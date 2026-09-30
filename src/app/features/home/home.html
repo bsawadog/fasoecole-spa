@@ -1,0 +1,181 @@
+<main class="home">
+  <header class="home__header" id="accueil">
+    <a class="home__brand" routerLink="/" aria-label="Faso École, accueil">
+      <span class="home__brand-mark"><svg lucideGraduationCap [size]="23" aria-hidden="true"></svg></span>
+      <span>FasoÉcole</span>
+    </a>
+    <nav class="home__nav" aria-label="Navigation principale">
+      <a class="home__nav-link" href="#accueil">Accueil</a>
+
+      <details class="home__dropdown">
+        <summary class="home__nav-link">
+          Établissements <svg lucideChevronDown [size]="15" aria-hidden="true"></svg>
+        </summary>
+        <div class="home__dropdown-menu">
+          <a href="#primaire"><svg lucideSchool [size]="17" aria-hidden="true"></svg> Primaire</a>
+          <a href="#secondaire"><svg lucideBookOpen [size]="17" aria-hidden="true"></svg> Secondaire</a>
+          <a href="#universite"><svg lucideGraduationCap [size]="17" aria-hidden="true"></svg> Université</a>
+          <a href="#formation"><svg lucideLightbulb [size]="17" aria-hidden="true"></svg> Formation</a>
+        </div>
+      </details>
+
+      <details class="home__dropdown">
+        <summary class="home__nav-link">
+          Ressources <svg lucideChevronDown [size]="15" aria-hidden="true"></svg>
+        </summary>
+        <div class="home__dropdown-menu">
+          <a href="#suivi"><svg lucideClipboardList [size]="17" aria-hidden="true"></svg> Suivi scolaire</a>
+          <a href="#resultats"><svg lucideChartNoAxesColumnIncreasing [size]="17" aria-hidden="true"></svg> Résultats</a>
+          <a href="#communication"><svg lucideMessageCircle [size]="17" aria-hidden="true"></svg> Communication</a>
+          <a href="#services"><svg lucideBookOpen [size]="17" aria-hidden="true"></svg> Tous les services</a>
+        </div>
+      </details>
+
+      <a class="home__nav-link" href="#a-propos">À propos</a>
+      <a class="home__nav-link" href="#contact">Contact</a>
+    </nav>
+    <a class="home__button home__button--header" routerLink="/login">
+      Se connecter <svg lucideArrowRight [size]="17" aria-hidden="true"></svg>
+    </a>
+  </header>
+
+  <section class="home__hero" aria-labelledby="home-title">
+    <img
+      class="home__hero-image"
+      src="assets/images/01-hero-faso-ecole.jpg"
+      alt="Des élèves et étudiants burkinabè réunis autour d'un ordinateur"
+    />
+    <div class="home__hero-content">
+      <p class="home__eyebrow">L’éducation, simplement</p>
+      <h1 id="home-title">Apprendre aujourd’hui, <span>réussir demain.</span></h1>
+      <p class="home__description">
+        FasoÉcole accompagne chaque parcours scolaire et rapproche les écoles, les enseignants,
+        les élèves et les familles.
+      </p>
+      <a class="home__button home__cta" routerLink="/login">
+        Accéder à mon espace <svg lucideArrowRight [size]="18" aria-hidden="true"></svg>
+      </a>
+    </div>
+  </section>
+
+  <section class="home__programs" aria-labelledby="programs-title">
+    <div class="home__section-heading">
+      <div>
+        <p class="home__eyebrow">Un parcours pour chacun</p>
+        <h2 id="programs-title">L’éducation à chaque étape</h2>
+      </div>
+      <p>Découvrez les espaces FasoÉcole adaptés à votre parcours.</p>
+    </div>
+
+    <div class="home__program-grid">
+      <article id="primaire" class="home__program-card home__program-card--primary">
+        <div class="home__program-image-wrap">
+          <img src="assets/images/02-primaire.jpg" alt="Une élève en classe primaire" />
+          <span class="home__program-icon"><svg lucideSchool [size]="23" aria-hidden="true"></svg></span>
+        </div>
+        <div class="home__program-copy">
+          <p class="home__program-kicker">Les premiers apprentissages</p>
+          <h3>FasoÈcole Primaire</h3>
+          <p>Les bases pour apprendre, grandir et prendre confiance à l’école.</p>
+        </div>
+      </article>
+
+      <article id="secondaire" class="home__program-card home__program-card--secondary">
+        <div class="home__program-image-wrap">
+          <img src="assets/images/03-secondaire.jpg" alt="Des étudiants en travail collaboratif" />
+          <span class="home__program-icon"><svg lucideBookOpen [size]="23" aria-hidden="true"></svg></span>
+        </div>
+        <div class="home__program-copy">
+          <p class="home__program-kicker">Curiosité et ambition</p>
+          <h3>FasoÈcole Secondaire</h3>
+          <p>Des outils pour accompagner les élèves vers de nouveaux horizons.</p>
+        </div>
+      </article>
+
+      <article id="universite" class="home__program-card home__program-card--university">
+        <div class="home__program-image-wrap">
+          <img src="assets/images/04-universite.jpg" alt="Des étudiants consultant un ordinateur à l'université" />
+          <span class="home__program-icon"><svg lucideGraduationCap [size]="23" aria-hidden="true"></svg></span>
+        </div>
+        <div class="home__program-copy">
+          <p class="home__program-kicker">Le savoir en mouvement</p>
+          <h3>FasoÈcole Université</h3>
+          <p>Un espace pour poursuivre ses études et préparer son avenir professionnel.</p>
+        </div>
+      </article>
+
+      <article id="formation" class="home__program-card home__program-card--training">
+        <div class="home__program-image-wrap">
+          <img src="assets/images/05-formation-professionnelle.jpg" alt="Une personne suivant une formation professionnelle" />
+          <span class="home__program-icon"><svg lucideLightbulb [size]="23" aria-hidden="true"></svg></span>
+        </div>
+        <div class="home__program-copy">
+          <p class="home__program-kicker">Apprendre toute la vie</p>
+          <h3>FasoÈcole Formation</h3>
+          <p>Développez vos compétences grâce à des parcours de formation adaptés.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="home__services" id="services" aria-labelledby="services-title">
+    <div class="home__section-heading">
+      <div>
+        <p class="home__eyebrow">Une plateforme au quotidien</p>
+        <h2 id="services-title">Nos services</h2>
+      </div>
+      <p>Les outils essentiels pour simplifier la vie de la communauté éducative.</p>
+    </div>
+
+    <div class="home__service-grid">
+      <article class="home__service-card" id="suivi">
+        <span class="home__service-icon"><svg lucideClipboardList [size]="24" aria-hidden="true"></svg></span>
+        <h3>Suivi scolaire</h3>
+        <p>Retrouvez les informations importantes du parcours scolaire au même endroit.</p>
+      </article>
+      <article class="home__service-card" id="resultats">
+        <span class="home__service-icon"><svg lucideChartNoAxesColumnIncreasing [size]="24" aria-hidden="true"></svg></span>
+        <h3>Notes et résultats</h3>
+        <p>Consultez les notes et suivez les progrès tout au long de l’année.</p>
+      </article>
+      <article class="home__service-card" id="communication">
+        <span class="home__service-icon"><svg lucideMessageCircle [size]="24" aria-hidden="true"></svg></span>
+        <h3>Communication</h3>
+        <p>Facilitez les échanges entre les familles, les enseignants et l’établissement.</p>
+      </article>
+      <article class="home__service-card">
+        <span class="home__service-icon"><svg lucideUsersRound [size]="24" aria-hidden="true"></svg></span>
+        <h3>Gestion des utilisateurs</h3>
+        <p>Offrez à chaque membre un espace adapté à son rôle dans la communauté.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="home__about" id="a-propos" aria-labelledby="about-title">
+    <span class="home__about-icon"><svg lucideHeartHandshake [size]="28" aria-hidden="true"></svg></span>
+    <div>
+      <p class="home__eyebrow">À propos de FasoÉcole</p>
+      <h2 id="about-title">Le numérique au service de la réussite éducative.</h2>
+      <p>
+        FasoÉcole rassemble les outils et les personnes qui font vivre l’école, pour accompagner
+        les élèves à chaque étape de leur parcours.
+      </p>
+    </div>
+  </section>
+
+  <section class="home__contact" id="contact" aria-labelledby="contact-title">
+    <div>
+      <p class="home__eyebrow">Prêt à commencer ?</p>
+      <h2 id="contact-title">Retrouvez votre communauté éducative.</h2>
+    </div>
+    <a class="home__button" routerLink="/login">
+      Se connecter <svg lucideArrowRight [size]="17" aria-hidden="true"></svg>
+    </a>
+  </section>
+
+  <footer class="home__footer">
+    <span><svg lucideGraduationCap [size]="18" aria-hidden="true"></svg> FasoÉcole</span>
+    <p>Une communauté qui apprend et grandit ensemble.</p>
+    <a routerLink="/login">Se connecter <svg lucideArrowRight [size]="16" aria-hidden="true"></svg></a>
+  </footer>
+</main>

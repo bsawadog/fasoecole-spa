@@ -1,0 +1,308 @@
+<section class="student-detail">
+  @if (loading()) {
+    <p>Chargement…</p>
+  } @else if (errorMessage()) {
+    <div class="student-detail__alert">{{ errorMessage() }}</div>
+    <button type="button" (click)="goBack()">← Retour</button>
+  } @else if (detail(); as d) {
+    <header class="student-detail__header">
+      <div class="student-detail__header-top student-detail__no-print">
+        <button type="button" class="student-detail__back" (click)="goBack()">← Retour aux élèves</button>
+        <button type="button" class="student-detail__print-btn" (click)="printPage()">🖨️ Imprimer / Enregistrer en PDF</button>
+      </div>
+      <div class="student-detail__identity">
+        <div class="student-detail__avatar">{{ initials(d) }}</div>
+        <div>
+          <h1>{{ d.lastName }} {{ d.firstName }}</h1>
+          <p class="student-detail__sub">
+            {{ d.schoolName }}
+            @if (d.className) { · <span class="student-detail__badge student-detail__badge--info">{{ d.className }}</span> }
+            · Matricule <strong>{{ d.registrationNumber }}</strong>
+          </p>
+        </div>
+      </div>
+      @if (errorMessage()) {
+        <div class="student-detail__alert student-detail__no-print">{{ errorMessage() }}</div>
+      }
+      @if (successMessage()) {
+        <div class="student-detail__success student-detail__no-print">{{ successMessage() }}</div>
+      }
+    </header>
+
+    <div class="student-detail__grid">
+      <section class="student-detail__card">
+        <h2>Informations</h2>
+        <dl>
+          <dt>Courriel</dt><dd>{{ d.email }}</dd>
+          <dt>Téléphone</dt><dd>{{ d.phone || '—' }}</dd>
+          <dt>Naissance</dt><dd>{{ d.birthDate || '—' }}</dd>
+          <dt>Genre</dt><dd>{{ d.gender || '—' }}</dd>
+        </dl>
+      </section>
+
+      <section class="student-detail__card">
+        <h2>Parents / Tuteurs</h2>
+        @for (parent of d.parents; track parent.parentId) {
+          <div class="student-detail__parent">
+            <strong>{{ parent.lastName }} {{ parent.firstName }}</strong>
+            <span class="student-detail__muted">{{ parent.email }}</span>
+            @if (parent.relationship) { <span class="student-detail__muted">({{ parent.relationship }})</span> }
+            <a class="student-detail__contact-btn student-detail__no-print" [href]="'mailto:' + parent.email" title="Contacter par courriel">✉️ Contacter</a>
+          </div>
+        } @empty {
+          <p class="student-detail__muted">Aucun parent associé</p>
+        }
+      </section>
+
+      <section class="student-detail__card">
+        <div class="student-detail__card-head">
+          <h2>Assiduité</h2>
+          <button type="button" class="student-detail__no-print student-detail__link-btn" (click)="openAddAttendance()">+ Signaler</button>
+        </div>
+        @if (d.attendanceSummary.totalRecords === 0) {
+          <p class="student-detail__muted">Aucune présence enregistrée.</p>
+        } @else {
+          <div class="student-detail__stats">
+            <div><strong>{{ d.attendanceSummary.totalRecords }}</strong><span>Enregistrements</span></div>
+            <div><strong>{{ d.attendanceSummary.presentCount }}</strong><span>Présences</span></div>
+            <div><strong>{{ d.attendanceSummary.absentCount }}</strong><span>Absences</span></div>
+            <div><strong>{{ d.attendanceSummary.lateCount }}</strong><span>Retards</span></div>
+            <div><strong>{{ d.attendanceSummary.justifiedAbsences }}</strong><span>Absences justifiées</span></div>
+            <div><strong>{{ d.attendanceSummary.unjustifiedAbsences }}</strong><span>Absences non justifiées</span></div>
+            <div><strong>{{ d.attendanceSummary.attendanceRate | number:'1.0-1' }}%</strong><span>Taux de présence</span></div>
+          </div>
+        }
+      </section>
+
+      <section class="student-detail__card student-detail__card--wide">
+        <h2>Résultats — Moyenne générale : {{ d.overallAverage !== null ? (d.overallAverage | number:'1.1-1') + '/20' : '—' }}</h2>
+        @if (d.grades.length === 0) {
+          <p class="student-detail__muted">Aucune note enregistrée.</p>
+        } @else {
+          <table class="student-detail__table">
+            <thead>
+              <tr><th>Matière</th><th>Enseignant</th><th>Période</th><th>Type</th><th>Note</th><th>Date</th></tr>
+            </thead>
+            <tbody>
+              @for (grade of d.grades; track grade.id) {
+                <tr>
+                  <td>{{ grade.subjectName }}</td>
+                  <td>{{ grade.teacherName }}</td>
+                  <td>{{ grade.term }}</td>
+                  <td>{{ grade.type }}</td>
+                  <td>{{ grade.value }}/{{ grade.maxValue }} ({{ gradePercent(grade) }}%)</td>
+                  <td>{{ grade.gradeDate || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </section>
+
+      <section class="student-detail__card student-detail__card--wide">
+        <div class="student-detail__card-head">
+          <h2>Historique des présences récentes</h2>
+        </div>
+
+        @if (addingAttendance() || editingAttendanceId() !== null) {
+          <form class="student-detail__form student-detail__no-print" (ngSubmit)="submitAttendance()">
+            <div class="student-detail__form-row">
+              <label>
+                Date
+                <input type="date" name="attendanceDate" [(ngModel)]="attendanceForm.attendanceDate" required />
+              </label>
+              <label>
+                Statut
+                <select name="status" [(ngModel)]="attendanceForm.status">
+                  <option value="PRESENT">Présent</option>
+                  <option value="ABSENT">Absent</option>
+                  <option value="LATE">Retard</option>
+                  <option value="EXCUSED">Absence justifiée</option>
+                </select>
+              </label>
+              <label class="student-detail__form-grow">
+                Motif / justification
+                <input type="text" name="justification" [(ngModel)]="attendanceForm.justification" placeholder="Ex : certificat médical" />
+              </label>
+            </div>
+            <div class="student-detail__form-actions">
+              <button type="submit" [disabled]="saving()">{{ editingAttendanceId() !== null ? 'Enregistrer' : 'Ajouter' }}</button>
+              <button type="button" (click)="cancelAttendanceForm()">Annuler</button>
+            </div>
+          </form>
+        }
+
+        @if (d.recentAttendance.length === 0) {
+          <p class="student-detail__muted">Aucune donnée.</p>
+        } @else {
+          <table class="student-detail__table">
+            <thead>
+              <tr><th>Date</th><th>Statut</th><th>Motif</th><th class="student-detail__no-print">Actions</th></tr>
+            </thead>
+            <tbody>
+              @for (a of d.recentAttendance; track a.id) {
+                <tr>
+                  <td>{{ a.attendanceDate }}</td>
+                  <td><span class="student-detail__badge" [ngClass]="attendanceBadgeClass(a.status)">{{ statusLabel(a.status) }}</span></td>
+                  <td>{{ a.justification || '—' }}</td>
+                  <td class="student-detail__no-print">
+                    <button type="button" class="student-detail__link-btn" (click)="startEditAttendance(a)">Modifier</button>
+                    <button type="button" class="student-detail__link-btn student-detail__link-btn--danger" (click)="removeAttendance(a.id)">Supprimer</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </section>
+
+      <section class="student-detail__card student-detail__card--wide">
+        <div class="student-detail__card-head">
+          <h2>
+            Frais de scolarité — Dû : {{ d.billingSummary.totalDue | number:'1.0-0' }} ·
+            Payé : {{ d.billingSummary.totalPaid | number:'1.0-0' }} ·
+            Reste à payer : {{ d.billingSummary.totalBalance | number:'1.0-0' }}
+          </h2>
+          <button type="button" class="student-detail__no-print student-detail__link-btn" (click)="openAddInvoice()">+ Ajouter un frais</button>
+        </div>
+
+        @if (addingInvoice()) {
+          <form class="student-detail__form student-detail__no-print" (ngSubmit)="submitInvoice()">
+            <div class="student-detail__form-row">
+              <label>
+                Type de frais
+                <select name="feeTypeId" [(ngModel)]="invoiceForm.feeTypeId" (ngModelChange)="onFeeTypeChange()" required>
+                  <option [ngValue]="null" disabled>— Choisir —</option>
+                  @for (ft of feeTypes(); track ft.id) {
+                    <option [ngValue]="ft.id">{{ ft.name }} ({{ ft.amount | number:'1.0-0' }})</option>
+                  }
+                </select>
+              </label>
+              <label>
+                Montant dû
+                <input type="number" name="amountDue" [(ngModel)]="invoiceForm.amountDue" min="0" />
+              </label>
+              <label>
+                Échéance
+                <input type="date" name="dueDate" [(ngModel)]="invoiceForm.dueDate" required />
+              </label>
+            </div>
+            <div class="student-detail__form-actions">
+              <button type="submit" [disabled]="saving()">Ajouter</button>
+              <button type="button" (click)="cancelInvoiceForm()">Annuler</button>
+            </div>
+          </form>
+        }
+
+        @if (d.invoices.length === 0) {
+          <p class="student-detail__muted">Aucun frais enregistré.</p>
+        } @else {
+          <table class="student-detail__table">
+            <thead>
+              <tr><th>Frais</th><th>Échéance</th><th>Montant dû</th><th>Payé</th><th>Reste</th><th>Statut</th><th class="student-detail__no-print">Actions</th></tr>
+            </thead>
+            <tbody>
+              @for (inv of d.invoices; track inv.id) {
+                <tr [class.student-detail__row--cancelled]="inv.status === 'CANCELLED'">
+                  <td>{{ inv.feeTypeName }}</td>
+                  <td>{{ inv.dueDate }}</td>
+                  <td>{{ inv.amountDue | number:'1.0-0' }}</td>
+                  <td>{{ inv.totalPaid | number:'1.0-0' }}</td>
+                  <td>{{ inv.balance | number:'1.0-0' }}</td>
+                  <td><span class="student-detail__badge" [ngClass]="invoiceBadgeClass(inv.status)">{{ invoiceStatusLabel(inv.status) }}</span></td>
+                  <td class="student-detail__no-print">
+                    <button type="button" class="student-detail__link-btn" [disabled]="!canPayInvoice(inv)" (click)="openAddPayment(inv)">Encaisser</button>
+                    <button type="button" class="student-detail__link-btn student-detail__link-btn--danger" [disabled]="!isInvoiceActionable(inv)" (click)="cancelInvoice(inv.id)">Annuler</button>
+                  </td>
+                </tr>
+                @if (payingInvoiceId() === inv.id) {
+                  <tr class="student-detail__no-print">
+                    <td colspan="7">
+                      <form class="student-detail__form" (ngSubmit)="submitPayment(inv.id)">
+                        <div class="student-detail__form-row">
+                          <label>
+                            Montant
+                            <input type="number" name="amount" [(ngModel)]="paymentForm.amount" min="0" required />
+                          </label>
+                          <label>
+                            Date
+                            <input type="date" name="paymentDate" [(ngModel)]="paymentForm.paymentDate" />
+                          </label>
+                          <label>
+                            Méthode
+                            <select name="method" [(ngModel)]="paymentForm.method">
+                              <option value="CASH">Espèces</option>
+                              <option value="MOBILE_MONEY">Mobile Money</option>
+                              <option value="BANK_TRANSFER">Virement bancaire</option>
+                              <option value="CARD">Carte</option>
+                            </select>
+                          </label>
+                        </div>
+                        <p class="student-detail__muted">La référence du reçu sera générée automatiquement.</p>
+                        <div class="student-detail__form-actions">
+                          <button type="submit" [disabled]="saving()">Enregistrer le paiement</button>
+                          <button type="button" (click)="cancelPaymentForm()">Annuler</button>
+                        </div>
+                      </form>
+                    </td>
+                  </tr>
+                }
+                @if (inv.payments.length > 0) {
+                  <tr class="student-detail__no-print">
+                    <td colspan="7">
+                      <div class="student-detail__muted student-detail__payments-list">
+                        Paiements :
+                        @for (p of inv.payments; track p.id) {
+                          <span class="student-detail__payment-chip">
+                            {{ p.reference }} · {{ p.paymentDate }} · {{ p.amount | number:'1.0-0' }} · {{ paymentMethodLabel(p.method) }}
+                            <button type="button" class="student-detail__receipt-btn" (click)="printReceipt(inv, p)" title="Imprimer le reçu">🖨️</button>
+                          </span>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        }
+      </section>
+
+      <section class="student-detail__card student-detail__card--wide">
+        <div class="student-detail__card-head">
+          <h2>Historique de tous les paiements</h2>
+        </div>
+        @if (allPayments().length === 0) {
+          <p class="student-detail__muted">Aucun paiement enregistré.</p>
+        } @else {
+          <table class="student-detail__table">
+            <thead>
+              <tr><th>Référence</th><th>Date</th><th>Frais</th><th>Méthode</th><th>Montant</th><th class="student-detail__no-print">Reçu</th></tr>
+            </thead>
+            <tbody>
+              @for (p of allPayments(); track p.id) {
+                <tr>
+                  <td>{{ p.reference }}</td>
+                  <td>{{ p.paymentDate }}</td>
+                  <td>{{ p.feeTypeName }}</td>
+                  <td>{{ paymentMethodLabel(p.method) }}</td>
+                  <td>{{ p.amount | number:'1.0-0' }}</td>
+                  <td class="student-detail__no-print">
+                    <button type="button" class="student-detail__link-btn" (click)="printReceiptById(p.id)">🖨️ Reçu</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </section>
+    </div>
+
+    <footer class="student-detail__print-footer student-detail__print-only">
+      <div class="student-detail__signature">
+        <span>Fait à ________________, le {{ today() }}</span>
+        <span>Signature et cachet du propriétaire</span>
+      </div>
+    </footer>
+  }
+</section>

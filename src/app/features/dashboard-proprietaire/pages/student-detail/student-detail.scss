@@ -1,0 +1,121 @@
+.student-detail { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; background: #f8fafc; }
+.student-detail__header {
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  border: 1px solid #1e3a8a;
+  border-radius: 0.6rem;
+  padding: 1.1rem 1.3rem;
+  box-shadow: 0 2px 6px rgba(30, 58, 138, 0.25);
+  color: #fff;
+}
+.student-detail__header-top { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+.student-detail__identity { display: flex; align-items: center; gap: 0.9rem; }
+.student-detail__avatar { flex: 0 0 auto; width: 3.2rem; height: 3.2rem; border-radius: 50%; background: #fff; color: #1e3a8a; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.15rem; letter-spacing: 0.03em; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); }
+.student-detail__header h1 { margin: 0 0 0.2rem; font-size: 1.4rem; color: #fff; }
+.student-detail__sub { margin: 0; color: #dbeafe; font-size: 0.9rem; }
+.student-detail__sub strong { color: #fff; }
+.student-detail__back { background: none; border: none; color: #fff; cursor: pointer; padding: 0; font-size: 0.85rem; text-decoration: underline; }
+.student-detail__print-btn { padding: 0.4rem 0.9rem; border-radius: 0.35rem; border: 1px solid #16a34a; background: #16a34a; color: #fff; cursor: pointer; font-size: 0.85rem; }
+.student-detail__alert { padding: 0.6rem 0.9rem; border-radius: 0.4rem; background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; margin-top: 0.8rem; }
+.student-detail__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+.student-detail__card { background: #fff; border: 1px solid #e2e8f0; border-radius: 0.6rem; padding: 1rem; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); transition: box-shadow 0.15s ease; }
+.student-detail__card:hover { box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06); }
+.student-detail__card--wide { grid-column: 1 / -1; }
+.student-detail__card h2 {
+  margin: -1rem -1rem 0.9rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e40af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #eff6ff;
+  border-bottom: 3px solid #2563eb;
+  border-radius: 0.6rem 0.6rem 0 0;
+}
+.student-detail__card dl { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 0.8rem; margin: 0; }
+.student-detail__card dt { color: #64748b; font-size: 0.85rem; }
+.student-detail__card dd { margin: 0; font-size: 0.9rem; }
+.student-detail__muted { color: #94a3b8; font-size: 0.85rem; }
+.student-detail__parent { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9; }
+.student-detail__parent:last-child { border-bottom: none; }
+.student-detail__contact-btn { margin-left: auto; padding: 0.25rem 0.6rem; border-radius: 0.35rem; border: 1px solid #16a34a; color: #16a34a; text-decoration: none; font-size: 0.8rem; }
+.student-detail__contact-btn:hover { background: #16a34a; color: #fff; }
+.student-detail__stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 0.6rem; }
+.student-detail__stats div { display: flex; flex-direction: column; align-items: center; padding: 0.6rem; background: #f8fafc; border-radius: 0.4rem; border: 1px solid #eef2f6; }
+.student-detail__stats strong { font-size: 1.1rem; color: #1e293b; }
+.student-detail__stats span { font-size: 0.75rem; color: #64748b; text-align: center; }
+.student-detail__table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.student-detail__table th, .student-detail__table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid #eef2f6; text-align: left; }
+.student-detail__table th { background: #f8fafc; font-weight: 600; color: #334155; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.03em; }
+.student-detail__table tbody tr { transition: background-color 0.15s ease; }
+.student-detail__table tbody tr:hover { background-color: #eff6ff; }
+
+.student-detail__badge { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 600; background: #e2e8f0; color: #334155; }
+.student-detail__badge--success { background: #dcfce7; color: #15803d; }
+.student-detail__badge--danger { background: #fee2e2; color: #b91c1c; }
+.student-detail__badge--warning { background: #fef3c7; color: #b45309; }
+.student-detail__badge--info { background: #dbeafe; color: #1d4ed8; }
+.student-detail__badge--muted { background: #e2e8f0; color: #64748b; }
+
+.student-detail__card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: -1rem -1rem 0.9rem;
+  padding: 0.6rem 1rem;
+  background: #eff6ff;
+  border-bottom: 3px solid #2563eb;
+  border-radius: 0.6rem 0.6rem 0 0;
+}
+.student-detail__card-head h2 {
+  margin: 0;
+  padding: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e40af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+.student-detail__link-btn { background: none; border: none; color: #2563eb; cursor: pointer; padding: 0.15rem 0.4rem; font-size: 0.8rem; }
+.student-detail__link-btn:hover { text-decoration: underline; }
+.student-detail__link-btn--danger { color: #b91c1c; }
+.student-detail__link-btn:disabled { color: #94a3b8; cursor: not-allowed; text-decoration: none; }
+.student-detail__row--cancelled { opacity: 0.6; text-decoration: line-through; }
+.student-detail__row--cancelled:hover { background-color: inherit; }
+.student-detail__success { padding: 0.6rem 0.9rem; border-radius: 0.4rem; background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; margin-top: 0.8rem; }
+.student-detail__form { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 0.4rem; padding: 0.8rem; margin-bottom: 0.8rem; }
+.student-detail__form-row { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+.student-detail__form-row label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.8rem; color: #475569; }
+.student-detail__form-row input, .student-detail__form-row select { padding: 0.35rem 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.35rem; font-size: 0.85rem; }
+.student-detail__form-grow { flex: 1 1 220px; }
+.student-detail__form-actions { display: flex; gap: 0.5rem; margin-top: 0.7rem; }
+.student-detail__form-actions button { padding: 0.35rem 0.9rem; border-radius: 0.35rem; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-size: 0.82rem; }
+.student-detail__form-actions button[type="submit"] { background: #2563eb; border-color: #2563eb; color: #fff; }
+.student-detail__payment-chip { display: inline-block; background: #eef2f6; border-radius: 0.3rem; padding: 0.15rem 0.5rem; margin: 0.15rem 0.3rem 0 0; font-size: 0.78rem; }
+.student-detail__payments-list { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem; }
+.student-detail__receipt-btn { background: none; border: none; cursor: pointer; font-size: 0.85rem; padding: 0 0.2rem; vertical-align: middle; }
+
+.student-detail__print-only { display: none; }
+.student-detail__print-footer { margin-top: 1rem; }
+.student-detail__signature { display: flex; justify-content: space-between; font-size: 0.85rem; color: #334155; }
+
+@media print {
+  @page { margin: 12mm; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .student-detail__no-print { display: none !important; }
+  .student-detail__print-only { display: block; }
+  .student-detail { padding: 0; gap: 0.6rem; background: #fff; }
+  .student-detail__header { border: none; box-shadow: none; padding: 0 0 0.6rem; border-bottom: 2px solid #1e293b; border-radius: 0; }
+  .student-detail__grid { display: block; }
+  .student-detail__card { border: 1px solid #cbd5e1; break-inside: avoid; margin-bottom: 0.6rem; box-shadow: none; }
+  .student-detail__card h2, .student-detail__card-head { border-radius: 0; }
+  .student-detail__table { font-size: 0.8rem; }
+  .student-detail__signature { margin-top: 3rem; }
+  .student-detail__signature span:last-child { border-top: 1px solid #334155; padding-top: 0.3rem; width: 45%; text-align: center; }
+}
+

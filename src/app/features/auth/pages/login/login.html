@@ -1,0 +1,280 @@
+<main class="auth-page">
+  <a class="auth-page__brand" routerLink="/" aria-label="Retour à l’accueil Faso École">
+    <span class="auth-page__brand-mark"><svg lucideGraduationCap [size]="22" aria-hidden="true"></svg></span>
+    <span>FasoÉcole</span>
+  </a>
+
+  <section class="auth-card" aria-label="Authentification FasoÉcole">
+    <aside class="auth-card__visual">
+      <img
+        src="assets/images/login_image.PNG"
+        alt="Une élève qui apprend en classe"
+        class="auth-card__image"
+      />
+      <div class="auth-card__image-shade"></div>
+      <div class="auth-card__visual-copy">
+        <span class="auth-card__visual-label">FasoÉcole</span>
+        <h1>Chaque parcours mérite les bons outils.</h1>
+        <p>Un espace simple pour apprendre, enseigner et accompagner la réussite.</p>
+        <div class="auth-card__image-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+      </div>
+    </aside>
+
+    <div class="auth-card__form-panel">
+      <div class="auth-card__form-content">
+        @if (mode() !== 'login') {
+          <button class="auth-card__back" type="button" (click)="setMode('login')">
+            <svg lucideArrowLeft [size]="17" aria-hidden="true"></svg>
+            Retour à la connexion
+          </button>
+        }
+
+        @if (mode() === 'login') {
+          <div class="auth-card__heading">
+            <p class="auth-card__eyebrow">Bon retour parmi nous</p>
+            <h2>Connectez-vous</h2>
+            <p>Accédez à votre espace FasoÉcole en toute simplicité.</p>
+          </div>
+
+          @if (successMessage()) {
+            <p class="auth-card__notice" role="status">{{ successMessage() }}</p>
+          }
+          @if (errorMessage()) {
+            <p class="auth-card__error" role="alert">{{ errorMessage() }}</p>
+          }
+
+          <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
+            <div class="auth-card__field">
+              <label for="login-email">Adresse e-mail</label>
+              <input
+                id="login-email"
+                type="email"
+                formControlName="email"
+                placeholder="nom@exemple.com"
+                autocomplete="username"
+                required
+              />
+            </div>
+            <div class="auth-card__field">
+              <div class="auth-card__label-row">
+                <label for="login-password">Mot de passe</label>
+                <button class="auth-card__text-button" type="button" (click)="setMode('forgot')">
+                  Mot de passe oublié ?
+                </button>
+              </div>
+              <div class="auth-card__password">
+                <input
+                  id="login-password"
+                  [type]="showPassword() ? 'text' : 'password'"
+                  formControlName="password"
+                  placeholder="Saisissez votre mot de passe"
+                  autocomplete="current-password"
+                  required
+                />
+                <button
+                  class="auth-card__password-toggle"
+                  type="button"
+                  [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+                  [attr.aria-pressed]="showPassword()"
+                  (click)="togglePasswordVisibility()"
+                >
+                  @if (showPassword()) {
+                    <svg lucideEyeOff [size]="18" aria-hidden="true"></svg>
+                  } @else {
+                    <svg lucideEye [size]="18" aria-hidden="true"></svg>
+                  }
+                </button>
+              </div>
+            </div>
+            <button class="auth-card__submit" type="submit" [disabled]="loading()">
+              @if (loading()) {
+                <span class="auth-card__spinner" aria-hidden="true"></span>
+                Connexion…
+              } @else {
+                Se connecter <svg lucideArrowRight [size]="18" aria-hidden="true"></svg>
+              }
+            </button>
+          </form>
+
+          <p class="auth-card__switch">
+            Vous n’avez pas encore de compte ?
+            <button class="auth-card__text-button" type="button" (click)="setMode('register')">Créer un compte</button>
+          </p>
+        } @else if (mode() === 'register') {
+          <div class="auth-card__heading">
+            <p class="auth-card__eyebrow">Rejoignez la communauté</p>
+            <h2>Créer un compte</h2>
+            <p>Un propriétaire d’établissement validera votre demande et définira votre accès.</p>
+          </div>
+          @if (errorMessage()) {
+            <p class="auth-card__error" role="alert">{{ errorMessage() }}</p>
+          }
+          @if (successMessage()) {
+            <p class="auth-card__notice" role="status">{{ successMessage() }}</p>
+          } @else {
+            @if (schoolsError()) {
+              <p class="auth-card__error" role="alert">{{ schoolsError() }}</p>
+            }
+            <form [formGroup]="registerForm" (ngSubmit)="submitRegistration()" novalidate>
+              <div class="auth-card__field-row">
+                <div class="auth-card__field">
+                  <label for="register-first-name">Prénom</label>
+                  <input id="register-first-name" formControlName="firstName" autocomplete="given-name" required />
+                </div>
+                <div class="auth-card__field">
+                  <label for="register-last-name">Nom</label>
+                  <input id="register-last-name" formControlName="lastName" autocomplete="family-name" required />
+                </div>
+              </div>
+              <div class="auth-card__field">
+                <label for="register-email">Adresse e-mail</label>
+                <input
+                  id="register-email"
+                  type="email"
+                  formControlName="email"
+                  placeholder="nom@exemple.com"
+                  autocomplete="email"
+                  required
+                />
+              </div>
+              <div class="auth-card__field">
+                <label for="register-school">Établissement concerné</label>
+                <select id="register-school" formControlName="schoolId" required [disabled]="schoolsLoading() || schools().length === 0">
+                  <option [ngValue]="0" disabled>
+                    @if (schoolsLoading()) {
+                      Chargement des établissements…
+                    } @else {
+                      Choisissez votre établissement
+                    }
+                  </option>
+                  @for (school of schools(); track school.id) {
+                    <option [ngValue]="school.id">{{ school.name }}</option>
+                  }
+                </select>
+                <small>Le propriétaire de cet établissement validera votre demande.</small>
+              </div>
+              <div class="auth-card__field">
+                <label for="register-role">Profil demandé</label>
+                <select id="register-role" formControlName="requestedRole" required>
+                  <option value="TEACHER">Enseignant</option>
+                  <option value="PARENT">Parent</option>
+                  <option value="STUDENT">Étudiant</option>
+                </select>
+                <small>Le profil pourra être confirmé ou ajusté par le propriétaire.</small>
+              </div>
+              <div class="auth-card__field">
+                <label for="register-phone">Téléphone <span>(facultatif)</span></label>
+                <input id="register-phone" type="tel" formControlName="phone" autocomplete="tel" />
+              </div>
+              <div class="auth-card__field-row">
+                <div class="auth-card__field">
+                  <label for="register-password">Mot de passe</label>
+                  <input
+                    id="register-password"
+                    type="password"
+                    formControlName="password"
+                    autocomplete="new-password"
+                    minlength="8"
+                    required
+                  />
+                </div>
+                <div class="auth-card__field">
+                  <label for="register-confirm">Confirmer</label>
+                  <input
+                    id="register-confirm"
+                    type="password"
+                    formControlName="confirmPassword"
+                    autocomplete="new-password"
+                    required
+                  />
+                </div>
+              </div>
+              <button class="auth-card__submit" type="submit" [disabled]="loading() || schoolsLoading() || schools().length === 0">
+                @if (loading()) {
+                  <span class="auth-card__spinner" aria-hidden="true"></span>
+                  Envoi…
+                } @else {
+                  Envoyer ma demande <svg lucideArrowRight [size]="18" aria-hidden="true"></svg>
+                }
+              </button>
+            </form>
+          }
+        } @else if (mode() === 'forgot') {
+          <div class="auth-card__heading">
+            <p class="auth-card__eyebrow">Récupération de compte</p>
+            <h2>Mot de passe oublié ?</h2>
+            <p>Indiquez l’adresse e-mail associée à votre compte. Nous vous enverrons un lien sécurisé.</p>
+          </div>
+          @if (errorMessage()) {
+            <p class="auth-card__error" role="alert">{{ errorMessage() }}</p>
+          }
+          @if (successMessage()) {
+            <p class="auth-card__notice" role="status">{{ successMessage() }}</p>
+          }
+          <form [formGroup]="emailForm" (ngSubmit)="submitForgotPassword()" novalidate>
+            <div class="auth-card__field">
+              <label for="forgot-email">Adresse e-mail</label>
+              <input
+                id="forgot-email"
+                type="email"
+                formControlName="email"
+                placeholder="nom@exemple.com"
+                autocomplete="email"
+                required
+              />
+            </div>
+            <button class="auth-card__submit" type="submit" [disabled]="loading()">
+              @if (loading()) {
+                <span class="auth-card__spinner" aria-hidden="true"></span>
+                Envoi…
+              } @else {
+                Envoyer le lien <svg lucideArrowRight [size]="18" aria-hidden="true"></svg>
+              }
+            </button>
+          </form>
+        } @else {
+          <div class="auth-card__heading">
+            <p class="auth-card__eyebrow">Presque terminé</p>
+            <h2>Nouveau mot de passe</h2>
+            <p>Choisissez un mot de passe sécurisé d’au moins 8 caractères.</p>
+          </div>
+          @if (errorMessage()) {
+            <p class="auth-card__error" role="alert">{{ errorMessage() }}</p>
+          }
+          <form [formGroup]="resetForm" (ngSubmit)="submitPasswordReset()" novalidate>
+            <div class="auth-card__field">
+              <label for="reset-password">Nouveau mot de passe</label>
+              <input
+                id="reset-password"
+                type="password"
+                formControlName="password"
+                autocomplete="new-password"
+                minlength="8"
+                required
+              />
+            </div>
+            <div class="auth-card__field">
+              <label for="reset-confirm">Confirmer le mot de passe</label>
+              <input
+                id="reset-confirm"
+                type="password"
+                formControlName="confirmPassword"
+                autocomplete="new-password"
+                required
+              />
+            </div>
+            <button class="auth-card__submit" type="submit" [disabled]="loading()">
+              @if (loading()) {
+                <span class="auth-card__spinner" aria-hidden="true"></span>
+                Modification…
+              } @else {
+                Modifier le mot de passe <svg lucideArrowRight [size]="18" aria-hidden="true"></svg>
+              }
+            </button>
+          </form>
+        }
+      </div>
+      <footer class="auth-card__footer">© FasoÉcole · Tous les parcours comptent</footer>
+    </div>
+  </section>
+</main>

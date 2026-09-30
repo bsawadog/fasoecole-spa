@@ -1,0 +1,182 @@
+<main class="owner-dashboard">
+  <header class="owner-dashboard__header" id="school">
+    <div>
+      <p class="owner-dashboard__eyebrow">Pilotage de l’établissement</p>
+      <h1>Bonjour {{ user()?.firstName }}</h1>
+      @if (dashboard(); as data) {
+        <p class="owner-dashboard__subtitle">
+          {{ schoolTypeLabel(data.schoolType) }} · {{ data.schoolName }} · Mis à jour {{ data.generatedDate | date: 'dd/MM/yyyy' }}
+        </p>
+      } @else {
+        <p class="owner-dashboard__subtitle">Vue d’ensemble de vos établissements FasoÉcole.</p>
+      }
+    </div>
+    @if (schools().length > 1) {
+      <label class="owner-dashboard__school-picker">
+        <span>Établissement</span>
+        <select [value]="selectedSchoolId()" (change)="onSchoolChange($event)">
+          @for (school of schools(); track school.id) {
+            <option [value]="school.id">{{ school.name }}</option>
+          }
+        </select>
+      </label>
+    } @else if (schools().length === 1) {
+      <div class="owner-dashboard__school-badge">
+        <svg lucideBuilding2 [size]="18" aria-hidden="true"></svg>
+        {{ schools()[0].name }}
+      </div>
+    }
+  </header>
+
+  @if (errorMessage()) {
+    <p class="owner-dashboard__message owner-dashboard__message--error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  @if (loading()) {
+    <div class="owner-dashboard__empty">Chargement des indicateurs…</div>
+  } @else if (schools().length === 0) {
+    <section class="owner-dashboard__empty">
+      <svg lucideBuilding2 [size]="30" aria-hidden="true"></svg>
+      <h2>Aucun établissement associé</h2>
+      <p>Créez ou associez un établissement à votre compte pour consulter son tableau de bord.</p>
+    </section>
+  } @else if (dashboard(); as data) {
+    <section class="owner-dashboard__metrics" aria-label="Effectifs et structure">
+      <article class="owner-dashboard__metric owner-dashboard__metric--green">
+        <span class="owner-dashboard__metric-icon"><svg lucideGraduationCap [size]="21" aria-hidden="true"></svg></span>
+        <span class="owner-dashboard__metric-label">Élèves</span>
+        <strong>{{ data.students }}</strong>
+      </article>
+      <article class="owner-dashboard__metric owner-dashboard__metric--blue">
+        <span class="owner-dashboard__metric-icon"><svg lucideUsers [size]="21" aria-hidden="true"></svg></span>
+        <span class="owner-dashboard__metric-label">Enseignants</span>
+        <strong>{{ data.teachers }}</strong>
+      </article>
+      <article class="owner-dashboard__metric owner-dashboard__metric--violet">
+        <span class="owner-dashboard__metric-icon"><svg lucidePanelsTopLeft [size]="21" aria-hidden="true"></svg></span>
+        <span class="owner-dashboard__metric-label">Classes</span>
+        <strong>{{ data.classes }}</strong>
+      </article>
+      <article class="owner-dashboard__metric owner-dashboard__metric--amber">
+        <span class="owner-dashboard__metric-icon"><svg lucideLayers3 [size]="21" aria-hidden="true"></svg></span>
+        <span class="owner-dashboard__metric-label">Niveaux</span>
+        <strong>{{ data.levels }}</strong>
+      </article>
+      <article class="owner-dashboard__metric owner-dashboard__metric--teal">
+        <span class="owner-dashboard__metric-icon"><svg lucideHeartHandshake [size]="21" aria-hidden="true"></svg></span>
+        <span class="owner-dashboard__metric-label">Parents actifs</span>
+        <strong>{{ data.parents }}</strong>
+      </article>
+      <a class="owner-dashboard__metric owner-dashboard__metric--rose" routerLink="/proprietaire/demandes">
+        <span class="owner-dashboard__metric-icon"><svg lucideUserRoundCheck [size]="21" aria-hidden="true"></svg></span>
+        <span class="owner-dashboard__metric-label">Comptes à approuver</span>
+        <strong>{{ data.pendingAccountApprovals }}</strong>
+        <span class="owner-dashboard__metric-action">Traiter les demandes <svg lucideArrowRight [size]="15" aria-hidden="true"></svg></span>
+      </a>
+    </section>
+
+    <div class="owner-dashboard__columns">
+      <section class="owner-dashboard__panel" id="attendance">
+        <div class="owner-dashboard__panel-heading">
+          <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--blue"><svg lucideCalendarCheck2 [size]="20" aria-hidden="true"></svg></span>
+          <div><h2>Présences du jour</h2><p>{{ data.generatedDate | date: 'dd/MM/yyyy' }}</p></div>
+        </div>
+        <div class="owner-dashboard__attendance-total">
+          <strong>{{ data.attendanceRecorded }}</strong>
+          <span>enregistrements</span>
+        </div>
+        <div class="owner-dashboard__attendance-grid">
+          <div><span class="owner-dashboard__status-dot owner-dashboard__status-dot--present"></span><span>Présents</span><strong>{{ data.presentToday }}</strong></div>
+          <div><span class="owner-dashboard__status-dot owner-dashboard__status-dot--absent"></span><span>Absents</span><strong>{{ data.absentToday }}</strong></div>
+          <div><span class="owner-dashboard__status-dot owner-dashboard__status-dot--late"></span><span>En retard</span><strong>{{ data.lateToday }}</strong></div>
+          <div><span class="owner-dashboard__status-dot owner-dashboard__status-dot--excused"></span><span>Excusés</span><strong>{{ data.excusedToday }}</strong></div>
+        </div>
+        @if (data.attendanceRecorded === 0) {
+          <p class="owner-dashboard__hint">Aucune présence n’a encore été saisie aujourd’hui.</p>
+        }
+      </section>
+
+      <section class="owner-dashboard__panel" id="finance">
+        <div class="owner-dashboard__panel-heading">
+          <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--green"><svg lucideWallet [size]="20" aria-hidden="true"></svg></span>
+          <div><h2>Situation financière</h2><p>Montants enregistrés dans FasoÉcole</p></div>
+        </div>
+        <div class="owner-dashboard__finance-row">
+          <div><span>Montant encaissé</span><strong>{{ formatAmount(data.receivedAmount) }}</strong></div>
+          <svg lucideTrendingUp [size]="20" aria-hidden="true"></svg>
+        </div>
+        <div class="owner-dashboard__finance-row owner-dashboard__finance-row--due">
+          <div><span>Reste à recouvrer</span><strong>{{ formatAmount(data.outstandingAmount) }}</strong></div>
+          <span class="owner-dashboard__invoice-count">{{ data.pendingInvoices }} facture(s)</span>
+        </div>
+      </section>
+
+      <section class="owner-dashboard__panel" id="academic">
+        <div class="owner-dashboard__panel-heading">
+          <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--violet"><svg lucideBookOpen [size]="20" aria-hidden="true"></svg></span>
+          <div><h2>Résultats scolaires</h2><p>Bulletins validés uniquement</p></div>
+        </div>
+        <div class="owner-dashboard__average">
+          @if (data.schoolAverage !== null) {
+            <strong>{{ data.schoolAverage | number: '1.1-2' }}<small>/20</small></strong>
+            <span>Moyenne générale publiée</span>
+          } @else {
+            <strong>—</strong>
+            <span>Aucun bulletin validé pour le moment</span>
+          }
+        </div>
+        <p class="owner-dashboard__hint">{{ data.validatedReportCards }} bulletin(s) validé(s) comptabilisé(s).</p>
+      </section>
+
+      <section class="owner-dashboard__panel" id="communication">
+        <div class="owner-dashboard__panel-heading">
+          <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--amber"><svg lucideMessageCircle [size]="20" aria-hidden="true"></svg></span>
+          <div><h2>Communication</h2><p>Sur votre compte propriétaire</p></div>
+        </div>
+        <div class="owner-dashboard__unread">
+          <svg lucideMail [size]="20" aria-hidden="true"></svg>
+          <strong>{{ data.unreadMessages }}</strong>
+          <span>message(s) non lu(s)</span>
+        </div>
+        <div class="owner-dashboard__notification-list">
+          @for (notification of data.recentNotifications; track notification.id) {
+            <article [class.owner-dashboard__notification--unread]="!notification.read">
+              <span class="owner-dashboard__notification-dot"></span>
+              <div><strong>{{ notification.title }}</strong><p>{{ notification.content || 'Notification' }}</p></div>
+              <time>{{ notification.createdAt | date: 'dd/MM HH:mm' }}</time>
+            </article>
+          } @empty {
+            <p class="owner-dashboard__hint">Aucune notification récente.</p>
+          }
+        </div>
+      </section>
+    </div>
+
+    <section class="owner-dashboard__panel owner-dashboard__payments">
+      <div class="owner-dashboard__panel-heading">
+        <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--green"><svg lucideReceiptText [size]="20" aria-hidden="true"></svg></span>
+        <div><h2>Derniers paiements</h2><p>Les cinq dernières transactions enregistrées</p></div>
+      </div>
+      @if (data.recentPayments.length > 0) {
+        <div class="owner-dashboard__table-wrap">
+          <table>
+            <thead><tr><th>Élève</th><th>Date</th><th>Moyen</th><th>Référence</th><th class="owner-dashboard__amount">Montant</th></tr></thead>
+            <tbody>
+              @for (payment of data.recentPayments; track payment.id) {
+                <tr>
+                  <td>{{ payment.studentName }}</td>
+                  <td>{{ payment.paymentDate | date: 'dd/MM/yyyy' }}</td>
+                  <td>{{ payment.method }}</td>
+                  <td>{{ payment.reference || '—' }}</td>
+                  <td class="owner-dashboard__amount">{{ formatAmount(payment.amount) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="owner-dashboard__hint">Aucun paiement enregistré pour cet établissement.</p>
+      }
+    </section>
+  }
+</main>

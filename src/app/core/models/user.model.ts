@@ -1,0 +1,17 @@
+import { Role } from './role.model';
+
+export interface User {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  role: Role;
+  approved: boolean;
+  requestedSchoolId: number | null;
+  requestedSchoolName: string | null;
+  requestedSchoolType: string | null;
+  requestedRole: string | null;
+  /** Rôles bruts renvoyés par le backend (utile pour du débogage ou multi-rôles futurs). */
+  rawRoles: string[];
+}

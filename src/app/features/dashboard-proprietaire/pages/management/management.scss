@@ -1,0 +1,43 @@
+.owner-management { max-width: 82rem; margin: auto; color: #18342c; }
+.owner-management header, .owner-management__panel-heading, .owner-management__editor-heading, .owner-management__list-heading, .owner-management__form-actions { display: flex; align-items: center; justify-content: space-between; gap: .8rem; }
+.owner-management header { margin-bottom: 1rem; }
+.owner-management header h1 { margin: 0; font-size: clamp(1.8rem, 3vw, 2.35rem); }
+.owner-management header p, .owner-management section p { color: #718078; font-size: .82rem; }
+.owner-management__eyebrow { color: #1f765e !important; font-size: .72rem !important; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+.owner-management__school-picker { display: grid; gap: .4rem; color: #66756d; font-size: .75rem; }
+.owner-management__school-picker select, .owner-management input, .owner-management select { min-height: 2.5rem; padding: .55rem .7rem; border: 1px solid #dbe4dc; border-radius: .55rem; color: #203d33; background: #fff; font: inherit; font-size: .84rem; }
+.owner-management__panel { padding: 1rem; border: 1px solid #e5eae5; border-radius: .85rem; background: #fff; }
+.owner-management__list-heading span { color: #87938b; font-size: .74rem; }
+.owner-management__tabs, .owner-management__subtabs { display: flex; gap: .4rem; overflow-x: auto; }
+.owner-management__tabs { margin-bottom: 1rem; padding: .35rem; border: 1px solid #e5eae5; border-radius: .85rem; background: #fff; }
+.owner-management button { font: inherit; cursor: pointer; }
+.owner-management__tabs button, .owner-management__subtabs button { flex: 0 0 auto; padding: .6rem .8rem; border: 0; border-radius: .55rem; color: #68766e; background: transparent; font-size: .8rem; }
+.owner-management__tab--active, .owner-management__subtab--active { color: #176449 !important; background: #eaf6f0 !important; font-weight: 700; }
+.owner-management__panel { padding: 1.2rem; box-shadow: 0 .3rem 1rem rgb(24 52 44 / 4%); }
+.owner-management__panel-heading { margin-bottom: 1rem; }
+.owner-management section h2 { margin: 0; color: #203d33; font-size: 1.05rem; }
+.owner-management__primary, .owner-management__form-actions button { padding: .65rem .9rem; border: 0; border-radius: .6rem; color: #fff; background: #1e795b; font-size: .8rem; font-weight: 700; text-decoration: none; }
+.owner-management__subtabs { padding-bottom: .7rem; border-bottom: 1px solid #edf0ed; }
+.owner-management__subtabs button { padding: .5rem .65rem; font-size: .76rem; }
+.owner-management form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+.owner-management__editor { margin: 1rem 0; padding: 1rem; border: 1px solid #dce9df; border-radius: .75rem; background: #f8fbf8; }
+.owner-management__wide, .owner-management__editor-heading { grid-column: 1 / -1; }
+.owner-management form label { display: grid; gap: .35rem; color: #586b60; font-size: .76rem; }
+.owner-management__form-actions span { color: #87938b; font-size: .72rem; }
+.owner-management__list-heading { margin: 1rem 0 .5rem; }
+.owner-management table { width: 100%; border-collapse: collapse; text-align: left; }
+.owner-management th, .owner-management td { padding: .65rem .5rem; border-bottom: 1px solid #edf0ed; font-size: .78rem; }
+.owner-management th { color: #87938b; font-size: .7rem; }
+.owner-management td { color: #586b60; }
+.owner-management td strong { color: #294438; }
+.owner-management__summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: .8rem; margin-bottom: 1rem; }
+.owner-management__notice { margin-top: 1rem; padding: .8rem; color: #786335; background: #fffbef; font-size: .75rem; line-height: 1.5; }
+.owner-management__message { margin-bottom: 1rem; padding: .8rem 1rem; border-radius: .65rem; font-size: .84rem; }
+.owner-management__message--error { color: #963c35; background: #fff0ed; }
+.owner-management__message--success { color: #176449; background: #eaf6f0; }
+.owner-management__empty, .owner-management__empty-inline { padding: 1.5rem; border: 1px dashed #dbe4dc; border-radius: .8rem; color: #718078; background: #fff; text-align: center; }
+.owner-management__table-wrap { overflow-x: auto; }
+@media (max-width: 700px) {
+  .owner-management header { flex-direction: column; }
+  .owner-management form { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,176 @@
+<section class="class-roster">
+  <header class="class-roster__header class-roster__no-print">
+    <div>
+      <h1>Élèves par classe</h1>
+      <p>Consultez les élèves d’une classe, leurs parents et leurs enseignants.</p>
+    </div>
+    @if (schools().length > 1) {
+      <select class="class-roster__select" [ngModel]="selectedSchoolId()" (change)="onSchoolChange($event)">
+        @for (school of schools(); track school.id) {
+          <option [value]="school.id">{{ school.name }}</option>
+        }
+      </select>
+    }
+  </header>
+
+  @if (errorMessage()) {
+    <div class="class-roster__alert class-roster__alert--error class-roster__no-print">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="class-roster__alert class-roster__alert--success class-roster__no-print">{{ successMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <p>Chargement…</p>
+  } @else if (classes().length === 0) {
+    <p>Aucune classe n’a encore été créée pour cet établissement.</p>
+  } @else {
+    <div class="class-roster__toolbar class-roster__no-print">
+      <label for="class-select">Classe</label>
+      <select id="class-select" class="class-roster__select" [ngModel]="selectedClassId()" (change)="onClassChange($event)">
+        @for (schoolClass of classes(); track schoolClass.id) {
+          <option [value]="schoolClass.id">{{ className(schoolClass) }}</option>
+        }
+      </select>
+      @if (selectedClassId() && !addingStudent()) {
+        <button type="button" class="class-roster__add-btn" (click)="openAddStudent()">+ Ajouter un élève</button>
+      }
+      @if (selectedClassId() && rows().length > 0) {
+        <button type="button" class="class-roster__print-btn" (click)="printRoster()">🖨️ Imprimer / Enregistrer en PDF</button>
+      }
+    </div>
+
+    <h2 class="class-roster__print-title">
+      Liste des élèves — {{ currentSchoolName() }} — {{ currentClassLabel() }}
+    </h2>
+
+    @if (addingStudent()) {
+      <form class="class-roster__new-form class-roster__no-print" (ngSubmit)="submitNewStudent()">
+        <h2>Ajouter un élève à cette classe</h2>
+        <div class="class-roster__edit-grid">
+          <label>Prénom <input name="nFirstName" [(ngModel)]="newStudentForm.firstName" required /></label>
+          <label>Nom <input name="nLastName" [(ngModel)]="newStudentForm.lastName" required /></label>
+          <label>Courriel <input type="email" name="nEmail" [(ngModel)]="newStudentForm.email" required /></label>
+          <label>Mot de passe <input type="text" name="nPassword" [(ngModel)]="newStudentForm.password" required minlength="8" placeholder="8 caractères min." /></label>
+          <label>Téléphone <input name="nPhone" [(ngModel)]="newStudentForm.phone" /></label>
+          <label>Matricule <input name="nRegistrationNumber" [(ngModel)]="newStudentForm.registrationNumber" required /></label>
+          <label>Naissance <input type="date" name="nBirthDate" [(ngModel)]="newStudentForm.birthDate" /></label>
+          <label>Genre
+            <select name="nGender" [(ngModel)]="newStudentForm.gender">
+              <option value="">—</option>
+              <option value="M">Masculin</option>
+              <option value="F">Féminin</option>
+            </select>
+          </label>
+        </div>
+        <div class="class-roster__edit-actions">
+          <button type="submit" [disabled]="saving()">Ajouter l’élève</button>
+          <button type="button" (click)="cancelAddStudent()">Annuler</button>
+        </div>
+      </form>
+    }
+
+    @if (loadingRoster()) {
+      <p>Chargement des élèves…</p>
+    } @else if (rows().length === 0) {
+      <p>Aucun élève actif inscrit dans cette classe.</p>
+    } @else {
+      <div class="class-roster__table-wrap">
+        <table class="class-roster__table">
+          <thead>
+            <tr>
+              <th>Élève</th>
+              <th>Contact</th>
+              <th>Matricule</th>
+              <th>Parents</th>
+              <th>Enseignants</th>
+              <th class="class-roster__no-print">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.studentId) {
+              <tr class="class-roster__row">
+                @if (editingStudentId() === row.studentId) {
+                  <td colspan="6">
+                    <form class="class-roster__edit-form" (ngSubmit)="saveStudent(row.studentId)">
+                      <div class="class-roster__edit-grid">
+                        <label>Prénom <input name="firstName" [(ngModel)]="studentForm.firstName" required /></label>
+                        <label>Nom <input name="lastName" [(ngModel)]="studentForm.lastName" required /></label>
+                        <label>Courriel <input type="email" name="email" [(ngModel)]="studentForm.email" required /></label>
+                        <label>Téléphone <input name="phone" [(ngModel)]="studentForm.phone" /></label>
+                        <label>Matricule <input name="registrationNumber" [(ngModel)]="studentForm.registrationNumber" required /></label>
+                        <label>Naissance <input type="date" name="birthDate" [(ngModel)]="studentForm.birthDate" /></label>
+                        <label>Genre
+                          <select name="gender" [(ngModel)]="studentForm.gender">
+                            <option value="">—</option>
+                            <option value="M">Masculin</option>
+                            <option value="F">Féminin</option>
+                          </select>
+                        </label>
+                      </div>
+                      <div class="class-roster__edit-actions">
+                        <button type="submit" [disabled]="saving()">Enregistrer</button>
+                        <button type="button" (click)="cancelEdit()">Annuler</button>
+                      </div>
+                    </form>
+                  </td>
+                } @else {
+                  <td>
+                    <strong>{{ row.lastName }} {{ row.firstName }}</strong>
+                    @if (row.gender) { <div class="class-roster__muted">{{ row.gender }}</div> }
+                  </td>
+                  <td>
+                    <div>{{ row.email }}</div>
+                    @if (row.phone) { <div class="class-roster__muted">{{ row.phone }}</div> }
+                  </td>
+                  <td>{{ row.registrationNumber }}</td>
+                  <td>
+                    @for (parent of row.parents; track parent.parentId) {
+                      @if (editingParentId() === parent.parentId) {
+                        <form class="class-roster__edit-form" (ngSubmit)="saveParent(parent.parentId, row.studentId)">
+                          <div class="class-roster__edit-grid">
+                            <label>Prénom <input name="pFirstName" [(ngModel)]="parentForm.firstName" required /></label>
+                            <label>Nom <input name="pLastName" [(ngModel)]="parentForm.lastName" required /></label>
+                            <label>Courriel <input type="email" name="pEmail" [(ngModel)]="parentForm.email" required /></label>
+                            <label>Téléphone <input name="pPhone" [(ngModel)]="parentForm.phone" /></label>
+                          </div>
+                          <div class="class-roster__edit-actions">
+                            <button type="submit" [disabled]="saving()">Enregistrer</button>
+                            <button type="button" (click)="cancelEdit()">Annuler</button>
+                          </div>
+                        </form>
+                      } @else {
+                        <div class="class-roster__parent">
+                          <span>{{ parent.lastName }} {{ parent.firstName }}</span>
+                          <span class="class-roster__muted">{{ parent.email }}</span>
+                          <div class="class-roster__parent-actions class-roster__no-print">
+                            <button type="button" class="class-roster__link" (click)="startEditParent(parent)">Modifier</button>
+                            <a class="class-roster__link class-roster__link--contact" [href]="'mailto:' + parent.email" title="Contacter le parent par courriel">✉️ Contacter</a>
+                          </div>
+                        </div>
+                      }
+                    } @empty {
+                      <span class="class-roster__muted">Aucun parent associé</span>
+                    }
+                  </td>
+                  <td>
+                    @if (row.teacherNames.length > 0) {
+                      {{ row.teacherNames.join(', ') }}
+                    } @else {
+                      <span class="class-roster__muted">Aucun enseignant assigné</span>
+                    }
+                  </td>
+                  <td class="class-roster__no-print">
+                    <a class="class-roster__link" [routerLink]="['/proprietaire/eleves', row.studentId]">📋 Voir la fiche</a>
+                    <button type="button" (click)="startEditStudent(row)">Modifier</button>
+                    <button type="button" class="class-roster__danger" (click)="removeStudent(row)">Supprimer</button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</section>

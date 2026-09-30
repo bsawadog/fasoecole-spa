@@ -1,0 +1,256 @@
+<main class="owner-management">
+  <header class="owner-management__header">
+    <div>
+      <p class="owner-management__eyebrow">Administration de l’école</p>
+      <h1>Gestion de l’établissement</h1>
+      <p>Configurez l’école, organisez l’année scolaire et suivez vos effectifs et tarifs.</p>
+    </div>
+    @if (schools().length > 1) {
+      <label class="owner-management__school-picker">
+        <span>Établissement</span>
+        <select [value]="selectedSchoolId()" (change)="onSchoolChange($event)">
+          @for (item of schools(); track item.id) {
+            <option [value]="item.id">{{ item.name }}</option>
+          }
+        </select>
+      </label>
+    } @else if (school(); as currentSchool) {
+      <div class="owner-management__school-badge">{{ currentSchool.name }} <span>{{ typeLabel(currentSchool.type) }}</span></div>
+    }
+  </header>
+
+  @if (errorMessage()) {
+    <p class="owner-management__message owner-management__message--error" role="alert">{{ errorMessage() }}</p>
+  }
+  @if (successMessage()) {
+    <p class="owner-management__message owner-management__message--success" role="status">{{ successMessage() }}</p>
+  }
+
+  @if (loading()) {
+    <div class="owner-management__empty">Chargement des données de l’établissement…</div>
+  } @else if (schools().length === 0) {
+    <section class="owner-management__empty">
+      <h2>Aucun établissement associé</h2>
+      <p>Un établissement doit être associé à votre compte propriétaire pour accéder à sa gestion.</p>
+    </section>
+  } @else {
+    <nav class="owner-management__tabs" aria-label="Sections de gestion">
+      @for (item of sections; track item.id) {
+        <button type="button" [class.owner-management__tab--active]="section() === item.id" (click)="selectSection(item.id)">
+          {{ item.label }}
+        </button>
+      }
+    </nav>
+
+    @if (section() === 'school') {
+      <section class="owner-management__panel">
+        <div class="owner-management__panel-heading">
+          <div><h2>Informations de l’établissement</h2><p>Coordonnées utilisées dans les espaces et documents scolaires.</p></div>
+        </div>
+        @if (school(); as currentSchool) {
+          <form class="owner-management__form owner-management__form--school" (ngSubmit)="saveSchool()">
+            <label>Nom de l’école<input name="schoolName" [(ngModel)]="schoolForm.name" required maxlength="150"></label>
+            <label>Type
+              <select name="schoolType" [(ngModel)]="schoolForm.type" required>
+                <option value="PRIMAIRE">École primaire</option>
+                <option value="SECONDAIRE">Établissement secondaire</option>
+                <option value="UNIVERSITE">Université</option>
+                <option value="FORMATION">Centre de formation</option>
+              </select>
+            </label>
+            <label class="owner-management__wide">Adresse<input name="schoolAddress" [(ngModel)]="schoolForm.address" maxlength="255"></label>
+            <label>Téléphone<input name="schoolPhone" [(ngModel)]="schoolForm.phone" maxlength="30"></label>
+            <label>Email<input name="schoolEmail" type="email" [(ngModel)]="schoolForm.email" maxlength="150"></label>
+            <div class="owner-management__form-actions owner-management__wide">
+              <span>Établissement {{ currentSchool.status === 'ACTIVE' ? 'actif' : currentSchool.status.toLowerCase() }}</span>
+              <button type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer les coordonnées' }}</button>
+            </div>
+          </form>
+        }
+        <div class="owner-management__notice">
+          Les paramètres pris en charge actuellement sont le nom, le type et les coordonnées. Logo, calendrier, devise, règlement et documents officiels nécessitent encore des champs et API dédiés.
+        </div>
+      </section>
+    }
+
+    @if (section() === 'academic') {
+      <section class="owner-management__panel">
+        <div class="owner-management__panel-heading">
+          <div><h2>Organisation académique</h2><p>Construisez la structure de l’école, de l’année scolaire aux classes et matières.</p></div>
+          <button class="owner-management__primary" type="button" (click)="editAcademic()">Ajouter</button>
+        </div>
+        <div class="owner-management__subtabs" aria-label="Données académiques">
+          <button type="button" [class.owner-management__subtab--active]="academicKind() === 'years'" (click)="setAcademicKind('years')">Années scolaires <span>{{ years().length }}</span></button>
+          <button type="button" [class.owner-management__subtab--active]="academicKind() === 'levels'" (click)="setAcademicKind('levels')">Cycles et niveaux <span>{{ levels().length }}</span></button>
+          <button type="button" [class.owner-management__subtab--active]="academicKind() === 'classes'" (click)="setAcademicKind('classes')">Classes <span>{{ classes().length }}</span></button>
+          <button type="button" [class.owner-management__subtab--active]="academicKind() === 'subjects'" (click)="setAcademicKind('subjects')">Matières <span>{{ subjects().length }}</span></button>
+        </div>
+
+        @if (editorOpen()) {
+          <form class="owner-management__editor" (ngSubmit)="saveAcademic()">
+            <div class="owner-management__editor-heading">
+              <h3>{{ academicForm.id ? 'Modifier' : 'Créer' }} — {{ academicTitle() }}</h3>
+              <button type="button" class="owner-management__text-button" (click)="cancelEdit()">Annuler</button>
+            </div>
+            @if (academicKind() === 'years') {
+              <label>Nom de l’année<input name="yearLabel" [(ngModel)]="academicForm.label" placeholder="2026–2027" required maxlength="80"></label>
+              <label>Date de début<input name="yearStart" type="date" [(ngModel)]="academicForm.startDate" required></label>
+              <label>Date de fin<input name="yearEnd" type="date" [(ngModel)]="academicForm.endDate" required></label>
+              <label class="owner-management__checkbox"><input name="currentYear" type="checkbox" [(ngModel)]="academicForm.isCurrent"> Année en cours</label>
+            }
+            @if (academicKind() === 'levels') {
+              <label>Nom du niveau<input name="levelName" [(ngModel)]="academicForm.name" placeholder="Seconde" required maxlength="100"></label>
+              <label>Cycle<input name="levelCycle" [(ngModel)]="academicForm.cycle" placeholder="Lycée" required maxlength="100"></label>
+              <label>Ordre<input name="levelOrder" type="number" min="0" [(ngModel)]="academicForm.orderIndex" required></label>
+            }
+            @if (academicKind() === 'classes') {
+              <label>Nom de la classe<input name="className" [(ngModel)]="academicForm.name" placeholder="2nde C" required maxlength="100"></label>
+              <label>Année scolaire
+                <select name="classYear" [(ngModel)]="academicForm.academicYearId" required>
+                  <option [ngValue]="null" disabled>Sélectionner</option>
+                  @for (year of years(); track year.id) { <option [ngValue]="year.id">{{ year.label }}</option> }
+                </select>
+              </label>
+              <label>Niveau
+                <select name="classLevel" [(ngModel)]="academicForm.levelId" required>
+                  <option [ngValue]="null" disabled>Sélectionner</option>
+                  @for (level of levels(); track level.id) { <option [ngValue]="level.id">{{ level.cycle }} · {{ level.name }}</option> }
+                </select>
+              </label>
+              <label>Capacité<input name="classCapacity" type="number" min="1" [(ngModel)]="academicForm.capacity" required></label>
+            }
+            @if (academicKind() === 'subjects') {
+              <label>Nom de la matière<input name="subjectName" [(ngModel)]="academicForm.name" placeholder="Mathématiques" required maxlength="100"></label>
+              <label>Code<input name="subjectCode" [(ngModel)]="academicForm.code" placeholder="MATH" maxlength="30"></label>
+            }
+            <div class="owner-management__form-actions owner-management__wide">
+              <span>Les affectations enseignant-matière ne sont pas encore configurables depuis l’interface.</span>
+              <button type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer' }}</button>
+            </div>
+          </form>
+        }
+
+        <div class="owner-management__list-heading"><h3>{{ academicTitle() }}</h3><span>{{ academicRows.length }} élément(s)</span></div>
+        <div class="owner-management__table-wrap">
+          @if (academicRows.length > 0) {
+            <table>
+              <thead><tr><th>Nom</th><th>Détails</th><th class="owner-management__actions-heading">Actions</th></tr></thead>
+              <tbody>
+                @for (row of academicRows; track row.id) {
+                  <tr>
+                    <td><strong>{{ academicName(row) }}</strong></td>
+                    <td>{{ academicDescription(row) }}</td>
+                    <td class="owner-management__actions">
+                      <button type="button" (click)="editAcademic(row)">Modifier</button>
+                      <button type="button" class="owner-management__delete" (click)="deleteAcademic(row)">Supprimer</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <p class="owner-management__empty-inline">Aucun élément enregistré. Utilisez « Ajouter » pour commencer.</p>
+          }
+        </div>
+      </section>
+    }
+
+    @if (section() === 'fees') {
+      <section class="owner-management__panel">
+        <div class="owner-management__panel-heading">
+          <div><h2>Frais scolaires</h2><p>Configurez les tarifs et leur fréquence pour cet établissement.</p></div>
+          <button class="owner-management__primary" type="button" (click)="editFee()">Créer un frais</button>
+        </div>
+        @if (editorOpen()) {
+          <form class="owner-management__editor" (ngSubmit)="saveFee()">
+            <div class="owner-management__editor-heading">
+              <h3>{{ feeForm.id ? 'Modifier le tarif' : 'Nouveau tarif' }}</h3>
+              <button type="button" class="owner-management__text-button" (click)="cancelEdit()">Annuler</button>
+            </div>
+            <label>Libellé<input name="feeName" [(ngModel)]="feeForm.name" placeholder="Frais de scolarité" required maxlength="120"></label>
+            <label>Montant (FCFA)<input name="feeAmount" type="number" min="1" step="1" [(ngModel)]="feeForm.amount" required></label>
+            <label>Fréquence
+              <select name="feeFrequency" [(ngModel)]="feeForm.frequency">
+                <option value="ONE_TIME">Unique</option>
+                <option value="MONTHLY">Mensuelle</option>
+                <option value="TERM">Trimestrielle</option>
+                <option value="YEARLY">Annuelle</option>
+              </select>
+            </label>
+            <div class="owner-management__form-actions owner-management__wide">
+              <span>Les tarifs par niveau et échéanciers ne sont pas encore gérés par l’API.</span>
+              <button type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer le tarif' }}</button>
+            </div>
+          </form>
+        }
+        <div class="owner-management__table-wrap">
+          @if (fees().length > 0) {
+            <table>
+              <thead><tr><th>Frais</th><th>Fréquence</th><th>Tarif</th><th class="owner-management__actions-heading">Actions</th></tr></thead>
+              <tbody>
+                @for (fee of fees(); track fee.id) {
+                  <tr>
+                    <td><strong>{{ fee.name }}</strong></td>
+                    <td>{{ frequencyLabel(fee.frequency) }}</td>
+                    <td>{{ fee.amount | number: '1.0-0' }} FCFA</td>
+                    <td class="owner-management__actions">
+                      <button type="button" (click)="editFee(fee)">Modifier</button>
+                      <button type="button" class="owner-management__delete" (click)="deleteFee(fee)">Supprimer</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <p class="owner-management__empty-inline">Aucun tarif défini pour cet établissement.</p>
+          }
+        </div>
+        <div class="owner-management__notice">
+          Les encaissements, impayés et paiements récents sont consultables sur le tableau de bord. La facturation, les reçus PDF, remboursements et exports comptables ne sont pas exposés par l’API actuelle.
+        </div>
+      </section>
+    }
+
+    @if (section() === 'people') {
+      <section class="owner-management__panel">
+        <div class="owner-management__panel-heading">
+          <div><h2>Effectifs de l’établissement</h2><p>Consultez les profils déjà rattachés à l’école.</p></div>
+          <a class="owner-management__primary" routerLink="/proprietaire/demandes">Traiter les demandes de compte</a>
+        </div>
+        <div class="owner-management__summary">
+          <div><span>Élèves</span><strong>{{ students().length }}</strong></div>
+          <div><span>Enseignants</span><strong>{{ teachers().length }}</strong></div>
+        </div>
+        <div class="owner-management__rosters">
+          <section>
+            <div class="owner-management__list-heading"><h3>Élèves</h3><span>{{ students().length }} profil(s)</span></div>
+            <div class="owner-management__table-wrap">
+              @if (students().length) {
+                <table><thead><tr><th>Matricule</th><th>Compte associé</th><th>Date de naissance</th><th>Genre</th></tr></thead>
+                  <tbody>@for (student of students(); track student.id) {
+                    <tr><td><strong>{{ student.registrationNumber || '—' }}</strong></td><td>#{{ student.userId }}</td><td>{{ student.birthDate ? (student.birthDate | date: 'dd/MM/yyyy') : '—' }}</td><td>{{ student.gender || '—' }}</td></tr>
+                  }</tbody>
+                </table>
+              } @else { <p class="owner-management__empty-inline">Aucun profil élève n’est rattaché.</p> }
+            </div>
+          </section>
+          <section>
+            <div class="owner-management__list-heading"><h3>Enseignants</h3><span>{{ teachers().length }} profil(s)</span></div>
+            <div class="owner-management__table-wrap">
+              @if (teachers().length) {
+                <table><thead><tr><th>Compte associé</th><th>Spécialité</th><th>Date d’embauche</th></tr></thead>
+                  <tbody>@for (teacher of teachers(); track teacher.id) {
+                    <tr><td>#{{ teacher.userId }}</td><td>{{ teacher.specialty || '—' }}</td><td>{{ teacher.hireDate ? (teacher.hireDate | date: 'dd/MM/yyyy') : '—' }}</td></tr>
+                  }</tbody>
+                </table>
+              } @else { <p class="owner-management__empty-inline">Aucun profil enseignant n’est rattaché.</p> }
+            </div>
+          </section>
+        </div>
+        <div class="owner-management__notice">
+          L’API actuelle permet de consulter ces profils, mais ne fournit pas encore de parcours sécurisé pour créer/modifier les personnes, changer leurs rôles, gérer parents-enfants ou transférer un élève. Les demandes de compte restent accessibles ci-dessus.
+        </div>
+      </section>
+    }
+  }
+</main>

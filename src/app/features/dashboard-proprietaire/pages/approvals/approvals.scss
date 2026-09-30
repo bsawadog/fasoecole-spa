@@ -1,0 +1,175 @@
+.approvals {
+  max-width: 68rem;
+  margin: 0 auto;
+  color: #18342c;
+
+  &__heading {
+    margin-bottom: 1.75rem;
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      letter-spacing: -0.04em;
+    }
+
+    > p:last-child {
+      margin: 0.6rem 0 0;
+      color: #718078;
+      line-height: 1.6;
+    }
+  }
+
+  &__eyebrow {
+    margin: 0 0 0.45rem;
+    color: #1f765e;
+    font-size: 0.75rem;
+    font-weight: 750;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  &__list {
+    display: grid;
+    gap: 1rem;
+  }
+
+  &__card {
+    display: grid;
+    grid-template-columns: minmax(15rem, 1fr) minmax(18rem, 1.25fr);
+    gap: 1.5rem;
+    padding: 1.25rem;
+    border: 1px solid #e2e9e3;
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 0.4rem 1.5rem rgb(24 52 44 / 5%);
+  }
+
+  &__person {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+
+    h2 {
+      margin: 0.1rem 0 0.35rem;
+      font-size: 1rem;
+    }
+
+    p {
+      margin: 0.2rem 0;
+      color: #718078;
+      font-size: 0.87rem;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  &__avatar {
+    flex: 0 0 2.8rem;
+    display: grid;
+    width: 2.8rem;
+    aspect-ratio: 1;
+    place-items: center;
+    border-radius: 0.85rem;
+    color: #1f765e;
+    background: #eaf5ee;
+    font-weight: 750;
+  }
+
+  &__requested-role {
+    margin-top: 0.55rem !important;
+    color: #1f765e !important;
+  }
+
+  &__controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-content: center;
+    gap: 0.85rem;
+
+    label {
+      display: grid;
+      gap: 0.4rem;
+      color: #53645a;
+      font-size: 0.8rem;
+      font-weight: 650;
+    }
+
+    select {
+      min-width: 0;
+      min-height: 2.7rem;
+      padding: 0.55rem 0.7rem;
+      border: 1px solid #dce3dd;
+      border-radius: 0.6rem;
+      color: #18342c;
+      background: #fff;
+      font: inherit;
+    }
+
+    button {
+      grid-column: 1 / -1;
+      min-height: 2.8rem;
+      border: 0;
+      border-radius: 0.65rem;
+      color: #fff;
+      background: #1f765e;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+
+      &:disabled {
+        cursor: wait;
+        opacity: 0.65;
+      }
+    }
+  }
+
+  &__empty {
+    padding: 3rem 1.5rem;
+    border: 1px dashed #d7e2d9;
+    border-radius: 1rem;
+    color: #718078;
+    background: #fff;
+    text-align: center;
+
+    h2 {
+      margin: 0;
+      color: #18342c;
+      font-size: 1.1rem;
+    }
+
+    p {
+      margin: 0.6rem 0 0;
+    }
+  }
+
+  &__message {
+    margin: 0 0 1rem;
+    padding: 0.8rem 1rem;
+    border-radius: 0.65rem;
+
+    &--error {
+      color: #963c35;
+      background: #fff0ed;
+    }
+
+    &--success {
+      color: #236347;
+      background: #eaf6ee;
+    }
+  }
+}
+
+@media (max-width: 760px) {
+  .approvals__card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .approvals__controls {
+    grid-template-columns: 1fr;
+
+    button {
+      grid-column: auto;
+    }
+  }
+}

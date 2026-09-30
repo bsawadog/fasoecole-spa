@@ -1,0 +1,382 @@
+.owner-dashboard {
+  max-width: 82rem;
+  margin: 0 auto;
+  color: #18342c;
+
+  &__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 3vw, 2.35rem);
+      letter-spacing: -0.045em;
+    }
+  }
+
+  &__eyebrow {
+    margin: 0 0 0.4rem;
+    color: #1f765e;
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  &__subtitle {
+    margin: 0.4rem 0 0;
+    color: #718078;
+    font-size: 0.9rem;
+  }
+
+  &__school-picker {
+    display: grid;
+    min-width: min(100%, 17rem);
+    gap: 0.4rem;
+    color: #66756d;
+    font-size: 0.75rem;
+    font-weight: 650;
+
+    select {
+      min-height: 2.8rem;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid #dbe4dc;
+      border-radius: 0.65rem;
+      color: #18342c;
+      background: #fff;
+      font: inherit;
+      font-size: 0.9rem;
+    }
+  }
+
+  &__school-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #dfe8e0;
+    border-radius: 0.75rem;
+    color: #345447;
+    background: #fff;
+    font-size: 0.88rem;
+    font-weight: 650;
+  }
+
+  &__metrics {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  &__metric {
+    position: relative;
+    display: flex;
+    min-height: 8.4rem;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+    border: 1px solid #e5eae5;
+    border-radius: 0.9rem;
+    color: #18342c;
+    background: #fff;
+    box-shadow: 0 0.35rem 1.2rem rgb(24 52 44 / 4%);
+    text-decoration: none;
+
+    strong {
+      margin-top: 0.45rem;
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    &--green { --metric: #238363; --tint: #eaf6f0; }
+    &--blue { --metric: #3977b8; --tint: #edf4fc; }
+    &--violet { --metric: #7555b3; --tint: #f2effa; }
+    &--amber { --metric: #ac791d; --tint: #fbf5e7; }
+    &--teal { --metric: #278b91; --tint: #e9f6f5; }
+    &--rose { --metric: #b4545d; --tint: #fcf0f0; }
+
+    &--rose:hover {
+      border-color: #e9c2c4;
+      box-shadow: 0 0.5rem 1.4rem rgb(180 84 93 / 10%);
+    }
+  }
+
+  &__metric-icon,
+  &__panel-icon {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    color: var(--metric, #1f765e);
+    background: var(--tint, #eaf6f0);
+  }
+
+  &__metric-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    margin-bottom: 0.55rem;
+    border-radius: 0.65rem;
+  }
+
+  &__metric-label {
+    color: #718078;
+    font-size: 0.78rem;
+    line-height: 1.3;
+  }
+
+  &__metric-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.65rem;
+    color: var(--metric);
+    font-size: 0.73rem;
+    font-weight: 700;
+  }
+
+  &__columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  &__panel {
+    min-width: 0;
+    padding: 1.2rem;
+    border: 1px solid #e5eae5;
+    border-radius: 0.95rem;
+    background: #fff;
+    box-shadow: 0 0.35rem 1.2rem rgb(24 52 44 / 4%);
+  }
+
+  &__panel-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.15rem;
+
+    h2 {
+      margin: 0;
+      color: #203d33;
+      font-size: 1rem;
+    }
+
+    p {
+      margin: 0.25rem 0 0;
+      color: #849088;
+      font-size: 0.77rem;
+    }
+  }
+
+  &__panel-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+
+    &--blue { --metric: #3977b8; --tint: #edf4fc; }
+    &--green { --metric: #238363; --tint: #eaf6f0; }
+    &--violet { --metric: #7555b3; --tint: #f2effa; }
+    &--amber { --metric: #ac791d; --tint: #fbf5e7; }
+  }
+
+  &__attendance-total {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid #edf0ed;
+
+    strong { font-size: 1.8rem; }
+    span { color: #849088; font-size: 0.82rem; }
+  }
+
+  &__attendance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem 1rem;
+    padding-top: 0.9rem;
+
+    div {
+      display: grid;
+      grid-template-columns: 0.6rem 1fr auto;
+      align-items: center;
+      gap: 0.45rem;
+      color: #68766e;
+      font-size: 0.8rem;
+    }
+
+    strong { color: #203d33; }
+  }
+
+  &__status-dot,
+  &__notification-dot {
+    width: 0.52rem;
+    height: 0.52rem;
+    border-radius: 50%;
+
+    &--present { background: #35a778; }
+    &--absent { background: #d45d58; }
+    &--late { background: #d59a32; }
+    &--excused { background: #8294a6; }
+  }
+
+  &__finance-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.95rem 0;
+    color: #238363;
+
+    & + & { border-top: 1px solid #edf0ed; }
+
+    div {
+      display: grid;
+      gap: 0.35rem;
+      color: #718078;
+      font-size: 0.8rem;
+    }
+
+    strong {
+      color: #203d33;
+      font-size: 1.2rem;
+    }
+
+    &--due { color: #b47b20; }
+  }
+
+  &__invoice-count {
+    color: #849088;
+    font-size: 0.76rem;
+    white-space: nowrap;
+  }
+
+  &__average {
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.6rem 0;
+
+    strong {
+      color: #6849a5;
+      font-size: 2.1rem;
+
+      small { margin-left: 0.15rem; color: #a59abb; font-size: 0.95rem; }
+    }
+
+    span { color: #718078; font-size: 0.82rem; }
+  }
+
+  &__unread {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.8rem;
+    border-radius: 0.7rem;
+    color: #8b671f;
+    background: #fbf6e9;
+
+    strong { font-size: 1.15rem; }
+    span { font-size: 0.82rem; }
+  }
+
+  &__notification-list {
+    display: grid;
+    gap: 0.7rem;
+    margin-top: 0.8rem;
+
+    article {
+      display: grid;
+      grid-template-columns: 0.55rem minmax(0, 1fr) auto;
+      align-items: start;
+      gap: 0.6rem;
+      padding: 0.35rem 0;
+      color: #718078;
+
+      strong { color: #42564b; font-size: 0.8rem; }
+      p { margin: 0.25rem 0 0; font-size: 0.75rem; line-height: 1.4; }
+      time { color: #9aa49e; font-size: 0.68rem; white-space: nowrap; }
+    }
+  }
+
+  &__notification-dot {
+    margin-top: 0.3rem;
+    background: #c4cdc6;
+  }
+
+  &__notification--unread .owner-dashboard__notification-dot { background: #d59a32; }
+
+  &__hint {
+    margin: 0.8rem 0 0;
+    color: #849088;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  &__payments { margin-top: 1rem; }
+
+  &__table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+
+    th {
+      padding: 0.65rem 0.5rem;
+      color: #87938b;
+      font-size: 0.7rem;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 0.8rem 0.5rem;
+      border-top: 1px solid #edf0ed;
+      color: #52645a;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+  }
+
+  &__amount { text-align: right; font-weight: 700; }
+
+  &__empty {
+    padding: 2.5rem 1rem;
+    border: 1px dashed #dbe4dc;
+    border-radius: 0.9rem;
+    color: #718078;
+    background: #fff;
+    text-align: center;
+
+    h2 { margin: 0.75rem 0 0; color: #18342c; font-size: 1.15rem; }
+    p { margin: 0.45rem auto 0; max-width: 32rem; line-height: 1.5; }
+  }
+
+  &__message {
+    margin: 0 0 1rem;
+    padding: 0.8rem 1rem;
+    border-radius: 0.65rem;
+
+    &--error { color: #963c35; background: #fff0ed; }
+  }
+}
+
+@media (max-width: 1100px) {
+  .owner-dashboard__metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .owner-dashboard__header { align-items: stretch; flex-direction: column; }
+  .owner-dashboard__columns { grid-template-columns: 1fr; }
+  .owner-dashboard__metrics { gap: 0.6rem; }
+  .owner-dashboard__metric { min-height: 7.5rem; padding: 0.8rem; }
+}
+
+@media (max-width: 450px) {
+  .owner-dashboard__metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .owner-dashboard__notification-list article { grid-template-columns: 0.55rem minmax(0, 1fr); }
+  .owner-dashboard__notification-list time { grid-column: 2; }
+}

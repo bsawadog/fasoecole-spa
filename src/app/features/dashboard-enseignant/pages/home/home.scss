@@ -1,0 +1,33 @@
+.dashboard-home {
+  &__subtitle {
+    color: #6b7280;
+    margin-top: -0.5rem;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  &__card {
+    padding: 1.4rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.9rem;
+    background: #fff;
+    box-shadow: 0 4px 16px rgb(17 24 39 / 5%);
+
+    h2 {
+      margin: 0 0 0.6rem;
+      color: #111827;
+      font-size: 1.1rem;
+    }
+
+    p {
+      margin: 0;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+  }
+}

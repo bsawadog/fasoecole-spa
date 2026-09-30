@@ -1,0 +1,70 @@
+<section class="approvals">
+  <header class="approvals__heading">
+    <p class="approvals__eyebrow">Gestion des accès</p>
+    <h1>Demandes de compte</h1>
+    <p>Examinez les inscriptions adressées à vos établissements et définissez le profil de chaque personne.</p>
+  </header>
+
+  @if (errorMessage()) {
+    <p class="approvals__message approvals__message--error" role="alert">{{ errorMessage() }}</p>
+  }
+  @if (successMessage()) {
+    <p class="approvals__message approvals__message--success" role="status">{{ successMessage() }}</p>
+  }
+
+  @if (loading()) {
+    <div class="approvals__empty">Chargement des demandes…</div>
+  } @else if (pending().length === 0) {
+    <div class="approvals__empty">
+      <h2>Aucune demande en attente</h2>
+      <p>Les nouvelles inscriptions apparaîtront ici.</p>
+    </div>
+  } @else {
+    <div class="approvals__list">
+      @for (request of pending(); track request.id) {
+        <article class="approvals__card">
+          <div class="approvals__person">
+            <span class="approvals__avatar" aria-hidden="true">
+              {{ request.firstName.charAt(0) }}{{ request.lastName.charAt(0) }}
+            </span>
+            <div>
+              <h2>{{ request.firstName }} {{ request.lastName }}</h2>
+              <p>{{ request.email }}</p>
+              <p class="approvals__requested-role">
+                Profil demandé : <strong>{{ requestedRoleLabel(request.requestedRole) }}</strong>
+              </p>
+              @if (request.phone) {
+                <p>{{ request.phone }}</p>
+              }
+            </div>
+          </div>
+          <div class="approvals__controls">
+            <label>
+              Établissement à attribuer
+              <select [value]="selections()[request.id]?.schoolId" (change)="changeSchool(request.id, $event)">
+                @for (school of schools(); track school.id) {
+                  <option [value]="school.id">{{ school.name }}</option>
+                }
+              </select>
+            </label>
+            <label>
+              Profil
+              <select [value]="selections()[request.id]?.role" (change)="changeRole(request.id, $event)">
+                <option value="TEACHER">Enseignant</option>
+                <option value="PARENT">Parent</option>
+                <option value="STUDENT">Étudiant</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              [disabled]="savingUserId() !== null || schools().length === 0"
+              (click)="approve(request)"
+            >
+              {{ savingUserId() === request.id ? 'Validation…' : 'Valider le compte' }}
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>
