@@ -1,0 +1,133 @@
+<div class="profile">
+  <header class="profile__heading">
+    <h1>Mon profil</h1>
+    <p>Consultez et modifiez vos informations personnelles et la sécurité de votre compte.</p>
+  </header>
+
+  @if (emailUnverified()) {
+    <section class="profile__verify" role="status" aria-live="polite">
+      <div>
+        <strong>Adresse courriel non vérifiée.</strong>
+        <span>Confirmez-la pour que l’accès automatique aux écoles de vos enfants soit activé.</span>
+        @if (verificationMessage()) { <span>{{ verificationMessage() }}</span> }
+      </div>
+      <button type="button" class="profile__link-button" [disabled]="verificationSending()" (click)="resendVerification()">
+        {{ verificationSending() ? 'Envoi…' : 'Renvoyer le lien' }}
+      </button>
+    </section>
+  }
+
+  <section class="profile__card" aria-labelledby="profile-info-title">
+    <h2 id="profile-info-title">Informations personnelles</h2>
+
+    @if (error()) { <p class="profile__error" role="alert">{{ error() }}</p> }
+    @if (success()) { <p class="profile__success" role="status">Profil mis à jour.</p> }
+
+    <form #profileForm="ngForm" (ngSubmit)="save(profileForm)">
+      <label for="profile-first-name">Prénom</label>
+      <input id="profile-first-name" name="firstName" [(ngModel)]="form.firstName" required maxlength="100" />
+
+      <label for="profile-last-name">Nom</label>
+      <input id="profile-last-name" name="lastName" [(ngModel)]="form.lastName" required maxlength="100" />
+
+      <label for="profile-email">E-mail (identifiant)</label>
+      <input id="profile-email" type="email" [value]="user()?.email ?? ''" readonly />
+
+      <label for="profile-phone">Téléphone</label>
+      <input id="profile-phone" name="phone" type="tel" [(ngModel)]="form.phone" maxlength="30" />
+
+      <button type="submit" [disabled]="saving()">
+        {{ saving() ? 'Enregistrement…' : 'Enregistrer les modifications' }}
+      </button>
+    </form>
+  </section>
+
+  <section class="profile__card" aria-labelledby="profile-password-title">
+    <h2 id="profile-password-title">Mot de passe</h2>
+
+    @if (passwordError()) { <p class="profile__error" role="alert">{{ passwordError() }}</p> }
+    @if (passwordSuccess()) { <p class="profile__success" role="status">Mot de passe modifié.</p> }
+
+    <form #passwordFormRef="ngForm" (ngSubmit)="changePassword(passwordFormRef)">
+      <label for="profile-current-password">Mot de passe actuel</label>
+      <input id="profile-current-password" name="currentPassword" type="password"
+             autocomplete="current-password" [(ngModel)]="passwordForm.currentPassword" required />
+
+      <label for="profile-new-password">Nouveau mot de passe</label>
+      <input id="profile-new-password" name="newPassword" type="password" autocomplete="new-password"
+             [(ngModel)]="passwordForm.newPassword" required minlength="8" maxlength="100"
+             aria-describedby="profile-password-hint" />
+      <small id="profile-password-hint" class="profile__hint">Au moins 8 caractères.</small>
+
+      <label for="profile-confirm-password">Confirmer le nouveau mot de passe</label>
+      <input id="profile-confirm-password" name="confirmPassword" type="password" autocomplete="new-password"
+             [(ngModel)]="passwordForm.confirmPassword" required maxlength="100" />
+
+      <button type="submit" [disabled]="passwordSaving()">
+        {{ passwordSaving() ? 'Modification…' : 'Modifier le mot de passe' }}
+      </button>
+    </form>
+  </section>
+
+  @if (canRequestSchools()) {
+    <section class="profile__card" aria-labelledby="profile-schools-title">
+      <h2 id="profile-schools-title">Accès à d’autres établissements</h2>
+      <p class="profile__muted">
+        Demandez l’accès à un autre établissement. Le propriétaire de l’établissement validera votre demande.
+      </p>
+
+      @if (accessError()) { <p class="profile__error" role="alert">{{ accessError() }}</p> }
+      @if (accessSuccess()) { <p class="profile__success" role="status">{{ accessSuccess() }}</p> }
+
+      <form class="profile__inline-form" (ngSubmit)="requestAccess()">
+        <div>
+          <label for="profile-access-school">Établissement</label>
+          <select id="profile-access-school" name="schoolId" [(ngModel)]="accessForm.schoolId" required>
+            <option [ngValue]="null" disabled>Choisir un établissement</option>
+            @for (school of schools(); track school.id) {
+              <option [ngValue]="school.id">{{ school.name }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label for="profile-access-role">Profil</label>
+          <select id="profile-access-role" name="role" [(ngModel)]="accessForm.role">
+            @for (role of requestableRoles; track role) {
+              <option [ngValue]="role">{{ roleLabels[role] }}</option>
+            }
+          </select>
+        </div>
+        <button type="submit" [disabled]="accessSaving()">
+          {{ accessSaving() ? 'Envoi…' : 'Envoyer la demande' }}
+        </button>
+      </form>
+
+      <h3>Mes demandes</h3>
+      @if (accessLoading()) {
+        <p class="profile__muted">Chargement…</p>
+      } @else if (!requests().length) {
+        <p class="profile__muted">Aucune demande pour le moment.</p>
+      } @else {
+        <ul class="profile__requests">
+          @for (request of requests(); track request.id) {
+            <li>
+              <div>
+                <strong>{{ request.schoolName }}</strong>
+                <small>{{ roleLabels[request.requestedRole] }}</small>
+              </div>
+              <span class="profile__status profile__status--{{ request.status.toLowerCase() }}">
+                {{ statusLabel(request.status) }}
+              </span>
+              @if (request.status === 'PENDING') {
+                <button type="button" class="profile__link-button" [disabled]="accessSaving()"
+                        (click)="cancelRequest(request)">
+                  Annuler
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</div>

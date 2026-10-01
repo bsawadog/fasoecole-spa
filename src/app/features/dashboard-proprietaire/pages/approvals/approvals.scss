@@ -6,6 +6,15 @@
   &__heading {
     margin-bottom: 1.75rem;
 
+    &--section {
+      margin-top: 2.5rem;
+
+      h2 {
+        margin: 0;
+        font-size: 1.3rem;
+      }
+    }
+
     h1 {
       margin: 0;
       font-size: clamp(1.8rem, 4vw, 2.4rem);
@@ -79,6 +88,22 @@
     color: #1f765e !important;
   }
 
+  &__badge {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    color: #1d4ed8;
+    background: #e0ebff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    vertical-align: middle;
+  }
+
+  &__card--auto {
+    border-color: #c7d7fe;
+  }
+
   &__controls {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -119,6 +144,12 @@
         cursor: wait;
         opacity: 0.65;
       }
+    }
+
+    .approvals__reject {
+      border: 1px solid #f1b9b2;
+      color: #963c35;
+      background: #fff;
     }
   }
 

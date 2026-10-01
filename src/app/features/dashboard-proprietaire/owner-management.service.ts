@@ -81,7 +81,7 @@ export interface RosterParent {
   userId: number;
   firstName: string;
   lastName: string;
-  email: string;
+  email: string | null;
   phone: string | null;
   relationship: string | null;
 }
@@ -113,7 +113,7 @@ export interface UpdateStudentProfilePayload {
 export interface UpdateParentProfilePayload {
   firstName: string;
   lastName: string;
-  email: string;
+  email: string | null;
   phone: string | null;
 }
 
@@ -123,7 +123,8 @@ export interface CreateRosterStudentPayload {
   email: string;
   password: string;
   phone: string | null;
-  registrationNumber: string;
+  /** Laisser vide pour un matricule généré automatiquement (MAT-AAAA-NNN). */
+  registrationNumber: string | null;
   birthDate: string | null;
   gender: string | null;
 }
@@ -329,6 +330,13 @@ export class OwnerManagementService {
 
   removeRosterStudent(classId: number, studentId: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/classes/${classId}/roster/students/${studentId}`);
+  }
+
+  transferRosterStudent(classId: number, studentId: number, targetClassId: number): Observable<ClassRosterRow> {
+    return this.http.post<ClassRosterRow>(
+      `${this.apiUrl}/classes/${classId}/roster/students/${studentId}/transfer`,
+      { targetClassId },
+    );
   }
 
   updateRosterStudent(classId: number, studentId: number, payload: UpdateStudentProfilePayload): Observable<ClassRosterRow> {

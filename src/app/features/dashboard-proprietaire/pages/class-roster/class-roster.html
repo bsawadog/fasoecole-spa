@@ -64,7 +64,7 @@
           <label>Courriel <input type="email" name="nEmail" [(ngModel)]="newStudentForm.email" required /></label>
           <label>Mot de passe <input type="text" name="nPassword" [(ngModel)]="newStudentForm.password" required minlength="8" placeholder="8 caractères min." /></label>
           <label>Téléphone <input name="nPhone" [(ngModel)]="newStudentForm.phone" /></label>
-          <label>Matricule <input name="nRegistrationNumber" [(ngModel)]="newStudentForm.registrationNumber" required /></label>
+          <label>Matricule <input name="nRegistrationNumber" [(ngModel)]="newStudentForm.registrationNumber" placeholder="Généré automatiquement" /></label>
           <label>Naissance <input type="date" name="nBirthDate" [(ngModel)]="newStudentForm.birthDate" /></label>
           <label>Genre
             <select name="nGender" [(ngModel)]="newStudentForm.gender">
@@ -130,6 +130,37 @@
                       </div>
                     </form>
                   </td>
+                } @else if (transferringStudentId() === row.studentId) {
+                  <td colspan="6">
+                    <form class="class-roster__transfer" (ngSubmit)="confirmTransfer(row)">
+                      <p class="class-roster__transfer-title">
+                        Transférer <strong>{{ row.lastName }} {{ row.firstName }}</strong> vers une autre classe
+                      </p>
+                      @if (transferTargets().length === 0) {
+                        <p class="class-roster__muted">Aucune autre classe n’existe dans cet établissement.</p>
+                        <div class="class-roster__edit-actions">
+                          <button type="button" (click)="cancelEdit()">Fermer</button>
+                        </div>
+                      } @else {
+                        <label>Classe de destination
+                          <select class="class-roster__select" name="transferTarget" [(ngModel)]="transferTargetId" required>
+                            @for (group of transferTargetGroups(); track group.label) {
+                              <optgroup [label]="group.label">
+                                @for (target of group.classes; track target.id) {
+                                  <option [ngValue]="target.id">{{ className(target) }}</option>
+                                }
+                              </optgroup>
+                            }
+                          </select>
+                        </label>
+                        <p class="class-roster__muted">La fiche de l’élève (notes, présences, paiements, parents) est conservée.</p>
+                        <div class="class-roster__edit-actions">
+                          <button type="submit" [disabled]="saving() || !transferTargetId">Transférer</button>
+                          <button type="button" (click)="cancelEdit()">Annuler</button>
+                        </div>
+                      }
+                    </form>
+                  </td>
                 } @else {
                   <td>
                     <div class="class-roster__student">
@@ -150,7 +181,7 @@
                           <div class="class-roster__edit-grid">
                             <label>Prénom <input name="pFirstName" [(ngModel)]="parentForm.firstName" required /></label>
                             <label>Nom <input name="pLastName" [(ngModel)]="parentForm.lastName" required /></label>
-                            <label>Courriel <input type="email" name="pEmail" [(ngModel)]="parentForm.email" required /></label>
+                            <label>Courriel (facultatif) <input type="email" name="pEmail" [(ngModel)]="parentForm.email" /></label>
                             <label>Téléphone <input name="pPhone" [(ngModel)]="parentForm.phone" /></label>
                           </div>
                           <div class="class-roster__edit-actions">
@@ -160,11 +191,17 @@
                         </form>
                       } @else {
                         <div class="class-roster__parent">
-                          <span>{{ parent.lastName }} {{ parent.firstName }}</span>
-                          <span class="class-roster__muted">{{ parent.email }}</span>
+                          <span>{{ parent.lastName }} {{ parent.firstName }}@if (parent.relationship) { <small class="class-roster__muted">({{ parent.relationship }})</small>}</span>
+                          @if (parent.email) { <span class="class-roster__muted">{{ parent.email }}</span> }
+                          @if (parent.phone) { <span class="class-roster__muted">{{ parent.phone }}</span> }
                           <div class="class-roster__parent-actions class-roster__no-print">
                             <button type="button" class="class-roster__link" (click)="startEditParent(parent)">Modifier</button>
-                            <a class="class-roster__link class-roster__link--contact" [href]="'mailto:' + parent.email" title="Contacter le parent par courriel">✉️ Contacter</a>
+                            @if (parent.email) {
+                              <a class="class-roster__link class-roster__link--contact" [href]="'mailto:' + parent.email" title="Contacter le parent par courriel">✉️ Contacter</a>
+                            }
+                            @if (parent.phone) {
+                              <a class="class-roster__link class-roster__link--contact" [href]="'tel:' + parent.phone" title="Appeler le parent">📞 Appeler</a>
+                            }
                           </div>
                         </div>
                       }
@@ -182,6 +219,7 @@
                   <td class="class-roster__actions class-roster__no-print">
                     <a class="class-roster__action class-roster__action--primary" [routerLink]="['/proprietaire/eleves', row.studentId]">Voir la fiche</a>
                     <button type="button" class="class-roster__action" (click)="startEditStudent(row)">Modifier</button>
+                    <button type="button" class="class-roster__action" (click)="startTransfer(row)">Transférer</button>
                     <button type="button" class="class-roster__action class-roster__danger" (click)="removeStudent(row)">Supprimer</button>
                   </td>
                 }

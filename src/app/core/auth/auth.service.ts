@@ -16,6 +16,12 @@ export interface PasswordResetRequestResponse {
   message: string;
 }
 
+/** Réponse d'inscription quand l'adresse appartient à un compte créé par une école. */
+export interface ActivationRequired {
+  activationRequired: true;
+  message: string;
+}
+
 export interface RegistrationRequest {
   firstName: string;
   lastName: string;
@@ -30,6 +36,12 @@ export interface RegistrationSchool {
   id: number;
   name: string;
   type: string;
+}
+
+export interface ProfileUpdate {
+  firstName: string;
+  lastName: string;
+  phone: string;
 }
 
 export type ApprovalRole = 'TEACHER' | 'PARENT' | 'STUDENT';
@@ -152,11 +164,15 @@ export class AuthService {
     });
   }
 
-  register(request: RegistrationRequest): Observable<User> {
+  register(request: RegistrationRequest): Observable<User | ActivationRequired> {
     return defer(() => {
       this.clearSession();
-      return this.http.post<LoginResponse>(`${this.apiUrl}/auth/register`, request).pipe(
-        switchMap((loginResponse) => {
+      return this.http.post<LoginResponse | ActivationRequired>(`${this.apiUrl}/auth/register`, request).pipe(
+        switchMap((response): Observable<User | ActivationRequired> => {
+          if ('activationRequired' in response) {
+            return of(response);
+          }
+          const loginResponse = response;
           const headers = new HttpHeaders({ Authorization: `Bearer ${loginResponse.token}` });
           return this.loadProfile(loginResponse, headers);
         })
@@ -229,12 +245,36 @@ export class AuthService {
     );
   }
 
+  updateProfile(changes: ProfileUpdate): Observable<User> {
+    const token = this._token();
+    if (!token || !this._user()) {
+      throw new Error('Aucune session à actualiser');
+    }
+    return this.http.put<UserDto>(`${this.apiUrl}/users/me`, changes).pipe(
+      map((profile) => this.toUser(profile, profile.roles)),
+      tap((user) => this.setSession(token, user))
+    );
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/users/me/password`, { currentPassword, newPassword });
+  }
+
   requestPasswordReset(email: string): Observable<PasswordResetRequestResponse> {
     return this.http.post<PasswordResetRequestResponse>(`${this.apiUrl}/auth/forgot-password`, { email });
   }
 
   resetPassword(token: string, newPassword: string): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/auth/reset-password`, { token, newPassword });
+  }
+
+  /** Confirme l'adresse (lien « verify ») ou active un compte créé par une école (lien « activate » + mot de passe). */
+  verifyEmail(token: string, newPassword?: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/auth/verify-email`, newPassword ? { token, newPassword } : { token });
+  }
+
+  resendEmailVerification(): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/users/me/email-verification`, {});
   }
 
   logout(): void {
@@ -277,6 +317,7 @@ export class AuthService {
       phone: profile.phone,
       role,
       approved: profile.approved,
+      emailVerified: profile.emailVerified ?? true,
       requestedSchoolId: profile.requestedSchoolId,
       requestedSchoolName: profile.requestedSchoolName,
       requestedSchoolType: profile.requestedSchoolType,

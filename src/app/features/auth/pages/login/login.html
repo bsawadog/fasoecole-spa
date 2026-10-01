@@ -235,8 +235,13 @@
         } @else {
           <div class="auth-card__heading">
             <p class="auth-card__eyebrow">Presque terminé</p>
-            <h2>Nouveau mot de passe</h2>
-            <p>Choisissez un mot de passe sécurisé d’au moins 8 caractères.</p>
+            @if (mode() === 'activate') {
+              <h2>Activez votre compte</h2>
+              <p>Votre adresse est confirmée. Choisissez votre mot de passe (8 caractères minimum) pour accéder à l’espace parent.</p>
+            } @else {
+              <h2>Nouveau mot de passe</h2>
+              <p>Choisissez un mot de passe sécurisé d’au moins 8 caractères.</p>
+            }
           </div>
           @if (errorMessage()) {
             <p class="auth-card__error" role="alert">{{ errorMessage() }}</p>
@@ -267,6 +272,8 @@
               @if (loading()) {
                 <span class="auth-card__spinner" aria-hidden="true"></span>
                 Modification…
+              } @else if (mode() === 'activate') {
+                Activer mon compte <svg lucideArrowRight [size]="18" aria-hidden="true"></svg>
               } @else {
                 Modifier le mot de passe <svg lucideArrowRight [size]="18" aria-hidden="true"></svg>
               }

@@ -17,7 +17,17 @@
   </header>
 
   @if (error()) { <div class="enr__alert enr__alert--error" role="alert">{{ error() }}</div> }
-  @if (success()) { <div class="enr__alert enr__alert--success" role="status">{{ success() }}</div> }
+  @if (success()) {
+    <div class="enr__alert enr__alert--success" role="status">
+      {{ success() }}
+      @if (lastRegistration(); as r) {
+        <a class="enr__link" [routerLink]="['/proprietaire/eleves', r.student.studentId]">Voir la fiche de {{ r.student.firstName }} {{ r.student.lastName }}</a>
+        @if (hasPayments(r)) {
+          <button type="button" class="enr__mini" (click)="printEnrollmentReceipt(r)">🖨️ Imprimer le reçu</button>
+        }
+      }
+    </div>
+  }
   @if (skipped().length) {
     <div class="enr__alert enr__alert--warn" role="status">
       <strong>{{ skipped().length }} élève(s) non traité(s) :</strong>
@@ -32,6 +42,165 @@
   } @else if (!schools().length) {
     <p class="enr__state">Aucun établissement associé à votre compte.</p>
   } @else {
+    <!-- Nouvel élève -->
+    <div class="enr__card">
+      <div class="enr__card-head">
+        <h2>Inscrire un nouvel élève</h2>
+        @if (!newStudentOpen()) {
+          <button type="button" class="enr__btn enr__btn--green" (click)="openNewStudent()" [disabled]="busy() || !years().length">+ Nouvel élève</button>
+        }
+      </div>
+      @if (!years().length) {
+        <p class="enr__empty">Créez d’abord une année scolaire et ses classes pour inscrire un élève.</p>
+      } @else if (newStudentOpen()) {
+        <form class="enr__panel" (ngSubmit)="registerStudent()">
+          <div class="enr__form">
+            <label>Classe d’accueil
+              <select name="nsClass" [(ngModel)]="newStudentForm.classId" [disabled]="newStudentClassesLoading() || !newStudentClasses().length" required>
+                <option [ngValue]="null">{{ newStudentClassesLoading() ? 'Chargement des classes…' : 'Choisir une classe' }}</option>
+                @for (g of newStudentClassGroups(); track g.yearId) {
+                  <optgroup [label]="'Année ' + g.label">
+                    @for (c of g.classes; track c.id) {
+                      <option [ngValue]="c.id" [disabled]="isFull(c)">
+                        {{ c.levelName }} · {{ c.name }} — {{ c.enrolled }}@if (c.capacity) {/{{ c.capacity }}} élève(s)@if (isFull(c)) { (complète)}
+                      </option>
+                    }
+                  </optgroup>
+                }
+              </select>
+            </label>
+            @if (selectedHostClass(); as hc) {
+              <label>Année scolaire<input name="nsYear" [value]="hc.yearLabel + (hc.currentYear ? ' (en cours)' : '')" disabled></label>
+            }
+            <label>Prénom<input name="nsFirstName" [(ngModel)]="newStudentForm.firstName" maxlength="100" required></label>
+            <label>Nom<input name="nsLastName" [(ngModel)]="newStudentForm.lastName" maxlength="100" required></label>
+            <label>Courriel<input name="nsEmail" type="email" [(ngModel)]="newStudentForm.email" maxlength="150" required></label>
+            <label>Mot de passe<input name="nsPassword" type="text" [(ngModel)]="newStudentForm.password" minlength="8" placeholder="8 caractères min." required></label>
+            <label>Matricule<input name="nsRegistration" value="Généré automatiquement" disabled title="Format MAT-AAAA-NNN, attribué à l’enregistrement"></label>
+            <label>Téléphone<input name="nsPhone" [(ngModel)]="newStudentForm.phone" maxlength="30"></label>
+            <label>Date de naissance<input name="nsBirthDate" type="date" [(ngModel)]="newStudentForm.birthDate"></label>
+            <label>Genre
+              <select name="nsGender" [(ngModel)]="newStudentForm.gender">
+                <option value="">—</option>
+                <option value="M">Masculin</option>
+                <option value="F">Féminin</option>
+              </select>
+            </label>
+          </div>
+          @if (!newStudentClassesLoading() && !newStudentClasses().length) {
+            <p class="enr__alert enr__alert--warn">Aucune classe dans cet établissement : créez-en une dans Gestion de l’école.</p>
+          }
+
+          <fieldset class="enr__fees">
+            <legend>Parent / tuteur</legend>
+            <p class="enr__muted">Choisissez un parent déjà enregistré (ex. pour un frère ou une sœur) ou saisissez-en un nouveau : seuls le prénom et le nom sont obligatoires. Avec un courriel, le parent pourra activer son espace via « Mot de passe oublié ».</p>
+            @for (g of guardians; track $index; let i = $index) {
+              <div class="enr__guardian">
+                <div class="enr__guardian-mode" role="radiogroup" [attr.aria-label]="'Type du ' + (i === 0 ? 'parent' : 'second parent')">
+                  <label><input type="radio" [name]="'gMode' + i" [checked]="g.mode === 'new'" (change)="setGuardianMode(i, 'new')"> Nouveau parent</label>
+                  <label><input type="radio" [name]="'gMode' + i" [checked]="g.mode === 'existing'" (change)="setGuardianMode(i, 'existing')"> Parent déjà enregistré</label>
+                </div>
+                <div class="enr__form">
+                  @if (g.mode === 'existing') {
+                    @if (g.selected; as s) {
+                      <div class="enr__guardian-card">
+                        <strong>{{ s.firstName }} {{ s.lastName }}</strong>
+                        <span class="enr__muted">{{ s.phone || 'Sans téléphone' }} · {{ s.email || 'Sans courriel' }}</span>
+                        @if (s.children.length) { <span class="enr__muted">Parent de : {{ s.children.join(', ') }}</span> }
+                        <button type="button" class="enr__link" (click)="setGuardianMode(i, 'existing')">Changer</button>
+                      </div>
+                    } @else {
+                      <label class="enr__guardian-search">Rechercher un parent
+                        <input [name]="'gSearch' + i" [(ngModel)]="g.query" (ngModelChange)="searchGuardian(i, $event)"
+                               placeholder="Nom, prénom, téléphone ou courriel (2 caractères min.)" autocomplete="off">
+                        @if (guardianSearching() === i) { <span class="enr__muted">Recherche…</span> }
+                        @if (guardianResults()[i]?.length) {
+                          <ul class="enr__guardian-results" role="listbox">
+                            @for (o of guardianResults()[i]; track o.parentId) {
+                              <li>
+                                <button type="button" (click)="selectGuardian(i, o)">
+                                  <strong>{{ o.lastName }} {{ o.firstName }}</strong>
+                                  <span>{{ o.phone || o.email || '' }}@if (o.children.length) { · parent de {{ o.children.join(', ') }}}</span>
+                                </button>
+                              </li>
+                            }
+                          </ul>
+                        } @else if (g.query.trim().length >= 2 && guardianSearching() !== i) {
+                          <span class="enr__muted">Aucun parent trouvé : choisissez « Nouveau parent ».</span>
+                        }
+                      </label>
+                    }
+                  } @else {
+                    <label>Prénom du {{ i === 0 ? 'parent' : 'second parent' }}<input [name]="'gFirst' + i" [(ngModel)]="g.firstName" maxlength="100" required></label>
+                    <label>Nom<input [name]="'gLast' + i" [(ngModel)]="g.lastName" maxlength="100" required></label>
+                    <label>Téléphone (facultatif)<input [name]="'gPhone' + i" type="tel" [(ngModel)]="g.phone" maxlength="30"></label>
+                    <label>Courriel (facultatif)<input [name]="'gEmail' + i" type="email" [(ngModel)]="g.email" maxlength="150"></label>
+                  }
+                  <label>Lien
+                    <select [name]="'gRel' + i" [(ngModel)]="g.relationship">
+                      @for (r of relationships; track r) { <option [value]="r">{{ r }}</option> }
+                    </select>
+                  </label>
+                  @if (i > 0) {
+                    <button type="button" class="enr__link" (click)="removeGuardian(i)">Retirer ce parent</button>
+                  }
+                </div>
+              </div>
+            }
+            @if (guardians.length < 2) {
+              <button type="button" class="enr__link" (click)="addGuardian()">+ Ajouter un second parent / tuteur</button>
+            }
+          </fieldset>
+
+          <fieldset class="enr__fees">
+            <legend>Frais et paiement à l’inscription</legend>
+            @if (!availableFees().length) {
+              <p class="enr__muted">Aucun frais actif pour cette classe. Créez-les dans « Frais &amp; paiements » pour pouvoir encaisser à l’inscription.</p>
+            } @else {
+              <table class="enr__table">
+                <thead><tr><th></th><th>Frais</th><th>Montant dû</th><th>Montant versé</th><th>Reste</th></tr></thead>
+                <tbody>
+                  @for (fee of availableFees(); track fee.id) {
+                    <tr [class.enr__selected]="feeChoices[fee.id]?.selected">
+                      <td><input type="checkbox" [attr.aria-label]="'Facturer ' + fee.name" [checked]="feeChoices[fee.id]?.selected" (change)="toggleFee(fee, $any($event.target).checked)"></td>
+                      <td>{{ fee.name }}</td>
+                      <td>{{ formatAmount(fee.amount) }}</td>
+                      <td>
+                        @if (feeChoices[fee.id]?.selected) {
+                          <input class="enr__amount" type="number" min="0" [max]="fee.amount" step="1" [name]="'paid' + fee.id"
+                                 [(ngModel)]="feeChoices[fee.id].amountPaid" [attr.aria-label]="'Montant versé pour ' + fee.name">
+                        } @else { <span class="enr__muted">—</span> }
+                      </td>
+                      <td>@if (feeChoices[fee.id]?.selected) { {{ formatAmount(remaining(fee)) }} }</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+              @if (selectedFees().length) {
+                <div class="enr__form">
+                  <label>Mode de paiement
+                    <select name="nsMethod" [(ngModel)]="newStudentForm.paymentMethod">
+                      @for (m of paymentMethods; track m.code) { <option [ngValue]="m.code">{{ m.label }}</option> }
+                    </select>
+                  </label>
+                  <label>Date du paiement<input name="nsPayDate" type="date" [(ngModel)]="newStudentForm.paymentDate"></label>
+                </div>
+                <p class="enr__fee-total">
+                  Total dû : <b>{{ formatAmount(totalDue()) }}</b> · Versé maintenant : <b>{{ formatAmount(totalPaid()) }}</b>
+                  · Reste : <b>{{ formatAmount(totalDue() - totalPaid()) }}</b>
+                </p>
+                <p class="enr__muted">Un reçu est généré automatiquement dès qu’un montant est versé.</p>
+              }
+            }
+          </fieldset>
+          <div class="enr__actions">
+            <button type="submit" class="enr__btn" [disabled]="busy() || !newStudentForm.classId">Inscrire l’élève</button>
+            <button type="button" class="enr__btn enr__btn--ghost" (click)="closeNewStudent()">Fermer</button>
+          </div>
+        </form>
+      }
+    </div>
+
     <!-- Années scolaires -->
     <div class="enr__card">
       <div class="enr__card-head">

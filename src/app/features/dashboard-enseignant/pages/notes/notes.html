@@ -1,0 +1,172 @@
+<div class="ss">
+  <header class="ss__header">
+    <div>
+      <h1>Notes</h1>
+      <p>Créez vos évaluations et saisissez les notes de vos élèves.</p>
+    </div>
+    @if (classes().length) {
+      <div class="ss__actions">
+        <label class="ss__picker">Classe
+          <select [ngModel]="classId()" (ngModelChange)="selectClass(+$event)" aria-label="Classe">
+            @for (c of classes(); track c.classId) {
+              <option [ngValue]="c.classId">{{ c.className }} — {{ c.schoolName }} ({{ c.academicYearLabel }})</option>
+            }
+          </select>
+        </label>
+        <label class="ss__picker">Période
+          <select [ngModel]="periodId()" (ngModelChange)="selectPeriod(+$event)" aria-label="Période"
+                  [disabled]="!periods().length">
+            @for (p of periods(); track p.id) {
+              <option [ngValue]="p.id">{{ p.name }} ({{ periodStatus[p.status] }})</option>
+            }
+          </select>
+        </label>
+      </div>
+    }
+  </header>
+
+  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
+  @if (success()) { <p class="ss__alert ss__alert--success" role="status">{{ success() }}</p> }
+
+  @if (loading()) {
+    <p class="ss__state">Chargement…</p>
+  } @else if (!classes().length) {
+    <p class="ss__state">Aucune classe ne vous est encore affectée.</p>
+  } @else if (!periods().length) {
+    <p class="ss__state">L’établissement n’a pas encore défini de période de notation pour cette année scolaire.</p>
+  } @else {
+    @if (!editable()) {
+      <p class="ss__alert ss__alert--info">Cette période est {{ selectedPeriod()?.status === 'PUBLISHED' ? 'publiée' : 'verrouillée' }} : les notes sont consultables mais ne peuvent plus être modifiées.</p>
+    }
+
+    <section class="ss__card" aria-labelledby="evaluations-title">
+      <header class="ss__card-head">
+        <h2 id="evaluations-title">Mes évaluations</h2>
+        @if (editable() && !showForm()) {
+          <button type="button" class="ss__mini" (click)="openForm()">+ Nouvelle évaluation</button>
+        }
+      </header>
+      <div class="ss__body">
+        @if (showForm()) {
+          <form class="ss__form" (ngSubmit)="createEvaluation()" aria-label="Nouvelle évaluation">
+            <label>Matière
+              <select name="cst" [(ngModel)]="form.classSubjectTeacherId" required>
+                <option [ngValue]="null" disabled>Choisir…</option>
+                @for (s of selectedClass()?.subjects ?? []; track s.classSubjectTeacherId) {
+                  <option [ngValue]="s.classSubjectTeacherId">{{ s.subjectName }}</option>
+                }
+              </select>
+            </label>
+            <label>Intitulé
+              <input name="title" [(ngModel)]="form.title" maxlength="120" required placeholder="Ex. Devoir n°1" />
+            </label>
+            <label>Type
+              <select name="type" [(ngModel)]="form.type">
+                @for (t of types; track t.value) { <option [value]="t.value">{{ t.label }}</option> }
+              </select>
+            </label>
+            <label>Date
+              <input name="date" type="date" [(ngModel)]="form.evalDate" [min]="selectedPeriod()?.startDate ?? ''"
+                     [max]="selectedPeriod()?.endDate ?? ''" required />
+            </label>
+            <label>Barème (noté sur)
+              <input name="max" type="number" min="1" max="100" [(ngModel)]="form.maxValue" />
+            </label>
+            <label>Poids
+              <input name="weight" type="number" min="0.25" max="10" step="0.25" [(ngModel)]="form.weight" />
+            </label>
+            <div class="ss__actions ss__wide">
+              <button type="submit" class="ss__btn" [disabled]="busy()">Créer l’évaluation</button>
+              <button type="button" class="ss__btn ss__btn--ghost" (click)="showForm.set(false)">Annuler</button>
+            </div>
+          </form>
+        }
+
+        @if (!evaluations().length) {
+          <p class="ss__state">Aucune évaluation pour cette période.</p>
+        } @else {
+          <div class="ss__table-wrap">
+            <table class="ss__table">
+              <thead>
+                <tr><th>Date</th><th>Matière</th><th>Évaluation</th><th>Type</th><th class="ss__num">Barème</th>
+                  <th class="ss__num">Saisies</th><th class="ss__num">Moy. /20</th><th></th></tr>
+              </thead>
+              <tbody>
+                @for (e of evaluations(); track e.id) {
+                  <tr>
+                    <td>{{ e.evalDate | date: 'dd/MM/yyyy' }}</td>
+                    <td>{{ e.subjectName }}</td>
+                    <td>{{ e.title }}</td>
+                    <td>{{ typeLabel(e.type) }}</td>
+                    <td class="ss__num">{{ e.maxValue | number: '1.0-2' }}</td>
+                    <td class="ss__num">{{ e.gradedCount }} / {{ e.studentCount }}</td>
+                    <td class="ss__num">{{ e.averageOn20 === null ? '—' : (e.averageOn20 | number: '1.2-2') }}</td>
+                    <td>
+                      <div class="ss__actions">
+                        <button type="button" class="ss__mini" (click)="openSheet(e.id)">
+                          {{ editable() ? 'Saisir les notes' : 'Voir les notes' }}
+                        </button>
+                        @if (editable()) {
+                          <button type="button" class="ss__mini ss__mini--danger" (click)="deleteEvaluation(e)">Supprimer</button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </section>
+
+    @if (sheet(); as s) {
+      <section class="ss__card" aria-labelledby="sheet-title">
+        <header class="ss__card-head">
+          <h2 id="sheet-title">{{ s.evaluation.subjectName }} — {{ s.evaluation.title }} · {{ s.className }}</h2>
+          <span class="ss__chip">Noté sur {{ s.evaluation.maxValue | number: '1.0-2' }}</span>
+        </header>
+        <form class="ss__body" (ngSubmit)="saveSheet()" aria-label="Feuille de notes">
+          @if (!s.rows.length) {
+            <p class="ss__state">Aucun élève inscrit dans cette classe.</p>
+          } @else {
+            <div class="ss__table-wrap">
+              <table class="ss__table">
+                <thead><tr><th>#</th><th>Élève</th><th>Matricule</th><th>Note</th></tr></thead>
+                <tbody>
+                  @for (row of s.rows; track row.studentId; let i = $index) {
+                    <tr>
+                      <td>{{ i + 1 }}</td>
+                      <td><label [for]="'grade-' + row.studentId">{{ row.fullName }}</label></td>
+                      <td>{{ row.registrationNumber }}</td>
+                      <td>
+                        <input class="ss__grade-input" [id]="'grade-' + row.studentId" [name]="'grade-' + row.studentId"
+                               inputmode="decimal" [(ngModel)]="values[row.studentId]" [disabled]="!editable()"
+                               placeholder="—" />
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            @if (editable()) {
+              @if (altersExisting()) {
+                <label class="ss__field">Motif de la modification (obligatoire)
+                  <input name="reason" [(ngModel)]="reason" maxlength="255" placeholder="Ex. erreur de report" />
+                </label>
+              } @else {
+                <label class="ss__field">Motif (requis pour supprimer une évaluation déjà notée)
+                  <input name="reason" [(ngModel)]="reason" maxlength="255" />
+                </label>
+              }
+              <div class="ss__actions">
+                <button type="submit" class="ss__btn" [disabled]="busy()">Enregistrer les notes</button>
+                <button type="button" class="ss__btn ss__btn--ghost" (click)="sheet.set(null)">Fermer</button>
+              </div>
+            }
+          }
+        </form>
+      </section>
+    }
+  }
+</div>

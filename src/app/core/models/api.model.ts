@@ -20,6 +20,7 @@ export interface UserDto {
   phone?: string;
   active: boolean;
   approved: boolean;
+  emailVerified?: boolean;
   requestedSchoolId: number | null;
   requestedSchoolName: string | null;
   requestedSchoolType: string | null;

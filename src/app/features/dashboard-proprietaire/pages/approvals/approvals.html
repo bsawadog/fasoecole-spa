@@ -67,4 +67,80 @@
       }
     </div>
   }
+
+  @if (autoApproved().length) {
+    <header class="approvals__heading approvals__heading--section">
+      <h2>Accès accordés automatiquement</h2>
+      <p>Ces parents ont été reconnus par leur courriel : leurs enfants sont inscrits dans vos établissements.
+        L’accès est déjà actif ; confirmez-le ou retirez-le.</p>
+    </header>
+    <div class="approvals__list">
+      @for (request of autoApproved(); track request.id) {
+        <article class="approvals__card approvals__card--auto">
+          <div class="approvals__person">
+            <span class="approvals__avatar" aria-hidden="true">
+              {{ request.firstName.charAt(0) }}{{ request.lastName.charAt(0) }}
+            </span>
+            <div>
+              <h2>{{ request.firstName }} {{ request.lastName }}
+                <span class="approvals__badge">Approuvé par le système</span></h2>
+              @if (request.email) { <p>{{ request.email }}</p> }
+              @if (request.phone) { <p>{{ request.phone }}</p> }
+              <p class="approvals__requested-role">
+                <strong>{{ requestedRoleLabel(request.requestedRole) }}</strong> à <strong>{{ request.schoolName }}</strong>
+              </p>
+              @if (request.children?.length) {
+                <p>Enfant(s) : {{ request.children!.join(', ') }}</p>
+              }
+            </div>
+          </div>
+          <div class="approvals__controls">
+            <button type="button" [disabled]="decidingAccessId() !== null" (click)="decideAutomatic(request, true)">
+              {{ decidingAccessId() === request.id ? 'Traitement…' : 'Confirmer' }}
+            </button>
+            <button type="button" class="approvals__reject" [disabled]="decidingAccessId() !== null"
+                    (click)="decideAutomatic(request, false)">
+              Refuser l’accès
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+
+  @if (manualRequests().length) {
+    <header class="approvals__heading approvals__heading--section">
+      <h2>Demandes d’accès à un établissement supplémentaire</h2>
+      <p>Des enseignants, parents ou élèves déjà inscrits souhaitent rejoindre l’un de vos établissements.</p>
+    </header>
+    <div class="approvals__list">
+      @for (request of manualRequests(); track request.id) {
+        <article class="approvals__card">
+          <div class="approvals__person">
+            <span class="approvals__avatar" aria-hidden="true">
+              {{ request.firstName.charAt(0) }}{{ request.lastName.charAt(0) }}
+            </span>
+            <div>
+              <h2>{{ request.firstName }} {{ request.lastName }}</h2>
+              <p>{{ request.email }}</p>
+              @if (request.phone) { <p>{{ request.phone }}</p> }
+              <p class="approvals__requested-role">
+                Demande : <strong>{{ requestedRoleLabel(request.requestedRole) }}</strong>
+                à <strong>{{ request.schoolName }}</strong>
+              </p>
+            </div>
+          </div>
+          <div class="approvals__controls">
+            <button type="button" [disabled]="decidingAccessId() !== null" (click)="decideAccess(request, true)">
+              {{ decidingAccessId() === request.id ? 'Traitement…' : 'Accorder l’accès' }}
+            </button>
+            <button type="button" class="approvals__reject" [disabled]="decidingAccessId() !== null"
+                    (click)="decideAccess(request, false)">
+              Refuser
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+  }
 </section>

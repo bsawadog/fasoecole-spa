@@ -1,0 +1,76 @@
+<div class="ss">
+  <header class="ss__header">
+    <div>
+      <h1>Mes classes</h1>
+      <p>Les classes et matières qui vous sont confiées, vos élèves et votre emploi du temps.</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="ss__state">Chargement…</p>
+  } @else if (error()) {
+    <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p>
+  } @else if (!classes().length) {
+    <p class="ss__state">Aucune classe ne vous est encore affectée. L’établissement doit vous attribuer une matière dans une classe.</p>
+  } @else {
+    <div class="ss__grid">
+      @for (c of classes(); track c.classId) {
+        <button type="button" class="ss__card ss__card--link" [class.ss__card--active]="c.classId === selectedId()"
+                [attr.aria-pressed]="c.classId === selectedId()" (click)="select(c.classId)">
+          <h2>{{ c.className }}</h2>
+          <p>{{ c.schoolName }} · {{ c.academicYearLabel }}@if (!c.currentYear) { (année passée) }</p>
+          <p>{{ c.studentCount }} élève(s)@if (c.levelName) { · {{ c.levelName }} }</p>
+          <div class="ss__chips">
+            @for (s of c.subjects; track s.classSubjectTeacherId) { <span class="ss__chip">{{ s.subjectName }}</span> }
+          </div>
+        </button>
+      }
+    </div>
+
+    @if (selected(); as c) {
+      <section class="ss__card" aria-labelledby="roster-title">
+        <header class="ss__card-head">
+          <h2 id="roster-title">Élèves de {{ c.className }}</h2>
+          <div class="ss__actions">
+            <input type="search" placeholder="Rechercher un élève" aria-label="Rechercher un élève"
+                   [value]="filter()" (input)="filter.set($any($event.target).value)" />
+            <a class="ss__mini" routerLink="/enseignant/notes" [queryParams]="{ classe: c.classId }">Saisir des notes</a>
+          </div>
+        </header>
+        <div class="ss__body">
+          @if (studentsLoading()) {
+            <p class="ss__state">Chargement des élèves…</p>
+          } @else if (studentsError()) {
+            <p class="ss__alert ss__alert--error" role="alert">{{ studentsError() }}</p>
+          } @else if (!filteredStudents().length) {
+            <p class="ss__state">Aucun élève.</p>
+          } @else {
+            <div class="ss__table-wrap">
+              <table class="ss__table">
+                <thead><tr><th>#</th><th>Élève</th><th>Matricule</th><th>Sexe</th><th>Date de naissance</th></tr></thead>
+                <tbody>
+                  @for (s of filteredStudents(); track s.studentId; let i = $index) {
+                    <tr>
+                      <td>{{ i + 1 }}</td>
+                      <td>{{ s.fullName }}</td>
+                      <td>{{ s.registrationNumber }}</td>
+                      <td>{{ genderLabel(s.gender) }}</td>
+                      <td>{{ s.birthDate ? (s.birthDate | date: 'dd/MM/yyyy') : '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  }
+
+  <section class="ss__card" aria-labelledby="schedule-title">
+    <header class="ss__card-head"><h2 id="schedule-title">Mon emploi du temps</h2></header>
+    <div class="ss__body">
+      <app-schedule-view [entries]="schedule()" [showClass]="true" />
+    </div>
+  </section>
+</div>

@@ -1,0 +1,140 @@
+import { TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { AuthService, SchoolAccessService } from '../../core/auth';
+import { ProfilePage } from './profile';
+
+describe('ProfilePage', () => {
+  const baseUser = {
+    id: 4, firstName: 'Awa', lastName: 'Diallo', email: 'awa@ecole.bf', phone: '70000000',
+    role: 'enseignant' as const, approved: true, requestedSchoolId: null,
+    requestedSchoolName: null, requestedSchoolType: null, requestedRole: null, rawRoles: ['TEACHER'],
+  };
+
+  function setup(user: Record<string, unknown> = baseUser) {
+    const auth = {
+      user: () => user,
+      updateProfile: vi.fn(() => of({ ...baseUser, firstName: 'Aminata' })),
+      changePassword: vi.fn(() => of(undefined)),
+      resendEmailVerification: vi.fn(() => of(undefined)),
+      getRegistrationSchools: vi.fn(() => of([{ id: 2, name: 'École B', type: 'PRIMAIRE' }])),
+    };
+    const access = {
+      mine: vi.fn(() => of([])),
+      request: vi.fn(() => of({
+        id: 9, userId: 4, firstName: 'Awa', lastName: 'Diallo', email: 'awa@ecole.bf', phone: null,
+        schoolId: 2, schoolName: 'École B', schoolType: 'PRIMAIRE', requestedRole: 'TEACHER',
+        status: 'PENDING', createdAt: '2026-10-01T08:00:00', decidedAt: null,
+      })),
+      cancel: vi.fn(() => of(undefined)),
+    };
+    TestBed.configureTestingModule({
+      imports: [ProfilePage],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: auth },
+        { provide: SchoolAccessService, useValue: access },
+      ],
+    });
+    const fixture = TestBed.createComponent(ProfilePage);
+    fixture.detectChanges();
+    return { fixture, auth, access };
+  }
+
+  function submit(fixture: { nativeElement: HTMLElement }, index: number): void {
+    fixture.nativeElement.querySelectorAll('form')[index].dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true })
+    );
+  }
+
+  it('displays personal details and saves editable fields', () => {
+    const { fixture, auth } = setup();
+    const page = fixture.componentInstance;
+    const email = fixture.nativeElement.querySelector('#profile-email') as HTMLInputElement;
+    expect(email.value).toBe('awa@ecole.bf');
+    expect(email.readOnly).toBe(true);
+
+    page.form.firstName = ' Aminata ';
+    submit(fixture, 0);
+    expect(auth.updateProfile).toHaveBeenCalledWith({
+      firstName: 'Aminata', lastName: 'Diallo', phone: '70000000',
+    });
+    expect(page.success()).toBe(true);
+    expect(page.form.firstName).toBe('Aminata');
+  });
+
+  it('reports profile errors without claiming success', () => {
+    const { fixture, auth } = setup();
+    auth.updateProfile.mockImplementation(() => throwError(() => new Error('API unavailable')));
+    submit(fixture, 0);
+    expect(fixture.componentInstance.error()).toContain('Impossible');
+    expect(fixture.componentInstance.success()).toBe(false);
+  });
+
+  it('validates and changes the password', () => {
+    const { fixture, auth } = setup();
+    const page = fixture.componentInstance;
+    page.passwordForm = { currentPassword: 'ancienMdp1', newPassword: 'NouveauMdp1', confirmPassword: 'Autre' };
+    submit(fixture, 1);
+    expect(auth.changePassword).not.toHaveBeenCalled();
+    expect(page.passwordError()).toContain('confirmation');
+
+    page.passwordForm = { currentPassword: 'ancienMdp1', newPassword: 'NouveauMdp1', confirmPassword: 'NouveauMdp1' };
+    submit(fixture, 1);
+    expect(auth.changePassword).toHaveBeenCalledWith('ancienMdp1', 'NouveauMdp1');
+    expect(page.passwordSuccess()).toBe(true);
+    expect(page.passwordForm.currentPassword).toBe('');
+  });
+
+  it('shows the server message when the current password is wrong', () => {
+    const { fixture, auth } = setup();
+    auth.changePassword.mockImplementation(() => throwError(() => new HttpErrorResponse({
+      status: 400, error: { message: 'Le mot de passe actuel est incorrect' },
+    })));
+    const page = fixture.componentInstance;
+    page.passwordForm = { currentPassword: 'mauvais12', newPassword: 'NouveauMdp1', confirmPassword: 'NouveauMdp1' };
+    submit(fixture, 1);
+    expect(page.passwordError()).toBe('Le mot de passe actuel est incorrect');
+    expect(page.passwordSuccess()).toBe(false);
+  });
+
+  it('lets a teacher request access to another school', () => {
+    const { fixture, access } = setup();
+    const page = fixture.componentInstance;
+    expect(fixture.nativeElement.textContent).toContain('Accès à d’autres établissements');
+    expect(access.mine).toHaveBeenCalled();
+
+    page.accessForm.schoolId = 2;
+    page.requestAccess();
+    fixture.detectChanges();
+    expect(access.request).toHaveBeenCalledWith(2, 'TEACHER');
+    expect(page.requests()[0].schoolName).toBe('École B');
+    expect(fixture.nativeElement.textContent).toContain('En attente');
+  });
+
+  it('hides school access requests for owners and pending accounts', () => {
+    const { fixture, access } = setup({ ...baseUser, role: 'proprietaire', rawRoles: ['SCHOOL_ADMIN'] });
+    expect(fixture.nativeElement.textContent).not.toContain('Accès à d’autres établissements');
+    expect(access.mine).not.toHaveBeenCalled();
+    TestBed.resetTestingModule();
+
+    const pending = setup({ ...baseUser, approved: false });
+    expect(pending.fixture.componentInstance.canRequestSchools()).toBe(false);
+  });
+
+  it('offers to resend the verification link only when the email is unverified', () => {
+    const verified = setup();
+    expect(verified.fixture.nativeElement.textContent).not.toContain('Adresse courriel non vérifiée');
+    TestBed.resetTestingModule();
+
+    const { fixture, auth } = setup({ ...baseUser, emailVerified: false });
+    expect(fixture.nativeElement.textContent).toContain('Adresse courriel non vérifiée');
+    const button = Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>)
+      .find((b) => b.textContent?.includes('Renvoyer le lien'))!;
+    button.click();
+    fixture.detectChanges();
+    expect(auth.resendEmailVerification).toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('vient d’être envoyé');
+  });
+});

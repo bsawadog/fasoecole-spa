@@ -5,7 +5,13 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LucideArrowLeft, LucideArrowRight, LucideEye, LucideEyeOff, LucideGraduationCap } from '@lucide/angular';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
 
-type AuthMode = 'login' | 'register' | 'forgot' | 'reset';
+type AuthMode = 'login' | 'register' | 'forgot' | 'reset' | 'activate';
+
+function initialMode(params: { has(name: string): boolean }): AuthMode {
+  if (params.has('activate')) return 'activate';
+  if (params.has('token')) return 'reset';
+  return 'login';
+}
 
 @Component({
   selector: 'app-login',
@@ -27,7 +33,7 @@ export class Login implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
 
-  readonly mode = signal<AuthMode>(this.route.snapshot.queryParamMap.has('token') ? 'reset' : 'login');
+  readonly mode = signal<AuthMode>(initialMode(this.route.snapshot.queryParamMap));
   readonly loading = signal(false);
   readonly schoolsLoading = signal(true);
   readonly schools = signal<RegistrationSchool[]>([]);
@@ -36,8 +42,13 @@ export class Login implements OnInit {
   readonly successMessage = signal<string | null>(null);
   readonly showPassword = signal(false);
   readonly resetToken = this.route.snapshot.queryParamMap.get('token');
+  readonly activationToken = this.route.snapshot.queryParamMap.get('activate');
+  private readonly verificationToken = this.route.snapshot.queryParamMap.get('verify');
 
   ngOnInit(): void {
+    if (this.verificationToken) {
+      this.confirmEmail(this.verificationToken);
+    }
     this.auth.getRegistrationSchools().subscribe({
       next: (schools) => {
         this.schools.set(schools);
@@ -132,8 +143,15 @@ export class Login implements OnInit {
       schoolId,
       requestedRole,
     }).subscribe({
-      next: () => {
+      next: (result) => {
         this.loading.set(false);
+        if ('activationRequired' in result) {
+          this.registerForm.reset();
+          this.mode.set('login');
+          this.errorMessage.set(null);
+          this.successMessage.set(result.message);
+          return;
+        }
         this.auth.redirectAfterLogin();
       },
       error: (error: HttpErrorResponse) => {
@@ -144,6 +162,21 @@ export class Login implements OnInit {
             ? message
             : 'Impossible de créer la demande. Vérifiez les informations ou contactez l’établissement.',
         );
+      },
+    });
+  }
+
+  /** Lien « vérifier mon adresse » : confirmé automatiquement à l'ouverture de la page. */
+  private confirmEmail(token: string): void {
+    this.loading.set(true);
+    this.auth.verifyEmail(token).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.successMessage.set('Votre adresse courriel est confirmée. Connectez-vous pour accéder à votre espace.');
+      },
+      error: () => {
+        this.loading.set(false);
+        this.errorMessage.set('Ce lien de vérification est invalide ou expiré. Demandez-en un nouveau depuis votre profil.');
       },
     });
   }
@@ -178,14 +211,31 @@ export class Login implements OnInit {
       this.errorMessage.set('Les deux mots de passe ne correspondent pas.');
       return;
     }
-    if (!this.resetToken) {
+    if (!this.resetToken && !this.activationToken) {
       this.errorMessage.set('Le lien de réinitialisation est invalide ou incomplet.');
       return;
     }
 
     this.loading.set(true);
     this.errorMessage.set(null);
-    this.auth.resetPassword(this.resetToken, password).subscribe({
+    if (this.mode() === 'activate' && this.activationToken) {
+      this.auth.verifyEmail(this.activationToken, password).subscribe({
+        next: () => {
+          this.loading.set(false);
+          this.resetForm.reset();
+          this.setMode('login');
+          this.successMessage.set('Votre compte est activé. Connectez-vous avec votre courriel et votre nouveau mot de passe.');
+        },
+        error: (error: HttpErrorResponse) => {
+          this.loading.set(false);
+          const message = error.error?.message;
+          this.errorMessage.set(typeof message === 'string' && message
+            ? message : 'Ce lien d’activation est invalide ou expiré. Recommencez l’inscription pour en recevoir un nouveau.');
+        },
+      });
+      return;
+    }
+    this.auth.resetPassword(this.resetToken!, password).subscribe({
       next: () => {
         this.loading.set(false);
         this.resetForm.reset();

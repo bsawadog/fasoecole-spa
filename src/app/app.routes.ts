@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, roleGuard } from './core/auth';
+import { authGuard, roleGuard, roleHomeRedirectGuard } from './core/auth';
 
 export const routes: Routes = [
   {
@@ -21,6 +21,10 @@ export const routes: Routes = [
     loadComponent: () => import('./core/layout/app-shell/app-shell').then((m) => m.AppShell),
     canActivate: [authGuard],
     children: [
+      {
+        path: 'profil',
+        loadComponent: () => import('./features/profile/profile').then((m) => m.ProfilePage),
+      },
       {
         path: 'admin',
         canActivate: [roleGuard(['admin'])],
@@ -50,6 +54,7 @@ export const routes: Routes = [
         loadChildren: () => import('./features/dashboard-parent/parent.routes').then((m) => m.PARENT_ROUTES),
       },
       { path: '', pathMatch: 'full', redirectTo: 'login' },
+      { path: '**', canActivate: [roleHomeRedirectGuard], children: [] },
     ],
   },
   { path: '**', redirectTo: 'login' },

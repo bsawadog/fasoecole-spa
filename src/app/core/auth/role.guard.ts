@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from './auth.service';
-import { Role } from '../models';
+import { ROLE_HOME_ROUTE, Role } from '../models';
 
 /**
  * Guard factory : restreint l'accès à une route selon le(s) rôle(s) autorisé(s).
@@ -20,3 +20,14 @@ export function roleGuard(allowedRoles: Role[]): CanActivateFn {
     return router.parseUrl('/unauthorized');
   };
 }
+
+/**
+ * Adresse inconnue : un utilisateur connecté reste dans son espace (accueil de son rôle) au lieu d'être renvoyé
+ * vers la page de connexion.
+ */
+export const roleHomeRedirectGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  const role = auth.isAuthenticated() ? auth.role() : null;
+  return router.parseUrl(role ? ROLE_HOME_ROUTE[role] : '/login');
+};

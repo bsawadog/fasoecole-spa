@@ -2,6 +2,53 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { ClassRosterRow, CreateRosterStudentPayload, StudentInvoiceInfo } from './owner-management.service';
+
+export type PaymentMethodCode = 'CASH' | 'MOBILE_MONEY' | 'BANK_TRANSFER' | 'CARD';
+
+export interface EnrollmentFee {
+  id: number;
+  name: string;
+  amount: number;
+  frequency: string;
+  levelId: number | null;
+}
+
+export interface GuardianPayload {
+  /** Parent déjà enregistré à rattacher tel quel (ses coordonnées ne sont pas modifiées). */
+  parentId: number | null;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  relationship: string | null;
+}
+
+/** Parent existant proposé à l'inscription. */
+export interface GuardianOption {
+  parentId: number;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  children: string[];
+}
+
+export interface NewStudentPayload extends CreateRosterStudentPayload {
+  classId: number;
+  fees: { feeTypeId: number; amountPaid: number }[];
+  paymentMethod: PaymentMethodCode | null;
+  paymentDate: string | null;
+  guardians: GuardianPayload[];
+}
+
+export interface RegistrationResult {
+  student: ClassRosterRow;
+  schoolName: string;
+  className: string;
+  yearLabel: string;
+  invoices: StudentInvoiceInfo[];
+}
 
 export type EnrollmentDecision = 'PROMOTED' | 'REPEATED' | 'GRADUATED' | 'LEFT';
 
@@ -128,5 +175,21 @@ export class EnrollmentService {
 
   undo(enrollmentId: number): Observable<void> {
     return this.http.post<void>(`${this.base}/enrollments/${enrollmentId}/undo`, {});
+  }
+
+  yearClasses(schoolId: number, yearId: number): Observable<TargetClass[]> {
+    return this.http.get<TargetClass[]>(`${this.base}/schools/${schoolId}/years/${yearId}/classes`);
+  }
+
+  registerStudent(schoolId: number, payload: NewStudentPayload): Observable<RegistrationResult> {
+    return this.http.post<RegistrationResult>(`${this.base}/schools/${schoolId}/students`, payload);
+  }
+
+  searchGuardians(schoolId: number, q: string): Observable<GuardianOption[]> {
+    return this.http.get<GuardianOption[]>(`${this.base}/schools/${schoolId}/guardians`, { params: { q } });
+  }
+
+  enrollmentFees(schoolId: number): Observable<EnrollmentFee[]> {
+    return this.http.get<EnrollmentFee[]>(`${this.base}/schools/${schoolId}/fees`);
   }
 }

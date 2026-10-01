@@ -1,5 +1,5 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import {
   LucideBookOpen,
   LucideBuilding2,
@@ -12,6 +12,7 @@ import {
   LucideNotebookPen,
   LucideShieldCheck,
   LucideStar,
+  LucideUserRound,
   LucideUsers,
   LucideWallet,
 } from '@lucide/angular';
@@ -68,6 +69,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
   imports: [
     RouterOutlet,
     RouterLink,
+    RouterLinkActive,
     LucideBookOpen,
     LucideBuilding2,
     LucideCalendarDays,
@@ -79,6 +81,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     LucideNotebookPen,
     LucideShieldCheck,
     LucideStar,
+    LucideUserRound,
     LucideUsers,
     LucideWallet,
   ],
@@ -91,6 +94,10 @@ export class AppShell implements OnInit {
 
   readonly user = this.auth.user;
   readonly accountStatusError = signal(false);
+  readonly initials = computed(() => {
+    const user = this.user();
+    return `${user?.firstName?.charAt(0) ?? ''}${user?.lastName?.charAt(0) ?? ''}`.toUpperCase();
+  });
   readonly menuItems = computed<NavigationItem[]>(() => {
     const role = this.auth.role();
     if (!role) {

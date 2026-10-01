@@ -1,0 +1,105 @@
+<div class="ss">
+  <a class="ss__back" routerLink="/parent/enfants">← Mes enfants</a>
+
+  @if (error()) {
+    <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p>
+  } @else if (child(); as c) {
+    <header class="ss__header">
+      <div>
+        <h1>{{ c.fullName }}</h1>
+        <p>{{ c.schoolName }} · {{ c.className ? c.className + ' (' + c.academicYearLabel + ')' : 'Pas d’inscription en cours' }}
+          · Matricule {{ c.registrationNumber }}</p>
+      </div>
+    </header>
+
+    <div class="ss__kpis">
+      <div class="ss__kpi" [class.ss__kpi--danger]="c.attendance.unjustifiedAbsences > 0">
+        <span>Absences</span><strong>{{ c.attendance.absences }}</strong>
+        <small class="ss__muted">{{ c.attendance.unjustifiedAbsences }} non justifiée(s)</small>
+      </div>
+      <div class="ss__kpi" [class.ss__kpi--warn]="c.attendance.lates > 0">
+        <span>Retards</span><strong>{{ c.attendance.lates }}</strong>
+      </div>
+      <div class="ss__kpi"><span>Frais payés</span><strong>{{ c.fees.totalPaid | number: '1.0-0' }} F</strong>
+        <small class="ss__muted">sur {{ c.fees.totalDue | number: '1.0-0' }} F</small></div>
+      <div class="ss__kpi" [class.ss__kpi--danger]="c.fees.overdueCount > 0" [class.ss__kpi--warn]="c.fees.balance > 0 && !c.fees.overdueCount">
+        <span>Reste à payer</span><strong>{{ c.fees.balance | number: '1.0-0' }} F</strong>
+        @if (c.fees.overdueCount) { <small class="ss__muted">{{ c.fees.overdueCount }} échéance(s) dépassée(s)</small> }
+      </div>
+    </div>
+
+    <div class="ss__tabs" role="tablist" aria-label="Dossier de l’enfant">
+      <button type="button" role="tab" class="ss__tab" [class.ss__tab--on]="tab() === 'notes'" [attr.aria-selected]="tab() === 'notes'" (click)="open('notes')">Notes & bulletins</button>
+      <button type="button" role="tab" class="ss__tab" [class.ss__tab--on]="tab() === 'emploi'" [attr.aria-selected]="tab() === 'emploi'" (click)="open('emploi')">Emploi du temps</button>
+      <button type="button" role="tab" class="ss__tab" [class.ss__tab--on]="tab() === 'absences'" [attr.aria-selected]="tab() === 'absences'" (click)="open('absences')">Absences</button>
+      <button type="button" role="tab" class="ss__tab" [class.ss__tab--on]="tab() === 'frais'" [attr.aria-selected]="tab() === 'frais'" (click)="open('frais')">Frais scolaires</button>
+    </div>
+
+    @if (tabError()) { <p class="ss__alert ss__alert--error" role="alert">{{ tabError() }}</p> }
+
+    @switch (tab()) {
+      @case ('notes') {
+        <app-student-grades-view [studentId]="studentId" />
+      }
+      @case ('emploi') {
+        @if (schedule(); as entries) { <app-schedule-view [entries]="entries" [showTeacher]="true" /> }
+        @else if (!tabError()) { <p class="ss__state">Chargement…</p> }
+      }
+      @case ('absences') {
+        @if (attendance(); as items) {
+          @if (!items.length) {
+            <p class="ss__state">Aucune absence ni retard enregistré.</p>
+          } @else {
+            <div class="ss__card ss__table-wrap">
+              <table class="ss__table">
+                <thead><tr><th>Date</th><th>Type</th><th>Justification</th></tr></thead>
+                <tbody>
+                  @for (a of items; track a.id) {
+                    <tr>
+                      <td>{{ a.date | date: 'dd/MM/yyyy' }}</td>
+                      <td>{{ attendanceLabels[a.status] }}</td>
+                      <td>@if (a.justification) { {{ a.justification }} } @else if (a.status === 'ABSENT') {
+                        <span class="ss__chip ss__chip--red">Non justifiée</span> } @else { — }</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        } @else if (!tabError()) { <p class="ss__state">Chargement…</p> }
+      }
+      @case ('frais') {
+        @if (invoices(); as items) {
+          @if (!items.length) {
+            <p class="ss__state">Aucune facture.</p>
+          } @else {
+            <div class="ss__card ss__table-wrap">
+              <table class="ss__table">
+                <thead>
+                  <tr><th>Frais</th><th>Échéance</th><th class="ss__num">Montant</th><th class="ss__num">Remise</th>
+                    <th class="ss__num">Payé</th><th class="ss__num">Reste</th><th>Statut</th></tr>
+                </thead>
+                <tbody>
+                  @for (i of items; track i.id) {
+                    <tr>
+                      <td>{{ i.feeName }}</td>
+                      <td>{{ i.dueDate | date: 'dd/MM/yyyy' }}</td>
+                      <td class="ss__num">{{ i.amountDue | number: '1.0-0' }} F</td>
+                      <td class="ss__num">{{ i.discountAmount ? (i.discountAmount | number: '1.0-0') + ' F' : '—' }}</td>
+                      <td class="ss__num">{{ i.paid | number: '1.0-0' }} F</td>
+                      <td class="ss__num"><strong>{{ i.balance | number: '1.0-0' }} F</strong></td>
+                      <td><span class="ss__chip" [class.ss__chip--red]="i.status === 'OVERDUE'"
+                                [class.ss__chip--amber]="i.status === 'PENDING'">{{ invoiceLabels[i.status] }}</span></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        } @else if (!tabError()) { <p class="ss__state">Chargement…</p> }
+      }
+    }
+  } @else {
+    <p class="ss__state">Chargement…</p>
+  }
+</div>

@@ -1,0 +1,87 @@
+@if (loading()) {
+  <p class="ss__state">Chargement des notes…</p>
+} @else if (error()) {
+  <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p>
+} @else if (data(); as d) {
+  @if (!d.className) {
+    <p class="ss__state">Aucune inscription en cours : les notes s’afficheront dès l’inscription dans une classe.</p>
+  } @else if (!d.periods.length) {
+    <p class="ss__state">{{ d.className }} · {{ d.academicYearLabel }} — aucune période de notation n’est encore définie.</p>
+  } @else {
+    <div class="ss__tabs" role="tablist" aria-label="Périodes">
+      @for (p of d.periods; track p.periodId) {
+        <button type="button" role="tab" class="ss__tab" [class.ss__tab--on]="p.periodId === selectedPeriodId()"
+                [attr.aria-selected]="p.periodId === selectedPeriodId()" (click)="selectedPeriodId.set(p.periodId)">
+          {{ p.periodName }}
+        </button>
+      }
+    </div>
+
+    @if (period(); as p) {
+      <section class="ss__card">
+        <header class="ss__card-head">
+          <h2>{{ p.periodName }} · {{ d.className }}</h2>
+          <span class="ss__chip" [class.ss__chip--amber]="!p.published">{{ statusLabels[p.status] }}</span>
+        </header>
+        <div class="ss__body">
+          @if (p.bulletin; as b) {
+            <div class="ss__summary">
+              <div><span>Moyenne générale</span><strong>{{ b.average === null ? '—' : (b.average | number: '1.2-2') }}</strong></div>
+              <div><span>Rang</span><strong>{{ b.rank ? b.rank + ' / ' + b.classSize : '—' }}</strong></div>
+              <div><span>Moyenne de la classe</span><strong>{{ p.classAverage === null ? '—' : (p.classAverage | number: '1.2-2') }}</strong></div>
+              <div><span>Mention</span><strong>{{ b.mention || '—' }}</strong></div>
+              <div><span>Absences</span><strong>{{ b.absences }} ({{ b.unjustifiedAbsences }} non justifiée(s))</strong></div>
+            </div>
+            <div class="ss__table-wrap">
+              <table class="ss__table">
+                <caption class="ss__muted" style="text-align:left;padding-bottom:.4rem">Bulletin</caption>
+                <thead>
+                  <tr><th>Matière</th><th class="ss__num">Coef.</th><th class="ss__num">Moyenne</th>
+                    <th class="ss__num">Moy. classe</th><th>Appréciation</th></tr>
+                </thead>
+                <tbody>
+                  @for (line of b.lines; track line.subjectName) {
+                    <tr>
+                      <td>{{ line.subjectName }} @if (line.teacherName) { <span class="ss__muted">· {{ line.teacherName }}</span> }</td>
+                      <td class="ss__num">{{ line.coefficient | number: '1.0-2' }}</td>
+                      <td class="ss__num">{{ line.average === null ? '—' : (line.average | number: '1.2-2') }}</td>
+                      <td class="ss__num">{{ line.classAverage === null ? '—' : (line.classAverage | number: '1.2-2') }}</td>
+                      <td>{{ line.appreciation || '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            @if (b.comment) { <p><strong>Appréciation générale :</strong> {{ b.comment }}</p> }
+          } @else if (!p.published) {
+            <p class="ss__alert ss__alert--info">Les moyennes et le bulletin seront disponibles après la publication des résultats par l’école.</p>
+          }
+
+          <h3 style="margin:0;font-size:.95rem;color:#14532d">Détail des notes</h3>
+          @if (!p.grades.length) {
+            <p class="ss__state">Aucune note pour cette période.</p>
+          } @else {
+            <div class="ss__table-wrap">
+              <table class="ss__table">
+                <thead>
+                  <tr><th>Date</th><th>Matière</th><th>Évaluation</th><th class="ss__num">Note</th><th class="ss__num">Sur 20</th></tr>
+                </thead>
+                <tbody>
+                  @for (g of p.grades; track g.id) {
+                    <tr>
+                      <td>{{ g.date | date: 'dd/MM/yyyy' }}</td>
+                      <td>{{ g.subjectName }}</td>
+                      <td>{{ g.title || g.type }}</td>
+                      <td class="ss__num">{{ g.value | number: '1.0-2' }} / {{ g.maxValue | number: '1.0-2' }}</td>
+                      <td class="ss__num">{{ on20(g.value, g.maxValue) | number: '1.2-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  }
+}

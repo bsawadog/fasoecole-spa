@@ -1,5 +1,6 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { AuthService, ApprovalRole, RegistrationSchool } from '../../../../core/auth';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AuthService, ApprovalRole, RegistrationSchool, SchoolAccessRequest, SchoolAccessService } from '../../../../core/auth';
 import { UserDto } from '../../../../core/models';
 
 interface ApprovalSelection {
@@ -15,8 +16,13 @@ interface ApprovalSelection {
 })
 export class Approvals implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly schoolAccess = inject(SchoolAccessService);
 
   readonly pending = signal<UserDto[]>([]);
+  readonly accessRequests = signal<SchoolAccessRequest[]>([]);
+  readonly manualRequests = computed(() => this.accessRequests().filter((r) => r.status !== 'AUTO_APPROVED'));
+  readonly autoApproved = computed(() => this.accessRequests().filter((r) => r.status === 'AUTO_APPROVED'));
+  readonly decidingAccessId = signal<number | null>(null);
   readonly schools = signal<RegistrationSchool[]>([]);
   readonly selections = signal<Record<number, ApprovalSelection>>({});
   readonly loading = signal(true);
@@ -40,6 +46,65 @@ export class Approvals implements OnInit {
       error: () => {
         this.loading.set(false);
         this.errorMessage.set('Impossible de charger vos établissements.');
+      },
+    });
+    this.schoolAccess.pending().subscribe({
+      next: (requests) => this.accessRequests.set(requests),
+      error: () => this.errorMessage.set('Impossible de charger les demandes d’accès à vos établissements.'),
+    });
+  }
+
+  decideAccess(request: SchoolAccessRequest, approve: boolean): void {
+    if (this.decidingAccessId() !== null) {
+      return;
+    }
+    this.decidingAccessId.set(request.id);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    const decision = approve ? this.schoolAccess.approve(request.id) : this.schoolAccess.reject(request.id);
+    decision.subscribe({
+      next: () => {
+        this.accessRequests.update((list) => list.filter((r) => r.id !== request.id));
+        this.decidingAccessId.set(null);
+        const name = `${request.firstName} ${request.lastName}`;
+        this.successMessage.set(
+          approve
+            ? `${name} a maintenant accès à ${request.schoolName}.`
+            : `La demande de ${name} pour ${request.schoolName} a été refusée.`
+        );
+      },
+      error: (err: unknown) => {
+        this.decidingAccessId.set(null);
+        const message = err instanceof HttpErrorResponse ? err.error?.message : null;
+        this.errorMessage.set(typeof message === 'string' && message ? message : 'Le traitement de la demande a échoué.');
+      },
+    });
+  }
+
+  /** Accès accordé automatiquement : le propriétaire le confirme ou le retire. */
+  decideAutomatic(request: SchoolAccessRequest, keep: boolean): void {
+    if (this.decidingAccessId() !== null) {
+      return;
+    }
+    this.decidingAccessId.set(request.id);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    const decision = keep ? this.schoolAccess.confirm(request.id) : this.schoolAccess.revoke(request.id);
+    decision.subscribe({
+      next: () => {
+        this.accessRequests.update((list) => list.filter((r) => r.id !== request.id));
+        this.decidingAccessId.set(null);
+        const name = `${request.firstName} ${request.lastName}`;
+        this.successMessage.set(
+          keep
+            ? `L’accès de ${name} à ${request.schoolName} est confirmé.`
+            : `${name} n’a plus accès à ${request.schoolName}. Le système ne lui redonnera pas cet accès automatiquement.`
+        );
+      },
+      error: (err: unknown) => {
+        this.decidingAccessId.set(null);
+        const message = err instanceof HttpErrorResponse ? err.error?.message : null;
+        this.errorMessage.set(typeof message === 'string' && message ? message : 'Le traitement de l’accès a échoué.');
       },
     });
   }

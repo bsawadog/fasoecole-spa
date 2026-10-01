@@ -8,6 +8,8 @@ export interface User {
   phone?: string;
   role: Role;
   approved: boolean;
+  /** Faux tant que l'adresse courriel n'a pas été confirmée par lien. */
+  emailVerified?: boolean;
   requestedSchoolId: number | null;
   requestedSchoolName: string | null;
   requestedSchoolType: string | null;

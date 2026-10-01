@@ -45,9 +45,15 @@
         @for (parent of d.parents; track parent.parentId) {
           <div class="student-detail__parent">
             <strong>{{ parent.lastName }} {{ parent.firstName }}</strong>
-            <span class="student-detail__muted">{{ parent.email }}</span>
+            @if (parent.email) { <span class="student-detail__muted">{{ parent.email }}</span> }
+            @if (parent.phone) { <span class="student-detail__muted">{{ parent.phone }}</span> }
             @if (parent.relationship) { <span class="student-detail__muted">({{ parent.relationship }})</span> }
-            <a class="student-detail__contact-btn student-detail__no-print" [href]="'mailto:' + parent.email" title="Contacter par courriel">✉️ Contacter</a>
+            @if (parent.email) {
+              <a class="student-detail__contact-btn student-detail__no-print" [href]="'mailto:' + parent.email" title="Contacter par courriel">✉️ Contacter</a>
+            }
+            @if (parent.phone) {
+              <a class="student-detail__contact-btn student-detail__no-print" [href]="'tel:' + parent.phone" title="Appeler">📞 Appeler</a>
+            }
           </div>
         } @empty {
           <p class="student-detail__muted">Aucun parent associé</p>

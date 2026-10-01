@@ -1,14 +1,18 @@
 .shell {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 
   &__sidebar {
     width: 260px;
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     background: #111827;
     color: #f9fafb;
     padding: 1.25rem 1rem;
+    overflow-y: auto;
   }
 
   &__brand {
@@ -24,7 +28,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    flex: 1;
   }
 
   &__nav-link {
@@ -51,53 +54,126 @@
     }
   }
 
-  &__user {
+  &__content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: #f3f4f6;
+    overflow-y: auto;
+  }
+
+  // Barre d'actions du compte : reste visible pendant le défilement de la page.
+  &__topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.65rem 2rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fff;
+  }
+
+  &__profile-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+    margin-right: auto;
+    padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+    border-radius: 999px;
+    color: #111827;
+    text-decoration: none;
+
+    &:hover,
+    &--active {
+      background: #eff6ff;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #2563eb;
+      outline-offset: 2px;
+    }
+  }
+
+  &__avatar {
+    display: grid;
+    flex: 0 0 2.25rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    background: #2563eb;
+    font-size: 0.8rem;
+    font-weight: 700;
   }
 
   &__user-info {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     font-size: 0.85rem;
 
+    strong,
     small {
-      color: #9ca3af;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    small {
+      color: #6b7280;
       text-transform: capitalize;
     }
   }
 
-  &__logout {
-    display: grid;
-    width: 2.5rem;
-    height: 2.5rem;
+  &__action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     flex: 0 0 auto;
-    place-items: center;
-    border: 0;
-    border-radius: 50%;
-    color: #e5e7eb;
-    background: transparent;
+    padding: 0.5rem 0.8rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #1f2937;
+    background: #fff;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
     cursor: pointer;
 
-    &:hover {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.1);
+    &:hover,
+    &--active {
+      border-color: #2563eb;
+      color: #1d4ed8;
+      background: #eff6ff;
     }
 
     &:focus-visible {
-      outline: 2px solid #93c5fd;
+      outline: 2px solid #2563eb;
       outline-offset: 2px;
+    }
+
+    &--logout {
+      border-color: #fecaca;
+      color: #b91c1c;
+
+      &:hover {
+        border-color: #b91c1c;
+        color: #991b1b;
+        background: #fef2f2;
+      }
     }
   }
 
-  &__content {
+  &__page {
     flex: 1;
-    background: #f3f4f6;
     padding: 2rem;
-    overflow-y: auto;
   }
 
   &__status {
@@ -137,10 +213,14 @@
 @media (max-width: 700px) {
   .shell {
     flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
 
     &__sidebar {
       width: auto;
       padding: 1rem;
+      overflow: visible;
     }
 
     &__brand {
@@ -152,31 +232,54 @@
       flex-wrap: wrap;
     }
 
-    &__user {
-      margin-top: 1rem;
+    &__content {
+      overflow: visible;
     }
 
-    &__content {
+    &__topbar {
+      padding: 0.5rem 0.75rem;
+    }
+
+    &__user-info {
+      display: none;
+    }
+
+    &__page {
       padding: 1.25rem;
     }
+  }
+}
+
+@media (max-width: 420px) {
+  .shell__action span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 }
 
 @media print {
   .shell {
     display: block;
-    min-height: auto;
+    height: auto;
+    overflow: visible;
   }
 
   .shell__sidebar,
+  .shell__topbar,
   .shell__status {
     display: none !important;
   }
 
   .shell__content {
-    padding: 0;
     overflow: visible;
     background: #fff;
   }
-}
 
+  .shell__page {
+    padding: 0;
+  }
+}

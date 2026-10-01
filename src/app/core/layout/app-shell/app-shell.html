@@ -7,7 +7,8 @@
 
     <nav class="shell__nav">
       @for (item of menuItems(); track item.routerLink) {
-        <a [routerLink]="item.routerLink" class="shell__nav-link" routerLinkActive="shell__nav-link--active">
+        <a [routerLink]="item.routerLink" class="shell__nav-link" routerLinkActive="shell__nav-link--active"
+           [routerLinkActiveOptions]="{ exact: item.icon === 'home' }">
           @switch (item.icon) {
             @case ('home') { <svg lucideHouse [size]="19" aria-hidden="true"></svg> }
             @case ('building') { <svg lucideBuilding2 [size]="19" aria-hidden="true"></svg> }
@@ -25,19 +26,29 @@
         </a>
       }
     </nav>
-
-    <div class="shell__user">
-      <div class="shell__user-info">
-        <strong>{{ user()?.firstName }} {{ user()?.lastName }}</strong>
-        <small>{{ roleLabel() }}</small>
-      </div>
-      <button class="shell__logout" type="button" aria-label="Se déconnecter" (click)="logout()">
-        <svg lucideLogOut [size]="19" aria-hidden="true"></svg>
-      </button>
-    </div>
   </aside>
 
   <main class="shell__content">
+    <header class="shell__topbar">
+      <a routerLink="/profil" class="shell__profile-link" routerLinkActive="shell__profile-link--active"
+         title="Voir mon profil">
+        <span class="shell__avatar" aria-hidden="true">{{ initials() }}</span>
+        <span class="shell__user-info">
+          <strong>{{ user()?.firstName }} {{ user()?.lastName }}</strong>
+          <small>{{ roleLabel() }}</small>
+        </span>
+      </a>
+      <a routerLink="/profil" class="shell__action" routerLinkActive="shell__action--active">
+        <svg lucideUserRound [size]="18" aria-hidden="true"></svg>
+        <span>Mon profil</span>
+      </a>
+      <button class="shell__action shell__action--logout" type="button" (click)="logout()">
+        <svg lucideLogOut [size]="18" aria-hidden="true"></svg>
+        <span>Se déconnecter</span>
+      </button>
+    </header>
+
+    <div class="shell__page">
     @if (accountStatusError()) {
       <section class="shell__status shell__status--error" role="alert">
         Impossible de vérifier l’état du compte. Certaines informations peuvent ne pas être à jour.
@@ -62,5 +73,6 @@
       }
     }
     <router-outlet />
+    </div>
   </main>
 </div>

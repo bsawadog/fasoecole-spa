@@ -1,10 +1,11 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { forkJoin, Subscription } from 'rxjs';
+import { catchError, forkJoin, of, Subscription } from 'rxjs';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import {
+  AcademicYearRecord,
   ClassRecord,
   ClassRosterRow,
   CreateRosterStudentPayload,
@@ -59,6 +60,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   readonly selectedSchoolId = signal<number | null>(null);
   readonly classes = signal<ClassRecord[]>([]);
   readonly levels = signal<LevelRecord[]>([]);
+  readonly years = signal<AcademicYearRecord[]>([]);
   readonly selectedClassId = signal<number | null>(null);
   readonly rows = signal<ClassRosterRow[]>([]);
   readonly loading = signal(true);
@@ -70,6 +72,8 @@ export class ClassRoster implements OnInit, OnDestroy {
   readonly editingStudentId = signal<number | null>(null);
   readonly editingParentId = signal<number | null>(null);
   readonly addingStudent = signal(false);
+  readonly transferringStudentId = signal<number | null>(null);
+  transferTargetId: number | null = null;
   studentForm: StudentEditForm = this.emptyStudentForm();
   parentForm: ParentEditForm = this.emptyParentForm();
   newStudentForm: NewStudentForm = this.emptyNewStudentForm();
@@ -135,6 +139,7 @@ export class ClassRoster implements OnInit, OnDestroy {
 
   startEditStudent(row: ClassRosterRow): void {
     this.editingParentId.set(null);
+    this.transferringStudentId.set(null);
     this.editingStudentId.set(row.studentId);
     this.studentForm = {
       firstName: row.firstName,
@@ -150,11 +155,12 @@ export class ClassRoster implements OnInit, OnDestroy {
 
   startEditParent(parent: RosterParent): void {
     this.editingStudentId.set(null);
+    this.transferringStudentId.set(null);
     this.editingParentId.set(parent.parentId);
     this.parentForm = {
       firstName: parent.firstName,
       lastName: parent.lastName,
-      email: parent.email,
+      email: parent.email ?? '',
       phone: parent.phone ?? '',
     };
     this.errorMessage.set(null);
@@ -163,6 +169,65 @@ export class ClassRoster implements OnInit, OnDestroy {
   cancelEdit(): void {
     this.editingStudentId.set(null);
     this.editingParentId.set(null);
+    this.transferringStudentId.set(null);
+  }
+
+  transferTargets(): ClassRecord[] {
+    const currentId = this.selectedClassId();
+    if (currentId === null) return [];
+    return this.classes().filter((c) => c.id !== currentId);
+  }
+
+  transferTargetGroups(): { label: string; classes: ClassRecord[] }[] {
+    const current = this.classes().find((c) => c.id === this.selectedClassId());
+    const groups = new Map<number, ClassRecord[]>();
+    for (const target of this.transferTargets()) {
+      groups.set(target.academicYearId, [...(groups.get(target.academicYearId) ?? []), target]);
+    }
+    return [...groups.entries()]
+      .sort(([a], [b]) => (a === current?.academicYearId ? -1 : b === current?.academicYearId ? 1 : a - b))
+      .map(([yearId, items]) => ({
+        label: this.years().find((y) => y.id === yearId)?.label ?? 'Année scolaire',
+        classes: [...items].sort((x, y) => this.className(x).localeCompare(this.className(y))),
+      }));
+  }
+
+  private transferLabel(target: ClassRecord): string {
+    const year = this.years().find((y) => y.id === target.academicYearId)?.label;
+    return year ? `${this.className(target)} (${year})` : this.className(target);
+  }
+
+  startTransfer(row: ClassRosterRow): void {
+    this.cancelEdit();
+    this.transferringStudentId.set(row.studentId);
+    this.transferTargetId = this.transferTargetGroups()[0]?.classes[0]?.id ?? null;
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+  }
+
+  async confirmTransfer(row: ClassRosterRow): Promise<void> {
+    const classId = this.selectedClassId();
+    const target = this.transferTargets().find((c) => c.id === Number(this.transferTargetId));
+    if (!classId || !target) {
+      this.errorMessage.set('Veuillez choisir la classe de destination.');
+      return;
+    }
+    const targetLabel = this.transferLabel(target);
+    if (!await this.confirmation.confirm({
+      title: 'Transférer cet élève ?',
+      message: `${row.firstName} ${row.lastName} sera transféré(e) en ${targetLabel}. Sa fiche, ses notes, ses présences, ses paiements et ses parents sont conservés.`,
+      confirmLabel: 'Transférer',
+    })) return;
+    this.saving.set(true);
+    this.api.transferRosterStudent(classId, row.studentId, target.id).subscribe({
+      next: () => {
+        this.rows.update((rows) => rows.filter((r) => r.studentId !== row.studentId));
+        this.saving.set(false);
+        this.transferringStudentId.set(null);
+        this.successMessage.set(`${row.firstName} ${row.lastName} a été transféré(e) en ${targetLabel}. Sa fiche est conservée.`);
+      },
+      error: (err) => this.fail(err?.error?.message ?? 'Le transfert de l’élève a échoué.'),
+    });
   }
 
   openAddStudent(): void {
@@ -180,7 +245,7 @@ export class ClassRoster implements OnInit, OnDestroy {
     const classId = this.selectedClassId();
     if (!classId || !this.newStudentForm.firstName.trim() || !this.newStudentForm.lastName.trim() ||
       !this.newStudentForm.email.trim() || !this.newStudentForm.password.trim() ||
-      this.newStudentForm.password.trim().length < 8 || !this.newStudentForm.registrationNumber.trim()) {
+      this.newStudentForm.password.trim().length < 8) {
       this.errorMessage.set('Veuillez remplir tous les champs obligatoires (mot de passe : 8 caractères minimum).');
       return;
     }
@@ -191,7 +256,7 @@ export class ClassRoster implements OnInit, OnDestroy {
       email: this.newStudentForm.email.trim(),
       password: this.newStudentForm.password.trim(),
       phone: this.newStudentForm.phone.trim() || null,
-      registrationNumber: this.newStudentForm.registrationNumber.trim(),
+      registrationNumber: this.newStudentForm.registrationNumber.trim() || null,
       birthDate: this.newStudentForm.birthDate || null,
       gender: this.newStudentForm.gender || null,
     };
@@ -254,15 +319,14 @@ export class ClassRoster implements OnInit, OnDestroy {
 
   saveParent(parentId: number, studentId: number): void {
     const classId = this.selectedClassId();
-    if (!classId || !this.parentForm.firstName.trim() || !this.parentForm.lastName.trim() ||
-      !this.parentForm.email.trim()) {
+    if (!classId || !this.parentForm.firstName.trim() || !this.parentForm.lastName.trim()) {
       return;
     }
     this.saving.set(true);
     this.api.updateRosterParent(classId, parentId, {
       firstName: this.parentForm.firstName.trim(),
       lastName: this.parentForm.lastName.trim(),
-      email: this.parentForm.email.trim(),
+      email: this.parentForm.email.trim() || null,
       phone: this.parentForm.phone.trim() || null,
     }).subscribe({
       next: (updated) => {
@@ -271,7 +335,7 @@ export class ClassRoster implements OnInit, OnDestroy {
         this.editingParentId.set(null);
         this.successMessage.set('Les informations du parent ont été mises à jour.');
       },
-      error: () => this.fail('La mise à jour du parent a échoué.'),
+      error: (err) => this.fail(err?.error?.message ?? 'La mise à jour du parent a échoué.'),
     });
   }
 
@@ -288,10 +352,12 @@ export class ClassRoster implements OnInit, OnDestroy {
     this.request = forkJoin({
       classes: this.api.getClasses(schoolId),
       levels: this.api.getLevels(schoolId),
+      years: this.api.getAcademicYears(schoolId).pipe(catchError(() => of([] as AcademicYearRecord[]))),
     }).subscribe({
       next: (data) => {
         this.classes.set(data.classes);
         this.levels.set(data.levels);
+        this.years.set(data.years);
         this.loading.set(false);
         if (data.classes.length > 0) this.selectClass(data.classes[0].id);
       },
