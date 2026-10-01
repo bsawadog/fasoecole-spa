@@ -82,7 +82,7 @@ export class ClassRoster implements OnInit, OnDestroy {
       return;
     }
 
-    this.auth.getOwnedSchools(ownerId).subscribe({
+    this.auth.getOwnedSchools(ownerId, 'STUDENTS').subscribe({
       next: (schools) => {
         this.schools.set(schools);
         if (schools.length === 0) {

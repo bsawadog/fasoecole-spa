@@ -85,7 +85,7 @@ export class FinancePage implements OnInit, OnDestroy {
       this.error.set('Impossible d’identifier votre compte propriétaire.');
       return;
     }
-    this.auth.getOwnedSchools(ownerId).subscribe({
+    this.auth.getOwnedSchools(ownerId, 'FINANCE').subscribe({
       next: schools => {
         this.schools.set(schools);
         if (!schools.length) { this.loading.set(false); return; }

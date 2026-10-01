@@ -33,6 +33,8 @@ export interface ClassSubject {
   subjectId: number;
   subjectName: string;
   coefficient: number;
+  defaultCoefficient: number;
+  overridden: boolean;
   assignments: { classSubjectTeacherId: number; teacherId: number; teacherName: string; active: boolean }[];
 }
 
@@ -268,6 +270,10 @@ export class GradesService {
 
   updateCoefficient(classId: number, subjectId: number, coefficient: number): Observable<ClassSubject[]> {
     return this.http.put<ClassSubject[]>(`${this.api}/classes/${classId}/subjects/${subjectId}/coefficient`, { coefficient });
+  }
+
+  resetCoefficient(classId: number, subjectId: number): Observable<ClassSubject[]> {
+    return this.http.delete<ClassSubject[]>(`${this.api}/classes/${classId}/subjects/${subjectId}/coefficient`);
   }
 
   evaluations(classId: number, periodId: number): Observable<EvaluationInfo[]> {

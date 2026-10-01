@@ -28,6 +28,7 @@ describe('GradesPage', () => {
           passRate: 75, reportCards: 0 }],
       })),
       subjects: vi.fn(() => of([{ subjectId: 41, subjectName: 'Mathématiques', coefficient: 2,
+        defaultCoefficient: 2, overridden: false,
         assignments: [{ classSubjectTeacherId: 31, teacherId: 8, teacherName: 'Paul Ouédraogo', active: true }] }])),
       evaluations: vi.fn(() => of([evaluation])),
       sheet: vi.fn(() => of({ evaluation, period, className: '6e A', rows: [

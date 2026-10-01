@@ -155,6 +155,8 @@
             @if (academicKind() === 'subjects') {
               <label>Nom de la matière<input name="subjectName" [(ngModel)]="academicForm.name" placeholder="Mathématiques" required maxlength="100"></label>
               <label>Code<input name="subjectCode" [(ngModel)]="academicForm.code" placeholder="MATH" maxlength="30"></label>
+              <label>Coefficient par défaut<input name="subjectCoefficient" type="number" min="0.25" max="20" step="0.25" [(ngModel)]="academicForm.coefficient" required></label>
+              <p class="owner-management__wide owner-management__hint">Appliqué à toutes les classes ; il reste ajustable par classe dans « Notes &amp; bulletins ».</p>
             }
             @if (academicError()) {
               <p class="owner-management__message owner-management__message--error owner-management__wide" role="alert">{{ academicError() }}</p>

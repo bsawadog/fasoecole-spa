@@ -1,0 +1,147 @@
+<section class="stf">
+  <header class="stf__header">
+    <div class="stf__identity">
+      <span class="stf__header-icon" aria-hidden="true">🔑</span>
+      <div>
+        <h1>Personnel &amp; accès</h1>
+        <p>Ouvrez des comptes à votre équipe (directeur, comptable, secrétaire…) et choisissez les modules auxquels chacun a accès.</p>
+      </div>
+    </div>
+    @if (schools().length > 1) {
+      <label class="stf__school-picker">Choisir un établissement
+        <select class="stf__select" [ngModel]="schoolId()" (change)="changeSchool($event)">
+          @for (school of schools(); track school.id) { <option [value]="school.id">{{ school.name }}</option> }
+        </select>
+      </label>
+    }
+  </header>
+
+  @if (error()) { <div class="stf__alert stf__alert--error" role="alert">{{ error() }}</div> }
+  @if (success()) { <div class="stf__alert stf__alert--success" role="status">{{ success() }}</div> }
+
+  @if (credentials(); as c) {
+    <div class="stf__credentials" role="status">
+      <div>
+        <strong>Identifiants de {{ c.name }}</strong>
+        <p>Identifiant : <code>{{ c.email }}</code> · Mot de passe provisoire : <code>{{ c.password }}</code></p>
+        <small>
+          @if (c.emailSent) { Ils ont aussi été envoyés par e-mail. } @else { L’e-mail n’a pas pu être envoyé : transmettez-les vous-même. }
+          Ce mot de passe ne sera plus affiché.
+        </small>
+      </div>
+      <div class="stf__actions">
+        <button type="button" class="stf__btn stf__btn--ghost" (click)="copyCredentials()">Copier</button>
+        <button type="button" class="stf__btn" (click)="credentials.set(null)">J’ai noté</button>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="stf__state">Chargement…</p>
+  } @else if (!schools().length) {
+    <p class="stf__state">Aucun établissement associé à votre compte.</p>
+  } @else {
+    <div class="stf__card">
+      <div class="stf__card-head">
+        <h2>Membres du personnel</h2>
+        <span class="stf__count">{{ activeCount() }} actif(s) / {{ staff().length }}</span>
+        <button type="button" class="stf__btn stf__btn--green" (click)="openCreate()" [disabled]="busy()">+ Ajouter un membre</button>
+      </div>
+
+      @if (formOpen()) {
+        <form class="stf__panel" (ngSubmit)="save()">
+          <h3>{{ editing ? 'Modifier ' + editing.firstName + ' ' + editing.lastName : 'Nouveau membre du personnel' }}</h3>
+          @if (!editing) {
+            <div class="stf__presets">
+              <span>Profils types :</span>
+              @for (p of presets; track p.title) {
+                <button type="button" class="stf__chip" (click)="applyPreset(p)">{{ p.title }}</button>
+              }
+            </div>
+          }
+          <div class="stf__form">
+            <label>Prénom
+              <input name="firstName" [(ngModel)]="form.firstName" [disabled]="!!editing && !editing.managedAccount" required />
+            </label>
+            <label>Nom
+              <input name="lastName" [(ngModel)]="form.lastName" [disabled]="!!editing && !editing.managedAccount" required />
+            </label>
+            <label>E-mail (identifiant)
+              <input name="email" type="email" [(ngModel)]="form.email" [disabled]="!!editing" required />
+            </label>
+            <label>Téléphone
+              <input name="phone" [(ngModel)]="form.phone" [disabled]="!!editing && !editing.managedAccount" />
+            </label>
+            <label>Fonction
+              <input name="jobTitle" [(ngModel)]="form.jobTitle" list="stf-titles" maxlength="80" required />
+              <datalist id="stf-titles">
+                @for (p of presets; track p.title) { <option [value]="p.title"></option> }
+              </datalist>
+            </label>
+          </div>
+          @if (editing && !editing.managedAccount) {
+            <p class="stf__muted">Ce compte est aussi utilisé ailleurs sur la plateforme : seuls la fonction et les accès sont modifiables ici.</p>
+          }
+          <fieldset class="stf__modules">
+            <legend>Modules autorisés</legend>
+            @for (m of modules; track m.code) {
+              <label class="stf__module" [class.stf__module--on]="form.modules.has(m.code)">
+                <input type="checkbox" [checked]="form.modules.has(m.code)"
+                       (change)="toggleModule(m.code, $any($event.target).checked)" />
+                <span><strong>{{ m.label }}</strong><small>{{ m.hint }}</small></span>
+              </label>
+            }
+          </fieldset>
+          <p class="stf__muted">Les demandes de compte et la gestion du personnel restent réservées au propriétaire.</p>
+          <div class="stf__actions">
+            <button type="submit" class="stf__btn" [disabled]="busy()">{{ editing ? 'Enregistrer' : 'Créer le compte' }}</button>
+            <button type="button" class="stf__btn stf__btn--ghost" (click)="closeForm()">Annuler</button>
+          </div>
+        </form>
+      }
+
+      @if (!staff().length) {
+        <p class="stf__empty">Aucun membre du personnel pour le moment. Ajoutez un directeur, un comptable ou une secrétaire pour déléguer une partie de la gestion.</p>
+      } @else {
+        <div class="stf__table-wrap">
+          <table class="stf__table">
+            <thead>
+              <tr><th>Membre</th><th>Fonction</th><th>Modules</th><th>Statut</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              @for (s of staff(); track s.id) {
+                <tr [class.stf__off]="!s.active">
+                  <td>
+                    <strong>{{ s.lastName }} {{ s.firstName }}</strong>
+                    <div class="stf__muted">{{ s.email }}@if (s.phone) { · {{ s.phone }} }</div>
+                  </td>
+                  <td>{{ s.jobTitle }}</td>
+                  <td>
+                    <div class="stf__tags">
+                      @for (m of s.modules; track m) { <span class="stf__tag">{{ moduleLabel(m) }}</span> }
+                    </div>
+                  </td>
+                  <td>
+                    <span class="stf__badge" [class.stf__badge--on]="s.active">{{ s.active ? 'Actif' : 'Suspendu' }}</span>
+                  </td>
+                  <td>
+                    <div class="stf__row-actions">
+                      <button type="button" class="stf__mini" (click)="openEdit(s)" [disabled]="busy()">Modifier</button>
+                      <button type="button" class="stf__mini" (click)="toggleActive(s)" [disabled]="busy()">
+                        {{ s.active ? 'Suspendre' : 'Réactiver' }}
+                      </button>
+                      @if (s.managedAccount) {
+                        <button type="button" class="stf__mini" (click)="resetPassword(s)" [disabled]="busy()">Nouveau mot de passe</button>
+                      }
+                      <button type="button" class="stf__mini stf__mini--danger" (click)="remove(s)" [disabled]="busy()">Retirer</button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</section>

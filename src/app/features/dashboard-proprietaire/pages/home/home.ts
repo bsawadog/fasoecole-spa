@@ -69,7 +69,7 @@ export class ProprietaireHome implements OnDestroy, OnInit {
       return;
     }
 
-    this.auth.getOwnedSchools(ownerId).subscribe({
+    this.auth.getOwnedSchools(ownerId, 'DASHBOARD').subscribe({
       next: (schools) => {
         this.schools.set(schools);
         if (schools.length === 0) {

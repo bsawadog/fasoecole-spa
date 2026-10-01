@@ -18,6 +18,8 @@
             @case ('book') { <svg lucideBookOpen [size]="19" aria-hidden="true"></svg> }
             @case ('graduation') { <svg lucideGraduationCap [size]="19" aria-hidden="true"></svg> }
             @case ('wallet') { <svg lucideWallet [size]="19" aria-hidden="true"></svg> }
+            @case ('chart') { <svg lucideChartPie [size]="19" aria-hidden="true"></svg> }
+            @case ('shield') { <svg lucideShieldCheck [size]="19" aria-hidden="true"></svg> }
           }
           <span>{{ item.label }}</span>
         </a>
@@ -27,7 +29,7 @@
     <div class="shell__user">
       <div class="shell__user-info">
         <strong>{{ user()?.firstName }} {{ user()?.lastName }}</strong>
-        <small>{{ user()?.role }}</small>
+        <small>{{ roleLabel() }}</small>
       </div>
       <button class="shell__logout" type="button" aria-label="Se déconnecter" (click)="logout()">
         <svg lucideLogOut [size]="19" aria-hidden="true"></svg>

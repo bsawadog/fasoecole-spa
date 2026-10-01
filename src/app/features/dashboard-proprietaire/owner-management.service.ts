@@ -45,6 +45,7 @@ export interface SubjectRecord {
   schoolId: number;
   name: string;
   code: string;
+  coefficient?: number;
 }
 
 export interface FeeTypeRecord {

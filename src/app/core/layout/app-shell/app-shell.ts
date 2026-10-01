@@ -4,24 +4,28 @@ import {
   LucideBookOpen,
   LucideBuilding2,
   LucideCalendarDays,
+  LucideChartPie,
   LucideClock3,
   LucideGraduationCap,
   LucideHouse,
   LucideLogOut,
   LucideNotebookPen,
+  LucideShieldCheck,
   LucideStar,
   LucideUsers,
   LucideWallet,
 } from '@lucide/angular';
-import { AuthService } from '../../auth';
+import { AuthService, OwnerModule } from '../../auth';
 import { Role } from '../../models';
 import { catchError, EMPTY, exhaustMap, filter, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface NavigationItem {
   label: string;
-  icon: 'home' | 'building' | 'users' | 'notes' | 'calendar' | 'star' | 'book' | 'graduation' | 'wallet';
+  icon: 'home' | 'building' | 'users' | 'notes' | 'calendar' | 'star' | 'book' | 'graduation' | 'wallet' | 'chart' | 'shield';
   routerLink: string;
+  /** Espace propriétaire : module requis pour le personnel ; null = réservé au propriétaire. */
+  module?: OwnerModule | null;
 }
 
 const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
@@ -31,13 +35,15 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Utilisateurs', icon: 'users', routerLink: '/admin/utilisateurs' },
   ],
   proprietaire: [
-    { label: 'Accueil', icon: 'home', routerLink: '/proprietaire' },
-    { label: 'Demandes de compte', icon: 'users', routerLink: '/proprietaire/demandes' },
-    { label: 'Gestion de l’école', icon: 'book', routerLink: '/proprietaire/gestion' },
-    { label: 'Élèves par classe', icon: 'graduation', routerLink: '/proprietaire/classes' },
-    { label: 'Enseignants par classe', icon: 'users', routerLink: '/proprietaire/enseignants' },
-    { label: 'Frais & paiements', icon: 'wallet', routerLink: '/proprietaire/frais' },
-    { label: 'Notes & bulletins', icon: 'notes', routerLink: '/proprietaire/notes' },
+    { label: 'Accueil', icon: 'home', routerLink: '/proprietaire', module: 'DASHBOARD' },
+    { label: 'Demandes de compte', icon: 'users', routerLink: '/proprietaire/demandes', module: null },
+    { label: 'Gestion de l’école', icon: 'book', routerLink: '/proprietaire/gestion', module: 'MANAGEMENT' },
+    { label: 'Élèves par classe', icon: 'graduation', routerLink: '/proprietaire/classes', module: 'STUDENTS' },
+    { label: 'Enseignants par classe', icon: 'users', routerLink: '/proprietaire/enseignants', module: 'TEACHERS' },
+    { label: 'Frais & paiements', icon: 'wallet', routerLink: '/proprietaire/frais', module: 'FINANCE' },
+    { label: 'Dépenses & budget', icon: 'chart', routerLink: '/proprietaire/depenses', module: 'EXPENSES' },
+    { label: 'Notes & bulletins', icon: 'notes', routerLink: '/proprietaire/notes', module: 'GRADES' },
+    { label: 'Personnel & accès', icon: 'shield', routerLink: '/proprietaire/personnel', module: null },
   ],
   enseignant: [
     { label: 'Accueil', icon: 'home', routerLink: '/enseignant' },
@@ -64,11 +70,13 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     LucideBookOpen,
     LucideBuilding2,
     LucideCalendarDays,
+    LucideChartPie,
     LucideClock3,
     LucideGraduationCap,
     LucideHouse,
     LucideLogOut,
     LucideNotebookPen,
+    LucideShieldCheck,
     LucideStar,
     LucideUsers,
     LucideWallet,
@@ -84,7 +92,26 @@ export class AppShell implements OnInit {
   readonly accountStatusError = signal(false);
   readonly menuItems = computed<NavigationItem[]>(() => {
     const role = this.auth.role();
-    return role ? MENU_BY_ROLE[role] : [];
+    if (!role) {
+      return [];
+    }
+    if (role !== 'proprietaire' || this.auth.isSchoolOwner()) {
+      return MENU_BY_ROLE[role];
+    }
+    const allowed = this.auth.ownerModules();
+    return MENU_BY_ROLE[role].filter((item) => !!item.module && allowed.has(item.module));
+  });
+  /** Libellé affiché sous le nom : fonction du membre du personnel, sinon le rôle. */
+  readonly roleLabel = computed(() => {
+    const user = this.user();
+    if (!user) {
+      return '';
+    }
+    if (user.role === 'proprietaire' && !this.auth.isSchoolOwner()) {
+      const titles = [...new Set((this.auth.ownerAccess() ?? []).map((a) => a.jobTitle))];
+      return titles.length ? titles.join(' · ') : 'Personnel';
+    }
+    return user.role;
   });
 
   schoolTypeLabel(type: string): string {
@@ -100,6 +127,9 @@ export class AppShell implements OnInit {
   }
 
   ngOnInit(): void {
+    if (this.auth.role() === 'proprietaire' && !this.auth.isSchoolOwner()) {
+      this.auth.loadOwnerAccess().pipe(catchError(() => EMPTY), takeUntilDestroyed(this.destroyRef)).subscribe();
+    }
     timer(0, 20_000)
       .pipe(
         filter(() => this.user()?.approved !== true),

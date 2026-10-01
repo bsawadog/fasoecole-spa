@@ -92,7 +92,7 @@ export class GradesPage implements OnInit, OnDestroy {
       this.error.set('Impossible d’identifier votre compte propriétaire.');
       return;
     }
-    this.auth.getOwnedSchools(ownerId).subscribe({
+    this.auth.getOwnedSchools(ownerId, 'GRADES').subscribe({
       next: schools => {
         this.schools.set(schools);
         if (!schools.length) { this.loading.set(false); return; }
@@ -313,6 +313,13 @@ export class GradesPage implements OnInit, OnDestroy {
     }
     this.run(this.grades.updateCoefficient(classId, subject.subjectId, value),
       `Coefficient de ${subject.subjectName} : ${value}.`);
+  }
+
+  resetCoefficient(subject: ClassSubject): void {
+    const classId = this.classId();
+    if (!classId) return;
+    this.run(this.grades.resetCoefficient(classId, subject.subjectId),
+      `${subject.subjectName} reprend le coefficient de la matière (${subject.defaultCoefficient}).`);
   }
 
   // ------------------------------------------------------------ résultats & bulletins

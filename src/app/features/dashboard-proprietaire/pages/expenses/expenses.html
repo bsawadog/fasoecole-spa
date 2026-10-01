@@ -1,0 +1,256 @@
+<section class="dep">
+  <header class="dep__header">
+    <div class="dep__identity">
+      <span class="dep__header-icon" aria-hidden="true">⇄</span>
+      <div>
+        <h1>Dépenses &amp; budget</h1>
+        <p>Charges de l’établissement, budget annuel par catégorie et bilan recettes / dépenses.</p>
+      </div>
+    </div>
+    @if (schools().length > 1) {
+      <label class="dep__school-picker">Choisir un établissement
+        <select class="dep__select" [ngModel]="schoolId()" (change)="changeSchool($event)">
+          @for (school of schools(); track school.id) { <option [value]="school.id">{{ school.name }}</option> }
+        </select>
+      </label>
+    }
+  </header>
+
+  <nav class="dep__tabs" aria-label="Sections dépenses">
+    @for (item of tabs; track item.id) {
+      <button type="button" class="dep__tab" [class.dep__tab--on]="tab() === item.id"
+              [attr.aria-current]="tab() === item.id ? 'page' : null" (click)="setTab(item.id)">{{ item.label }}</button>
+    }
+  </nav>
+
+  @if (error()) { <div class="dep__alert dep__alert--error" role="alert">{{ error() }}</div> }
+  @if (success()) { <div class="dep__alert dep__alert--success" role="status">{{ success() }}</div> }
+
+  @if (loading()) {
+    <p class="dep__state">Chargement…</p>
+  } @else if (!schools().length) {
+    <p class="dep__state">Aucun établissement associé à votre compte.</p>
+  } @else {
+    @if ((tab() === 'summary' || tab() === 'budget') && summary(); as s) {
+      <div class="dep__toolbar dep__toolbar--bare">
+        @if (s.years.length) {
+          <label>Année scolaire
+            <select [(ngModel)]="yearId" (change)="changeYear()">
+              @for (y of s.years; track y.id) { <option [ngValue]="y.id">{{ y.label }}{{ y.current ? ' (en cours)' : '' }}</option> }
+            </select>
+          </label>
+        } @else {
+          <p class="dep__muted">Aucune année scolaire : le bilan porte sur l’année civile. Créez une année scolaire pour définir un budget.</p>
+        }
+        <span class="dep__muted">Période du {{ s.from }} au {{ s.to }}</span>
+      </div>
+    }
+
+    @switch (tab()) {
+      @case ('summary') {
+        @if (summary(); as s) {
+          <div class="dep__kpis">
+            <div class="dep__kpi dep__kpi--ok"><span>Recettes encaissées</span><strong>{{ s.income | number:'1.0-0' }} FCFA</strong>
+              <small>Paiements des frais scolaires</small></div>
+            <div class="dep__kpi dep__kpi--warn"><span>Dépenses</span><strong>{{ s.expenses | number:'1.0-0' }} FCFA</strong>
+              <small>dont ce mois-ci : {{ s.spentThisMonth | number:'1.0-0' }}</small></div>
+            <div class="dep__kpi" [class.dep__kpi--bad]="s.balance < 0" [class.dep__kpi--ok]="s.balance >= 0">
+              <span>Solde</span><strong [class.dep__neg]="s.balance < 0">{{ s.balance | number:'1.0-0' }} FCFA</strong>
+              <small>{{ s.balance >= 0 ? 'Excédent' : 'Déficit' }} sur la période</small></div>
+            <div class="dep__kpi" [class.dep__kpi--bad]="s.overBudgetCount > 0"><span>Budget consommé</span>
+              <strong>{{ s.budgetUsedRate === null ? '—' : (s.budgetUsedRate | number:'1.0-1') + ' %' }}</strong>
+              <small>{{ s.budgetTotal ? (s.budgetTotal | number:'1.0-0') + ' FCFA prévus' : 'Aucun budget défini' }}
+                @if (s.overBudgetCount) { · {{ s.overBudgetCount }} catégorie(s) en dépassement }</small></div>
+          </div>
+
+          <div class="dep__card">
+            <div class="dep__card-head"><h2>Recettes et dépenses par mois</h2>
+              <span class="dep__legend"><i class="dep__dot dep__dot--in"></i>Recettes <i class="dep__dot dep__dot--out"></i>Dépenses</span></div>
+            <div class="dep__table-wrap"><table class="dep__table">
+              <thead><tr><th>Mois</th><th class="dep__chart-col">Évolution</th><th>Recettes</th><th>Dépenses</th><th>Solde</th></tr></thead>
+              <tbody>
+                @for (m of s.months; track m.month) {
+                  <tr><td><strong>{{ monthLabel(m.month) }}</strong></td>
+                    <td class="dep__chart-col"><div class="dep__pair">
+                      <span class="dep__in" [style.width.%]="width(m.income)"></span>
+                      <span class="dep__out" [style.width.%]="width(m.expenses)"></span></div></td>
+                    <td>{{ m.income | number:'1.0-0' }}</td><td>{{ m.expenses | number:'1.0-0' }}</td>
+                    <td [class.dep__neg]="m.balance < 0" [class.dep__pos]="m.balance > 0"><strong>{{ m.balance | number:'1.0-0' }}</strong></td></tr>
+                }
+              </tbody>
+              <tfoot><tr><td>Total</td><td class="dep__chart-col"></td><td>{{ s.income | number:'1.0-0' }}</td>
+                <td>{{ s.expenses | number:'1.0-0' }}</td><td [class.dep__neg]="s.balance < 0">{{ s.balance | number:'1.0-0' }}</td></tr></tfoot>
+            </table></div>
+          </div>
+
+          <div class="dep__grid">
+            <div class="dep__card">
+              <div class="dep__card-head"><h2>Budget par catégorie</h2>
+                <button type="button" class="dep__link" (click)="setTab('budget')">Modifier le budget →</button></div>
+              <div class="dep__table-wrap"><table class="dep__table">
+                <thead><tr><th>Catégorie</th><th>Prévu</th><th>Dépensé</th><th>Reste</th><th>Consommation</th></tr></thead>
+                <tbody>
+                  @for (c of s.categories; track c.categoryId) {
+                    <tr [class.dep__alert-row]="c.overBudget"><td><strong>{{ c.name }}</strong>
+                        @if (c.systemCode === 'PAYROLL') { <div class="dep__muted">Depuis la paie des enseignants</div> }</td>
+                      <td>{{ c.budget ? (c.budget | number:'1.0-0') : '—' }}</td><td>{{ c.spent | number:'1.0-0' }}</td>
+                      <td [class.dep__neg]="c.budget && c.remaining < 0">{{ c.budget ? (c.remaining | number:'1.0-0') : '—' }}</td>
+                      <td>@if (c.usedRate !== null) {
+                          <div class="dep__bar" [class.dep__bar--over]="c.overBudget"><span [style.width.%]="usage(c)"></span></div>
+                          {{ c.usedRate | number:'1.0-1' }} %@if (c.overBudget) { <span class="dep__badge dep__badge--over">Dépassé</span> }
+                        } @else { <span class="dep__muted">Non budgétée</span> }</td></tr>
+                  }
+                </tbody>
+              </table></div>
+            </div>
+            <div class="dep__card">
+              <div class="dep__card-head"><h2>Dernières dépenses</h2>
+                <button type="button" class="dep__link" (click)="setTab('expenses')">Voir tout →</button></div>
+              <div class="dep__table-wrap"><table class="dep__table">
+                <thead><tr><th>Date</th><th>Libellé</th><th>Catégorie</th><th>Montant</th></tr></thead>
+                <tbody>
+                  @for (e of s.recentExpenses; track e.source + e.id) {
+                    <tr><td>{{ e.expenseDate }}</td><td>{{ e.label }}@if (e.supplier) { <div class="dep__muted">{{ e.supplier }}</div> }</td>
+                      <td>{{ e.categoryName }}</td><td><strong>{{ e.amount | number:'1.0-0' }}</strong></td></tr>
+                  } @empty { <tr><td colspan="4" class="dep__muted">Aucune dépense sur la période.</td></tr> }
+                </tbody>
+              </table></div>
+            </div>
+          </div>
+        } @else { <p class="dep__state">Chargement du bilan…</p> }
+      }
+
+      @case ('expenses') {
+        <div class="dep__card">
+          <div class="dep__card-head"><h2>Dépenses</h2><span class="dep__count">{{ filteredExpenses().length }} · {{ expensesTotal() | number:'1.0-0' }} FCFA</span></div>
+          <div class="dep__toolbar">
+            <label>Du<input type="date" [(ngModel)]="from" (change)="loadExpenses()"></label>
+            <label>Au<input type="date" [(ngModel)]="to" (change)="loadExpenses()"></label>
+            <label>Catégorie
+              <select [(ngModel)]="categoryFilter" (change)="loadExpenses()">
+                <option [ngValue]="null">Toutes les catégories</option>
+                @for (c of categories(); track c.id) { <option [ngValue]="c.id">{{ c.name }}{{ c.active ? '' : ' (archivée)' }}</option> }
+              </select>
+            </label>
+            <label>Rechercher<input type="search" [(ngModel)]="search" placeholder="Libellé, bénéficiaire, référence"></label>
+            <div class="dep__actions">
+              <button type="button" class="dep__btn" (click)="openExpense()" [disabled]="!manualCategories().length">+ Nouvelle dépense</button>
+              <button type="button" class="dep__btn dep__btn--ghost" (click)="exportCsv()">Exporter (CSV)</button>
+            </div>
+          </div>
+
+          @if (formOpen()) {
+            <form class="dep__panel" (ngSubmit)="saveExpense()">
+              <h3>{{ editingId ? 'Modifier la dépense' : 'Nouvelle dépense' }}</h3>
+              <div class="dep__form">
+                <label>Catégorie
+                  <select name="category" [(ngModel)]="form.categoryId" required>
+                    @for (c of manualCategories(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
+                  </select>
+                </label>
+                <label>Date<input type="date" name="date" [(ngModel)]="form.expenseDate" [max]="todayIso" required></label>
+                <label>Montant (FCFA)<input type="number" name="amount" min="1" step="1" [(ngModel)]="form.amount" required></label>
+                <label>Mode de paiement
+                  <select name="method" [(ngModel)]="form.method">
+                    @for (m of methods; track m) { <option [value]="m">{{ methodLabels[m] }}</option> }
+                  </select>
+                </label>
+                <label class="dep__wide">Libellé<input name="label" [(ngModel)]="form.label" maxlength="150" placeholder="Loyer d’octobre" required></label>
+                <label>Bénéficiaire / fournisseur<input name="supplier" [(ngModel)]="form.supplier" maxlength="150"></label>
+                <label>Référence (facture, reçu)<input name="reference" [(ngModel)]="form.reference" maxlength="100"></label>
+                <label class="dep__wide">Note<input name="notes" [(ngModel)]="form.notes" maxlength="500"></label>
+              </div>
+              <p class="dep__muted">Les salaires des enseignants sont ajoutés automatiquement depuis leur paie : inutile de les saisir ici.</p>
+              <div class="dep__actions">
+                <button type="submit" class="dep__btn dep__btn--green" [disabled]="busy()">Enregistrer</button>
+                <button type="button" class="dep__btn dep__btn--ghost" (click)="formOpen.set(false)">Annuler</button>
+              </div>
+            </form>
+          }
+
+          <div class="dep__table-wrap"><table class="dep__table">
+            <thead><tr><th>Date</th><th>Catégorie</th><th>Libellé</th><th>Bénéficiaire</th><th>Mode</th><th>Montant</th><th></th></tr></thead>
+            <tbody>
+              @for (e of filteredExpenses(); track e.source + e.id) {
+                <tr><td>{{ e.expenseDate }}</td><td>{{ e.categoryName }}</td>
+                  <td><strong>{{ e.label }}</strong>@if (e.reference) { <div class="dep__muted">Réf. {{ e.reference }}</div> }
+                    @if (e.notes) { <div class="dep__muted">{{ e.notes }}</div> }</td>
+                  <td>{{ e.supplier ?? '—' }}</td><td>{{ e.method ? methodLabels[e.method] : '—' }}</td>
+                  <td><strong>{{ e.amount | number:'1.0-0' }}</strong></td>
+                  <td>@if (e.source === 'MANUAL') {
+                      <div class="dep__row-actions">
+                        <button type="button" class="dep__mini" (click)="openExpense(e)" [disabled]="busy()">Modifier</button>
+                        <button type="button" class="dep__mini dep__mini--danger" (click)="deleteExpense(e)" [disabled]="busy()">Supprimer</button>
+                      </div>
+                    } @else { <span class="dep__badge" title="Enregistré depuis la paie de l’enseignant">Paie</span> }</td></tr>
+              } @empty { <tr><td colspan="7" class="dep__muted">Aucune dépense sur cette période.</td></tr> }
+            </tbody>
+          </table></div>
+        </div>
+      }
+
+      @case ('budget') {
+        @if (summary(); as s) {
+          <div class="dep__card">
+            <div class="dep__card-head"><h2>Budget {{ s.year?.label ?? '' }}</h2><span class="dep__count">{{ budgetTotal() | number:'1.0-0' }} FCFA</span></div>
+            @if (!s.year) {
+              <p class="dep__state">Créez une année scolaire (Gestion → Années scolaires) pour définir un budget.</p>
+            } @else {
+              <p class="dep__intro">Indiquez le montant prévu pour chaque catégorie sur l’année. Laissez 0 pour une catégorie non budgétée.</p>
+              <div class="dep__table-wrap"><table class="dep__table">
+                <thead><tr><th>Catégorie</th><th>Budget prévu (FCFA)</th><th>Déjà dépensé</th><th>Consommation</th></tr></thead>
+                <tbody>
+                  @for (c of s.categories; track c.categoryId) {
+                    <tr><td><strong>{{ c.name }}</strong>@if (!c.active) { <span class="dep__muted"> (archivée)</span> }</td>
+                      <td><input type="number" min="0" step="1000" class="dep__num" [(ngModel)]="budget[c.categoryId]" [attr.aria-label]="'Budget ' + c.name"></td>
+                      <td>{{ c.spent | number:'1.0-0' }}</td>
+                      <td>@if (c.usedRate !== null) { {{ c.usedRate | number:'1.0-1' }} % } @else { <span class="dep__muted">—</span> }</td></tr>
+                  }
+                </tbody>
+                <tfoot><tr><td>Total</td><td>{{ budgetTotal() | number:'1.0-0' }}</td><td>{{ s.expenses | number:'1.0-0' }}</td><td></td></tr></tfoot>
+              </table></div>
+              <div class="dep__actions dep__pad"><button type="button" class="dep__btn dep__btn--green" (click)="saveBudget()" [disabled]="busy()">Enregistrer le budget</button></div>
+            }
+          </div>
+        } @else { <p class="dep__state">Chargement du budget…</p> }
+      }
+
+      @case ('categories') {
+        <div class="dep__grid">
+          <div class="dep__card">
+            <div class="dep__card-head"><h2>{{ editingCategoryId ? 'Modifier la catégorie' : 'Nouvelle catégorie' }}</h2></div>
+            <form class="dep__body" (ngSubmit)="saveCategory()">
+              <label>Nom<input name="catName" [(ngModel)]="categoryForm.name" maxlength="100" required placeholder="Cantine"></label>
+              <label>Description<input name="catDesc" [(ngModel)]="categoryForm.description" maxlength="255"></label>
+              <div class="dep__actions">
+                <button type="submit" class="dep__btn" [disabled]="busy()">{{ editingCategoryId ? 'Enregistrer' : 'Ajouter' }}</button>
+                @if (editingCategoryId) { <button type="button" class="dep__btn dep__btn--ghost" (click)="editCategory()">Annuler</button> }
+              </div>
+            </form>
+          </div>
+          <div class="dep__card">
+            <div class="dep__card-head"><h2>Catégories</h2><span class="dep__count">{{ categories().length }}</span></div>
+            <div class="dep__table-wrap"><table class="dep__table">
+              <thead><tr><th>Catégorie</th><th>Dépenses</th><th>Statut</th><th></th></tr></thead>
+              <tbody>
+                @for (c of categories(); track c.id) {
+                  <tr [class.dep__off]="!c.active"><td><strong>{{ c.name }}</strong>
+                      @if (c.description) { <div class="dep__muted">{{ c.description }}</div> }</td>
+                    <td>{{ c.systemCode === 'PAYROLL' ? 'Automatique' : c.expenseCount }}</td>
+                    <td><span class="dep__badge" [class.dep__badge--on]="c.active">{{ c.active ? 'Active' : 'Archivée' }}</span></td>
+                    <td><div class="dep__row-actions">
+                      <button type="button" class="dep__mini" (click)="editCategory(c)" [disabled]="busy()">Modifier</button>
+                      @if (c.systemCode !== 'PAYROLL') {
+                        <button type="button" class="dep__mini" (click)="toggleCategory(c)" [disabled]="busy()">{{ c.active ? 'Archiver' : 'Réactiver' }}</button>
+                        <button type="button" class="dep__mini dep__mini--danger" (click)="deleteCategory(c)" [disabled]="busy()">Supprimer</button>
+                      }
+                    </div></td></tr>
+                }
+              </tbody>
+            </table></div>
+          </div>
+        </div>
+      }
+    }
+  }
+</section>

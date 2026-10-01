@@ -110,6 +110,7 @@
 .owner-management__editor { margin: 1.2rem 0; padding: 1.2rem; border: 1px solid #cddfd2; border-radius: .75rem; background: #f6faf7; }
 .owner-management__wide,
 .owner-management__editor-heading { grid-column: 1 / -1; }
+.owner-management__hint { margin: 0; color: #5b6f63; font-size: .85rem; }
 .owner-management form label { display: grid; gap: .4rem; color: #294838; font-size: .95rem; font-weight: 600; }
 .owner-management form label.owner-management__checkbox { display: flex; align-items: center; }
 .owner-management form input[type="checkbox"] { min-height: 0; width: 1.15rem; height: 1.15rem; }

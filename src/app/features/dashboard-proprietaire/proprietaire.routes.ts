@@ -1,41 +1,61 @@
 import { Routes } from '@angular/router';
+import { ownerModuleGuard } from '../../core/auth';
 
 export const PROPRIETAIRE_ROUTES: Routes = [
   {
     path: 'demandes',
+    canActivate: [ownerModuleGuard(null)],
     loadComponent: () => import('./pages/approvals/approvals').then((m) => m.Approvals),
   },
   {
+    path: 'personnel',
+    canActivate: [ownerModuleGuard(null)],
+    loadComponent: () => import('./pages/staff/staff').then((m) => m.StaffPage),
+  },
+  {
     path: 'gestion',
+    canActivate: [ownerModuleGuard('MANAGEMENT')],
     loadComponent: () => import('./pages/management/management').then((m) => m.OwnerManagement),
   },
   {
     path: 'classes',
+    canActivate: [ownerModuleGuard('STUDENTS')],
     loadComponent: () => import('./pages/class-roster/class-roster').then((m) => m.ClassRoster),
   },
   {
     path: 'enseignants',
+    canActivate: [ownerModuleGuard('TEACHERS')],
     loadComponent: () => import('./pages/teacher-roster/teacher-roster').then((m) => m.TeacherRoster),
   },
   {
     path: 'enseignants/:teacherId',
+    canActivate: [ownerModuleGuard('TEACHERS')],
     loadComponent: () => import('./pages/teacher-detail/teacher-detail').then((m) => m.TeacherDetailPage),
   },
   {
     path: 'frais',
+    canActivate: [ownerModuleGuard('FINANCE')],
     loadComponent: () => import('./pages/finance/finance').then((m) => m.FinancePage),
   },
   {
+    path: 'depenses',
+    canActivate: [ownerModuleGuard('EXPENSES')],
+    loadComponent: () => import('./pages/expenses/expenses').then((m) => m.ExpensesPage),
+  },
+  {
     path: 'notes',
+    canActivate: [ownerModuleGuard('GRADES')],
     loadComponent: () => import('./pages/grades/grades').then((m) => m.GradesPage),
   },
   {
     path: 'eleves/:studentId',
+    canActivate: [ownerModuleGuard('STUDENTS')],
     loadComponent: () => import('./pages/student-detail/student-detail').then((m) => m.StudentDetailPage),
   },
   {
     path: '',
     pathMatch: 'full',
+    canActivate: [ownerModuleGuard('DASHBOARD')],
     loadComponent: () => import('./pages/home/home').then((m) => m.ProprietaireHome),
   },
 ];

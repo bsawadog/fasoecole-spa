@@ -118,18 +118,21 @@
       <section class="owner-dashboard__panel" id="academic">
         <div class="owner-dashboard__panel-heading">
           <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--violet"><svg lucideBookOpen [size]="20" aria-hidden="true"></svg></span>
-          <div><h2>Résultats scolaires</h2><p>Bulletins validés uniquement</p></div>
+          <div><h2>Résultats scolaires</h2><p>{{ data.averagePeriodName ?? 'Aucune période de notation' }}</p></div>
         </div>
         <div class="owner-dashboard__average">
           @if (data.schoolAverage !== null) {
             <strong>{{ data.schoolAverage | number: '1.1-2' }}<small>/20</small></strong>
-            <span>Moyenne générale publiée</span>
+            <span>Moyenne générale de l’établissement</span>
           } @else {
             <strong>—</strong>
-            <span>Aucun bulletin validé pour le moment</span>
+            <span>Aucune note saisie pour cette période</span>
           }
         </div>
-        <p class="owner-dashboard__hint">{{ data.validatedReportCards }} bulletin(s) validé(s) comptabilisé(s).</p>
+        <p class="owner-dashboard__hint">
+          {{ data.rankedStudents }} élève(s) noté(s)@if (data.passRate !== null) { · {{ data.passRate | number: '1.0-1' }} % de réussite }
+          · <a routerLink="/proprietaire/notes">Notes &amp; bulletins</a>
+        </p>
       </section>
 
       <section class="owner-dashboard__panel" id="communication">

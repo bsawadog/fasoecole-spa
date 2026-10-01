@@ -35,6 +35,7 @@ interface AcademicForm {
   levelId: number | null;
   capacity: number;
   code: string;
+  coefficient: number;
 }
 
 @Component({
@@ -95,7 +96,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
       return;
     }
 
-    this.auth.getOwnedSchools(ownerId).subscribe({
+    this.auth.getOwnedSchools(ownerId, 'MANAGEMENT').subscribe({
       next: (schools) => {
         this.schools.set(schools);
         if (schools.length === 0) {
@@ -167,7 +168,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
       }
       case 'subjects': {
         const subject = row as SubjectRecord;
-        return subject.code || 'Aucun code';
+        return `${subject.code || 'Aucun code'} · Coefficient ${subject.coefficient ?? 1}`;
       }
     }
   }
@@ -245,7 +246,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
         }
         case 'subjects': {
           const subject = row as SubjectRecord;
-          Object.assign(this.academicForm, { name: subject.name, code: subject.code });
+          Object.assign(this.academicForm, { name: subject.name, code: subject.code, coefficient: subject.coefficient ?? 1 });
           break;
         }
       }
@@ -302,6 +303,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
           schoolId,
           name: this.academicForm.name.trim(),
           code: this.academicForm.code.trim(),
+          coefficient: Number(this.academicForm.coefficient),
         }, id ?? undefined);
         break;
     }
@@ -509,8 +511,11 @@ export class OwnerManagement implements OnDestroy, OnInit {
         return this.academicForm.name.trim() && this.academicForm.academicYearId &&
           this.academicForm.levelId && this.academicForm.capacity > 0
           ? null : 'Indiquez le nom, l’année scolaire, le niveau et une capacité positive.';
-      case 'subjects':
-        return this.academicForm.name.trim() ? null : 'Indiquez le nom de la matière.';
+      case 'subjects': {
+        if (!this.academicForm.name.trim()) return 'Indiquez le nom de la matière.';
+        const coefficient = Number(this.academicForm.coefficient);
+        return coefficient >= 0.25 && coefficient <= 20 ? null : 'Le coefficient doit être compris entre 0,25 et 20.';
+      }
     }
   }
 
@@ -528,6 +533,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
       levelId: null,
       capacity: 30,
       code: '',
+      coefficient: 1,
     };
   }
 

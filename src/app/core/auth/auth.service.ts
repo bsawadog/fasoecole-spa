@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, defer, map, switchMap, tap } from 'rxjs';
+import { Observable, defer, map, of, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, LoginResponse, ROLE_HOME_ROUTE, User, UserDto, resolveRole } from '../models';
 
@@ -34,6 +34,29 @@ export interface RegistrationSchool {
 
 export type ApprovalRole = 'TEACHER' | 'PARENT' | 'STUDENT';
 
+/** Modules de l'espace propriétaire pouvant être délégués au personnel. */
+export type OwnerModule = 'DASHBOARD' | 'MANAGEMENT' | 'STUDENTS' | 'TEACHERS' | 'FINANCE' | 'EXPENSES' | 'GRADES';
+
+export const OWNER_MODULES: { code: OwnerModule; label: string; route: string }[] = [
+  { code: 'DASHBOARD', label: 'Tableau de bord', route: '/proprietaire' },
+  { code: 'MANAGEMENT', label: 'Gestion de l’école', route: '/proprietaire/gestion' },
+  { code: 'STUDENTS', label: 'Élèves & dossiers', route: '/proprietaire/classes' },
+  { code: 'TEACHERS', label: 'Enseignants & paie', route: '/proprietaire/enseignants' },
+  { code: 'FINANCE', label: 'Frais & paiements', route: '/proprietaire/frais' },
+  { code: 'EXPENSES', label: 'Dépenses & budget', route: '/proprietaire/depenses' },
+  { code: 'GRADES', label: 'Notes & bulletins', route: '/proprietaire/notes' },
+];
+
+/** Établissement accessible dans l'espace propriétaire (possédé ou délégué). */
+export interface SchoolAccess {
+  schoolId: number;
+  schoolName: string;
+  schoolType: string;
+  owner: boolean;
+  jobTitle: string;
+  modules: OwnerModule[];
+}
+
 export interface OwnerDashboard {
   schoolId: number;
   schoolName: string;
@@ -56,6 +79,9 @@ export interface OwnerDashboard {
   excusedToday: number;
   validatedReportCards: number;
   schoolAverage: number | null;
+  averagePeriodName: string | null;
+  passRate: number | null;
+  rankedStudents: number;
   unreadMessages: number;
   recentPayments: {
     id: number;
@@ -86,6 +112,21 @@ export class AuthService {
   readonly user = this._user.asReadonly();
   readonly isAuthenticated = computed(() => !!this._user());
   readonly role = computed(() => this._user()?.role ?? null);
+
+  private readonly _ownerAccess = signal<SchoolAccess[] | null>(null);
+  readonly ownerAccess = this._ownerAccess.asReadonly();
+  /** Vrai pour le propriétaire (ou l'administrateur) : accès complet à l'espace propriétaire. */
+  readonly isSchoolOwner = computed(() => {
+    const roles = this._user()?.rawRoles ?? [];
+    return roles.includes('SCHOOL_ADMIN') || roles.includes('SUPER_ADMIN');
+  });
+  /** Modules accessibles (union sur tous les établissements). */
+  readonly ownerModules = computed<Set<OwnerModule>>(() => {
+    if (this.isSchoolOwner()) {
+      return new Set(OWNER_MODULES.map((m) => m.code));
+    }
+    return new Set((this._ownerAccess() ?? []).flatMap((a) => a.modules));
+  });
 
   /**
    * Authentifie l'utilisateur auprès de l'API :
@@ -126,8 +167,32 @@ export class AuthService {
     return this.http.get<RegistrationSchool[]>(`${this.apiUrl}/schools/registration-options`);
   }
 
-  getOwnedSchools(ownerId: number): Observable<RegistrationSchool[]> {
-    return this.http.get<RegistrationSchool[]>(`${this.apiUrl}/schools/by-owner/${ownerId}`);
+  /**
+   * Établissements accessibles dans l'espace propriétaire. Avec un module, la liste inclut aussi
+   * les établissements où ce module a été délégué à l'utilisateur (personnel administratif).
+   */
+  getOwnedSchools(ownerId: number, module?: OwnerModule): Observable<RegistrationSchool[]> {
+    if (!module) {
+      return this.http.get<RegistrationSchool[]>(`${this.apiUrl}/schools/by-owner/${ownerId}`);
+    }
+    return this.loadOwnerAccess(true).pipe(
+      map((access) =>
+        access
+          .filter((a) => a.modules.includes(module))
+          .map((a) => ({ id: a.schoolId, name: a.schoolName, type: a.schoolType }))
+      )
+    );
+  }
+
+  /** Charge (une fois par session) les établissements et modules accessibles à l'utilisateur. */
+  loadOwnerAccess(force = false): Observable<SchoolAccess[]> {
+    const cached = this._ownerAccess();
+    if (cached && !force) {
+      return of(cached);
+    }
+    return this.http
+      .get<SchoolAccess[]>(`${this.apiUrl}/owner/staff/my-access`)
+      .pipe(tap((access) => this._ownerAccess.set(access)));
   }
 
   getOwnerDashboard(schoolId: number): Observable<OwnerDashboard> {
@@ -179,6 +244,7 @@ export class AuthService {
   private clearSession(): void {
     this._user.set(null);
     this._token.set(null);
+    this._ownerAccess.set(null);
     localStorage.removeItem(STORAGE_KEY);
   }
 
