@@ -1,48 +1,89 @@
-.class-roster { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
-.class-roster__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
-.class-roster__header h1 { margin: 0; font-size: 1.4rem; }
-.class-roster__header p { margin: 0.25rem 0 0; color: #64748b; font-size: 0.9rem; }
-.class-roster__select { padding: 0.4rem 0.6rem; border: 1px solid #cbd5e1; border-radius: 0.4rem; background: #fff; }
-.class-roster__toolbar { display: flex; align-items: center; gap: 0.6rem; }
-.class-roster__alert { padding: 0.6rem 0.9rem; border-radius: 0.4rem; font-size: 0.9rem; }
+.class-roster { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; background: #f8fafc; }
+.class-roster__header {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+  padding: 1.1rem 1.3rem; border: 1px solid #1e3a8a; border-radius: 0.6rem;
+  background: linear-gradient(135deg, #1e3a8a, #2563eb); color: #fff;
+  box-shadow: 0 2px 6px rgba(30, 58, 138, 0.25);
+}
+.class-roster__identity { display: flex; align-items: center; gap: 0.9rem; }
+.class-roster__header-icon {
+  flex: 0 0 auto; width: 3.2rem; height: 3.2rem; border-radius: 50%;
+  display: grid; place-items: center; background: #fff; color: #1e3a8a;
+  font-size: 1.15rem; font-weight: 700; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+.class-roster__header h1 { margin: 0 0 0.2rem; font-size: 1.4rem; color: #fff; }
+.class-roster__header p { margin: 0; color: #dbeafe; font-size: 0.9rem; }
+.class-roster__school-picker, .class-roster__class-picker { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.8rem; }
+.class-roster__school-picker { color: #dbeafe; }
+.class-roster__class-picker { color: #475569; min-width: min(100%, 250px); }
+.class-roster__select { width: 100%; padding: 0.45rem 0.6rem; border: 1px solid #cbd5e1; border-radius: 0.35rem; background: #fff; color: #1e293b; font: inherit; font-size: 0.85rem; }
+.class-roster__card { background: #fff; border: 1px solid #e2e8f0; border-radius: 0.6rem; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); overflow: hidden; }
+.class-roster__card-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+  padding: 0.6rem 1rem; background: #eff6ff; border-bottom: 3px solid #2563eb;
+}
+.class-roster__card-head h2 { margin: 0; color: #1e40af; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.class-roster__count { padding: 0.15rem 0.55rem; border-radius: 999px; background: #dbeafe; color: #1d4ed8; font-size: 0.75rem; font-weight: 600; }
+.class-roster__toolbar { display: flex; align-items: end; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap; padding: 1rem; }
+.class-roster__toolbar-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.class-roster__alert, .class-roster__state { padding: 0.8rem 1rem; border-radius: 0.4rem; font-size: 0.9rem; }
 .class-roster__alert--error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 .class-roster__alert--success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
-.class-roster__table-wrap { overflow-x: auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 0.5rem; }
-.class-roster__table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-.class-roster__table th, .class-roster__table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #eef2f6; text-align: left; vertical-align: top; }
-.class-roster__table th { background: #f8fafc; font-weight: 600; color: #334155; }
+.class-roster__state { margin: 0; background: #fff; border: 1px solid #e2e8f0; color: #64748b; }
+.class-roster__table-wrap { overflow-x: auto; }
+.class-roster__table { width: 100%; border-collapse: collapse; color: #1e293b; font-size: 0.95rem; line-height: 1.5; }
+.class-roster__table th, .class-roster__table td { padding: 0.7rem 0.75rem; border-bottom: 1px solid #eef2f6; text-align: left; vertical-align: top; }
+.class-roster__table th { background: #f8fafc; font-weight: 600; color: #334155; text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.03em; white-space: nowrap; }
 .class-roster__row { transition: background-color 0.15s ease; }
-.class-roster__row:hover { background-color: #eff6ff; }
-.class-roster__muted { color: #94a3b8; font-size: 0.82rem; }
-.class-roster__parent { display: flex; flex-direction: column; margin-bottom: 0.4rem; gap: 0.1rem; }
-.class-roster__parent-actions { display: flex; gap: 0.6rem; align-items: center; }
-.class-roster__link { background: none; border: none; color: #2563eb; padding: 0; font-size: 0.8rem; cursor: pointer; text-align: left; text-decoration: none; }
+.class-roster__row:nth-child(odd) { background-color: #f1f5f9; }
+.class-roster__row:hover { background-color: #dbeafe; }
+.class-roster__student { display: flex; align-items: center; gap: 0.5rem; min-width: 9rem; color: #1e293b; }
+.class-roster__avatar { flex: 0 0 auto; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: #dbeafe; color: #1d4ed8; font-weight: 700; text-transform: uppercase; }
+.class-roster__muted { color: #475569; font-size: 0.88rem; }
+.class-roster__parent { display: flex; flex-direction: column; margin-bottom: 0.5rem; gap: 0.15rem; }
+.class-roster__parent + .class-roster__parent { padding-top: 0.4rem; border-top: 1px solid #f1f5f9; }
+.class-roster__parent-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.class-roster__link { background: none; border: none; color: #2563eb; padding: 0.15rem 0; font-size: 0.85rem; cursor: pointer; text-align: left; text-decoration: none; }
+.class-roster__link:hover { text-decoration: underline; }
 .class-roster__link--contact { color: #16a34a; }
-.class-roster__edit-form { display: flex; flex-direction: column; gap: 0.6rem; }
-.class-roster__edit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem; }
-.class-roster__edit-grid label { display: flex; flex-direction: column; font-size: 0.8rem; gap: 0.2rem; color: #475569; }
-.class-roster__edit-grid input, .class-roster__edit-grid select { padding: 0.35rem 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.35rem; }
-.class-roster__edit-actions { display: flex; gap: 0.5rem; }
-.class-roster__edit-actions button { padding: 0.35rem 0.8rem; border-radius: 0.35rem; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; }
-.class-roster__edit-actions button[type="submit"] { background: #2563eb; color: #fff; border-color: #2563eb; }
-.class-roster__add-btn { margin-left: auto; padding: 0.4rem 0.9rem; border-radius: 0.35rem; border: 1px solid #2563eb; background: #2563eb; color: #fff; cursor: pointer; font-size: 0.85rem; }
-.class-roster__new-form { background: #fff; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem; display: flex; flex-direction: column; gap: 0.7rem; }
-.class-roster__new-form h2 { margin: 0; font-size: 1rem; color: #1e293b; }
-.class-roster__table td:last-child { display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start; }
-.class-roster__table td:last-child button, .class-roster__table td:last-child a { padding: 0.3rem 0.6rem; border-radius: 0.35rem; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-size: 0.8rem; text-decoration: none; color: #1e293b; }
-.class-roster__danger { color: #b91c1c; border-color: #fecaca !important; }
-.class-roster__print-btn { padding: 0.4rem 0.9rem; border-radius: 0.35rem; border: 1px solid #16a34a; background: #16a34a; color: #fff; cursor: pointer; font-size: 0.85rem; }
+.class-roster__edit-form { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.8rem; border: 1px dashed #cbd5e1; border-radius: 0.4rem; background: #f8fafc; }
+.class-roster__edit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.6rem; }
+.class-roster__edit-grid label { display: flex; flex-direction: column; font-size: 0.8rem; gap: 0.25rem; color: #475569; }
+.class-roster__edit-grid input, .class-roster__edit-grid select { min-width: 0; padding: 0.4rem 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.35rem; font: inherit; font-size: 0.85rem; }
+.class-roster__edit-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.class-roster__edit-actions button, .class-roster__action { padding: 0.35rem 0.7rem; border-radius: 0.35rem; border: 1px solid #cbd5e1; background: #fff; color: #2563eb; cursor: pointer; font-size: 0.85rem; text-decoration: none; white-space: nowrap; }
+.class-roster__edit-actions button[type="submit"], .class-roster__action--primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+.class-roster__actions { white-space: nowrap; }
+.class-roster__actions > * { display: inline-block; margin: 0 0.25rem 0.35rem 0; }
+.class-roster__danger { color: #b91c1c; border-color: #fecaca; }
+.class-roster__add-btn, .class-roster__print-btn { padding: 0.4rem 0.9rem; border-radius: 0.35rem; border: 1px solid #2563eb; background: #2563eb; color: #fff; cursor: pointer; font-size: 0.85rem; }
+.class-roster__print-btn { border-color: #16a34a; background: #16a34a; }
+.class-roster__new-form { display: flex; flex-direction: column; gap: 0.8rem; padding: 0 1rem 1rem; }
+.class-roster__new-form .class-roster__card-head { margin: 0 -1rem; }
 .class-roster__print-title { display: none; }
+
+@media (max-width: 650px) {
+  .class-roster { padding: 1rem; }
+  .class-roster__school-picker, .class-roster__class-picker, .class-roster__toolbar-actions { width: 100%; }
+  .class-roster__toolbar-actions button { flex: 1 1 auto; }
+}
 
 @media print {
   @page { size: landscape; margin: 10mm; }
   .class-roster__no-print { display: none !important; }
-  .class-roster { padding: 0; gap: 0.5rem; }
+  .class-roster { padding: 0; gap: 0.5rem; background: #fff; }
   .class-roster__print-title { display: block; margin: 0 0 0.5rem; font-size: 1.1rem; }
-  .class-roster__table-wrap { border: none; overflow: visible; width: 100%; }
+  .class-roster__list { border: none; box-shadow: none; overflow: visible; }
+  .class-roster__table-wrap { overflow: visible; width: 100%; }
   .class-roster__table { font-size: 0.75rem; width: 100%; table-layout: fixed; word-break: break-word; }
   .class-roster__table th, .class-roster__table td { border: 1px solid #cbd5e1; padding: 0.35rem 0.4rem; }
+  .class-roster__table th:last-child { display: none; }
+  .class-roster__student { min-width: 0; }
   .class-roster__parent { margin-bottom: 0.25rem; }
 }
 
+.class-roster__class-picker { color: #1e3a8a; font-size: 0.85rem; font-weight: 700; }
+.class-roster__class-picker .class-roster__select { padding: 0.55rem 0.7rem; border: 2px solid #f59e0b; background: #fef3c7; color: #78350f; font-size: 1rem; font-weight: 700; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18); cursor: pointer; }
+.class-roster__class-picker .class-roster__select:focus { outline: none; border-color: #d97706; box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.3); }
 
+.class-roster__school-picker, .class-roster__school-picker .class-roster__select { font-weight: 700; }

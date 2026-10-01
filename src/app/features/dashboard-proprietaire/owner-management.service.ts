@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface SchoolRecord {
@@ -53,6 +53,9 @@ export interface FeeTypeRecord {
   name: string;
   amount: number;
   frequency: 'ONE_TIME' | 'MONTHLY' | 'TERM' | 'YEARLY';
+  levelId?: number | null;
+  description?: string | null;
+  active?: boolean;
 }
 
 export interface StudentRecord {
@@ -156,7 +159,7 @@ export interface StudentPaymentInfo {
   id: number;
   amount: number;
   paymentDate: string;
-  method: string;
+  method: CreateStudentPaymentPayload['method'];
   reference: string | null;
 }
 
@@ -291,17 +294,20 @@ export class OwnerManagementService {
   }
 
   getFeeTypes(schoolId: number): Observable<FeeTypeRecord[]> {
-    return this.http.get<FeeTypeRecord[]>(`${this.apiUrl}/fee-types`, { params: { schoolId } });
+    return this.http.get<Omit<FeeTypeRecord, 'schoolId'>[]>(`${this.apiUrl}/owner/finance/schools/${schoolId}/fee-types`)
+      .pipe(map(fees => fees.map(fee => ({ ...fee, schoolId }))));
   }
 
   saveFeeType(fee: Omit<FeeTypeRecord, 'id'>, id?: number): Observable<FeeTypeRecord> {
+    const payload = { name: fee.name, amount: fee.amount, frequency: fee.frequency,
+      levelId: fee.levelId ?? null, description: fee.description ?? null };
     return id
-      ? this.http.put<FeeTypeRecord>(`${this.apiUrl}/fee-types/${id}`, { ...fee, id })
-      : this.http.post<FeeTypeRecord>(`${this.apiUrl}/fee-types`, fee);
+      ? this.http.put<FeeTypeRecord>(`${this.apiUrl}/owner/finance/fee-types/${id}`, payload)
+      : this.http.post<FeeTypeRecord>(`${this.apiUrl}/owner/finance/schools/${fee.schoolId}/fee-types`, payload);
   }
 
-  deleteFeeType(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/fee-types/${id}`);
+  deleteFeeType(id: number): Observable<{ deleted: boolean }> {
+    return this.http.delete<{ deleted: boolean }>(`${this.apiUrl}/owner/finance/fee-types/${id}`);
   }
 
   getStudents(schoolId: number): Observable<StudentRecord[]> {
@@ -354,6 +360,14 @@ export class OwnerManagementService {
 
   addStudentPayment(studentId: number, invoiceId: number, payload: CreateStudentPaymentPayload): Observable<StudentInvoiceInfo> {
     return this.http.post<StudentInvoiceInfo>(`${this.apiUrl}/students/${studentId}/invoices/${invoiceId}/payments`, payload);
+  }
+
+  updateStudentPayment(studentId: number, invoiceId: number, paymentId: number, payload: CreateStudentPaymentPayload): Observable<StudentInvoiceInfo> {
+    return this.http.put<StudentInvoiceInfo>(`${this.apiUrl}/students/${studentId}/invoices/${invoiceId}/payments/${paymentId}`, payload);
+  }
+
+  deleteStudentPayment(studentId: number, invoiceId: number, paymentId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/students/${studentId}/invoices/${invoiceId}/payments/${paymentId}`);
   }
 
   deleteStudentInvoice(studentId: number, invoiceId: number): Observable<void> {

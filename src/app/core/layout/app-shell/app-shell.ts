@@ -11,6 +11,7 @@ import {
   LucideNotebookPen,
   LucideStar,
   LucideUsers,
+  LucideWallet,
 } from '@lucide/angular';
 import { AuthService } from '../../auth';
 import { Role } from '../../models';
@@ -19,7 +20,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface NavigationItem {
   label: string;
-  icon: 'home' | 'building' | 'users' | 'notes' | 'calendar' | 'star' | 'book' | 'graduation';
+  icon: 'home' | 'building' | 'users' | 'notes' | 'calendar' | 'star' | 'book' | 'graduation' | 'wallet';
   routerLink: string;
 }
 
@@ -34,6 +35,9 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Demandes de compte', icon: 'users', routerLink: '/proprietaire/demandes' },
     { label: 'Gestion de l’école', icon: 'book', routerLink: '/proprietaire/gestion' },
     { label: 'Élèves par classe', icon: 'graduation', routerLink: '/proprietaire/classes' },
+    { label: 'Enseignants par classe', icon: 'users', routerLink: '/proprietaire/enseignants' },
+    { label: 'Frais & paiements', icon: 'wallet', routerLink: '/proprietaire/frais' },
+    { label: 'Notes & bulletins', icon: 'notes', routerLink: '/proprietaire/notes' },
   ],
   enseignant: [
     { label: 'Accueil', icon: 'home', routerLink: '/enseignant' },
@@ -67,6 +71,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     LucideNotebookPen,
     LucideStar,
     LucideUsers,
+    LucideWallet,
   ],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
@@ -84,8 +89,10 @@ export class AppShell implements OnInit {
 
   schoolTypeLabel(type: string): string {
     const labels: Record<string, string> = {
+      PRESCOLAIRE: 'préscolaire',
       PRIMAIRE: 'primaire',
       SECONDAIRE: 'secondaire',
+      MIXTE: 'établissement mixte',
       UNIVERSITE: 'université',
       FORMATION: 'centre de formation',
     };

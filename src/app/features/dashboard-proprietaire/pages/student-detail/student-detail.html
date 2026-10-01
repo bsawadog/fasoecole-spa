@@ -85,7 +85,7 @@
             </thead>
             <tbody>
               @for (grade of d.grades; track grade.id) {
-                <tr>
+                <tr [class.student-detail__row--alternate]="$even">
                   <td>{{ grade.subjectName }}</td>
                   <td>{{ grade.teacherName }}</td>
                   <td>{{ grade.term }}</td>
@@ -141,7 +141,7 @@
             </thead>
             <tbody>
               @for (a of d.recentAttendance; track a.id) {
-                <tr>
+                <tr [class.student-detail__row--alternate]="$even">
                   <td>{{ a.attendanceDate }}</td>
                   <td><span class="student-detail__badge" [ngClass]="attendanceBadgeClass(a.status)">{{ statusLabel(a.status) }}</span></td>
                   <td>{{ a.justification || '—' }}</td>
@@ -159,7 +159,7 @@
       <section class="student-detail__card student-detail__card--wide">
         <div class="student-detail__card-head">
           <h2>
-            Frais de scolarité — Dû : {{ d.billingSummary.totalDue | number:'1.0-0' }} ·
+            Frais de scolarité — Dû (frais actifs) : {{ d.billingSummary.totalDue | number:'1.0-0' }} ·
             Payé : {{ d.billingSummary.totalPaid | number:'1.0-0' }} ·
             Reste à payer : {{ d.billingSummary.totalBalance | number:'1.0-0' }}
           </h2>
@@ -203,7 +203,7 @@
             </thead>
             <tbody>
               @for (inv of d.invoices; track inv.id) {
-                <tr [class.student-detail__row--cancelled]="inv.status === 'CANCELLED'">
+                <tr class="student-detail__row--fee" [class.student-detail__row--cancelled]="inv.status === 'CANCELLED'">
                   <td>{{ inv.feeTypeName }}</td>
                   <td>{{ inv.dueDate }}</td>
                   <td>{{ inv.amountDue | number:'1.0-0' }}</td>
@@ -216,7 +216,7 @@
                   </td>
                 </tr>
                 @if (payingInvoiceId() === inv.id) {
-                  <tr class="student-detail__no-print">
+                  <tr class="student-detail__no-print student-detail__row--fee-payment">
                     <td colspan="7">
                       <form class="student-detail__form" (ngSubmit)="submitPayment(inv.id)">
                         <div class="student-detail__form-row">
@@ -247,21 +247,6 @@
                     </td>
                   </tr>
                 }
-                @if (inv.payments.length > 0) {
-                  <tr class="student-detail__no-print">
-                    <td colspan="7">
-                      <div class="student-detail__muted student-detail__payments-list">
-                        Paiements :
-                        @for (p of inv.payments; track p.id) {
-                          <span class="student-detail__payment-chip">
-                            {{ p.reference }} · {{ p.paymentDate }} · {{ p.amount | number:'1.0-0' }} · {{ paymentMethodLabel(p.method) }}
-                            <button type="button" class="student-detail__receipt-btn" (click)="printReceipt(inv, p)" title="Imprimer le reçu">🖨️</button>
-                          </span>
-                        }
-                      </div>
-                    </td>
-                  </tr>
-                }
               }
             </tbody>
           </table>
@@ -277,11 +262,11 @@
         } @else {
           <table class="student-detail__table">
             <thead>
-              <tr><th>Référence</th><th>Date</th><th>Frais</th><th>Méthode</th><th>Montant</th><th class="student-detail__no-print">Reçu</th></tr>
+              <tr><th>Référence</th><th>Date</th><th>Frais</th><th>Méthode</th><th>Montant</th><th class="student-detail__no-print">Actions</th></tr>
             </thead>
             <tbody>
               @for (p of allPayments(); track p.id) {
-                <tr>
+                <tr [class.student-detail__row--alternate]="$even">
                   <td>{{ p.reference }}</td>
                   <td>{{ p.paymentDate }}</td>
                   <td>{{ p.feeTypeName }}</td>
@@ -289,8 +274,39 @@
                   <td>{{ p.amount | number:'1.0-0' }}</td>
                   <td class="student-detail__no-print">
                     <button type="button" class="student-detail__link-btn" (click)="printReceiptById(p.id)">🖨️ Reçu</button>
+                    <button type="button" class="student-detail__link-btn" [disabled]="saving()" (click)="startEditPayment(p)">Modifier</button>
+                    <button type="button" class="student-detail__link-btn student-detail__link-btn--danger" [disabled]="saving()" (click)="removePayment(p.invoiceId, p.id)">Supprimer</button>
                   </td>
                 </tr>
+                @if (editingPaymentId() === p.id) {
+                  <tr class="student-detail__no-print">
+                    <td colspan="6">
+                      <form class="student-detail__form" (ngSubmit)="savePayment(p.invoiceId, p.id)">
+                        <div class="student-detail__form-row">
+                          <label>Montant
+                            <input type="number" name="editAmount" [(ngModel)]="editPaymentForm.amount" min="0.01" step="0.01" required />
+                          </label>
+                          <label>Date
+                            <input type="date" name="editPaymentDate" [(ngModel)]="editPaymentForm.paymentDate" required />
+                          </label>
+                          <label>Méthode
+                            <select name="editMethod" [(ngModel)]="editPaymentForm.method">
+                              <option value="CASH">Espèces</option>
+                              <option value="MOBILE_MONEY">Mobile Money</option>
+                              <option value="BANK_TRANSFER">Virement bancaire</option>
+                              <option value="CARD">Carte</option>
+                            </select>
+                          </label>
+                        </div>
+                        <p class="student-detail__muted">La référence du reçu est conservée.</p>
+                        <div class="student-detail__form-actions">
+                          <button type="submit" [disabled]="saving()">Enregistrer</button>
+                          <button type="button" (click)="cancelEditPayment()">Annuler</button>
+                        </div>
+                      </form>
+                    </td>
+                  </tr>
+                }
               }
             </tbody>
           </table>

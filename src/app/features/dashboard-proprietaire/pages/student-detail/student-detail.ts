@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { DecimalPipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import {
   CreateStudentInvoicePayload,
   CreateStudentPaymentPayload,
@@ -43,6 +44,7 @@ export class StudentDetailPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly api = inject(OwnerManagementService);
+  private readonly confirmation = inject(ConfirmationService);
   private studentId = 0;
 
   readonly detail = signal<StudentDetail | null>(null);
@@ -61,6 +63,8 @@ export class StudentDetailPage implements OnInit {
 
   readonly payingInvoiceId = signal<number | null>(null);
   paymentForm: PaymentForm = this.emptyPaymentForm();
+  readonly editingPaymentId = signal<number | null>(null);
+  editPaymentForm: PaymentForm = this.emptyPaymentForm();
 
   ngOnInit(): void {
     this.studentId = Number(this.route.snapshot.paramMap.get('studentId'));
@@ -78,7 +82,7 @@ export class StudentDetailPage implements OnInit {
         this.detail.set(detail);
         this.loading.set(false);
         this.api.getFeeTypes(detail.schoolId).subscribe({
-          next: (types) => this.feeTypes.set(types),
+          next: (types) => this.feeTypes.set(types.filter((type) => type.active !== false)),
           error: () => undefined,
         });
       },
@@ -161,11 +165,11 @@ export class StudentDetailPage implements OnInit {
     }
   }
 
-  allPayments(): Array<StudentPaymentInfo & { feeTypeName: string; invoiceStatus: string }> {
+  allPayments(): Array<StudentPaymentInfo & { feeTypeName: string; invoiceId: number }> {
     const d = this.detail();
     if (!d) return [];
     return d.invoices
-      .flatMap((inv) => inv.payments.map((p) => ({ ...p, feeTypeName: inv.feeTypeName, invoiceStatus: inv.status })))
+      .flatMap((inv) => inv.payments.map((p) => ({ ...p, feeTypeName: inv.feeTypeName, invoiceId: inv.id })))
       .sort((a, b) => a.paymentDate.localeCompare(b.paymentDate) || a.id - b.id);
   }
 
@@ -234,8 +238,13 @@ export class StudentDetailPage implements OnInit {
     });
   }
 
-  removeAttendance(attendanceId: number): void {
-    if (!window.confirm('Supprimer cet enregistrement de présence ?')) return;
+  async removeAttendance(attendanceId: number): Promise<void> {
+    if (!await this.confirmation.confirm({
+      title: 'Supprimer cette présence ?',
+      message: 'Cet enregistrement de présence sera supprimé.',
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    })) return;
     this.saving.set(true);
     this.api.deleteStudentAttendance(this.studentId, attendanceId).subscribe({
       next: () => {
@@ -289,8 +298,13 @@ export class StudentDetailPage implements OnInit {
     });
   }
 
-  cancelInvoice(invoiceId: number): void {
-    if (!window.confirm('Annuler ce frais ? Il restera visible mais ne pourra plus recevoir de paiement.')) return;
+  async cancelInvoice(invoiceId: number): Promise<void> {
+    if (!await this.confirmation.confirm({
+      title: 'Annuler ce frais ?',
+      message: 'Il restera visible mais ne pourra plus recevoir de paiement.',
+      confirmLabel: 'Annuler le frais',
+      destructive: true,
+    })) return;
     this.saving.set(true);
     this.api.cancelStudentInvoice(this.studentId, invoiceId).subscribe({
       next: () => {
@@ -345,6 +359,63 @@ export class StudentDetailPage implements OnInit {
         this.loadDetail();
       },
       error: (err) => this.fail(err?.error?.message ?? 'L’enregistrement du paiement a échoué.'),
+    });
+  }
+
+  startEditPayment(payment: StudentPaymentInfo): void {
+    this.editingPaymentId.set(payment.id);
+    this.editPaymentForm = {
+      amount: payment.amount,
+      paymentDate: payment.paymentDate,
+      method: payment.method,
+      reference: payment.reference ?? '',
+    };
+    this.errorMessage.set(null);
+  }
+
+  cancelEditPayment(): void {
+    this.editingPaymentId.set(null);
+  }
+
+  savePayment(invoiceId: number, paymentId: number): void {
+    if (!this.editPaymentForm.amount || this.editPaymentForm.amount <= 0 || !this.editPaymentForm.paymentDate) {
+      this.errorMessage.set('Veuillez indiquer un montant positif et une date de paiement.');
+      return;
+    }
+    const payload: CreateStudentPaymentPayload = {
+      amount: this.editPaymentForm.amount,
+      paymentDate: this.editPaymentForm.paymentDate,
+      method: this.editPaymentForm.method,
+      reference: null,
+    };
+    this.saving.set(true);
+    this.api.updateStudentPayment(this.studentId, invoiceId, paymentId, payload).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.editingPaymentId.set(null);
+        this.successMessage.set('Le paiement a été mis à jour.');
+        this.loadDetail();
+      },
+      error: (err) => this.fail(err?.error?.message ?? 'La mise à jour du paiement a échoué.'),
+    });
+  }
+
+  async removePayment(invoiceId: number, paymentId: number): Promise<void> {
+    if (!await this.confirmation.confirm({
+      title: 'Supprimer ce paiement ?',
+      message: 'Ce paiement sera supprimé définitivement et le solde du frais sera recalculé.',
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    })) return;
+    this.saving.set(true);
+    this.api.deleteStudentPayment(this.studentId, invoiceId, paymentId).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.editingPaymentId.set(null);
+        this.successMessage.set('Le paiement a été supprimé.');
+        this.loadDetail();
+      },
+      error: (err) => this.fail(err?.error?.message ?? 'La suppression du paiement a échoué.'),
     });
   }
 

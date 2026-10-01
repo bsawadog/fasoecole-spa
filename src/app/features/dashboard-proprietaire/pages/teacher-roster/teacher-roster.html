@@ -1,0 +1,184 @@
+<section class="teacher-roster">
+  <header class="teacher-roster__header">
+    <div class="teacher-roster__identity">
+      <span class="teacher-roster__header-icon" aria-hidden="true">E</span>
+      <div>
+        <h1>Enseignants par classe</h1>
+        <p>Sélectionnez une classe pour consulter ses enseignants et accéder à leur fiche.</p>
+      </div>
+    </div>
+    @if (schools().length > 1) {
+      <label class="teacher-roster__school-picker">Choisir un établissement
+        <select class="teacher-roster__select" [ngModel]="selectedSchoolId()" (change)="changeSchool($event)">
+          @for (school of schools(); track school.id) {
+            <option [value]="school.id">{{ school.name }}</option>
+          }
+        </select>
+      </label>
+    }
+  </header>
+
+  @if (error()) { <div class="teacher-roster__alert teacher-roster__alert--error" role="alert">{{ error() }}</div> }
+  @if (success()) { <div class="teacher-roster__alert teacher-roster__alert--success" role="status">{{ success() }}</div> }
+
+  @if (loading()) {
+    <p class="teacher-roster__state">Chargement des classes…</p>
+  } @else if (!schools().length) {
+    <p class="teacher-roster__state">Aucun établissement associé à votre compte.</p>
+  } @else if (!classes().length) {
+    <p class="teacher-roster__state">Aucune classe dans cet établissement. Créez-en une dans Gestion de l’établissement.</p>
+  } @else {
+    <section class="teacher-roster__card" aria-label="Choix de la classe">
+      <div class="teacher-roster__card-head"><h2>Classe sélectionnée</h2></div>
+      <div class="teacher-roster__toolbar">
+        <label class="teacher-roster__class-picker" for="teacher-class-select">Choisir une classe
+          <select id="teacher-class-select" class="teacher-roster__select" [ngModel]="selectedClassId()" (change)="changeClass($event)">
+            @for (schoolClass of classes(); track schoolClass.id) {
+              <option [value]="schoolClass.id">{{ classLabel(schoolClass) }}</option>
+            }
+          </select>
+        </label>
+        <div class="teacher-roster__toolbar-actions">
+          <button type="button" class="teacher-roster__add-btn" (click)="openAddTeacher()" [disabled]="!subjects().length">+ Ajouter un enseignant</button>
+          <button type="button" class="teacher-roster__add-btn" (click)="openAssignment()" [disabled]="!subjects().length || !candidates().length">
+            Affecter un enseignant existant
+          </button>
+          <button type="button" class="teacher-roster__secondary-btn" (click)="toggleAllTeachers()" [attr.aria-expanded]="showAllTeachers()">
+            {{ showAllTeachers() ? 'Masquer la liste des enseignants' : 'Voir tous les enseignants de l’établissement' }}
+          </button>
+        </div>
+      </div>
+      @if (!subjects().length) {
+        <p class="teacher-roster__hint">Créez d’abord une matière dans Gestion de l’établissement → Académique pour pouvoir affecter un enseignant.</p>
+      } @else if (!candidates().length) {
+        <p class="teacher-roster__hint">Aucun enseignant n’existe encore dans cet établissement : utilisez « Ajouter un enseignant » pour en créer un.</p>
+      }
+    </section>
+
+    @if (addingTeacher()) {
+      <form class="teacher-roster__new-form teacher-roster__card" (ngSubmit)="saveTeacher()">
+        <div class="teacher-roster__card-head"><h2>Nouvel enseignant dans cette classe</h2></div>
+        <div class="teacher-roster__edit-grid">
+          <label>Prénom<input name="firstName" [(ngModel)]="newTeacher.firstName" required maxlength="100"></label>
+          <label>Nom<input name="lastName" [(ngModel)]="newTeacher.lastName" required maxlength="100"></label>
+          <label>Courriel<input name="email" type="email" [(ngModel)]="newTeacher.email" required maxlength="150"></label>
+          <label>Mot de passe initial<input name="password" type="password" [(ngModel)]="newTeacher.password" required minlength="8" placeholder="8 caractères min."></label>
+          <label>Téléphone<input name="phone" [(ngModel)]="newTeacher.phone" maxlength="30"></label>
+          <label>Spécialité<input name="specialty" [(ngModel)]="newTeacher.specialty" maxlength="150"></label>
+          <label>Date d’embauche<input name="hireDate" type="date" [(ngModel)]="newTeacher.hireDate"></label>
+          <label>Matière enseignée
+            <select name="subjectId" [(ngModel)]="newTeacher.subjectId" required>
+              @for (subject of subjects(); track subject.id) { <option [ngValue]="subject.id">{{ subject.name }}</option> }
+            </select>
+          </label>
+        </div>
+        <div class="teacher-roster__edit-actions">
+          <button type="submit" [disabled]="saving()">Créer et affecter</button>
+          <button type="button" (click)="cancelForms()">Annuler</button>
+        </div>
+      </form>
+    }
+
+    @if (assigningTeacher()) {
+      <form class="teacher-roster__new-form teacher-roster__card" (ngSubmit)="saveAssignment()">
+        <div class="teacher-roster__card-head"><h2>Affecter un enseignant existant</h2></div>
+        <div class="teacher-roster__edit-grid">
+          <label>Enseignant
+            <select name="existingTeacher" [(ngModel)]="assignment.teacherId" required>
+              @for (candidate of candidates(); track candidate.id) {
+                <option [ngValue]="candidate.id">{{ candidate.firstName }} {{ candidate.lastName }}</option>
+              }
+            </select>
+          </label>
+          <label>Matière
+            <select name="existingSubject" [(ngModel)]="assignment.subjectId" required>
+              @for (subject of subjects(); track subject.id) { <option [ngValue]="subject.id">{{ subject.name }}</option> }
+            </select>
+          </label>
+        </div>
+        <div class="teacher-roster__edit-actions">
+          <button type="submit" [disabled]="saving()">Affecter à cette classe</button>
+          <button type="button" (click)="cancelForms()">Annuler</button>
+        </div>
+      </form>
+    }
+
+    @if (loadingTeachers()) {
+      <p class="teacher-roster__state">Chargement des enseignants…</p>
+    } @else if (!teachers().length) {
+      <p class="teacher-roster__state">Aucun enseignant affecté à cette classe. Les affectations sont déterminées par la classe et la matière enseignée.</p>
+    } @else {
+      <section class="teacher-roster__card">
+        <div class="teacher-roster__card-head">
+          <h2>Enseignants affectés</h2>
+          <span class="teacher-roster__count">{{ teachers().length }} enseignant(s)</span>
+        </div>
+        <ng-container *ngTemplateOutlet="teacherTable; context: { $implicit: teachers(), empty: '—', classMode: true }" />
+      </section>
+    }
+
+    @if (showAllTeachers()) {
+      @if (loadingAllTeachers()) {
+        <p class="teacher-roster__state">Chargement des enseignants de l’établissement…</p>
+      } @else if (!allTeachers().length) {
+        <p class="teacher-roster__state">Aucun enseignant enregistré dans cet établissement.</p>
+      } @else {
+        <section class="teacher-roster__card">
+          <div class="teacher-roster__card-head">
+            <h2>Tous les enseignants de l’établissement</h2>
+            <span class="teacher-roster__count">{{ allTeachers().length }} enseignant(s)</span>
+          </div>
+          <ng-container *ngTemplateOutlet="teacherTable; context: { $implicit: allTeachers(), empty: 'Aucune affectation', classMode: false }" />
+        </section>
+      }
+    }
+  }
+</section>
+
+<ng-template #teacherTable let-list let-empty="empty" let-classMode="classMode">
+  <div class="teacher-roster__table-wrap">
+    <table class="teacher-roster__table">
+      <thead><tr>
+        <th>Enseignant</th><th>Matières</th><th>Contact</th>
+        @if (classMode) { <th>Statut</th> } @else { <th>Classes actives</th> }
+        <th>Actions</th>
+      </tr></thead>
+      <tbody>
+        @for (teacher of list; track teacher.id) {
+          <tr class="teacher-roster__row" [class.teacher-roster__row--inactive]="classMode && teacher.activeInClass === false">
+            <td>
+              <div class="teacher-roster__person">
+                <span class="teacher-roster__avatar" aria-hidden="true">{{ teacher.firstName.charAt(0) }}{{ teacher.lastName.charAt(0) }}</span>
+                <div><strong>{{ teacher.firstName }} {{ teacher.lastName }}</strong>
+                  <div class="teacher-roster__muted">{{ teacher.specialty || 'Spécialité non renseignée' }}</div></div>
+              </div>
+            </td>
+            <td>{{ teacher.subjects.join(', ') || empty }}</td>
+            <td>{{ teacher.email }}<div class="teacher-roster__muted">{{ teacher.phone || '—' }}</div></td>
+            @if (classMode) {
+              <td>
+                @if (teacher.activeInClass === false) {
+                  <span class="teacher-roster__badge teacher-roster__badge--off">Désactivé</span>
+                } @else {
+                  <span class="teacher-roster__badge teacher-roster__badge--on">Actif</span>
+                }
+              </td>
+            } @else {
+              <td><span class="teacher-roster__count">{{ teacher.classCount ?? 0 }}</span></td>
+            }
+            <td class="teacher-roster__actions">
+              <a class="teacher-roster__action" [routerLink]="['/proprietaire/enseignants', teacher.id]">Voir la fiche</a>
+              @if (classMode) {
+                @if (teacher.activeInClass === false) {
+                  <button type="button" class="teacher-roster__action teacher-roster__action--ok" [disabled]="saving()" (click)="setTeacherActive(teacher, true)">Réactiver</button>
+                } @else {
+                  <button type="button" class="teacher-roster__action teacher-roster__action--danger" [disabled]="saving()" (click)="setTeacherActive(teacher, false)">Désactiver</button>
+                }
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</ng-template>

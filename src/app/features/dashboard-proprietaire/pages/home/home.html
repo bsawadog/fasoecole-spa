@@ -13,7 +13,7 @@
     </div>
     @if (schools().length > 1) {
       <label class="owner-dashboard__school-picker">
-        <span>Établissement</span>
+        <span>Choisir un établissement</span>
         <select [value]="selectedSchoolId()" (change)="onSchoolChange($event)">
           @for (school of schools(); track school.id) {
             <option [value]="school.id">{{ school.name }}</option>
@@ -100,6 +100,10 @@
         <div class="owner-dashboard__panel-heading">
           <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--green"><svg lucideWallet [size]="20" aria-hidden="true"></svg></span>
           <div><h2>Situation financière</h2><p>Montants enregistrés dans FasoÉcole</p></div>
+        </div>
+        <div class="owner-dashboard__finance-row">
+          <div><span>Total à encaisser (frais actifs)</span><strong>{{ formatAmount(data.expectedAmount) }}</strong></div>
+          <svg lucideReceiptText [size]="20" aria-hidden="true"></svg>
         </div>
         <div class="owner-dashboard__finance-row">
           <div><span>Montant encaissé</span><strong>{{ formatAmount(data.receivedAmount) }}</strong></div>

@@ -1,43 +1,174 @@
-.owner-management { max-width: 82rem; margin: auto; color: #18342c; }
-.owner-management header, .owner-management__panel-heading, .owner-management__editor-heading, .owner-management__list-heading, .owner-management__form-actions { display: flex; align-items: center; justify-content: space-between; gap: .8rem; }
-.owner-management header { margin-bottom: 1rem; }
+.owner-management {
+  max-width: 82rem;
+  margin: auto;
+  color: #18342c;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.owner-management header,
+.owner-management__panel-heading,
+.owner-management__editor-heading,
+.owner-management__list-heading,
+.owner-management__form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.owner-management header { margin-bottom: 1.4rem; }
 .owner-management header h1 { margin: 0; font-size: clamp(1.8rem, 3vw, 2.35rem); }
-.owner-management header p, .owner-management section p { color: #718078; font-size: .82rem; }
-.owner-management__eyebrow { color: #1f765e !important; font-size: .72rem !important; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
-.owner-management__school-picker { display: grid; gap: .4rem; color: #66756d; font-size: .75rem; }
-.owner-management__school-picker select, .owner-management input, .owner-management select { min-height: 2.5rem; padding: .55rem .7rem; border: 1px solid #dbe4dc; border-radius: .55rem; color: #203d33; background: #fff; font: inherit; font-size: .84rem; }
-.owner-management__panel { padding: 1rem; border: 1px solid #e5eae5; border-radius: .85rem; background: #fff; }
-.owner-management__list-heading span { color: #87938b; font-size: .74rem; }
-.owner-management__tabs, .owner-management__subtabs { display: flex; gap: .4rem; overflow-x: auto; }
-.owner-management__tabs { margin-bottom: 1rem; padding: .35rem; border: 1px solid #e5eae5; border-radius: .85rem; background: #fff; }
+.owner-management header p,
+.owner-management section p { color: #475a50; font-size: 1rem; line-height: 1.55; }
+.owner-management__eyebrow { color: #176449 !important; font-size: .85rem !important; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.owner-management__school-badge { padding: .7rem 1rem; border: 1px solid #cddfd2; border-radius: .7rem; background: #f1f8f3; font-weight: 700; }
+.owner-management__school-badge span { display: block; color: #40584a; font-size: .9rem; font-weight: 500; }
+.owner-management__school-picker { display: grid; gap: .4rem; color: #344e40; font-size: .95rem; font-weight: 600; }
+.owner-management__school-picker select,
+.owner-management input,
+.owner-management select {
+  min-height: 2.75rem;
+  padding: .55rem .75rem;
+  border: 1px solid #b8cbbd;
+  border-radius: .55rem;
+  color: #18342c;
+  background: #fff;
+  font: inherit;
+  font-size: 1rem;
+}
+
 .owner-management button { font: inherit; cursor: pointer; }
-.owner-management__tabs button, .owner-management__subtabs button { flex: 0 0 auto; padding: .6rem .8rem; border: 0; border-radius: .55rem; color: #68766e; background: transparent; font-size: .8rem; }
-.owner-management__tab--active, .owner-management__subtab--active { color: #176449 !important; background: #eaf6f0 !important; font-weight: 700; }
-.owner-management__panel { padding: 1.2rem; box-shadow: 0 .3rem 1rem rgb(24 52 44 / 4%); }
-.owner-management__panel-heading { margin-bottom: 1rem; }
-.owner-management section h2 { margin: 0; color: #203d33; font-size: 1.05rem; }
-.owner-management__primary, .owner-management__form-actions button { padding: .65rem .9rem; border: 0; border-radius: .6rem; color: #fff; background: #1e795b; font-size: .8rem; font-weight: 700; text-decoration: none; }
-.owner-management__subtabs { padding-bottom: .7rem; border-bottom: 1px solid #edf0ed; }
-.owner-management__subtabs button { padding: .5rem .65rem; font-size: .76rem; }
-.owner-management form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
-.owner-management__editor { margin: 1rem 0; padding: 1rem; border: 1px solid #dce9df; border-radius: .75rem; background: #f8fbf8; }
-.owner-management__wide, .owner-management__editor-heading { grid-column: 1 / -1; }
-.owner-management form label { display: grid; gap: .35rem; color: #586b60; font-size: .76rem; }
-.owner-management__form-actions span { color: #87938b; font-size: .72rem; }
-.owner-management__list-heading { margin: 1rem 0 .5rem; }
+.owner-management button:disabled { cursor: not-allowed; opacity: .65; }
+.owner-management button:focus-visible,
+.owner-management a:focus-visible,
+.owner-management input:focus-visible,
+.owner-management select:focus-visible { outline: 3px solid #14765a; outline-offset: 2px; }
+
+.owner-management__tabs,
+.owner-management__subtabs { display: flex; gap: .5rem; overflow-x: auto; }
+.owner-management__tabs {
+  margin-bottom: 1.2rem;
+  padding: .5rem;
+  border: 1px solid #d5e3d8;
+  border-radius: .85rem;
+  background: #f3f7f4;
+}
+.owner-management__tabs button,
+.owner-management__subtabs button {
+  flex: 0 0 auto;
+  padding: .75rem 1rem;
+  border: 1px solid transparent;
+  border-radius: .55rem;
+  color: #31483a;
+  background: transparent;
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.owner-management__tabs button:hover,
+.owner-management__subtabs button:hover { background: #e1eee5; }
+.owner-management__tabs .owner-management__tab--active,
+.owner-management__subtabs .owner-management__subtab--active {
+  border-color: #a9d1b6;
+  color: #12583e;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(24 52 44 / 10%);
+  font-weight: 750;
+}
+.owner-management__subtabs { padding-bottom: .8rem; border-bottom: 1px solid #dce6de; }
+.owner-management__subtabs button { padding: .6rem .8rem; font-size: .95rem; }
+.owner-management__subtabs span { margin-left: .3rem; font-weight: 700; }
+
+.owner-management__panel {
+  padding: 1.5rem;
+  border: 1px solid #dce6de;
+  border-radius: .85rem;
+  background: #fff;
+  box-shadow: 0 .3rem 1rem rgb(24 52 44 / 6%);
+}
+.owner-management__panel-heading { margin-bottom: 1.2rem; }
+.owner-management section h2 { margin: 0; color: #183f30; font-size: 1.35rem; }
+.owner-management section h3 { color: #183f30; font-size: 1.1rem; }
+.owner-management__primary,
+.owner-management__form-actions button {
+  display: inline-block;
+  padding: .7rem 1rem;
+  border: 1px solid #176449;
+  border-radius: .6rem;
+  color: #fff;
+  background: #176449;
+  font-size: .95rem;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+}
+.owner-management__primary:hover,
+.owner-management__form-actions button:hover { background: #104b36; }
+
+.owner-management form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.owner-management__editor { margin: 1.2rem 0; padding: 1.2rem; border: 1px solid #cddfd2; border-radius: .75rem; background: #f6faf7; }
+.owner-management__wide,
+.owner-management__editor-heading { grid-column: 1 / -1; }
+.owner-management form label { display: grid; gap: .4rem; color: #294838; font-size: .95rem; font-weight: 600; }
+.owner-management form label.owner-management__checkbox { display: flex; align-items: center; }
+.owner-management form input[type="checkbox"] { min-height: 0; width: 1.15rem; height: 1.15rem; }
+.owner-management__form-actions span { color: #475a50; font-size: .9rem; }
+.owner-management__text-button { border: 0; background: none; color: #176449; font-weight: 700; }
+.owner-management__list-heading { margin: 1.3rem 0 .6rem; }
+.owner-management__list-heading h3 { margin: 0; }
+.owner-management__list-heading span { color: #475a50; font-size: .9rem; }
+
+.owner-management__table-wrap { overflow-x: auto; }
 .owner-management table { width: 100%; border-collapse: collapse; text-align: left; }
-.owner-management th, .owner-management td { padding: .65rem .5rem; border-bottom: 1px solid #edf0ed; font-size: .78rem; }
-.owner-management th { color: #87938b; font-size: .7rem; }
-.owner-management td { color: #586b60; }
-.owner-management td strong { color: #294438; }
-.owner-management__summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: .8rem; margin-bottom: 1rem; }
-.owner-management__notice { margin-top: 1rem; padding: .8rem; color: #786335; background: #fffbef; font-size: .75rem; line-height: 1.5; }
-.owner-management__message { margin-bottom: 1rem; padding: .8rem 1rem; border-radius: .65rem; font-size: .84rem; }
+.owner-management th,
+.owner-management td { padding: .85rem .8rem; border-bottom: 1px solid #dce6de; font-size: .95rem; line-height: 1.5; }
+.owner-management th { color: #294838; background: #e9f2ec; font-weight: 700; white-space: nowrap; }
+.owner-management td { color: #30483b; }
+.owner-management td strong { color: #18342c; }
+.owner-management tbody tr:nth-child(even) { background: #f2f6f3; }
+.owner-management tbody tr:hover { background: #e6f1e9; }
+.owner-management__actions { white-space: nowrap; }
+.owner-management__actions button {
+  margin: .15rem .35rem .15rem 0;
+  padding: .4rem .65rem;
+  border: 1px solid #b2cdb9;
+  border-radius: .45rem;
+  color: #12583e;
+  background: #fff;
+  font-size: .9rem;
+  font-weight: 600;
+}
+.owner-management__actions .owner-management__delete { border-color: #e5b6ae; color: #923b30; }
+
+.owner-management__summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.2rem; }
+.owner-management__summary > div { display: grid; gap: .25rem; padding: 1rem; border: 1px solid #d5e3d8; border-radius: .7rem; background: #f3f8f4; }
+.owner-management__summary span { color: #40584a; font-weight: 600; }
+.owner-management__summary strong { color: #12583e; font-size: 1.7rem; }
+.owner-management__rosters { display: grid; gap: 1rem; }
+.owner-management__notice { margin-top: 1.2rem; padding: 1rem; border-radius: .6rem; color: #604a20; background: #fff7df; font-size: .95rem; line-height: 1.55; }
+.owner-management__message { margin-bottom: 1rem; padding: .8rem 1rem; border-radius: .65rem; font-size: 1rem; }
 .owner-management__message--error { color: #963c35; background: #fff0ed; }
 .owner-management__message--success { color: #176449; background: #eaf6f0; }
-.owner-management__empty, .owner-management__empty-inline { padding: 1.5rem; border: 1px dashed #dbe4dc; border-radius: .8rem; color: #718078; background: #fff; text-align: center; }
-.owner-management__table-wrap { overflow-x: auto; }
+.owner-management__empty,
+.owner-management__empty-inline { padding: 1.5rem; border: 1px dashed #b8cbbd; border-radius: .8rem; color: #40584a; background: #fff; text-align: center; }
+
+.owner-management__level-catalog { margin: 1.2rem 0; padding: 1.2rem; border: 1px solid #cddfd2; border-radius: .75rem; background: #f6faf7; }
+.owner-management__level-catalog h3 { margin: 0; }
+.owner-management__level-group { margin-top: 1rem; }
+.owner-management__level-group strong { display: block; margin-bottom: .5rem; }
+.owner-management__level-group div { display: flex; flex-wrap: wrap; gap: .5rem; }
+.owner-management__level-group button { padding: .5rem .8rem; border: 1px solid #b8d5c5; border-radius: .5rem; background: #fff; color: #12583e; font-size: .95rem; }
+.owner-management__level-group button:disabled { color: #40584a; background: #e9f0ec; }
+
 @media (max-width: 700px) {
-  .owner-management header { flex-direction: column; }
+  .owner-management header,
+  .owner-management__panel-heading,
+  .owner-management__form-actions { align-items: stretch; flex-direction: column; }
+  .owner-management__panel { padding: 1rem; }
   .owner-management form { grid-template-columns: 1fr; }
+  .owner-management__tabs button { padding: .65rem .8rem; }
+  .owner-management__summary { grid-template-columns: 1fr 1fr; }
 }
+
+.owner-management__school-picker, .owner-management__school-picker select { font-weight: 700; }

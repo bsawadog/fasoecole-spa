@@ -1,0 +1,325 @@
+<section class="fin" [class.fin--receipt]="receipt()">
+  <header class="fin__header">
+    <div class="fin__identity">
+      <span class="fin__header-icon" aria-hidden="true">₣</span>
+      <div>
+        <h1>Frais &amp; paiements</h1>
+        <p>Catalogue des frais, facturation des classes, encaissements, impayés et reçus.</p>
+      </div>
+    </div>
+    @if (schools().length > 1) {
+      <label class="fin__school-picker">Choisir un établissement
+        <select class="fin__select" [ngModel]="schoolId()" (change)="changeSchool($event)">
+          @for (school of schools(); track school.id) {
+            <option [value]="school.id">{{ school.name }}</option>
+          }
+        </select>
+      </label>
+    }
+  </header>
+
+  <nav class="fin__tabs" aria-label="Sections financières">
+    @for (item of tabs; track item.id) {
+      <button type="button" class="fin__tab" [class.fin__tab--on]="tab() === item.id"
+              [attr.aria-current]="tab() === item.id ? 'page' : null" (click)="setTab(item.id)">{{ item.label }}</button>
+    }
+  </nav>
+
+  @if (error()) { <div class="fin__alert fin__alert--error" role="alert">{{ error() }}</div> }
+  @if (success()) { <div class="fin__alert fin__alert--success" role="status">{{ success() }}</div> }
+
+  @if (loading()) {
+    <p class="fin__state">Chargement…</p>
+  } @else if (!schools().length) {
+    <p class="fin__state">Aucun établissement associé à votre compte.</p>
+  } @else {
+    @switch (tab()) {
+      @case ('overview') {
+        @if (overview(); as o) {
+          <div class="fin__kpis">
+            <div class="fin__kpi"><span>Montant attendu</span><strong>{{ o.expected | number:'1.0-0' }} FCFA</strong>
+              <small>{{ o.invoiceCount }} frais facturés · réductions {{ o.discounts | number:'1.0-0' }}</small></div>
+            <div class="fin__kpi fin__kpi--ok"><span>Encaissé</span><strong>{{ o.collected | number:'1.0-0' }} FCFA</strong>
+              <small>dont ce mois-ci : {{ o.collectedThisMonth | number:'1.0-0' }}</small></div>
+            <div class="fin__kpi fin__kpi--warn"><span>Reste à percevoir</span><strong>{{ o.remaining | number:'1.0-0' }} FCFA</strong>
+              <small>{{ o.unpaidCount }} frais non soldés</small></div>
+            <div class="fin__kpi fin__kpi--bad"><span>En retard</span><strong>{{ o.overdueAmount | number:'1.0-0' }} FCFA</strong>
+              <small>{{ o.overdueCount }} échéance(s) dépassée(s)</small></div>
+          </div>
+          <div class="fin__card">
+            <div class="fin__card-head"><h2>Taux de recouvrement</h2><span class="fin__count">{{ o.collectionRate }} %</span></div>
+            <div class="fin__body"><div class="fin__bar fin__bar--big"><span [style.width.%]="o.collectionRate"></span></div></div>
+          </div>
+          <div class="fin__grid">
+            <div class="fin__card">
+              <div class="fin__card-head"><h2>Par classe</h2></div>
+              <div class="fin__table-wrap"><table class="fin__table">
+                <thead><tr><th>Classe</th><th>Élèves</th><th>Attendu</th><th>Encaissé</th><th>Reste</th><th>Recouvrement</th></tr></thead>
+                <tbody>
+                  @for (c of o.perClass; track c.classId) {
+                    <tr><td><strong>{{ c.className }}</strong></td><td>{{ c.students }}</td><td>{{ c.expected | number:'1.0-0' }}</td>
+                      <td>{{ c.collected | number:'1.0-0' }}</td><td [class.fin__neg]="c.remaining > 0">{{ c.remaining | number:'1.0-0' }}</td>
+                      <td><div class="fin__bar"><span [style.width.%]="ratio(c.collected, c.expected)"></span></div>{{ ratio(c.collected, c.expected) }} %</td></tr>
+                  } @empty { <tr><td colspan="6" class="fin__muted">Aucune classe.</td></tr> }
+                </tbody>
+              </table></div>
+            </div>
+            <div class="fin__card">
+              <div class="fin__card-head"><h2>Par type de frais</h2></div>
+              <div class="fin__table-wrap"><table class="fin__table">
+                <thead><tr><th>Frais</th><th>Attendu</th><th>Encaissé</th><th>Reste</th></tr></thead>
+                <tbody>
+                  @for (f of o.perFeeType; track f.feeTypeId) {
+                    <tr><td><strong>{{ f.feeTypeName }}</strong></td><td>{{ f.expected | number:'1.0-0' }}</td>
+                      <td>{{ f.collected | number:'1.0-0' }}</td><td [class.fin__neg]="f.remaining > 0">{{ f.remaining | number:'1.0-0' }}</td></tr>
+                  } @empty { <tr><td colspan="4" class="fin__muted">Aucun frais facturé. Commencez par « Facturer ».</td></tr> }
+                </tbody>
+              </table></div>
+            </div>
+          </div>
+          <div class="fin__card">
+            <div class="fin__card-head"><h2>Derniers paiements</h2>
+              <button type="button" class="fin__link" (click)="setTab('payments')">Voir tout →</button></div>
+            <div class="fin__table-wrap"><table class="fin__table">
+              <thead><tr><th>Date</th><th>Reçu</th><th>Élève</th><th>Frais</th><th>Mode</th><th>Montant</th></tr></thead>
+              <tbody>
+                @for (p of o.recentPayments; track p.id) {
+                  <tr><td>{{ p.paymentDate }}</td><td>{{ p.reference }}</td><td>{{ p.studentName }}</td><td>{{ p.feeTypeName }}</td>
+                    <td>{{ methodLabels[p.method] }}</td><td><strong>{{ p.amount | number:'1.0-0' }}</strong></td></tr>
+                } @empty { <tr><td colspan="6" class="fin__muted">Aucun paiement enregistré.</td></tr> }
+              </tbody>
+            </table></div>
+          </div>
+        } @else { <p class="fin__state">Chargement du tableau financier…</p> }
+      }
+
+      @case ('invoices') {
+        <div class="fin__card">
+          <div class="fin__card-head"><h2>Frais facturés</h2><span class="fin__count">{{ filteredInvoices().length }}</span></div>
+          <div class="fin__toolbar">
+            <label>Statut
+              <select [(ngModel)]="invoiceFilter" (change)="loadTab()">
+                <option value="UNPAID">Impayés (à payer + en retard)</option>
+                <option value="OVERDUE">En retard</option>
+                <option value="PENDING">À payer (non échus)</option>
+                <option value="PAID">Payés</option>
+                <option value="CANCELLED">Annulés</option>
+                <option value="ALL">Tous</option>
+              </select>
+            </label>
+            <label>Classe
+              <select [(ngModel)]="invoiceClassId" (change)="loadTab()">
+                <option [ngValue]="null">Toutes les classes</option>
+                @for (c of classes(); track c.id) { <option [ngValue]="c.id">{{ classLabel(c) }}</option> }
+              </select>
+            </label>
+            <label>Rechercher<input type="search" [(ngModel)]="search" placeholder="Élève, matricule, frais"></label>
+          </div>
+
+          @if (panel(); as p) {
+            <form class="fin__panel" (ngSubmit)="p.kind === 'pay' ? submitPayment() : submitDiscount()">
+              <h3>{{ p.kind === 'pay' ? 'Encaisser' : 'Réduction / exonération' }} — {{ p.invoice.studentName }} · {{ p.invoice.feeTypeName }}</h3>
+              <p class="fin__muted">Facturé {{ p.invoice.amountDue | number:'1.0-0' }} · réduction {{ p.invoice.discountAmount | number:'1.0-0' }}
+                · versé {{ p.invoice.paid | number:'1.0-0' }} · reste <strong>{{ p.invoice.balance | number:'1.0-0' }} FCFA</strong></p>
+              <div class="fin__form">
+                @if (p.kind === 'pay') {
+                  <label>Montant (FCFA)<input type="number" min="1" [max]="p.invoice.balance" name="amount" [(ngModel)]="pay.amount" required></label>
+                  <label>Date<input type="date" name="date" [(ngModel)]="pay.paymentDate"></label>
+                  <label>Mode
+                    <select name="method" [(ngModel)]="pay.method">
+                      @for (m of methods; track m) { <option [value]="m">{{ methodLabels[m] }}</option> }
+                    </select>
+                  </label>
+                } @else {
+                  <label>Montant de la réduction<input type="number" min="0" name="discount" [(ngModel)]="discount.amount"></label>
+                  <label class="fin__wide">Motif<input name="reason" maxlength="255" [(ngModel)]="discount.reason" placeholder="Fratrie, bourse, enfant du personnel…"></label>
+                }
+              </div>
+              <div class="fin__actions">
+                <button type="submit" class="fin__btn" [disabled]="busy()">Valider</button>
+                @if (p.kind === 'discount') {
+                  <button type="button" class="fin__btn fin__btn--ghost" (click)="exemptAll(p.invoice)">Exonération totale</button>
+                }
+                <button type="button" class="fin__btn fin__btn--ghost" (click)="panel.set(null)">Fermer</button>
+              </div>
+            </form>
+          }
+
+          <div class="fin__table-wrap"><table class="fin__table">
+            <thead><tr><th>Élève</th><th>Classe</th><th>Frais</th><th>Échéance</th><th>Net</th><th>Versé</th><th>Reste</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody>
+              @for (row of filteredInvoices(); track row.id) {
+                <tr>
+                  <td><a [routerLink]="['/proprietaire/eleves', row.studentId]"><strong>{{ row.studentName }}</strong></a>
+                    <div class="fin__muted">{{ row.registrationNumber }}</div></td>
+                  <td>{{ row.className }}</td>
+                  <td>{{ row.feeTypeName }}</td>
+                  <td>{{ row.dueDate }}@if (row.daysOverdue > 0) { <div class="fin__neg">+{{ row.daysOverdue }} j</div> }</td>
+                  <td>{{ row.netAmount | number:'1.0-0' }}
+                    @if (row.discountAmount > 0) { <div class="fin__muted" [title]="row.discountReason ?? ''">−{{ row.discountAmount | number:'1.0-0' }} ({{ row.discountReason }})</div> }</td>
+                  <td>{{ row.paid | number:'1.0-0' }}</td>
+                  <td [class.fin__neg]="row.balance > 0"><strong>{{ row.balance | number:'1.0-0' }}</strong></td>
+                  <td><span class="fin__badge fin__badge--{{ row.status }}">{{ statusLabels[row.status] }}</span></td>
+                  <td class="fin__row-actions">
+                    @if (row.status !== 'CANCELLED') {
+                      @if (row.balance > 0) {
+                        <button type="button" class="fin__mini fin__mini--ok" (click)="openPanel('pay', row)">Encaisser</button>
+                        <button type="button" class="fin__mini" (click)="remind(row)" [disabled]="busy()">Relancer</button>
+                      }
+                      <button type="button" class="fin__mini" (click)="openPanel('discount', row)">Réduction</button>
+                      @if (row.paid === 0) {
+                        <button type="button" class="fin__mini fin__mini--danger" (click)="cancelInvoice(row)">Annuler</button>
+                      }
+                    }
+                  </td>
+                </tr>
+              } @empty { <tr><td colspan="9" class="fin__muted">Aucun frais pour ce filtre.</td></tr> }
+            </tbody>
+          </table></div>
+        </div>
+      }
+
+      @case ('payments') {
+        <div class="fin__card">
+          <div class="fin__card-head"><h2>Journal des paiements</h2>
+            <span class="fin__count">{{ payments().length }} · {{ paymentsTotal() | number:'1.0-0' }} FCFA</span></div>
+          <div class="fin__toolbar">
+            <label>Du<input type="date" [(ngModel)]="from"></label>
+            <label>Au<input type="date" [(ngModel)]="to"></label>
+            <button type="button" class="fin__btn" (click)="loadPayments()">Filtrer</button>
+            <button type="button" class="fin__btn fin__btn--green" (click)="exportCsv()">⬇ Exporter (CSV / Excel)</button>
+          </div>
+          <div class="fin__table-wrap"><table class="fin__table">
+            <thead><tr><th>Date</th><th>Reçu n°</th><th>Élève</th><th>Classe</th><th>Frais</th><th>Mode</th><th>Montant</th><th>Actions</th></tr></thead>
+            <tbody>
+              @for (p of payments(); track p.id) {
+                <tr><td>{{ p.paymentDate }}</td><td>{{ p.reference }}</td>
+                  <td><a [routerLink]="['/proprietaire/eleves', p.studentId]">{{ p.studentName }}</a></td>
+                  <td>{{ p.className }}</td><td>{{ p.feeTypeName }}</td><td>{{ methodLabels[p.method] }}</td>
+                  <td><strong>{{ p.amount | number:'1.0-0' }}</strong></td>
+                  <td class="fin__row-actions">
+                    <button type="button" class="fin__mini fin__mini--ok" (click)="printReceipt(p)">🧾 Reçu</button>
+                    <button type="button" class="fin__mini fin__mini--danger" (click)="deletePayment(p)">Supprimer</button>
+                  </td></tr>
+              } @empty { <tr><td colspan="8" class="fin__muted">Aucun paiement sur cette période.</td></tr> }
+            </tbody>
+          </table></div>
+        </div>
+      }
+
+      @case ('billing') {
+        <form class="fin__card" (ngSubmit)="submitBulk()">
+          <div class="fin__card-head"><h2>Facturer un frais à plusieurs élèves</h2></div>
+          @if (!activeFees().length) {
+            <p class="fin__state">Créez d’abord un frais dans le « Catalogue des frais ».</p>
+          } @else {
+            <div class="fin__body">
+              <div class="fin__form">
+                <label>Frais
+                  <select name="fee" [(ngModel)]="bulk.feeTypeId">
+                    @for (f of activeFees(); track f.id) {
+                      <option [ngValue]="f.id">{{ f.name }} — {{ f.amount | number:'1.0-0' }} FCFA{{ f.levelName ? ' · ' + f.levelName : '' }}</option>
+                    }
+                  </select>
+                </label>
+                <label>Élèves concernés
+                  <select name="scope" [(ngModel)]="bulk.scope">
+                    <option value="school">Tout l’établissement (ou le niveau du frais)</option>
+                    <option value="level">Un niveau</option>
+                    <option value="class">Une classe</option>
+                  </select>
+                </label>
+                @if (bulk.scope === 'level') {
+                  <label>Niveau
+                    <select name="level" [(ngModel)]="bulk.levelId">
+                      <option [ngValue]="0" disabled>Choisir…</option>
+                      @for (l of levels(); track l.id) { <option [ngValue]="l.id">{{ l.name }}</option> }
+                    </select>
+                  </label>
+                }
+                @if (bulk.scope === 'class') {
+                  <label>Classe
+                    <select name="class" [(ngModel)]="bulk.classId">
+                      <option [ngValue]="0" disabled>Choisir…</option>
+                      @for (c of classes(); track c.id) { <option [ngValue]="c.id">{{ classLabel(c) }}</option> }
+                    </select>
+                  </label>
+                }
+                <label>Échéance<input type="date" name="due" [(ngModel)]="bulk.dueDate" required></label>
+                <label>Montant spécifique (optionnel)<input type="number" min="1" name="amount" [(ngModel)]="bulk.amount" placeholder="Tarif du catalogue"></label>
+              </div>
+              <p class="fin__muted">Seuls les élèves inscrits (actifs) de l’année en cours sont facturés. Pour un frais mensuel, générez une échéance par mois.</p>
+              <div class="fin__actions"><button type="submit" class="fin__btn" [disabled]="busy()">Générer les factures</button></div>
+            </div>
+          }
+        </form>
+      }
+
+      @case ('catalog') {
+        <form class="fin__card" (ngSubmit)="saveFee()">
+          <div class="fin__card-head"><h2>{{ editingFeeId ? 'Modifier le frais' : 'Nouveau frais' }}</h2></div>
+          <div class="fin__body">
+            <div class="fin__form">
+              <label>Nom<input name="name" maxlength="150" [(ngModel)]="feeForm.name" placeholder="Scolarité, Inscription, Cantine…" required></label>
+              <label>Montant (FCFA)<input type="number" min="0" name="amount" [(ngModel)]="feeForm.amount" required></label>
+              <label>Fréquence
+                <select name="frequency" [(ngModel)]="feeForm.frequency">
+                  @for (f of frequencies; track f) { <option [value]="f">{{ frequencyLabels[f] }}</option> }
+                </select>
+              </label>
+              <label>Niveau (tarif par niveau)
+                <select name="level" [(ngModel)]="feeForm.levelId">
+                  <option [ngValue]="0">Tous les niveaux</option>
+                  @for (l of levels(); track l.id) { <option [ngValue]="l.id">{{ l.name }}</option> }
+                </select>
+              </label>
+              <label class="fin__wide">Description<input name="description" maxlength="255" [(ngModel)]="feeForm.description"></label>
+            </div>
+            <div class="fin__actions">
+              <button type="submit" class="fin__btn" [disabled]="busy()">{{ editingFeeId ? 'Enregistrer' : 'Ajouter' }}</button>
+              @if (editingFeeId) { <button type="button" class="fin__btn fin__btn--ghost" (click)="resetFee()">Annuler</button> }
+            </div>
+          </div>
+        </form>
+        <div class="fin__card">
+          <div class="fin__card-head"><h2>Catalogue</h2><span class="fin__count">{{ feeTypes().length }}</span></div>
+          <div class="fin__table-wrap"><table class="fin__table">
+            <thead><tr><th>Frais</th><th>Montant</th><th>Fréquence</th><th>Niveau</th><th>Facturé</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody>
+              @for (f of feeTypes(); track f.id) {
+                <tr [class.fin__off]="!f.active">
+                  <td><strong>{{ f.name }}</strong>@if (f.description) { <div class="fin__muted">{{ f.description }}</div> }</td>
+                  <td>{{ f.amount | number:'1.0-0' }} FCFA</td><td>{{ frequencyLabels[f.frequency] }}</td>
+                  <td>{{ f.levelName ?? 'Tous' }}</td><td>{{ f.invoiceCount }} fois</td>
+                  <td><span class="fin__badge" [class.fin__badge--PAID]="f.active">{{ f.active ? 'Actif' : 'Archivé' }}</span></td>
+                  <td class="fin__row-actions">
+                    <button type="button" class="fin__mini" (click)="editFee(f)">Modifier</button>
+                    <button type="button" class="fin__mini" (click)="toggleFee(f)">{{ f.active ? 'Archiver' : 'Réactiver' }}</button>
+                    <button type="button" class="fin__mini fin__mini--danger" (click)="deleteFee(f)">Supprimer</button>
+                  </td>
+                </tr>
+              } @empty { <tr><td colspan="7" class="fin__muted">Aucun frais. Ajoutez la scolarité, l’inscription, la cantine…</td></tr> }
+            </tbody>
+          </table></div>
+        </div>
+      }
+    }
+  }
+
+  @if (receipt(); as r) {
+    <article class="fin__receipt" aria-label="Reçu de paiement">
+      <h2>{{ schoolName() }}</h2>
+      <h3>REÇU DE PAIEMENT N° {{ r.reference }}</h3>
+      <dl>
+        <dt>Date</dt><dd>{{ r.paymentDate }}</dd>
+        <dt>Élève</dt><dd>{{ r.studentName }} ({{ r.registrationNumber }})</dd>
+        <dt>Classe</dt><dd>{{ r.className }}</dd>
+        <dt>Objet</dt><dd>{{ r.feeTypeName }}</dd>
+        <dt>Mode de paiement</dt><dd>{{ methodLabels[r.method] }}</dd>
+        <dt>Montant reçu</dt><dd><strong>{{ r.amount | number:'1.0-0' }} FCFA</strong></dd>
+        <dt>Reste à payer sur ce frais (à ce jour)</dt><dd>{{ r.invoiceBalance | number:'1.0-0' }} FCFA</dd>
+      </dl>
+      <p class="fin__sign">Cachet et signature de l’administration</p>
+    </article>
+  }
+</section>

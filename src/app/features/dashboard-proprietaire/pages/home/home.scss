@@ -380,3 +380,5 @@
   .owner-dashboard__notification-list article { grid-template-columns: 0.55rem minmax(0, 1fr); }
   .owner-dashboard__notification-list time { grid-column: 2; }
 }
+
+.owner-dashboard__school-picker, .owner-dashboard__school-picker select { font-weight: 700; }

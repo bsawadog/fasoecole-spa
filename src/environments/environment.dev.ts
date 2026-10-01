@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
   envName: 'dev' as const,
-  apiUrl: 'http://env-dev/api',
+  apiUrl: 'https://api.dev.fasoecole.com/api',
 };

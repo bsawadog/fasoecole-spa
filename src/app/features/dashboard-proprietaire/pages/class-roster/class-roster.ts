@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin, Subscription } from 'rxjs';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
+import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import {
   ClassRecord,
   ClassRosterRow,
@@ -50,6 +51,7 @@ interface NewStudentForm {
 export class ClassRoster implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly api = inject(OwnerManagementService);
+  private readonly confirmation = inject(ConfirmationService);
   private request?: Subscription;
   private classRequest?: Subscription;
 
@@ -230,10 +232,15 @@ export class ClassRoster implements OnInit, OnDestroy {
     });
   }
 
-  removeStudent(row: ClassRosterRow): void {
+  async removeStudent(row: ClassRosterRow): Promise<void> {
     const classId = this.selectedClassId();
     if (!classId) return;
-    if (!window.confirm(`Supprimer définitivement ${row.firstName} ${row.lastName} (compte, notes, présences, paiements) ?`)) return;
+    if (!await this.confirmation.confirm({
+      title: 'Supprimer cet élève définitivement ?',
+      message: `Supprimer ${row.firstName} ${row.lastName} ainsi que son compte, ses notes, ses présences et ses paiements ?`,
+      confirmLabel: 'Supprimer définitivement',
+      destructive: true,
+    })) return;
     this.saving.set(true);
     this.api.removeRosterStudent(classId, row.studentId).subscribe({
       next: () => {

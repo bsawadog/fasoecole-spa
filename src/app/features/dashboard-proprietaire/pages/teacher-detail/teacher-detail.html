@@ -1,0 +1,205 @@
+<main class="teacher-detail">
+  @if (loading() && !detail()) {
+    <p class="teacher-detail__state">Chargement de la fiche enseignant…</p>
+    @if (error()) { <p class="teacher-detail__alert teacher-detail__alert--error" role="alert">{{ error() }}</p> }
+  } @else if (detail(); as data) {
+    <header class="teacher-detail__header">
+      <div class="teacher-detail__header-top">
+        <a class="teacher-detail__back" routerLink="/proprietaire/enseignants">← Retour aux enseignants</a>
+        <div class="teacher-detail__header-actions">
+          <label class="teacher-detail__month">Mois suivi
+            <input type="month" [value]="month()" (change)="changeMonth($event)">
+          </label>
+          <button type="button" class="teacher-detail__print-btn" (click)="printPage()">🖨️ Imprimer / Enregistrer en PDF</button>
+          <button type="button" class="teacher-detail__send-btn" [disabled]="sending()" (click)="sendToTeacher()">
+            ✉️ {{ sending() ? 'Envoi…' : 'Envoyer à l’enseignant' }}
+          </button>
+        </div>
+      </div>
+      <div class="teacher-detail__identity">
+        <div class="teacher-detail__avatar" aria-hidden="true">{{ data.teacher.firstName.charAt(0) }}{{ data.teacher.lastName.charAt(0) }}</div>
+        <div>
+          <h1>{{ data.teacher.lastName }} {{ data.teacher.firstName }}</h1>
+          <p class="teacher-detail__sub">Fiche enseignant · {{ data.teacher.specialty || 'Spécialité non renseignée' }}
+            <span class="teacher-detail__print-only"> · Mois {{ month() }}</span></p>
+        </div>
+      </div>
+      @if (error()) { <p class="teacher-detail__alert teacher-detail__alert--error" role="alert">{{ error() }}</p> }
+      @if (success()) { <p class="teacher-detail__alert teacher-detail__alert--success" role="status">{{ success() }}</p> }
+    </header>
+    <section class="teacher-detail__panel" aria-label="Contact">
+      <h2>Informations</h2>
+      <dl>
+        <dt>Courriel</dt><dd>{{ data.teacher.email }}</dd>
+        <dt>Téléphone</dt><dd>{{ data.teacher.phone || '—' }}</dd>
+        <dt>Matières</dt><dd>{{ data.teacher.subjects.join(', ') || '—' }}</dd>
+      </dl>
+    </section>
+
+    <section class="teacher-detail__panel">
+      <h2>Rémunération et solde — {{ month() }}</h2>
+      <p>Seules les séances pointées présentes et les heures supplémentaires sont rémunérées. Une absence ne génère pas d’heures payées.</p>
+      <div class="teacher-detail__stats">
+        <div><span>Prévues</span><strong>{{ data.month.plannedHours | number: '1.0-2' }} h</strong></div>
+        <div><span>Présentes</span><strong>{{ data.month.workedHours | number: '1.0-2' }} h</strong></div>
+        <div><span>Absences</span><strong>{{ data.month.absenceHours | number: '1.0-2' }} h</strong></div>
+        <div><span>Heures ajoutées</span><strong>{{ data.month.extraHours | number: '1.0-2' }} h</strong></div>
+        <div><span>À payer</span><strong>{{ data.month.amountDue | number: '1.0-0' }} FCFA</strong></div>
+        <div><span>Déjà versé</span><strong>{{ data.month.paid | number: '1.0-0' }} FCFA</strong></div>
+        <div><span>Reste à payer</span><strong>{{ data.month.remaining | number: '1.0-0' }} FCFA</strong></div>
+      </div>
+      <p>Mode : <strong>{{ data.rateType === 'HOURLY' ? 'Horaire' : data.rateType === 'MONTHLY' ? 'Mensuel' : 'Non défini' }}</strong>
+        · Taux : <strong>{{ data.rate == null ? 'Non défini' : (data.rate | number: '1.0-0') + ' FCFA' }}</strong></p>
+      <form (ngSubmit)="setRate()">
+        <h3>Définir le taux</h3>
+        <label>Type de rémunération
+          <select name="rateType" [(ngModel)]="rateForm.type">
+            <option value="HOURLY">Taux horaire</option>
+            <option value="MONTHLY">Salaire mensuel (au prorata des heures pointées)</option>
+          </select>
+        </label>
+        <label>Montant (FCFA)<input name="rateAmount" type="number" min="1" step="1" [(ngModel)]="rateForm.amount" required></label>
+        <label>Applicable à partir du<input name="rateFrom" type="date" [(ngModel)]="rateForm.effectiveFrom" required></label>
+        <button type="submit" [disabled]="saving()">Enregistrer le taux</button>
+      </form>
+      @if (data.month.perClass.length) {
+        <h3>Répartition par classe</h3>
+        <div class="teacher-detail__table-wrap">
+          <table>
+            <thead><tr><th>Classe</th><th>Prévues</th><th>Présentes</th><th>Absences</th><th>Ajoutées</th></tr></thead>
+            <tbody>
+              @for (item of data.month.perClass; track item.classId) {
+                <tr><td>{{ item.className }}</td><td>{{ item.plannedHours | number: '1.0-2' }} h</td>
+                  <td>{{ item.workedHours | number: '1.0-2' }} h</td><td>{{ item.absenceHours | number: '1.0-2' }} h</td>
+                  <td>{{ item.extraHours | number: '1.0-2' }} h</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <section class="teacher-detail__panel">
+      <h2>Emploi du temps hebdomadaire</h2>
+      <p>Ajoutez un créneau pour une classe. Les modifications prennent effet à la date indiquée ; terminer un créneau conserve l’historique.</p>
+      <form (ngSubmit)="addSlot()">
+        <label>Classe
+          <select name="slotClass" [(ngModel)]="slotForm.classId" required>
+            @for (item of classes(); track item.id) { <option [ngValue]="item.id">{{ classLabel(item) }}</option> }
+          </select>
+        </label>
+        <label>Jour
+          <select name="slotDay" [(ngModel)]="slotForm.dayOfWeek">
+            @for (day of weekdays; track day; let index = $index) { <option [ngValue]="index + 1">{{ day }}</option> }
+          </select>
+        </label>
+        <label>Début<input name="slotStart" type="time" [(ngModel)]="slotForm.startTime" required></label>
+        <label>Fin<input name="slotEnd" type="time" [(ngModel)]="slotForm.endTime" required></label>
+        <label>À partir du<input name="slotFrom" type="date" [(ngModel)]="slotForm.effectiveFrom" required></label>
+        <button type="submit" [disabled]="saving() || !classes().length">Ajouter un créneau</button>
+      </form>
+      @if (!classes().length) { <p>Aucune classe n’est disponible pour cet établissement. Créez d’abord une classe dans la gestion académique.</p> }
+      @if (data.schedule.length) {
+        <div class="teacher-detail__table-wrap">
+          <table>
+            <thead><tr><th>Classe</th><th>Jour</th><th>Horaire</th><th>Période</th><th class="teacher-detail__no-print">Action</th></tr></thead>
+            <tbody>
+              @for (slot of data.schedule; track slot.id) {
+                <tr>
+                  <td>{{ slot.className }}</td><td>{{ weekdays[slot.dayOfWeek - 1] }}</td>
+                  <td>{{ slot.startTime.slice(0, 5) }}–{{ slot.endTime.slice(0, 5) }}</td>
+                  <td>{{ slot.effectiveFrom }} → {{ slot.effectiveTo || 'En cours' }}</td>
+                  <td class="teacher-detail__no-print">@if (!slot.effectiveTo) { <button class="teacher-detail__danger" type="button" [disabled]="saving()" (click)="removeSlot(slot.id)">Terminer</button> }</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <section class="teacher-detail__panel">
+      <h2>Calendrier et pointage — {{ month() }}</h2>
+      <p>En attente = non payé. Pointez les séances réalisées ou les absences ; chaque pointage recalcule le montant dû.</p>
+      @if (!data.month.sessions.length) {
+        <p>Aucune séance prévue ce mois-ci.</p>
+      } @else {
+        <div class="teacher-detail__table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Classe</th><th>Horaire</th><th>Durée</th><th>Statut</th><th class="teacher-detail__no-print">Pointage</th></tr></thead>
+            <tbody>
+              @for (session of data.month.sessions; track session.slotId + ':' + session.date) {
+                <tr>
+                  <td>{{ session.date }}</td><td>{{ session.className }}</td>
+                  <td>{{ session.startTime.slice(0, 5) }}–{{ session.endTime.slice(0, 5) }}</td>
+                  <td>{{ session.hours | number: '1.0-2' }} h</td>
+                  <td>{{ session.status === 'PRESENT' ? 'Présent' : session.status === 'ABSENT' ? 'Absent' : 'À pointer' }}</td>
+                  <td class="teacher-detail__actions teacher-detail__no-print">
+                    <button type="button" [disabled]="saving() || !isPast(session.date)" (click)="point(session, 'PRESENT')">Présent</button>
+                    <button type="button" [disabled]="saving() || !isPast(session.date)" (click)="point(session, 'ABSENT')">Absent</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <section class="teacher-detail__panel">
+      <h2>Heures supplémentaires — {{ month() }}</h2>
+      <form (ngSubmit)="addExtra()">
+        <label>Classe
+          <select name="extraClass" [(ngModel)]="extraForm.classId" required>
+            @for (item of classes(); track item.id) { <option [ngValue]="item.id">{{ classLabel(item) }}</option> }
+          </select>
+        </label>
+        <label>Date<input name="extraDate" type="date" [(ngModel)]="extraForm.date" required></label>
+        <label>Nombre d’heures<input name="extraHours" type="number" min="0.25" step="0.25" [(ngModel)]="extraForm.hours" required></label>
+        <label>Motif<input name="extraDescription" [(ngModel)]="extraForm.description"></label>
+        <button type="submit" [disabled]="saving() || !classes().length">Ajouter des heures</button>
+      </form>
+      @if (data.month.extras.length) {
+        <div class="teacher-detail__table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Classe</th><th>Heures</th><th>Motif</th><th class="teacher-detail__no-print">Action</th></tr></thead>
+            <tbody>
+              @for (extra of data.month.extras; track extra.id) {
+                <tr><td>{{ extra.date }}</td><td>{{ extra.className }}</td><td>{{ extra.hours | number: '1.0-2' }} h</td>
+                  <td>{{ extra.description || '—' }}</td>
+                  <td class="teacher-detail__no-print"><button class="teacher-detail__danger" type="button" [disabled]="saving()" (click)="removeExtra(extra.id)">Supprimer</button></td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <section class="teacher-detail__panel">
+      <h2>Versements — {{ month() }}</h2>
+      <form (ngSubmit)="addPayment()">
+        <label>Date du versement<input name="paymentDate" type="date" [(ngModel)]="paymentForm.date" required></label>
+        <label>Montant (FCFA)<input name="paymentAmount" type="number" min="1" step="1" [(ngModel)]="paymentForm.amount" required></label>
+        <label>Référence<input name="paymentReference" [(ngModel)]="paymentForm.reference"></label>
+        <button type="submit" [disabled]="saving() || data.month.remaining <= 0">Enregistrer un versement</button>
+      </form>
+      @if (data.month.payments.length) {
+        <div class="teacher-detail__table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Montant</th><th>Référence</th><th class="teacher-detail__no-print">Action</th></tr></thead>
+            <tbody>
+              @for (payment of data.month.payments; track payment.id) {
+                <tr><td>{{ payment.date }}</td><td>{{ payment.amount | number: '1.0-0' }} FCFA</td>
+                  <td>{{ payment.reference || '—' }}</td>
+                  <td class="teacher-detail__no-print"><button class="teacher-detail__danger" type="button" [disabled]="saving()" (click)="removePayment(payment.id)">Supprimer</button></td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  } @else {
+    @if (error()) { <p class="teacher-detail__alert teacher-detail__alert--error" role="alert">{{ error() }}</p> }
+    <a class="teacher-detail__action" routerLink="/proprietaire/enseignants">← Retour aux enseignants</a>
+  }
+</main>

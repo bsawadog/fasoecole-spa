@@ -1,0 +1,11 @@
+<dialog #dialog class="confirmation" (cancel)="onCancel($event)" (click)="onBackdropClick($event)" (close)="confirmation.respond(false)" aria-labelledby="confirmation-title" aria-describedby="confirmation-message">
+  @if (confirmation.request(); as request) {
+    <div class="confirmation__icon" [class.confirmation__icon--danger]="request.destructive" aria-hidden="true">?</div>
+    <h2 id="confirmation-title">{{ request.title }}</h2>
+    <p id="confirmation-message">{{ request.message }}</p>
+    <div class="confirmation__actions">
+      <button type="button" class="confirmation__cancel" (click)="confirmation.respond(false)">Annuler</button>
+      <button type="button" class="confirmation__confirm" [class.confirmation__confirm--danger]="request.destructive" (click)="confirmation.respond(true)">{{ request.confirmLabel }}</button>
+    </div>
+  }
+</dialog>

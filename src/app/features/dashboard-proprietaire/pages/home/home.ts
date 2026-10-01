@@ -100,8 +100,10 @@ export class ProprietaireHome implements OnDestroy, OnInit {
 
   schoolTypeLabel(type: string): string {
     const labels: Record<string, string> = {
+      PRESCOLAIRE: 'Établissement préscolaire',
       PRIMAIRE: 'École primaire',
       SECONDAIRE: 'Établissement secondaire',
+      MIXTE: 'Établissement mixte',
       UNIVERSITE: 'Université',
       FORMATION: 'Centre de formation',
     };

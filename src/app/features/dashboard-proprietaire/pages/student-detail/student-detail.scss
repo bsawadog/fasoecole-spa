@@ -33,9 +33,9 @@
   border-radius: 0.6rem 0.6rem 0 0;
 }
 .student-detail__card dl { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 0.8rem; margin: 0; }
-.student-detail__card dt { color: #64748b; font-size: 0.85rem; }
-.student-detail__card dd { margin: 0; font-size: 0.9rem; }
-.student-detail__muted { color: #94a3b8; font-size: 0.85rem; }
+.student-detail__card dt { color: #475569; font-size: 0.9rem; }
+.student-detail__card dd { margin: 0; font-size: 0.95rem; }
+.student-detail__muted { color: #475569; font-size: 0.9rem; }
 .student-detail__parent { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9; }
 .student-detail__parent:last-child { border-bottom: none; }
 .student-detail__contact-btn { margin-left: auto; padding: 0.25rem 0.6rem; border-radius: 0.35rem; border: 1px solid #16a34a; color: #16a34a; text-decoration: none; font-size: 0.8rem; }
@@ -44,13 +44,16 @@
 .student-detail__stats div { display: flex; flex-direction: column; align-items: center; padding: 0.6rem; background: #f8fafc; border-radius: 0.4rem; border: 1px solid #eef2f6; }
 .student-detail__stats strong { font-size: 1.1rem; color: #1e293b; }
 .student-detail__stats span { font-size: 0.75rem; color: #64748b; text-align: center; }
-.student-detail__table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.student-detail__table { width: 100%; border-collapse: collapse; color: #1e293b; font-size: 0.95rem; line-height: 1.5; }
 .student-detail__table th, .student-detail__table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid #eef2f6; text-align: left; }
-.student-detail__table th { background: #f8fafc; font-weight: 600; color: #334155; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.03em; }
+.student-detail__table th { background: #f8fafc; font-weight: 600; color: #334155; text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.03em; }
 .student-detail__table tbody tr { transition: background-color 0.15s ease; }
-.student-detail__table tbody tr:hover { background-color: #eff6ff; }
+.student-detail__table tbody tr.student-detail__row--alternate { background-color: #f1f5f9; }
+.student-detail__table tbody tr.student-detail__row--fee { background-color: #f1f5f9; }
+.student-detail__table tbody tr.student-detail__row--fee-payment { background-color: #fff; }
+.student-detail__table tbody tr:hover { background-color: #dbeafe; }
 
-.student-detail__badge { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 600; background: #e2e8f0; color: #334155; }
+.student-detail__badge { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600; background: #e2e8f0; color: #334155; }
 .student-detail__badge--success { background: #dcfce7; color: #15803d; }
 .student-detail__badge--danger { background: #fee2e2; color: #b91c1c; }
 .student-detail__badge--warning { background: #fef3c7; color: #b45309; }
@@ -81,11 +84,11 @@
   border: none;
   border-radius: 0;
 }
-.student-detail__link-btn { background: none; border: none; color: #2563eb; cursor: pointer; padding: 0.15rem 0.4rem; font-size: 0.8rem; }
+.student-detail__link-btn { background: none; border: none; color: #2563eb; cursor: pointer; padding: 0.15rem 0.4rem; font-size: 0.85rem; }
 .student-detail__link-btn:hover { text-decoration: underline; }
 .student-detail__link-btn--danger { color: #b91c1c; }
 .student-detail__link-btn:disabled { color: #94a3b8; cursor: not-allowed; text-decoration: none; }
-.student-detail__row--cancelled { opacity: 0.6; text-decoration: line-through; }
+.student-detail__row--cancelled { color: #475569; text-decoration: line-through; }
 .student-detail__row--cancelled:hover { background-color: inherit; }
 .student-detail__success { padding: 0.6rem 0.9rem; border-radius: 0.4rem; background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; margin-top: 0.8rem; }
 .student-detail__form { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 0.4rem; padding: 0.8rem; margin-bottom: 0.8rem; }
@@ -96,9 +99,6 @@
 .student-detail__form-actions { display: flex; gap: 0.5rem; margin-top: 0.7rem; }
 .student-detail__form-actions button { padding: 0.35rem 0.9rem; border-radius: 0.35rem; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-size: 0.82rem; }
 .student-detail__form-actions button[type="submit"] { background: #2563eb; border-color: #2563eb; color: #fff; }
-.student-detail__payment-chip { display: inline-block; background: #eef2f6; border-radius: 0.3rem; padding: 0.15rem 0.5rem; margin: 0.15rem 0.3rem 0 0; font-size: 0.78rem; }
-.student-detail__payments-list { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem; }
-.student-detail__receipt-btn { background: none; border: none; cursor: pointer; font-size: 0.85rem; padding: 0 0.2rem; vertical-align: middle; }
 
 .student-detail__print-only { display: none; }
 .student-detail__print-footer { margin-top: 1rem; }
@@ -118,4 +118,3 @@
   .student-detail__signature { margin-top: 3rem; }
   .student-detail__signature span:last-child { border-top: 1px solid #334155; padding-top: 0.3rem; width: 45%; text-align: center; }
 }
-

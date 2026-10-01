@@ -1,15 +1,20 @@
 <section class="class-roster">
   <header class="class-roster__header class-roster__no-print">
-    <div>
-      <h1>Élèves par classe</h1>
-      <p>Consultez les élèves d’une classe, leurs parents et leurs enseignants.</p>
+    <div class="class-roster__identity">
+      <span class="class-roster__header-icon" aria-hidden="true">É</span>
+      <div>
+        <h1>Élèves par classe</h1>
+        <p>Consultez les élèves d’une classe, leurs parents et leurs enseignants.</p>
+      </div>
     </div>
     @if (schools().length > 1) {
-      <select class="class-roster__select" [ngModel]="selectedSchoolId()" (change)="onSchoolChange($event)">
-        @for (school of schools(); track school.id) {
-          <option [value]="school.id">{{ school.name }}</option>
-        }
-      </select>
+      <label class="class-roster__school-picker">Choisir un établissement
+        <select class="class-roster__select" [ngModel]="selectedSchoolId()" (change)="onSchoolChange($event)">
+          @for (school of schools(); track school.id) {
+            <option [value]="school.id">{{ school.name }}</option>
+          }
+        </select>
+      </label>
     }
   </header>
 
@@ -21,32 +26,38 @@
   }
 
   @if (loading()) {
-    <p>Chargement…</p>
+    <p class="class-roster__state">Chargement…</p>
   } @else if (classes().length === 0) {
-    <p>Aucune classe n’a encore été créée pour cet établissement.</p>
+    <p class="class-roster__state">Aucune classe n’a encore été créée pour cet établissement.</p>
   } @else {
-    <div class="class-roster__toolbar class-roster__no-print">
-      <label for="class-select">Classe</label>
-      <select id="class-select" class="class-roster__select" [ngModel]="selectedClassId()" (change)="onClassChange($event)">
-        @for (schoolClass of classes(); track schoolClass.id) {
-          <option [value]="schoolClass.id">{{ className(schoolClass) }}</option>
-        }
-      </select>
-      @if (selectedClassId() && !addingStudent()) {
-        <button type="button" class="class-roster__add-btn" (click)="openAddStudent()">+ Ajouter un élève</button>
-      }
-      @if (selectedClassId() && rows().length > 0) {
-        <button type="button" class="class-roster__print-btn" (click)="printRoster()">🖨️ Imprimer / Enregistrer en PDF</button>
-      }
-    </div>
+    <section class="class-roster__card class-roster__no-print" aria-label="Choix de la classe">
+      <div class="class-roster__card-head"><h2>Classe sélectionnée</h2></div>
+      <div class="class-roster__toolbar">
+        <label class="class-roster__class-picker" for="class-select">Choisir une classe
+          <select id="class-select" class="class-roster__select" [ngModel]="selectedClassId()" (change)="onClassChange($event)">
+            @for (schoolClass of classes(); track schoolClass.id) {
+              <option [value]="schoolClass.id">{{ className(schoolClass) }}</option>
+            }
+          </select>
+        </label>
+        <div class="class-roster__toolbar-actions">
+          @if (selectedClassId() && !addingStudent()) {
+            <button type="button" class="class-roster__add-btn" (click)="openAddStudent()">+ Ajouter un élève</button>
+          }
+          @if (selectedClassId() && rows().length > 0) {
+            <button type="button" class="class-roster__print-btn" (click)="printRoster()">🖨️ Imprimer / Enregistrer en PDF</button>
+          }
+        </div>
+      </div>
+    </section>
 
     <h2 class="class-roster__print-title">
       Liste des élèves — {{ currentSchoolName() }} — {{ currentClassLabel() }}
     </h2>
 
     @if (addingStudent()) {
-      <form class="class-roster__new-form class-roster__no-print" (ngSubmit)="submitNewStudent()">
-        <h2>Ajouter un élève à cette classe</h2>
+      <form class="class-roster__new-form class-roster__card class-roster__no-print" (ngSubmit)="submitNewStudent()">
+        <div class="class-roster__card-head"><h2>Ajouter un élève à cette classe</h2></div>
         <div class="class-roster__edit-grid">
           <label>Prénom <input name="nFirstName" [(ngModel)]="newStudentForm.firstName" required /></label>
           <label>Nom <input name="nLastName" [(ngModel)]="newStudentForm.lastName" required /></label>
@@ -71,11 +82,16 @@
     }
 
     @if (loadingRoster()) {
-      <p>Chargement des élèves…</p>
+      <p class="class-roster__state">Chargement des élèves…</p>
     } @else if (rows().length === 0) {
-      <p>Aucun élève actif inscrit dans cette classe.</p>
+      <p class="class-roster__state">Aucun élève actif inscrit dans cette classe.</p>
     } @else {
-      <div class="class-roster__table-wrap">
+      <section class="class-roster__card class-roster__list">
+        <div class="class-roster__card-head class-roster__no-print">
+          <h2>Liste des élèves</h2>
+          <span class="class-roster__count">{{ rows().length }} élève(s)</span>
+        </div>
+        <div class="class-roster__table-wrap">
         <table class="class-roster__table">
           <thead>
             <tr>
@@ -116,7 +132,10 @@
                   </td>
                 } @else {
                   <td>
-                    <strong>{{ row.lastName }} {{ row.firstName }}</strong>
+                    <div class="class-roster__student">
+                      <span class="class-roster__avatar class-roster__no-print" aria-hidden="true">{{ row.firstName.charAt(0) }}{{ row.lastName.charAt(0) }}</span>
+                      <strong>{{ row.lastName }} {{ row.firstName }}</strong>
+                    </div>
                     @if (row.gender) { <div class="class-roster__muted">{{ row.gender }}</div> }
                   </td>
                   <td>
@@ -160,17 +179,18 @@
                       <span class="class-roster__muted">Aucun enseignant assigné</span>
                     }
                   </td>
-                  <td class="class-roster__no-print">
-                    <a class="class-roster__link" [routerLink]="['/proprietaire/eleves', row.studentId]">📋 Voir la fiche</a>
-                    <button type="button" (click)="startEditStudent(row)">Modifier</button>
-                    <button type="button" class="class-roster__danger" (click)="removeStudent(row)">Supprimer</button>
+                  <td class="class-roster__actions class-roster__no-print">
+                    <a class="class-roster__action class-roster__action--primary" [routerLink]="['/proprietaire/eleves', row.studentId]">Voir la fiche</a>
+                    <button type="button" class="class-roster__action" (click)="startEditStudent(row)">Modifier</button>
+                    <button type="button" class="class-roster__action class-roster__danger" (click)="removeStudent(row)">Supprimer</button>
                   </td>
                 }
               </tr>
             }
           </tbody>
         </table>
-      </div>
+        </div>
+      </section>
     }
   }
 </section>

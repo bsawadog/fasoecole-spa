@@ -48,6 +48,7 @@ export interface OwnerDashboard {
   pendingInvoices: number;
   outstandingAmount: number;
   receivedAmount: number;
+  expectedAmount: number;
   attendanceRecorded: number;
   presentToday: number;
   absentToday: number;

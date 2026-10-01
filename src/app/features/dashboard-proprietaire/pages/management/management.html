@@ -7,7 +7,7 @@
     </div>
     @if (schools().length > 1) {
       <label class="owner-management__school-picker">
-        <span>Établissement</span>
+        <span>Choisir un établissement</span>
         <select [value]="selectedSchoolId()" (change)="onSchoolChange($event)">
           @for (item of schools(); track item.id) {
             <option [value]="item.id">{{ item.name }}</option>
@@ -52,8 +52,10 @@
             <label>Nom de l’école<input name="schoolName" [(ngModel)]="schoolForm.name" required maxlength="150"></label>
             <label>Type
               <select name="schoolType" [(ngModel)]="schoolForm.type" required>
+                <option value="PRESCOLAIRE">Établissement préscolaire</option>
                 <option value="PRIMAIRE">École primaire</option>
                 <option value="SECONDAIRE">Établissement secondaire</option>
+                <option value="MIXTE">Établissement mixte (plusieurs cycles)</option>
                 <option value="UNIVERSITE">Université</option>
                 <option value="FORMATION">Centre de formation</option>
               </select>
@@ -86,6 +88,26 @@
           <button type="button" [class.owner-management__subtab--active]="academicKind() === 'subjects'" (click)="setAcademicKind('subjects')">Matières <span>{{ subjects().length }}</span></button>
         </div>
 
+        @if (academicKind() === 'levels' && suggestedCycles().length > 0) {
+          <div class="owner-management__level-catalog">
+            <h3>Niveaux suggérés</h3>
+            <p>Activez uniquement les niveaux enseignés ici. Vos niveaux et classes existants sont conservés.</p>
+            @for (group of suggestedCycles(); track group.cycle) {
+              <div class="owner-management__level-group">
+                <strong>{{ group.label }}</strong>
+                <div>
+                  @for (name of group.levels; track name; let index = $index) {
+                    <button type="button" [disabled]="activatingLevel() || levelExists({ name, cycle: group.cycle, orderIndex: group.startOrder + index })"
+                      (click)="activateLevel({ name, cycle: group.cycle, orderIndex: group.startOrder + index })">
+                      {{ name }} {{ levelExists({ name, cycle: group.cycle, orderIndex: group.startOrder + index }) ? '✓' : '+' }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
         @if (editorOpen()) {
           <form class="owner-management__editor" (ngSubmit)="saveAcademic()">
             <div class="owner-management__editor-heading">
@@ -100,7 +122,18 @@
             }
             @if (academicKind() === 'levels') {
               <label>Nom du niveau<input name="levelName" [(ngModel)]="academicForm.name" placeholder="Seconde" required maxlength="100"></label>
-              <label>Cycle<input name="levelCycle" [(ngModel)]="academicForm.cycle" placeholder="Lycée" required maxlength="100"></label>
+              <label>Cycle suggéré
+                <select name="levelCycleChoice" [ngModel]="isSuggestedCycle(academicForm.cycle) ? academicForm.cycle : 'PERSONNALISE'"
+                  (ngModelChange)="selectSuggestedCycle($event)">
+                  @for (group of suggestedCycles(); track group.cycle) {
+                    <option [value]="group.cycle">{{ group.label }}</option>
+                  }
+                  <option value="PERSONNALISE">Autre cycle (personnalisé)</option>
+                </select>
+              </label>
+              @if (!isSuggestedCycle(academicForm.cycle)) {
+                <label>Nom du cycle<input name="levelCycle" [(ngModel)]="academicForm.cycle" placeholder="Cycle personnalisé" required maxlength="30"></label>
+              }
               <label>Ordre<input name="levelOrder" type="number" min="0" [(ngModel)]="academicForm.orderIndex" required></label>
             }
             @if (academicKind() === 'classes') {
@@ -123,8 +156,11 @@
               <label>Nom de la matière<input name="subjectName" [(ngModel)]="academicForm.name" placeholder="Mathématiques" required maxlength="100"></label>
               <label>Code<input name="subjectCode" [(ngModel)]="academicForm.code" placeholder="MATH" maxlength="30"></label>
             }
+            @if (academicError()) {
+              <p class="owner-management__message owner-management__message--error owner-management__wide" role="alert">{{ academicError() }}</p>
+            }
             <div class="owner-management__form-actions owner-management__wide">
-              <span>Les affectations enseignant-matière ne sont pas encore configurables depuis l’interface.</span>
+              <span>Renseignez les champs obligatoires avant d’enregistrer.</span>
               <button type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer' }}</button>
             </div>
           </form>
@@ -190,7 +226,7 @@
               <tbody>
                 @for (fee of fees(); track fee.id) {
                   <tr>
-                    <td><strong>{{ fee.name }}</strong></td>
+                    <td><strong>{{ fee.name }}</strong>@if (fee.active === false) { <em> (archivé)</em> }</td>
                     <td>{{ frequencyLabel(fee.frequency) }}</td>
                     <td>{{ fee.amount | number: '1.0-0' }} FCFA</td>
                     <td class="owner-management__actions">

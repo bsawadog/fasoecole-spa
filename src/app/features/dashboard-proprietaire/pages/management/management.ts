@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin, Observable, Subscription } from 'rxjs';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
+import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
+import { LEVEL_CATALOG, SuggestedLevel } from './level-catalog';
 import {
   AcademicYearRecord,
   ClassRecord,
@@ -45,6 +47,7 @@ interface AcademicForm {
 export class OwnerManagement implements OnDestroy, OnInit {
   private readonly auth = inject(AuthService);
   private readonly api = inject(OwnerManagementService);
+  private readonly confirmation = inject(ConfirmationService);
   private dataRequest?: Subscription;
 
   readonly sections: { id: Section; label: string }[] = [
@@ -65,15 +68,19 @@ export class OwnerManagement implements OnDestroy, OnInit {
   readonly students = signal<StudentRecord[]>([]);
   readonly teachers = signal<TeacherRecord[]>([]);
   readonly academicKind = signal<AcademicKind>('years');
+  readonly levelCatalog = LEVEL_CATALOG;
+  readonly activatingLevel = signal(false);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly editorOpen = signal(false);
+  readonly academicError = signal<string | null>(null);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
 
   schoolForm = { name: '', type: '', address: '', phone: '', email: '' };
   academicForm: AcademicForm = this.emptyAcademicForm();
-  feeForm: { id: number | null; name: string; amount: number; frequency: FeeTypeRecord['frequency'] } = {
+  feeForm: { id: number | null; name: string; amount: number; frequency: FeeTypeRecord['frequency'];
+    levelId?: number | null; description?: string | null } = {
     id: null,
     name: '',
     amount: 0,
@@ -174,9 +181,49 @@ export class OwnerManagement implements OnDestroy, OnInit {
     }
   }
 
+  suggestedCycles(): typeof LEVEL_CATALOG {
+    return this.levelCatalog.filter(group => group.schoolTypes.includes(this.school()?.type ?? ''));
+  }
+
+  isSuggestedCycle(cycle: string): boolean {
+    return this.suggestedCycles().some(group => group.cycle === cycle);
+  }
+
+  levelExists(suggestion: SuggestedLevel): boolean {
+    return this.levels().some(level =>
+      level.cycle.trim().toLocaleLowerCase() === suggestion.cycle.toLocaleLowerCase() &&
+      level.name.trim().toLocaleLowerCase() === suggestion.name.toLocaleLowerCase());
+  }
+
+  activateLevel(suggestion: SuggestedLevel): void {
+    const schoolId = this.selectedSchoolId();
+    if (!schoolId || this.activatingLevel() || this.levelExists(suggestion)) return;
+    this.activatingLevel.set(true);
+    this.api.saveLevel({ schoolId, ...suggestion }).subscribe({
+      next: level => {
+        if (this.selectedSchoolId() === schoolId) {
+          this.levels.update(levels => [...levels, level].sort((a, b) => a.orderIndex - b.orderIndex));
+          this.successMessage.set(`Niveau « ${level.name} » ajouté.`);
+        }
+        this.activatingLevel.set(false);
+      },
+      error: err => {
+        this.activatingLevel.set(false);
+        this.errorMessage.set(err?.error?.message ?? 'Impossible d’ajouter ce niveau.');
+      },
+    });
+  }
+
+  selectSuggestedCycle(cycle: string): void {
+    this.academicForm.cycle = cycle === 'PERSONNALISE' ? '' : cycle;
+  }
+
   editAcademic(row?: AcademicRow): void {
     const schoolId = this.selectedSchoolId();
-    if (!schoolId) return;
+    if (!schoolId) {
+      this.errorMessage.set('Sélectionnez un établissement avant de créer une donnée académique.');
+      return;
+    }
     this.academicForm = this.emptyAcademicForm();
     if (row) {
       this.academicForm.id = row.id;
@@ -204,12 +251,22 @@ export class OwnerManagement implements OnDestroy, OnInit {
       }
     }
     this.editorOpen.set(true);
+    this.academicError.set(null);
     this.errorMessage.set(null);
   }
 
   saveAcademic(): void {
     const schoolId = this.selectedSchoolId();
-    if (!schoolId || !this.academicFormValid()) return;
+    if (!schoolId) {
+      this.academicError.set('Sélectionnez un établissement avant d’enregistrer.');
+      return;
+    }
+    const validationError = this.academicFormError();
+    if (validationError) {
+      this.academicError.set(validationError);
+      return;
+    }
+    this.academicError.set(null);
     const { id } = this.academicForm;
     this.saving.set(true);
     let request: Observable<AcademicYearRecord | LevelRecord | ClassRecord | SubjectRecord>;
@@ -252,17 +309,27 @@ export class OwnerManagement implements OnDestroy, OnInit {
       next: () => {
         this.saving.set(false);
         this.editorOpen.set(false);
+        this.academicError.set(null);
         this.successMessage.set('Les informations académiques ont été enregistrées.');
         if (this.selectedSchoolId() === schoolId) this.loadData(schoolId);
       },
-      error: () => this.fail('Enregistrement impossible. Vérifiez les informations et réessayez.'),
+      error: () => {
+        this.saving.set(false);
+        this.academicError.set('Enregistrement impossible. Vérifiez les informations et réessayez.');
+      },
     });
   }
 
-  deleteAcademic(row: AcademicRow): void {
-    if (!window.confirm(`Supprimer « ${this.academicName(row)} » ?`)) return;
+  async deleteAcademic(row: AcademicRow): Promise<void> {
+    const kind = this.academicKind();
+    if (!await this.confirmation.confirm({
+      title: 'Supprimer cet élément ?',
+      message: `Supprimer « ${this.academicName(row)} » ?`,
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    })) return;
     let request: Observable<void>;
-    switch (this.academicKind()) {
+    switch (kind) {
       case 'years': request = this.api.deleteAcademicYear(row.id); break;
       case 'levels': request = this.api.deleteLevel(row.id); break;
       case 'classes': request = this.api.deleteClass(row.id); break;
@@ -280,7 +347,8 @@ export class OwnerManagement implements OnDestroy, OnInit {
 
   editFee(fee?: FeeTypeRecord): void {
     this.feeForm = fee
-      ? { id: fee.id, name: fee.name, amount: fee.amount, frequency: fee.frequency }
+      ? { id: fee.id, name: fee.name, amount: fee.amount, frequency: fee.frequency,
+        levelId: fee.levelId, description: fee.description }
       : { id: null, name: '', amount: 0, frequency: 'YEARLY' };
     this.editorOpen.set(true);
     this.errorMessage.set(null);
@@ -295,6 +363,8 @@ export class OwnerManagement implements OnDestroy, OnInit {
       name: this.feeForm.name.trim(),
       amount: Number(this.feeForm.amount),
       frequency: this.feeForm.frequency,
+      levelId: this.feeForm.levelId,
+      description: this.feeForm.description,
     }, this.feeForm.id ?? undefined).subscribe({
       next: () => {
         this.saving.set(false);
@@ -327,11 +397,16 @@ export class OwnerManagement implements OnDestroy, OnInit {
     });
   }
 
-  deleteFee(fee: FeeTypeRecord): void {
-    if (!window.confirm(`Supprimer le frais « ${fee.name} » ?`)) return;
+  async deleteFee(fee: FeeTypeRecord): Promise<void> {
+    if (!await this.confirmation.confirm({
+      title: 'Supprimer ce type de frais ?',
+      message: `Supprimer le frais « ${fee.name} » ?`,
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    })) return;
     this.api.deleteFeeType(fee.id).subscribe({
-      next: () => {
-        this.successMessage.set('Frais supprimé.');
+      next: (res) => {
+        this.successMessage.set(res.deleted ? 'Frais supprimé.' : 'Frais archivé : il a déjà été facturé.');
         const schoolId = this.selectedSchoolId();
         if (schoolId) this.loadData(schoolId);
       },
@@ -341,6 +416,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
 
   cancelEdit(): void {
     this.editorOpen.set(false);
+    this.academicError.set(null);
   }
 
   levelName(id: number): string {
@@ -364,7 +440,9 @@ export class OwnerManagement implements OnDestroy, OnInit {
   typeLabel(type: string): string {
     const labels: Record<string, string> = {
       PRIMAIRE: 'École primaire',
+      PRESCOLAIRE: 'Établissement préscolaire',
       SECONDAIRE: 'Établissement secondaire',
+      MIXTE: 'Établissement mixte',
       UNIVERSITE: 'Université',
       FORMATION: 'Centre de formation',
     };
@@ -415,18 +493,24 @@ export class OwnerManagement implements OnDestroy, OnInit {
     });
   }
 
-  private academicFormValid(): boolean {
+  private academicFormError(): string | null {
     switch (this.academicKind()) {
       case 'years':
-        return !!this.academicForm.label.trim() && !!this.academicForm.startDate &&
-          !!this.academicForm.endDate && this.academicForm.startDate <= this.academicForm.endDate;
+        if (!this.academicForm.label.trim()) return 'Indiquez le nom de l’année scolaire.';
+        if (!this.academicForm.startDate || !this.academicForm.endDate) {
+          return 'Indiquez les dates de début et de fin de l’année scolaire.';
+        }
+        return this.academicForm.startDate <= this.academicForm.endDate
+          ? null : 'La date de fin doit être postérieure ou égale à la date de début.';
       case 'levels':
-        return !!this.academicForm.name.trim() && !!this.academicForm.cycle.trim();
+        return this.academicForm.name.trim() && this.academicForm.cycle.trim()
+          ? null : 'Indiquez le nom et le cycle du niveau.';
       case 'classes':
-        return !!this.academicForm.name.trim() && !!this.academicForm.academicYearId &&
-          !!this.academicForm.levelId && this.academicForm.capacity > 0;
+        return this.academicForm.name.trim() && this.academicForm.academicYearId &&
+          this.academicForm.levelId && this.academicForm.capacity > 0
+          ? null : 'Indiquez le nom, l’année scolaire, le niveau et une capacité positive.';
       case 'subjects':
-        return !!this.academicForm.name.trim();
+        return this.academicForm.name.trim() ? null : 'Indiquez le nom de la matière.';
     }
   }
 
