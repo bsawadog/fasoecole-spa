@@ -35,7 +35,7 @@ export interface RegistrationSchool {
 export type ApprovalRole = 'TEACHER' | 'PARENT' | 'STUDENT';
 
 /** Modules de l'espace propriétaire pouvant être délégués au personnel. */
-export type OwnerModule = 'DASHBOARD' | 'MANAGEMENT' | 'STUDENTS' | 'TEACHERS' | 'FINANCE' | 'EXPENSES' | 'GRADES';
+export type OwnerModule = 'DASHBOARD' | 'MANAGEMENT' | 'STUDENTS' | 'TEACHERS' | 'FINANCE' | 'EXPENSES' | 'GRADES' | 'ENROLLMENT';
 
 export const OWNER_MODULES: { code: OwnerModule; label: string; route: string }[] = [
   { code: 'DASHBOARD', label: 'Tableau de bord', route: '/proprietaire' },
@@ -45,6 +45,7 @@ export const OWNER_MODULES: { code: OwnerModule; label: string; route: string }[
   { code: 'FINANCE', label: 'Frais & paiements', route: '/proprietaire/frais' },
   { code: 'EXPENSES', label: 'Dépenses & budget', route: '/proprietaire/depenses' },
   { code: 'GRADES', label: 'Notes & bulletins', route: '/proprietaire/notes' },
+  { code: 'ENROLLMENT', label: 'Inscriptions & passage', route: '/proprietaire/inscriptions' },
 ];
 
 /** Établissement accessible dans l'espace propriétaire (possédé ou délégué). */

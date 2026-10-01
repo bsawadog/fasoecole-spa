@@ -48,6 +48,11 @@ export const PROPRIETAIRE_ROUTES: Routes = [
     loadComponent: () => import('./pages/grades/grades').then((m) => m.GradesPage),
   },
   {
+    path: 'inscriptions',
+    canActivate: [ownerModuleGuard('ENROLLMENT')],
+    loadComponent: () => import('./pages/enrollment/enrollment').then((m) => m.EnrollmentPage),
+  },
+  {
     path: 'eleves/:studentId',
     canActivate: [ownerModuleGuard('STUDENTS')],
     loadComponent: () => import('./pages/student-detail/student-detail').then((m) => m.StudentDetailPage),

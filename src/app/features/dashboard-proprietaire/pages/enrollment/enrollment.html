@@ -1,0 +1,223 @@
+<section class="enr">
+  <header class="enr__header">
+    <div class="enr__identity">
+      <span class="enr__header-icon" aria-hidden="true">🎓</span>
+      <div>
+        <h1>Inscriptions &amp; passage d’année</h1>
+        <p>Préparez la nouvelle année scolaire, décidez du passage de chaque élève et réinscrivez-les en un clic.</p>
+      </div>
+    </div>
+    @if (schools().length > 1) {
+      <label class="enr__school-picker">Choisir un établissement
+        <select class="enr__select" [ngModel]="schoolId()" (change)="changeSchool($event)">
+          @for (school of schools(); track school.id) { <option [value]="school.id">{{ school.name }}</option> }
+        </select>
+      </label>
+    }
+  </header>
+
+  @if (error()) { <div class="enr__alert enr__alert--error" role="alert">{{ error() }}</div> }
+  @if (success()) { <div class="enr__alert enr__alert--success" role="status">{{ success() }}</div> }
+  @if (skipped().length) {
+    <div class="enr__alert enr__alert--warn" role="status">
+      <strong>{{ skipped().length }} élève(s) non traité(s) :</strong>
+      <ul>
+        @for (s of skipped(); track $index) { <li>{{ s.studentName ?? 'Inscription' }} — {{ s.reason }}</li> }
+      </ul>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="enr__state">Chargement…</p>
+  } @else if (!schools().length) {
+    <p class="enr__state">Aucun établissement associé à votre compte.</p>
+  } @else {
+    <!-- Années scolaires -->
+    <div class="enr__card">
+      <div class="enr__card-head">
+        <h2>1. Années scolaires</h2>
+        <button type="button" class="enr__btn enr__btn--green" (click)="openYearForm()" [disabled]="busy()">+ Préparer une nouvelle année</button>
+      </div>
+
+      @if (yearFormOpen()) {
+        <form class="enr__panel" (ngSubmit)="createYear()">
+          <h3>Nouvelle année scolaire</h3>
+          <div class="enr__form">
+            <label>Nom de l’année<input name="label" [(ngModel)]="yearForm.label" placeholder="2026-2027" maxlength="20" required></label>
+            <label>Date de début<input name="start" type="date" [(ngModel)]="yearForm.startDate" required></label>
+            <label>Date de fin<input name="end" type="date" [(ngModel)]="yearForm.endDate" required></label>
+            <label>Reprendre l’organisation de
+              <select name="source" [(ngModel)]="yearForm.sourceYearId">
+                <option [ngValue]="null">Aucune (année vide)</option>
+                @for (y of years(); track y.id) { <option [ngValue]="y.id">{{ y.label }}</option> }
+              </select>
+            </label>
+          </div>
+          @if (yearForm.sourceYearId) {
+            <div class="enr__checks">
+              <label><input type="checkbox" name="copyClasses" [(ngModel)]="yearForm.copyClasses"> Recréer les mêmes classes (nom, niveau, capacité)</label>
+              <label [class.enr__disabled]="!yearForm.copyClasses"><input type="checkbox" name="copyTeachers" [(ngModel)]="yearForm.copyTeachers" [disabled]="!yearForm.copyClasses"> Garder les enseignants et matières de chaque classe</label>
+              <label><input type="checkbox" name="copyPeriods" [(ngModel)]="yearForm.copyPeriods"> Reprendre les périodes de notes (trimestres / semestres), dates décalées</label>
+            </div>
+          }
+          <label class="enr__check-line"><input type="checkbox" name="makeCurrent" [(ngModel)]="yearForm.makeCurrent"> Définir tout de suite comme année en cours</label>
+          <div class="enr__actions">
+            <button type="submit" class="enr__btn" [disabled]="busy()">Créer l’année</button>
+            <button type="button" class="enr__btn enr__btn--ghost" (click)="yearFormOpen.set(false)">Annuler</button>
+          </div>
+        </form>
+      }
+
+      @if (!years().length) {
+        <p class="enr__empty">Aucune année scolaire : commencez par en préparer une.</p>
+      } @else {
+        <div class="enr__years">
+          @for (y of years(); track y.id) {
+            <article class="enr__year" [class.enr__year--current]="y.current">
+              <header>
+                <strong>{{ y.label }}</strong>
+                @if (y.current) { <span class="enr__badge enr__badge--on">Année en cours</span> }
+              </header>
+              <p class="enr__muted">{{ formatDate(y.startDate) }} → {{ formatDate(y.endDate) }}</p>
+              <ul class="enr__stats">
+                <li><b>{{ y.classCount }}</b> classe(s)</li>
+                <li><b>{{ y.activeStudents }}</b> inscrit(s)</li>
+                <li><b>{{ y.completedStudents }}</b> clôturé(s)</li>
+              </ul>
+              @if (y.pendingDecisions) { <p class="enr__warn">{{ y.pendingDecisions }} élève(s) sans décision de fin d’année</p> }
+              @if (!y.current) {
+                <button type="button" class="enr__mini" (click)="setCurrent(y)" [disabled]="busy()">Définir comme année en cours</button>
+              }
+            </article>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Passage d'année -->
+    <div class="enr__card">
+      <div class="enr__card-head">
+        <h2>2. Passage d’année &amp; réinscriptions</h2>
+      </div>
+      <div class="enr__toolbar">
+        <label>Année qui se termine
+          <select [ngModel]="fromYearId()" (ngModelChange)="changeFromYear($event)">
+            @for (y of years(); track y.id) { <option [ngValue]="y.id">{{ y.label }}</option> }
+          </select>
+        </label>
+        <span class="enr__arrow" aria-hidden="true">→</span>
+        <label>Année de réinscription
+          <select [ngModel]="toYearId()" (ngModelChange)="changeToYear($event)">
+            <option [ngValue]="null">—</option>
+            @for (y of nextYearCandidates(); track y.id) { <option [ngValue]="y.id">{{ y.label }}</option> }
+          </select>
+        </label>
+        @if (plan(); as p) {
+          <label>Classe
+            <select [ngModel]="classFilter()" (ngModelChange)="changeClassFilter($event)">
+              <option [ngValue]="'all'">Toutes les classes</option>
+              @for (c of p.classes; track c.classId) { <option [ngValue]="c.classId">{{ c.className }}</option> }
+            </select>
+          </label>
+          <span class="enr__count">{{ p.decided }} traité(s) · {{ p.pending }} à traiter</span>
+        }
+      </div>
+
+      @if (!toYearId()) {
+        <p class="enr__empty">Aucune année scolaire après celle-ci. Préparez d’abord la nouvelle année (étape 1) pour pouvoir réinscrire les élèves.</p>
+      } @else if (planLoading()) {
+        <p class="enr__empty">Calcul des moyennes annuelles…</p>
+      } @else if (plan(); as p) {
+        @if (p.targetClasses.length) {
+          <div class="enr__targets">
+            <span>Effectifs prévus en {{ p.toYearLabel }} :</span>
+            @for (t of p.targetClasses; track t.id) {
+              <span class="enr__tag" [class.enr__tag--over]="overCapacity(t)">{{ t.name }} {{ planned(t) }}@if (t.capacity) {/{{ t.capacity }}}</span>
+            }
+          </div>
+        } @else {
+          <p class="enr__alert enr__alert--warn">Aucune classe n’existe encore pour {{ p.toYearLabel }} : créez-les (étape 1 ou Gestion de l’école) avant de réinscrire les élèves admis ou redoublants.</p>
+        }
+
+        @if (!p.classes.length) {
+          <p class="enr__empty">Aucune classe pour {{ p.fromYearLabel }}.</p>
+        }
+        @for (cls of visibleClasses(); track cls.classId) {
+          <div class="enr__class">
+            <div class="enr__class-head">
+              <h3>{{ cls.className }} <small>{{ cls.levelName }}@if (cls.lastLevel) { · dernier niveau}</small></h3>
+              <span class="enr__muted">{{ cls.students.length - pendingOf(cls).length }}/{{ cls.students.length }} traité(s)</span>
+              @if (pendingOf(cls).length) {
+                <button type="button" class="enr__mini" (click)="resetSuggestions(cls)">Appliquer les propositions</button>
+              }
+            </div>
+            @if (!cls.students.length) {
+              <p class="enr__empty">Aucun élève inscrit.</p>
+            } @else {
+              <div class="enr__table-wrap">
+                <table class="enr__table">
+                  <thead>
+                    <tr>
+                      <th><input type="checkbox" aria-label="Tout sélectionner" [checked]="allSelected(cls)" [disabled]="!pendingOf(cls).length" (change)="toggleClass(cls, $any($event.target).checked)"></th>
+                      <th>Élève</th>
+                      <th>Moy. annuelle</th>
+                      <th>Décision</th>
+                      <th>Classe en {{ p.toYearLabel }}</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of cls.students; track row.enrollmentId) {
+                      @if (row.decided) {
+                        <tr class="enr__done">
+                          <td></td>
+                          <td><strong>{{ row.lastName }} {{ row.firstName }}</strong><br><small>{{ row.registrationNumber }}</small></td>
+                          <td>{{ row.annualAverage ?? '—' }}</td>
+                          <td><span [class]="'enr__badge enr__badge--' + row.decision">{{ label(row.decision) }}</span></td>
+                          <td>{{ row.targetClassName ?? '—' }}</td>
+                          <td><button type="button" class="enr__mini enr__mini--danger" (click)="undo(row)" [disabled]="busy()">Annuler</button></td>
+                        </tr>
+                      } @else if (draft(row); as d) {
+                        <tr [class.enr__selected]="d.selected">
+                          <td><input type="checkbox" [attr.aria-label]="'Sélectionner ' + row.firstName" [checked]="d.selected" (change)="toggleRow(row, $any($event.target).checked)"></td>
+                          <td><strong>{{ row.lastName }} {{ row.firstName }}</strong><br><small>{{ row.registrationNumber }}</small></td>
+                          <td [class.enr__low]="row.annualAverage !== null && row.annualAverage < row.passMark">
+                            {{ row.annualAverage ?? 'Pas de notes' }}
+                          </td>
+                          <td>
+                            <select [ngModel]="d.decision" (ngModelChange)="setDecision(row, cls, $event)" [attr.aria-label]="'Décision pour ' + row.firstName">
+                              @for (opt of decisions; track opt.code) { <option [ngValue]="opt.code">{{ opt.label }}</option> }
+                            </select>
+                            @if (d.decision !== row.suggestedDecision) { <small class="enr__muted"> (proposé : {{ label(row.suggestedDecision) }})</small> }
+                          </td>
+                          <td>
+                            @if (continues(d.decision)) {
+                              <select [ngModel]="d.targetClassId" (ngModelChange)="setTarget(row, $event)" [class.enr__invalid]="missingTarget(row)" [attr.aria-label]="'Classe pour ' + row.firstName">
+                                <option [ngValue]="null">Choisir une classe</option>
+                                @for (t of targetsFor(cls, d.decision); track t.id) { <option [ngValue]="t.id">{{ t.name }}</option> }
+                              </select>
+                            } @else {
+                              <span class="enr__muted">Sortie de l’établissement</span>
+                            }
+                          </td>
+                          <td></td>
+                        </tr>
+                      }
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        }
+
+        @if (p.pending) {
+          <div class="enr__footer">
+            <span>{{ selectedCount() }} élève(s) sélectionné(s)</span>
+            <button type="button" class="enr__btn enr__btn--green" (click)="applySelected()" [disabled]="busy() || !selectedCount()">Enregistrer les décisions et réinscrire</button>
+          </div>
+        }
+      }
+    </div>
+  }
+</section>

@@ -43,6 +43,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Frais & paiements', icon: 'wallet', routerLink: '/proprietaire/frais', module: 'FINANCE' },
     { label: 'Dépenses & budget', icon: 'chart', routerLink: '/proprietaire/depenses', module: 'EXPENSES' },
     { label: 'Notes & bulletins', icon: 'notes', routerLink: '/proprietaire/notes', module: 'GRADES' },
+    { label: 'Inscriptions & passage', icon: 'calendar', routerLink: '/proprietaire/inscriptions', module: 'ENROLLMENT' },
     { label: 'Personnel & accès', icon: 'shield', routerLink: '/proprietaire/personnel', module: null },
   ],
   enseignant: [

@@ -17,6 +17,7 @@ const MODULE_HINTS: Record<OwnerModule, string> = {
   FINANCE: 'Frais scolaires, factures, encaissements et relances.',
   EXPENSES: 'Dépenses, budget annuel et bilan recettes / dépenses.',
   GRADES: 'Périodes, évaluations, notes, bulletins et coefficients.',
+  ENROLLMENT: 'Nouvelle année scolaire, réinscriptions et passage en classe supérieure.',
 };
 
 @Component({
@@ -33,9 +34,9 @@ export class StaffPage implements OnInit {
 
   readonly modules = OWNER_MODULES.map((m) => ({ ...m, hint: MODULE_HINTS[m.code] }));
   readonly presets: Preset[] = [
-    { title: 'Directeur des études', modules: ['DASHBOARD', 'MANAGEMENT', 'STUDENTS', 'TEACHERS', 'GRADES'] },
+    { title: 'Directeur des études', modules: ['DASHBOARD', 'MANAGEMENT', 'STUDENTS', 'TEACHERS', 'GRADES', 'ENROLLMENT'] },
     { title: 'Comptable', modules: ['DASHBOARD', 'FINANCE', 'EXPENSES'] },
-    { title: 'Secrétaire', modules: ['STUDENTS', 'FINANCE'] },
+    { title: 'Secrétaire', modules: ['STUDENTS', 'FINANCE', 'ENROLLMENT'] },
     { title: 'Surveillant général', modules: ['STUDENTS'] },
   ];
 
