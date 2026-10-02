@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { LucideArrowLeft, LucideArrowRight, LucideEye, LucideEyeOff, LucideGraduationCap } from '@lucide/angular';
+import { LucideArrowLeft, LucideArrowRight, LucideEye, LucideEyeOff } from '@lucide/angular';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
 
 type AuthMode = 'login' | 'register' | 'forgot' | 'reset' | 'activate';
@@ -23,7 +23,6 @@ function initialMode(params: { has(name: string): boolean }): AuthMode {
     LucideArrowRight,
     LucideEye,
     LucideEyeOff,
-    LucideGraduationCap,
   ],
   templateUrl: './login.html',
   styleUrl: './login.scss',

@@ -12,6 +12,18 @@ export const routes: Routes = [
     loadChildren: () => import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
   },
   {
+    path: 'services/:slug',
+    loadComponent: () => import('./features/home/service-detail').then((m) => m.ServiceDetail),
+  },
+  {
+    path: 'etablissements/:id',
+    loadComponent: () => import('./features/home/school-directory').then((m) => m.SchoolDirectory),
+  },
+  {
+    path: 'etablissements',
+    loadComponent: () => import('./features/home/school-directory').then((m) => m.SchoolDirectory),
+  },
+  {
     path: 'unauthorized',
     loadComponent: () =>
       import('./shared/components/unauthorized/unauthorized').then((m) => m.Unauthorized),

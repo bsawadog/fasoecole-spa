@@ -33,14 +33,11 @@
   text-decoration: none;
 }
 
-.auth-page__brand-mark {
-  display: grid;
-  width: 2.4rem;
-  aspect-ratio: 1;
-  place-items: center;
-  border-radius: 0.75rem;
-  color: #fff;
-  background: var(--green);
+.auth-page__brand-logo {
+  display: block;
+  width: 10rem;
+  height: 3rem;
+  object-fit: contain;
 }
 
 .auth-card {

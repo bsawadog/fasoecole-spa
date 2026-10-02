@@ -1,20 +1,23 @@
 <main class="home">
   <header class="home__header" id="accueil">
     <a class="home__brand" routerLink="/" aria-label="FasoEcole, accueil">
-      <img class="home__brand-logo" src="assets/images/fasoecole-logo-alt.svg" alt="FasoEcole" />
+      <img class="home__brand-logo" src="assets/images/fasoecole-logo-alt.svg" alt="" />
     </a>
     <nav class="home__nav" aria-label="Navigation principale">
-      <a class="home__nav-link" href="#accueil">Accueil</a>
+      <a class="home__nav-link" routerLink="/" fragment="accueil">Accueil</a>
 
       <details class="home__dropdown">
         <summary class="home__nav-link">
           Établissements <svg lucideChevronDown [size]="15" aria-hidden="true"></svg>
         </summary>
         <div class="home__dropdown-menu">
-          <a href="#primaire"><svg lucideSchool [size]="17" aria-hidden="true"></svg> Primaire</a>
-          <a href="#secondaire"><svg lucideBookOpen [size]="17" aria-hidden="true"></svg> Secondaire</a>
-          <a href="#universite"><svg lucideGraduationCap [size]="17" aria-hidden="true"></svg> Université</a>
-          <a href="#formation"><svg lucideLightbulb [size]="17" aria-hidden="true"></svg> Formation</a>
+          <a routerLink="/etablissements"><svg lucideSchool [size]="17" aria-hidden="true"></svg> Tous les établissements</a>
+          <a routerLink="/etablissements" [queryParams]="{ type: 'PRESCOLAIRE' }"><svg lucideSchool [size]="17" aria-hidden="true"></svg> Préscolaire</a>
+          <a routerLink="/etablissements" [queryParams]="{ type: 'PRIMAIRE' }"><svg lucideSchool [size]="17" aria-hidden="true"></svg> Primaire</a>
+          <a routerLink="/etablissements" [queryParams]="{ type: 'SECONDAIRE' }"><svg lucideBookOpen [size]="17" aria-hidden="true"></svg> Secondaire</a>
+          <a routerLink="/etablissements" [queryParams]="{ type: 'MIXTE' }"><svg lucideSchool [size]="17" aria-hidden="true"></svg> Mixte</a>
+          <a routerLink="/etablissements" [queryParams]="{ type: 'UNIVERSITE' }"><svg lucideGraduationCap [size]="17" aria-hidden="true"></svg> Université</a>
+          <a routerLink="/etablissements" [queryParams]="{ type: 'FORMATION' }"><svg lucideLightbulb [size]="17" aria-hidden="true"></svg> Formation</a>
         </div>
       </details>
 
@@ -23,15 +26,16 @@
           Ressources <svg lucideChevronDown [size]="15" aria-hidden="true"></svg>
         </summary>
         <div class="home__dropdown-menu">
-          <a href="#suivi"><svg lucideClipboardList [size]="17" aria-hidden="true"></svg> Suivi scolaire</a>
-          <a href="#resultats"><svg lucideChartNoAxesColumnIncreasing [size]="17" aria-hidden="true"></svg> Résultats</a>
-          <a href="#communication"><svg lucideMessageCircle [size]="17" aria-hidden="true"></svg> Communication</a>
-          <a href="#services"><svg lucideBookOpen [size]="17" aria-hidden="true"></svg> Tous les services</a>
+          <a routerLink="/services/portail-parent"><svg lucideUsersRound [size]="17" aria-hidden="true"></svg> Portail parent</a>
+          <a routerLink="/services/suivi-scolaire"><svg lucideChartNoAxesColumnIncreasing [size]="17" aria-hidden="true"></svg> Notes et suivi scolaire</a>
+          <a routerLink="/services/frais-scolaires"><svg lucideWallet [size]="17" aria-hidden="true"></svg> Gestion des frais</a>
+          <a routerLink="/services/communication"><svg lucideMessageCircle [size]="17" aria-hidden="true"></svg> Communication</a>
+          <a routerLink="/services/tableaux-de-bord"><svg lucideLayoutDashboard [size]="17" aria-hidden="true"></svg> Espace propriétaire</a>
         </div>
       </details>
 
-      <a class="home__nav-link" href="#a-propos">À propos</a>
-      <a class="home__nav-link" href="#contact">Contact</a>
+      <a class="home__nav-link" routerLink="/" fragment="a-propos">À propos</a>
+      <a class="home__nav-link" routerLink="/" fragment="contact">Contact</a>
     </nav>
     <a class="home__button home__button--header" routerLink="/login">
       Se connecter <svg lucideArrowRight [size]="17" aria-hidden="true"></svg>
@@ -74,7 +78,7 @@
         </div>
         <div class="home__program-copy">
           <p class="home__program-kicker">Les premiers apprentissages</p>
-          <h3>FasoÈcole Primaire</h3>
+          <h3>FasoÉcole Primaire</h3>
           <p>Les bases pour apprendre, grandir et prendre confiance à l’école.</p>
         </div>
       </article>
@@ -86,7 +90,7 @@
         </div>
         <div class="home__program-copy">
           <p class="home__program-kicker">Curiosité et ambition</p>
-          <h3>FasoÈcole Secondaire</h3>
+          <h3>FasoÉcole Secondaire</h3>
           <p>Des outils pour accompagner les élèves vers de nouveaux horizons.</p>
         </div>
       </article>
@@ -98,7 +102,7 @@
         </div>
         <div class="home__program-copy">
           <p class="home__program-kicker">Le savoir en mouvement</p>
-          <h3>FasoÈcole Université</h3>
+          <h3>FasoÉcole Université</h3>
           <p>Un espace pour poursuivre ses études et préparer son avenir professionnel.</p>
         </div>
       </article>
@@ -110,7 +114,7 @@
         </div>
         <div class="home__program-copy">
           <p class="home__program-kicker">Apprendre toute la vie</p>
-          <h3>FasoÈcole Formation</h3>
+          <h3>FasoÉcole Formation</h3>
           <p>Développez vos compétences grâce à des parcours de formation adaptés.</p>
         </div>
       </article>
@@ -127,31 +131,36 @@
     </div>
 
     <div class="home__service-grid">
-      <article class="home__service-card" id="suivi">
+      <a class="home__service-card" id="suivi" [routerLink]="['/services', 'portail-parent']" aria-label="En savoir plus sur le portail parent">
         <span class="home__service-icon"><svg lucideUsersRound [size]="24" aria-hidden="true"></svg></span>
         <h3>Portail parent multi-enfants</h3>
         <p>Un seul compte pour suivre tous vos enfants, du primaire à l’université.</p>
-      </article>
-      <article class="home__service-card" id="resultats">
+        <span class="home__service-more">En savoir plus <svg lucideArrowRight [size]="16" aria-hidden="true"></svg></span>
+      </a>
+      <a class="home__service-card" id="resultats" [routerLink]="['/services', 'suivi-scolaire']" aria-label="En savoir plus sur les notes et le suivi scolaire">
         <span class="home__service-icon"><svg lucideChartNoAxesColumnIncreasing [size]="24" aria-hidden="true"></svg></span>
         <h3>Notes, bulletins et suivi scolaire</h3>
         <p>Consultez les notes, les bulletins, les présences et les progrès tout au long de l’année.</p>
-      </article>
-      <article class="home__service-card">
+        <span class="home__service-more">En savoir plus <svg lucideArrowRight [size]="16" aria-hidden="true"></svg></span>
+      </a>
+      <a class="home__service-card" [routerLink]="['/services', 'frais-scolaires']" aria-label="En savoir plus sur la gestion des frais">
         <span class="home__service-icon"><svg lucideWallet [size]="24" aria-hidden="true"></svg></span>
         <h3>Gestion des frais</h3>
         <p>Suivez les frais scolaires, les paiements, les reçus et les soldes restants.</p>
-      </article>
-      <article class="home__service-card" id="communication">
+        <span class="home__service-more">En savoir plus <svg lucideArrowRight [size]="16" aria-hidden="true"></svg></span>
+      </a>
+      <a class="home__service-card" id="communication" [routerLink]="['/services', 'communication']" aria-label="En savoir plus sur les communications">
         <span class="home__service-icon"><svg lucideBell [size]="24" aria-hidden="true"></svg></span>
         <h3>Communications et notifications</h3>
         <p>Recevez les annonces, messages et alertes de l’établissement en temps réel.</p>
-      </article>
-      <article class="home__service-card">
+        <span class="home__service-more">En savoir plus <svg lucideArrowRight [size]="16" aria-hidden="true"></svg></span>
+      </a>
+      <a class="home__service-card" [routerLink]="['/services', 'tableaux-de-bord']" aria-label="En savoir plus sur les tableaux de bord propriétaire">
         <span class="home__service-icon"><svg lucideLayoutDashboard [size]="24" aria-hidden="true"></svg></span>
         <h3>Tableaux de bord propriétaire</h3>
         <p>Pilotez effectifs, finances, présences et résultats de vos établissements.</p>
-      </article>
+        <span class="home__service-more">En savoir plus <svg lucideArrowRight [size]="16" aria-hidden="true"></svg></span>
+      </a>
     </div>
   </section>
 

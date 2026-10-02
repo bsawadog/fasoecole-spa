@@ -1,0 +1,30 @@
+<main class="service-detail">
+  <header class="service-detail__header">
+    <a routerLink="/" aria-label="Retour à l’accueil"><img src="assets/images/fasoecole-logo-alt.svg" alt="FasoEcole" /></a>
+    <a class="service-detail__back" routerLink="/"><svg lucideArrowLeft [size]="17" aria-hidden="true"></svg> Retour à l’accueil</a>
+  </header>
+
+  @if (service(); as item) {
+    <section class="service-detail__content">
+      <p class="service-detail__eyebrow">Nos services · {{ item.audience }}</p>
+      <h1>{{ item.title }}</h1>
+      <p class="service-detail__intro">{{ item.intro }}</p>
+      <div class="service-detail__card">
+        <h2>Ce que ce service vous apporte</h2>
+        <ul>
+          @for (benefit of item.benefits; track benefit) {
+            <li><svg lucideCheck [size]="19" aria-hidden="true"></svg>{{ benefit }}</li>
+          }
+        </ul>
+      </div>
+      <a class="service-detail__cta" routerLink="/login">Accéder à mon espace <svg lucideArrowRight [size]="17" aria-hidden="true"></svg></a>
+    </section>
+  } @else {
+    <section class="service-detail__content">
+      <p class="service-detail__eyebrow">Nos services</p>
+      <h1>Service introuvable</h1>
+      <p class="service-detail__intro">Ce service n’est pas disponible.</p>
+      <a class="service-detail__cta" routerLink="/">Retour à l’accueil</a>
+    </section>
+  }
+</main>

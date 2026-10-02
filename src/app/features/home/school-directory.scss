@@ -1,0 +1,21 @@
+:host { display: block; min-height: 100vh; }
+.school-directory { min-height: 100vh; padding: 1.25rem clamp(1.25rem, 5vw, 4.5rem) 4rem; box-sizing: border-box; color: #18342c; background: radial-gradient(ellipse at 15% 10%, #e4f0e3, transparent 32rem), #f8faf7; }
+.school-directory__header { display: flex; align-items: center; justify-content: space-between; max-width: 75rem; margin: 0 auto; img { display: block; width: 12rem; height: 3.5rem; object-fit: contain; object-position: left center; } }
+.school-directory__back, .school-profile__all { color: #26704f; font-weight: 700; text-decoration: none; }
+.school-directory__hero { width: min(100%, 75rem); margin: clamp(3rem, 9vh, 6rem) auto 2rem; }
+.school-directory__eyebrow, .school-profile__eyebrow { color: #26704f; font-size: 0.85rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; }
+.school-directory__hero h1, .school-profile h1 { margin: 0.6rem 0 1rem; font-size: clamp(2.3rem, 5vw, 4rem); line-height: 1.08; }
+.school-directory__hero > p:last-child, .school-profile__intro { max-width: 48rem; color: #617169; font-size: 1.1rem; line-height: 1.7; }
+.school-directory__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 1rem; width: min(100%, 75rem); margin: 0 auto; }
+.school-card { display: flex; min-height: 12rem; flex-direction: column; align-items: flex-start; padding: 1.35rem; border: 1px solid #e2e9e1; border-radius: 1rem; color: inherit; background: #fff; box-shadow: 0 0.6rem 2rem rgb(22 51 44 / 5%); text-decoration: none; transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
+.school-card:hover, .school-card:focus-visible { transform: translateY(-4px); border-color: #77a98b; box-shadow: 0 1rem 2.3rem rgb(22 51 44 / 12%); outline: none; }
+.school-card__type, .school-profile__type { padding: 0.35rem 0.65rem; border-radius: 99px; color: #26704f; background: #e9f2eb; font-size: 0.78rem; font-weight: 750; }
+.school-card h2 { margin: 1rem 0; font-size: 1.2rem; }
+.school-card__more { display: flex; justify-content: space-between; width: 100%; gap: 1rem; margin-top: auto; color: #26704f; font-size: 0.9rem; font-weight: 750; }
+.school-directory__state { width: min(100%, 75rem); margin: 2rem auto; padding: 1.2rem; border-radius: 0.8rem; color: #617169; background: #fff; }
+.school-profile { width: min(100%, 58rem); margin: clamp(3rem, 10vh, 7rem) auto 0; }
+.school-profile h1 { margin-top: 1.3rem; }
+.school-profile__features { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: 0.9rem; margin: 2rem 0; }
+.school-profile__features article { display: grid; gap: 0.6rem; padding: 1.2rem; border: 1px solid #e2e9e1; border-radius: 0.9rem; background: #fff; }
+.school-profile__features article span { color: #617169; font-size: 0.92rem; line-height: 1.55; }
+.school-profile__cta { display: inline-block; margin: 0 1rem 1rem 0; padding: 0.85rem 1.2rem; border-radius: 0.7rem; color: #fff; background: #26704f; font-weight: 750; text-decoration: none; }
