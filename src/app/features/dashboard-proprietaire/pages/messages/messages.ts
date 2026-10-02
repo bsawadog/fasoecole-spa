@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { catchError, EMPTY, exhaustMap, timer } from 'rxjs';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
+import { ClassRecord, ClassRosterRow, OwnerManagementService } from '../../owner-management.service';
 import { apiError, ConversationRecipient, ConversationSummary, ConversationThread } from '../../../../shared/self-space/self-space.service';
 import { OwnerFamilyMessagesService } from '../../family-messages.service';
 
@@ -17,12 +18,17 @@ import { OwnerFamilyMessagesService } from '../../family-messages.service';
 export class OwnerMessages implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly api = inject(OwnerFamilyMessagesService);
+  private readonly rosterApi = inject(OwnerManagementService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly schools = signal<RegistrationSchool[]>([]);
   readonly schoolId = signal<number | null>(null);
   readonly conversations = signal<ConversationSummary[]>([]);
   readonly recipients = signal<ConversationRecipient[]>([]);
+  readonly classes = signal<ClassRecord[]>([]);
+  readonly selectedClassId = signal<number | null>(null);
+  readonly students = signal<ClassRosterRow[]>([]);
+  readonly selectedStudentId = signal<number | null>(null);
   readonly selectedRecipientIds = signal<number[]>([]);
   readonly thread = signal<ConversationThread | null>(null);
   readonly loading = signal(true);
@@ -86,14 +92,43 @@ export class OwnerMessages implements OnInit {
     this.selectedRecipientIds.update((selected) => [...new Set([...selected, ...ids])]);
   }
 
+  changeClass(value: string): void {
+    const id = Number(value);
+    if (!this.classes().some((item) => item.id === id)) return;
+    this.selectedClassId.set(id);
+    this.students.set([]);
+    this.selectedStudentId.set(null);
+    this.recipients.set([]);
+    this.selectedRecipientIds.set([]);
+    this.rosterApi.getClassRoster(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (rows) => this.students.set(rows),
+      error: (err) => this.error.set(apiError(err, 'Impossible de charger les élèves de cette classe.')),
+    });
+  }
+
+  changeStudent(value: string): void {
+    const id = Number(value);
+    const student = this.students().find((item) => item.studentId === id);
+    this.selectedStudentId.set(student?.studentId ?? null);
+    this.recipients.set([]);
+    this.selectedRecipientIds.set([]);
+    const schoolId = this.schoolId();
+    if (!student || schoolId === null) return;
+    this.api.recipients(schoolId, student.studentId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (items) => this.recipients.set(items.filter((recipient) => recipient.role === 'PARENT')),
+      error: (err) => this.error.set(apiError(err, 'Impossible de charger les parents de cet élève.')),
+    });
+  }
+
   startConversation(): void {
     const schoolId = this.schoolId();
     const recipientUserIds = this.selectedRecipientIds();
-    if (schoolId === null || !recipientUserIds.length || !this.subject.trim() || !this.message.trim()) return;
+    const studentId = this.selectedStudentId();
+    if (schoolId === null || studentId === null || !recipientUserIds.length || !this.subject.trim() || !this.message.trim()) return;
     this.error.set(null);
     this.success.set(null);
     this.sending.set(true);
-    this.api.start({ schoolId, studentId: null, subject: this.subject.trim(), content: this.message.trim(),
+    this.api.start({ schoolId, studentId, subject: this.subject.trim(), content: this.message.trim(),
       recipientUserIds, recipientSchool: false }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (thread) => {
         this.thread.set(thread);
@@ -101,6 +136,7 @@ export class OwnerMessages implements OnInit {
         this.subject = '';
         this.message = '';
         this.selectedRecipientIds.set([]);
+        this.selectedStudentId.set(null);
         this.composing.set(false);
         this.success.set('Le message a été envoyé aux destinataires sélectionnés.');
         this.sending.set(false);
@@ -164,11 +200,17 @@ export class OwnerMessages implements OnInit {
         this.error.set(apiError(err, 'Impossible de charger les messages des parents.'));
       },
     });
-    this.selectedRecipientIds.set([]);
-    this.api.recipients(schoolId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (items) => this.recipients.set(items),
-      error: (err) => this.error.set(apiError(err, 'Impossible de charger les destinataires.')),
+    this.rosterApi.getClasses(schoolId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (classes) => {
+        this.classes.set(classes);
+        this.selectedClassId.set(null);
+        this.students.set([]);
+        this.selectedStudentId.set(null);
+      },
+      error: (err) => this.error.set(apiError(err, 'Impossible de charger les classes de cet établissement.')),
     });
+    this.selectedRecipientIds.set([]);
+    this.recipients.set([]);
   }
 
   private initializeSchools(schools: RegistrationSchool[]): void {

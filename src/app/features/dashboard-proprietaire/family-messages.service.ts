@@ -25,8 +25,10 @@ export class OwnerFamilyMessagesService {
     return this.http.get<ConversationSummary[]>(this.conversationApi, { params: { schoolId } });
   }
 
-  recipients(schoolId: number): Observable<ConversationRecipient[]> {
-    return this.http.get<ConversationRecipient[]>(`${this.conversationApi}/recipients`, { params: { schoolId } });
+  recipients(schoolId: number, studentId?: number): Observable<ConversationRecipient[]> {
+    const params: Record<string, number> = { schoolId };
+    if (studentId !== undefined) params['studentId'] = studentId;
+    return this.http.get<ConversationRecipient[]>(`${this.conversationApi}/recipients`, { params });
   }
 
   start(payload: NewConversationPayload): Observable<ConversationThread> {

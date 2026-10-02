@@ -50,16 +50,25 @@
         @if (composing()) {
           <form class="ss__body" (ngSubmit)="startConversation()">
             <h2>Nouvelle conversation</h2>
-            <p class="ss__muted">Sélectionnez un ou plusieurs parents ou enseignants.</p>
-            <div class="ss__actions">
-              <button class="ss__mini" type="button" (click)="selectAllRecipients('PARENT')">Tous les parents</button>
-              <button class="ss__mini" type="button" (click)="selectAllRecipients('ENSEIGNANT')">Tous les enseignants</button>
-            </div>
+            <p class="ss__muted">Sélectionnez la classe, l’élève, puis le ou les parents à contacter.</p>
+            <label class="ss__field">Classe
+              <select [value]="selectedClassId() ?? ''" (change)="changeClass($any($event.target).value)" required>
+                <option value="">Sélectionner une classe</option>
+                @for (schoolClass of classes(); track schoolClass.id) { <option [value]="schoolClass.id">{{ schoolClass.name }}</option> }
+              </select>
+            </label>
+            <label class="ss__field">Élève
+              <select [value]="selectedStudentId() ?? ''" (change)="changeStudent($any($event.target).value)" [disabled]="!selectedClassId()" required>
+                <option value="">Sélectionner un élève</option>
+                @for (student of students(); track student.studentId) { <option [value]="student.studentId">{{ student.firstName }} {{ student.lastName }}</option> }
+              </select>
+            </label>
             <div class="ss__recipient-list">
+              @if (selectedStudentId() && !recipients().length) { <p class="ss__muted">Aucun parent n’est associé à cet élève.</p> }
               @for (recipient of recipients(); track recipient.userId) {
                 <label><input type="checkbox" [checked]="selectedRecipientIds().includes(recipient.userId)"
                               (change)="toggleRecipient(recipient.userId, $any($event.target).checked)" />
-                  {{ recipient.fullName }} <small>{{ recipient.role === 'PARENT' ? 'Parent' : 'Enseignant' }}</small>
+                  {{ recipient.fullName }} <small>Parent</small>
                 </label>
               }
             </div>
@@ -69,7 +78,7 @@
             <label class="ss__field">Message
               <textarea name="message" [(ngModel)]="message" rows="4" maxlength="4000" required></textarea>
             </label>
-            <button class="ss__btn" type="submit" [disabled]="sending() || !selectedRecipientIds().length">
+            <button class="ss__btn" type="submit" [disabled]="sending() || !selectedStudentId() || !selectedRecipientIds().length">
               {{ sending() ? 'Envoi…' : 'Créer la conversation' }}
             </button>
           </form>
