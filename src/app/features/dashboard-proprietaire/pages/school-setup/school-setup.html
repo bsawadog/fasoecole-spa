@@ -1,0 +1,56 @@
+<main class="setup">
+  <header>
+    <h1>Créer une école</h1>
+    <p>Préparez votre établissement, de sa création à l’arrivée des enseignants et des élèves.</p>
+    @if (schools().length) {
+      <label>Établissement
+        <select [ngModel]="schoolId()" (ngModelChange)="selectSchool($event)" [disabled]="saving()">
+          @for (school of schools(); track school.id) { <option [ngValue]="school.id">{{ school.name }}</option> }
+        </select>
+      </label>
+      <button type="button" (click)="creating.set(true); step.set('school')" [disabled]="saving()">Créer un autre établissement</button>
+    }
+  </header>
+  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+  @if (success()) { <p class="success" role="status">{{ success() }}</p> }
+  @if (loading()) { <p>Chargement des établissements…</p> }
+  @else {
+    <nav aria-label="Étapes de mise en place de l’école">
+      @for (item of steps; track item.id; let index = $index) {
+        <button type="button" [class.active]="step() === item.id" [attr.aria-current]="step() === item.id ? 'step' : null"
+          [disabled]="saving() || ((creating() || !schoolId()) && item.id !== 'school')" (click)="step.set(item.id)">
+          {{ index + 1 }}. {{ item.label }}
+        </button>
+      }
+    </nav>
+    @for (item of steps; track item.id) { @if (step() === item.id) { <p class="hint">{{ item.description }}</p> } }
+    @if (step() === 'school' && creating()) {
+      <form #schoolForm="ngForm" (ngSubmit)="schoolForm.valid && create()">
+        <h2>Nouvel établissement</h2>
+        <label>Nom de l’établissement<input name="name" [(ngModel)]="form.name" required maxlength="150" /></label>
+        <label>Type<select name="type" [(ngModel)]="form.type" required>
+          <option value="PRESCOLAIRE">Préscolaire</option><option value="PRIMAIRE">Primaire</option>
+          <option value="SECONDAIRE">Secondaire</option><option value="MIXTE">Mixte</option>
+          <option value="UNIVERSITE">Université</option><option value="FORMATION">Centre de formation</option>
+        </select></label>
+        <label>Adresse<input name="address" [(ngModel)]="form.address" maxlength="255" /></label>
+        <label>Téléphone<input name="phone" [(ngModel)]="form.phone" maxlength="30" /></label>
+        <label>Courriel<input name="email" type="email" email [(ngModel)]="form.email" maxlength="150" /></label>
+        <div class="actions"><button type="submit" [disabled]="saving() || schoolForm.invalid">{{ saving() ? 'Création…' : 'Créer et configurer' }}</button>
+          @if (schoolId()) { <button type="button" (click)="creating.set(false)" [disabled]="saving()">Annuler</button> }
+        </div>
+      </form>
+    } @else if (schoolId()) {
+      @for (currentSchoolId of [schoolId()]; track currentSchoolId) {
+      @switch (step()) {
+        @case ('school') { <app-owner-management [scopeSchoolId]="schoolId()" /> }
+        @case ('academic') { <app-owner-management initialSection="academic" [scopeSchoolId]="schoolId()" /> }
+        @case ('teachers') { <app-teacher-roster [scopeSchoolId]="schoolId()" /> }
+        @case ('students') { <app-class-roster [scopeSchoolId]="schoolId()" /> }
+        @case ('fees') { <app-owner-management initialSection="fees" [scopeSchoolId]="schoolId()" /> }
+        @case ('staff') { <app-staff [scopeSchoolId]="schoolId()" /> }
+      }
+      }
+    }
+  }
+</main>

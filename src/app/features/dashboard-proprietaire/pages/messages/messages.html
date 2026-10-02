@@ -78,6 +78,9 @@
             <label class="ss__field">Message
               <textarea name="message" [(ngModel)]="message" rows="4" maxlength="4000" required></textarea>
             </label>
+            <div class="ss__emoji-picker" aria-label="Ajouter un emoji">
+              @for (emoji of emojis; track emoji) { <button type="button" (click)="addEmoji(emoji, 'message')" [attr.aria-label]="'Ajouter ' + emoji">{{ emoji }}</button> }
+            </div>
             <button class="ss__btn" type="submit" [disabled]="sending() || !selectedStudentId() || !selectedRecipientIds().length">
               {{ sending() ? 'Envoi…' : 'Créer la conversation' }}
             </button>
@@ -103,6 +106,9 @@
             <label class="ss__field">Répondre au parent
               <textarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" required></textarea>
             </label>
+            <div class="ss__emoji-picker" aria-label="Ajouter un emoji">
+              @for (emoji of emojis; track emoji) { <button type="button" (click)="addEmoji(emoji, 'reply')" [attr.aria-label]="'Ajouter ' + emoji">{{ emoji }}</button> }
+            </div>
             <button class="ss__btn" type="submit" [disabled]="sending() || !reply.trim()">
               {{ sending() ? 'Envoi…' : 'Envoyer la réponse' }}
             </button>

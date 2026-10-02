@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, of, Subscription } from 'rxjs';
@@ -50,6 +50,7 @@ interface NewStudentForm {
   styleUrl: './class-roster.scss',
 })
 export class ClassRoster implements OnInit, OnDestroy {
+  readonly scopeSchoolId = input<number | null>(null);
   private readonly auth = inject(AuthService);
   private readonly api = inject(OwnerManagementService);
   private readonly confirmation = inject(ConfirmationService);
@@ -88,6 +89,7 @@ export class ClassRoster implements OnInit, OnDestroy {
 
     this.auth.getOwnedSchools(ownerId, 'STUDENTS').subscribe({
       next: (schools) => {
+        if (this.scopeSchoolId() !== null) schools = schools.filter(school => school.id === this.scopeSchoolId());
         this.schools.set(schools);
         if (schools.length === 0) {
           this.loading.set(false);

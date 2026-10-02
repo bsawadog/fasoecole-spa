@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, input, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService, OWNER_MODULES, OwnerModule, RegistrationSchool } from '../../../../core/auth';
 import { StaffMember, StaffPayload, StaffService } from '../../staff.service';
@@ -28,6 +28,7 @@ const MODULE_HINTS: Record<OwnerModule, string> = {
   styleUrl: './staff.scss',
 })
 export class StaffPage implements OnInit {
+  readonly scopeSchoolId = input<number | null>(null);
   private readonly auth = inject(AuthService);
   private readonly api = inject(StaffService);
   private readonly confirmation = inject(ConfirmationService);
@@ -61,8 +62,9 @@ export class StaffPage implements OnInit {
       this.error.set('Impossible d’identifier votre compte propriétaire.');
       return;
     }
-    this.auth.getOwnedSchools(ownerId).subscribe({
+    this.auth.getOwnedSchools(ownerId, 'MANAGEMENT').subscribe({
       next: (schools) => {
+        if (this.scopeSchoolId() !== null) schools = schools.filter(school => school.id === this.scopeSchoolId());
         this.schools.set(schools);
         if (!schools.length) {
           this.loading.set(false);

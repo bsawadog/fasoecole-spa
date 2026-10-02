@@ -44,7 +44,7 @@ export const routes: Routes = [
       },
       {
         path: 'proprietaire',
-        canActivate: [roleGuard(['proprietaire'])],
+        canActivate: [roleGuard(['proprietaire', 'admin'])],
         loadChildren: () =>
           import('./features/dashboard-proprietaire/proprietaire.routes').then((m) => m.PROPRIETAIRE_ROUTES),
       },

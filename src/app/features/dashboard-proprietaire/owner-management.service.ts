@@ -228,6 +228,9 @@ export interface CreateStudentPaymentPayload {
 
 @Injectable({ providedIn: 'root' })
 export class OwnerManagementService {
+  createSchool(payload: Omit<SchoolRecord, 'id'>): Observable<SchoolRecord> {
+    return this.http.post<SchoolRecord>(`${environment.apiUrl}/schools`, payload);
+  }
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 

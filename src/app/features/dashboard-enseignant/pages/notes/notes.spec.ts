@@ -60,10 +60,11 @@ describe('EnseignantNotes', () => {
     expect(component.error()).toContain('motif');
 
     component.reason = 'Erreur de saisie';
+    component.appreciations[1] = 'Très bien';
     component.saveSheet();
     expect(api['saveGrades']).toHaveBeenCalledWith(7, [
-      { studentId: 1, value: 15 },
-      { studentId: 2, value: null },
+      { studentId: 1, value: 15, appreciation: 'Très bien' },
+      { studentId: 2, value: null, appreciation: '' },
     ], 'Erreur de saisie');
   });
 

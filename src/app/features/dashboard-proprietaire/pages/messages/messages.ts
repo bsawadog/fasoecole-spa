@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { catchError, EMPTY, exhaustMap, timer } from 'rxjs';
+import { catchError, exhaustMap, forkJoin, of, timer } from 'rxjs';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
 import { ClassRecord, ClassRosterRow, OwnerManagementService } from '../../owner-management.service';
 import { apiError, ConversationRecipient, ConversationSummary, ConversationThread } from '../../../../shared/self-space/self-space.service';
@@ -35,6 +35,7 @@ export class OwnerMessages implements OnInit {
   readonly sending = signal(false);
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
+  readonly emojis = ['😀', '😊', '😂', '👍', '❤️', '🙏', '🎉'];
   readonly composing = signal(false);
   reply = '';
   subject = '';
@@ -44,12 +45,16 @@ export class OwnerMessages implements OnInit {
     timer(20_000, 20_000).pipe(
       exhaustMap(() => {
         const id = this.thread()?.conversation.id;
-        return id ? this.api.conversation(id).pipe(catchError(() => EMPTY)) : EMPTY;
+        const schoolId = this.schoolId();
+        return forkJoin({
+          conversations: schoolId ? this.api.conversations(schoolId).pipe(catchError(() => of(null))) : of(null),
+          thread: id ? this.api.conversation(id).pipe(catchError(() => of(null))) : of(null),
+        });
       }),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe((thread) => {
-      this.thread.set(thread);
-      this.conversations.update((items) => items.map((item) => item.id === thread.conversation.id ? thread.conversation : item));
+    ).subscribe(({ conversations, thread }) => {
+      if (conversations) this.conversations.set(conversations);
+      if (thread) this.thread.set(thread);
     });
     const ownerId = this.auth.user()?.id;
     if (!ownerId) {
@@ -149,6 +154,7 @@ export class OwnerMessages implements OnInit {
   }
 
   openConversation(item: ConversationSummary): void {
+    this.composing.set(false);
     this.error.set(null);
     this.success.set(null);
     this.api.conversation(item.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -182,6 +188,12 @@ export class OwnerMessages implements OnInit {
         this.sending.set(false);
       },
     });
+  }
+
+  addEmoji(emoji: string, field: 'message' | 'reply'): void {
+    if (this[field].length + emoji.length > 4000) return;
+    if (field === 'message') this.message += emoji;
+    else this.reply += emoji;
   }
 
   private selectSchool(schoolId: number): void {

@@ -3,7 +3,7 @@ import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { catchError, EMPTY, exhaustMap, timer } from 'rxjs';
+import { catchError, exhaustMap, forkJoin, of, timer } from 'rxjs';
 import {
   apiError, ConversationRecipient, ConversationSummary, ConversationThread, RosterStudent, SelfSpaceService, TeacherClass,
 } from '../../../../shared/self-space/self-space.service';
@@ -31,6 +31,7 @@ export class TeacherMessages implements OnInit {
   readonly recipientSchool = signal(false);
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
+  readonly emojis = ['😀', '😊', '😂', '👍', '❤️', '🙏', '🎉'];
 
   classId: number | null = null;
   studentId: number | null = null;
@@ -42,12 +43,15 @@ export class TeacherMessages implements OnInit {
     timer(20_000, 20_000).pipe(
       exhaustMap(() => {
         const id = this.thread()?.conversation.id;
-        return id ? this.api.conversation(id).pipe(catchError(() => EMPTY)) : EMPTY;
+        return forkJoin({
+          conversations: this.api.conversations().pipe(catchError(() => of(null))),
+          thread: id ? this.api.conversation(id).pipe(catchError(() => of(null))) : of(null),
+        });
       }),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe((thread) => {
-      this.thread.set(thread);
-      this.conversations.update((items) => items.map((item) => item.id === thread.conversation.id ? thread.conversation : item));
+    ).subscribe(({ conversations, thread }) => {
+      if (conversations) this.conversations.set(conversations);
+      if (thread) this.thread.set(thread);
     });
     this.api.teacherClasses().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (classes) => this.classes.set(classes),
@@ -112,6 +116,7 @@ export class TeacherMessages implements OnInit {
   }
 
   open(item: ConversationSummary): void {
+    this.composing.set(false);
     this.api.conversation(item.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (thread) => {
         this.thread.set(thread);
@@ -136,6 +141,12 @@ export class TeacherMessages implements OnInit {
         this.sending.set(false);
       },
     });
+  }
+
+  addEmoji(emoji: string, field: 'message' | 'reply'): void {
+    if (this[field].length + emoji.length > 4000) return;
+    if (field === 'message') this.message += emoji;
+    else this.reply += emoji;
   }
 
   private loadConversations(): void {

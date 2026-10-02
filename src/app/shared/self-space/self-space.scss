@@ -83,6 +83,9 @@
 .ss__conv--unread strong { color: #15803d; }
 .ss__conv small { color: #64748b; font-size: .78rem; }
 .ss__thread { display: flex; flex-direction: column; gap: .6rem; max-height: 28rem; overflow-y: auto; padding: .3rem; }
+.ss__emoji-picker { display: flex; flex-wrap: wrap; gap: .35rem; }
+.ss__emoji-picker button { min-width: 2.25rem; min-height: 2.25rem; border: 1px solid #d8dee8; border-radius: .4rem; background: #fff; font-size: 1.15rem; cursor: pointer; }
+.ss__emoji-picker button:hover { background: #f0fdf4; border-color: #16a34a; }
 .ss__msg { max-width: 80%; align-self: flex-start; padding: .55rem .8rem; border-radius: .6rem; background: #f1f5f9; color: #0f172a; font-size: .9rem; white-space: pre-wrap; }
 .ss__msg--mine { align-self: flex-end; background: #dcfce7; }
 .ss__msg small { display: block; margin-bottom: .2rem; color: #64748b; font-size: .72rem; font-weight: 700; }

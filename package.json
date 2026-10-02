@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "concurrently --kill-others-on-fail -n app,tests \"ng serve\" \"ng test --watch\"",
     "start:dev": "ng serve --configuration dev",
     "start:prod": "ng serve --configuration production",
     "build": "ng build",
@@ -30,6 +30,7 @@
     "@angular/build": "^22.2.0",
     "@angular/cli": "^22.2.0",
     "@angular/compiler-cli": "^22.2.0",
+    "concurrently": "^10.0.5",
     "jsdom": "^30.0.0",
     "prettier": "^3.8.1",
     "typescript": "~6.0.2",

@@ -36,16 +36,20 @@ interface NavigationItem {
 const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
   admin: [
     { label: 'Accueil', icon: 'home', routerLink: '/admin' },
+    { label: 'Créer une école', icon: 'building', routerLink: '/admin/creer-ecole' },
+    { label: 'Élèves par classe', icon: 'graduation', routerLink: '/admin/classes' },
+    { label: 'Enseignants par classe', icon: 'users', routerLink: '/admin/enseignants' },
     { label: 'Écoles', icon: 'building', routerLink: '/admin/ecoles' },
     { label: 'Utilisateurs', icon: 'users', routerLink: '/admin/utilisateurs' },
   ],
   proprietaire: [
     { label: 'Accueil', icon: 'home', routerLink: '/proprietaire', module: 'DASHBOARD' },
+    { label: 'Créer une école', icon: 'building', routerLink: '/proprietaire/creer-ecole', module: null },
+    { label: 'Élèves par classe', icon: 'graduation', routerLink: '/proprietaire/classes', module: 'STUDENTS' },
+    { label: 'Enseignants par classe', icon: 'users', routerLink: '/proprietaire/enseignants', module: 'TEACHERS' },
     { label: 'Demandes de compte', icon: 'users', routerLink: '/proprietaire/demandes', module: null },
     { label: 'Messages', icon: 'message', routerLink: '/proprietaire/messages', module: 'STUDENTS' },
     { label: 'Gestion de l’école', icon: 'book', routerLink: '/proprietaire/gestion', module: 'MANAGEMENT' },
-    { label: 'Élèves par classe', icon: 'graduation', routerLink: '/proprietaire/classes', module: 'STUDENTS' },
-    { label: 'Enseignants par classe', icon: 'users', routerLink: '/proprietaire/enseignants', module: 'TEACHERS' },
     { label: 'Frais & paiements', icon: 'wallet', routerLink: '/proprietaire/frais', module: 'FINANCE' },
     { label: 'Dépenses & budget', icon: 'chart', routerLink: '/proprietaire/depenses', module: 'EXPENSES' },
     { label: 'Notes & bulletins', icon: 'notes', routerLink: '/proprietaire/notes', module: 'GRADES' },

@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin, Subscription } from 'rxjs';
@@ -16,6 +16,7 @@ import { ConfirmationService } from '../../../../shared/confirmation/confirmatio
   styleUrl: './teacher-roster.scss',
 })
 export class TeacherRoster implements OnInit, OnDestroy {
+  readonly scopeSchoolId = input<number | null>(null);
   private readonly auth = inject(AuthService);
   private readonly management = inject(OwnerManagementService);
   private readonly teacherWork = inject(TeacherWorkService);
@@ -57,6 +58,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
     }
     this.auth.getOwnedSchools(ownerId, 'TEACHERS').subscribe({
       next: schools => {
+        if (this.scopeSchoolId() !== null) schools = schools.filter(school => school.id === this.scopeSchoolId());
         this.schools.set(schools);
         if (!schools.length) {
           this.loading.set(false);

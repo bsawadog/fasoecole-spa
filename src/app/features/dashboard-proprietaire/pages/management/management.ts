@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin, Observable, Subscription } from 'rxjs';
@@ -46,6 +46,8 @@ interface AcademicForm {
   styleUrl: './management.scss',
 })
 export class OwnerManagement implements OnDestroy, OnInit {
+  readonly initialSection = input<Section>('school');
+  readonly scopeSchoolId = input<number | null>(null);
   private readonly auth = inject(AuthService);
   private readonly api = inject(OwnerManagementService);
   private readonly confirmation = inject(ConfirmationService);
@@ -89,6 +91,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
   };
 
   ngOnInit(): void {
+    this.section.set(this.initialSection());
     const ownerId = this.auth.user()?.id;
     if (!ownerId) {
       this.loading.set(false);
@@ -98,6 +101,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
 
     this.auth.getOwnedSchools(ownerId, 'MANAGEMENT').subscribe({
       next: (schools) => {
+        if (this.scopeSchoolId() !== null) schools = schools.filter(school => school.id === this.scopeSchoolId());
         this.schools.set(schools);
         if (schools.length === 0) {
           this.loading.set(false);
