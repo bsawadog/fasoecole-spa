@@ -64,6 +64,91 @@
           }
         </div>
       </section>
+
+      <section class="ss__card" aria-labelledby="family-reports-title">
+        <header class="ss__card-head">
+          <h2 id="family-reports-title">Signalements des parents · {{ c.className }}</h2>
+          <div class="ss__actions">
+            <label class="ss__field">Date
+              <input type="date" [value]="reportDate()" (change)="changeReportDate($any($event.target).value)" />
+            </label>
+            <button class="ss__mini" type="button" (click)="refreshFamilyReports()">Actualiser</button>
+          </div>
+        </header>
+        <div class="ss__body">
+          @if (reportError()) { <p class="ss__alert ss__alert--error" role="alert">{{ reportError() }}</p> }
+          @if (reportSuccess()) { <p class="ss__alert ss__alert--success" role="status">{{ reportSuccess() }}</p> }
+          @if (reportsLoading()) {
+            <p class="ss__state">Chargement des signalements…</p>
+          } @else if (!familyReports().length) {
+            <p class="ss__state">Aucun signalement en attente pour cette date.</p>
+          } @else {
+            <div class="ss__table-wrap">
+              <table class="ss__table">
+                <thead><tr><th>Élève</th><th>Type</th><th>Motif donné par le parent</th><th></th></tr></thead>
+                <tbody>
+                  @for (report of familyReports(); track report.id) {
+                    <tr>
+                      <td>{{ report.studentName }} <small>· {{ report.registrationNumber }}</small></td>
+                      <td>{{ familyAttendanceLabels[report.attendanceType] }}</td>
+                      <td>{{ report.reason }}</td>
+                      <td><button class="ss__mini" type="button" [disabled]="reportBusyId() === report.id"
+                                  (click)="recordFamilyReport(report)">
+                        {{ reportBusyId() === report.id ? 'Enregistrement…' : 'Enregistrer ' + familyAttendanceLabels[report.attendanceType].toLowerCase() }}
+                      </button></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="ss__card" aria-labelledby="parent-messages-title">
+        <header class="ss__card-head"><h2 id="parent-messages-title">Échanges avec les parents · {{ c.className }}</h2></header>
+        <div class="ss__split ss__body">
+          <div class="ss__card">
+            @if (!conversations().length) {
+              <p class="ss__body ss__muted">Aucun message de parent lié à cette classe.</p>
+            } @else {
+              @for (item of conversations(); track item.id) {
+                <button type="button" class="ss__conv" [class.ss__conv--on]="conversation()?.conversation?.id === item.id"
+                        [class.ss__conv--unread]="item.unread" (click)="openConversation(item)">
+                  <strong>{{ item.subject }}</strong>
+                  <span>{{ item.parentName }} · {{ item.studentName }}</span>
+                  <small>{{ item.lastMessageAt | date: 'dd/MM/yyyy HH:mm' }}</small>
+                </button>
+              }
+            }
+          </div>
+          <div class="ss__body">
+            @if (conversationError()) { <p class="ss__alert ss__alert--error" role="alert">{{ conversationError() }}</p> }
+            @if (conversation(); as thread) {
+              <h3>{{ thread.conversation.subject }} · {{ thread.conversation.parentName }}</h3>
+              <div class="ss__thread" aria-live="polite">
+                @for (message of thread.messages; track message.id) {
+                  <article class="ss__msg" [class.ss__msg--mine]="message.mine">
+                    <small>{{ message.senderName || (message.fromSchool ? 'Établissement' : 'Parent') }} · {{ message.sentAt | date: 'dd/MM/yyyy HH:mm' }}</small>
+                    {{ message.content }}
+                    @if (message.mine) { <small>{{ message.readBy?.length ? 'Lu par ' + message.readBy.join(', ') : 'Non lu' }}</small> }
+                  </article>
+                }
+              </div>
+              <form class="ss__body" (ngSubmit)="sendReply()">
+                <label class="ss__field">Répondre au parent
+                  <textarea name="replyText" [ngModel]="replyText()" (ngModelChange)="replyText.set($event)" rows="3" maxlength="4000" required></textarea>
+                </label>
+                <button class="ss__btn" type="submit" [disabled]="replyBusy() || !replyText().trim()">
+                  {{ replyBusy() ? 'Envoi…' : 'Envoyer la réponse' }}
+                </button>
+              </form>
+            } @else {
+              <p class="ss__state">Sélectionnez une conversation pour répondre au parent.</p>
+            }
+          </div>
+        </div>
+      </section>
     }
   }
 

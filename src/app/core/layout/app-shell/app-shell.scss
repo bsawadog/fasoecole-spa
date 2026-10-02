@@ -54,6 +54,22 @@
     }
   }
 
+  &__badge {
+    display: inline-grid;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    box-sizing: border-box;
+    place-items: center;
+    margin-left: auto;
+    padding: 0 0.32rem;
+    border-radius: 999px;
+    color: #fff;
+    background: #dc2626;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
   &__content {
     flex: 1;
     min-width: 0;

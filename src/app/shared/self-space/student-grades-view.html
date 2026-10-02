@@ -64,7 +64,7 @@
             <div class="ss__table-wrap">
               <table class="ss__table">
                 <thead>
-                  <tr><th>Date</th><th>Matière</th><th>Évaluation</th><th class="ss__num">Note</th><th class="ss__num">Sur 20</th></tr>
+                  <tr><th>Date</th><th>Matière</th><th>Évaluation</th><th class="ss__num">Note</th><th class="ss__num">Sur 20</th><th>Appréciation</th></tr>
                 </thead>
                 <tbody>
                   @for (g of p.grades; track g.id) {
@@ -74,6 +74,7 @@
                       <td>{{ g.title || g.type }}</td>
                       <td class="ss__num">{{ g.value | number: '1.0-2' }} / {{ g.maxValue | number: '1.0-2' }}</td>
                       <td class="ss__num">{{ on20(g.value, g.maxValue) | number: '1.2-2' }}</td>
+                      <td>{{ g.appreciation || '—' }}</td>
                     </tr>
                   }
                 </tbody>

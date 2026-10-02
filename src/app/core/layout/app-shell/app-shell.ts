@@ -9,6 +9,7 @@ import {
   LucideGraduationCap,
   LucideHouse,
   LucideLogOut,
+  LucideMessageCircle,
   LucideNotebookPen,
   LucideShieldCheck,
   LucideStar,
@@ -17,16 +18,19 @@ import {
   LucideWallet,
 } from '@lucide/angular';
 import { AuthService, OwnerModule } from '../../auth';
+import { OwnerFamilyMessagesService } from '../../../features/dashboard-proprietaire/family-messages.service';
+import { SelfSpaceService } from '../../../shared/self-space/self-space.service';
 import { Role } from '../../models';
 import { catchError, EMPTY, exhaustMap, filter, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface NavigationItem {
   label: string;
-  icon: 'home' | 'building' | 'users' | 'notes' | 'calendar' | 'star' | 'book' | 'graduation' | 'wallet' | 'chart' | 'shield';
+  icon: 'home' | 'building' | 'users' | 'notes' | 'calendar' | 'star' | 'book' | 'graduation' | 'wallet' | 'chart' | 'shield' | 'message';
   routerLink: string;
   /** Espace propriétaire : module requis pour le personnel ; null = réservé au propriétaire. */
   module?: OwnerModule | null;
+  badge?: number;
 }
 
 const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
@@ -38,6 +42,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
   proprietaire: [
     { label: 'Accueil', icon: 'home', routerLink: '/proprietaire', module: 'DASHBOARD' },
     { label: 'Demandes de compte', icon: 'users', routerLink: '/proprietaire/demandes', module: null },
+    { label: 'Messages', icon: 'message', routerLink: '/proprietaire/messages', module: 'STUDENTS' },
     { label: 'Gestion de l’école', icon: 'book', routerLink: '/proprietaire/gestion', module: 'MANAGEMENT' },
     { label: 'Élèves par classe', icon: 'graduation', routerLink: '/proprietaire/classes', module: 'STUDENTS' },
     { label: 'Enseignants par classe', icon: 'users', routerLink: '/proprietaire/enseignants', module: 'TEACHERS' },
@@ -50,6 +55,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
   enseignant: [
     { label: 'Accueil', icon: 'home', routerLink: '/enseignant' },
     { label: 'Mes classes', icon: 'users', routerLink: '/enseignant/classes' },
+    { label: 'Messages', icon: 'message', routerLink: '/enseignant/messages' },
     { label: 'Notes', icon: 'notes', routerLink: '/enseignant/notes' },
   ],
   etudiant: [
@@ -60,6 +66,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
   parent: [
     { label: 'Accueil', icon: 'home', routerLink: '/parent' },
     { label: 'Mes enfants', icon: 'users', routerLink: '/parent/enfants' },
+    { label: 'Messages', icon: 'message', routerLink: '/parent/messages' },
   ],
 };
 
@@ -78,6 +85,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     LucideGraduationCap,
     LucideHouse,
     LucideLogOut,
+    LucideMessageCircle,
     LucideNotebookPen,
     LucideShieldCheck,
     LucideStar,
@@ -90,10 +98,13 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
 })
 export class AppShell implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly familyMessages = inject(OwnerFamilyMessagesService);
+  private readonly selfSpace = inject(SelfSpaceService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly user = this.auth.user;
   readonly accountStatusError = signal(false);
+  readonly unreadMessages = signal(0);
   readonly initials = computed(() => {
     const user = this.user();
     return `${user?.firstName?.charAt(0) ?? ''}${user?.lastName?.charAt(0) ?? ''}`.toUpperCase();
@@ -103,11 +114,18 @@ export class AppShell implements OnInit {
     if (!role) {
       return [];
     }
-    if (role !== 'proprietaire' || this.auth.isSchoolOwner()) {
-      return MENU_BY_ROLE[role];
+    if (role !== 'proprietaire') {
+      return MENU_BY_ROLE[role].map((item) => item.routerLink.endsWith('/messages')
+        ? { ...item, badge: this.unreadMessages() } : item);
+    }
+    if (this.auth.isSchoolOwner()) {
+      return MENU_BY_ROLE[role].map((item) => item.routerLink === '/proprietaire/messages'
+        ? { ...item, badge: this.familyMessages.unreadCount() } : item);
     }
     const allowed = this.auth.ownerModules();
-    return MENU_BY_ROLE[role].filter((item) => !!item.module && allowed.has(item.module));
+    return MENU_BY_ROLE[role].filter((item) => !!item.module && allowed.has(item.module))
+      .map((item) => item.routerLink === '/proprietaire/messages'
+        ? { ...item, badge: this.familyMessages.unreadCount() } : item);
   });
   /** Libellé affiché sous le nom : fonction du membre du personnel, sinon le rôle. */
   readonly roleLabel = computed(() => {
@@ -135,8 +153,29 @@ export class AppShell implements OnInit {
   }
 
   ngOnInit(): void {
+    if (this.auth.role() === 'parent' || this.auth.role() === 'enseignant') {
+      timer(0, 20_000).pipe(
+        exhaustMap(() => this.selfSpace.unreadConversationCount().pipe(
+          catchError(() => EMPTY),
+        )),
+        takeUntilDestroyed(this.destroyRef),
+      ).subscribe((count) => this.unreadMessages.set(count));
+    }
+    if (this.auth.role() === 'proprietaire' && this.auth.isSchoolOwner()) {
+      const ownerId = this.user()?.id;
+      if (ownerId) {
+        this.auth.getOwnedSchools(ownerId, 'DASHBOARD').pipe(
+          catchError(() => EMPTY),
+          takeUntilDestroyed(this.destroyRef),
+        ).subscribe((schools) => {
+          this.watchSchoolUnread(schools.map((school) => school.id));
+        });
+      }
+    }
     if (this.auth.role() === 'proprietaire' && !this.auth.isSchoolOwner()) {
-      this.auth.loadOwnerAccess().pipe(catchError(() => EMPTY), takeUntilDestroyed(this.destroyRef)).subscribe();
+      this.auth.loadOwnerAccess().pipe(catchError(() => EMPTY), takeUntilDestroyed(this.destroyRef)).subscribe((access) => {
+        this.watchSchoolUnread(access.filter((school) => school.modules.includes('STUDENTS')).map((school) => school.schoolId));
+      });
     }
     timer(0, 20_000)
       .pipe(
@@ -156,5 +195,12 @@ export class AppShell implements OnInit {
 
   logout(): void {
     this.auth.logout();
+  }
+
+  private watchSchoolUnread(schoolIds: number[]): void {
+    timer(0, 20_000).pipe(
+      exhaustMap(() => this.familyMessages.refreshUnreadCount(schoolIds).pipe(catchError(() => EMPTY))),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe();
   }
 }

@@ -36,6 +36,12 @@
   text-decoration: none;
 }
 
+.home__brand-logo {
+  display: block;
+  width: clamp(11rem, 19vw, 14rem);
+  height: auto;
+}
+
 .home__brand-mark {
   display: grid;
   width: 2.55rem;
@@ -440,6 +446,12 @@
   font-weight: 700;
 }
 
+.home__footer-logo {
+  display: block;
+  width: 10rem;
+  height: auto;
+}
+
 .home__footer p {
   margin: 0;
 }
@@ -475,6 +487,10 @@
 @media (max-width: 650px) {
   .home__header {
     min-height: 4rem;
+  }
+
+  .home__brand-logo {
+    width: 10rem;
   }
 
   .home__nav {

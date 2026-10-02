@@ -64,6 +64,7 @@ export class EnseignantNotes implements OnInit {
   form: EvaluationForm = this.emptyForm();
   /** Valeurs saisies dans la feuille, par élève ('' = pas de note). */
   values: Record<number, string> = {};
+  appreciations: Record<number, string> = {};
   reason = '';
 
   readonly selectedClass = computed(() => this.classes().find((c) => c.classId === this.classId()) ?? null);
@@ -168,6 +169,7 @@ export class EnseignantNotes implements OnInit {
       next: (sheet) => {
         this.sheet.set(sheet);
         this.values = Object.fromEntries(sheet.rows.map((r) => [r.studentId, r.value === null ? '' : String(r.value)]));
+        this.appreciations = Object.fromEntries(sheet.rows.map((r) => [r.studentId, r.appreciation ?? '']));
       },
       error: (err) => this.error.set(apiError(err, 'Impossible d’ouvrir la feuille de notes.')),
     });
@@ -184,14 +186,14 @@ export class EnseignantNotes implements OnInit {
     const sheet = this.sheet();
     if (!sheet) return;
     const max = sheet.evaluation.maxValue;
-    const grades: { studentId: number; value: number | null }[] = [];
+    const grades: { studentId: number; value: number | null; appreciation: string }[] = [];
     for (const row of sheet.rows) {
       const value = this.parse(this.values[row.studentId]);
       if (Number.isNaN(value) || (value !== null && (value < 0 || value > max))) {
         this.error.set(`Note invalide pour ${row.fullName} : elle doit être comprise entre 0 et ${max}.`);
         return;
       }
-      grades.push({ studentId: row.studentId, value });
+      grades.push({ studentId: row.studentId, value, appreciation: this.appreciations[row.studentId] ?? '' });
     }
     if (this.altersExisting() && !this.reason.trim()) {
       this.error.set('Indiquez le motif de la modification des notes déjà saisies.');

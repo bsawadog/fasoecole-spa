@@ -81,6 +81,7 @@ export interface GradeItem {
   date: string;
   value: number;
   maxValue: number;
+  appreciation?: string | null;
 }
 
 export interface BulletinLine {
@@ -178,6 +179,7 @@ export interface AbsenceReport {
   registrationNumber: string;
   startDate: string;
   endDate: string;
+  attendanceType: FamilyAttendanceType;
   reason: string;
   status: AbsenceReportStatus;
   reportedByName: string | null;
@@ -192,6 +194,7 @@ export interface AbsenceReport {
 export interface AbsenceReportPayload {
   startDate: string;
   endDate: string;
+  attendanceType: FamilyAttendanceType;
   reason: string;
 }
 
@@ -209,14 +212,18 @@ export interface ConversationSummary {
   createdAt: string;
   lastMessageAt: string;
   unread: boolean;
+  recipientNames?: string[];
 }
 
 export interface ConversationMessage {
   id: number;
   fromSchool: boolean;
+  senderId: number | null;
+  mine: boolean;
   senderName: string | null;
   content: string;
   sentAt: string;
+  readBy?: string[];
 }
 
 export interface ConversationThread {
@@ -229,7 +236,22 @@ export interface NewConversationPayload {
   studentId: number | null;
   subject: string;
   content: string;
+  recipientUserIds?: number[];
+  recipientSchool?: boolean;
 }
+
+export interface ConversationRecipient {
+  userId: number;
+  fullName: string;
+  role: 'PARENT' | 'ENSEIGNANT';
+}
+
+export type FamilyAttendanceType = 'ABSENT' | 'LATE';
+
+export const FAMILY_ATTENDANCE_LABELS: Record<FamilyAttendanceType, string> = {
+  ABSENT: 'Absence',
+  LATE: 'Retard',
+};
 
 export const ABSENCE_REPORT_LABELS: Record<AbsenceReportStatus, string> = {
   PENDING: 'En attente', ACKNOWLEDGED: 'Prise en compte', REJECTED: 'Refusée', CANCELLED: 'Annulée',
@@ -246,6 +268,17 @@ export class SelfSpaceService {
   private readonly teacherUrl = `${environment.apiUrl}/me/teacher`;
   private readonly studentsUrl = `${environment.apiUrl}/me/students`;
   private readonly meUrl = `${environment.apiUrl}/me`;
+  private readonly apiConversations = `${environment.apiUrl}/conversations`;
+
+  conversationRecipients(schoolId: number, studentId: number | null): Observable<ConversationRecipient[]> {
+    const params: Record<string, string> = { schoolId: String(schoolId) };
+    if (studentId !== null) params['studentId'] = String(studentId);
+    return this.http.get<ConversationRecipient[]>(`${this.apiConversations}/recipients`, { params });
+  }
+
+  unreadConversationCount(): Observable<number> {
+    return this.http.get<number>(`${this.apiConversations}/unread-count`);
+  }
 
   teacherClasses(): Observable<TeacherClass[]> {
     return this.http.get<TeacherClass[]>(`${this.teacherUrl}/classes`);
@@ -257,6 +290,30 @@ export class SelfSpaceService {
 
   teacherSchedule(): Observable<ScheduleEntry[]> {
     return this.http.get<ScheduleEntry[]>(`${this.teacherUrl}/schedule`);
+  }
+
+  teacherFamilyReports(classId: number, date: string): Observable<AbsenceReport[]> {
+    return this.http.get<AbsenceReport[]>(`${this.teacherUrl}/classes/${classId}/family-reports`, { params: { date } });
+  }
+
+  recordTeacherFamilyReport(classId: number, reportId: number): Observable<AbsenceReport> {
+    return this.http.post<AbsenceReport>(
+      `${this.teacherUrl}/classes/${classId}/family-reports/${reportId}/record-attendance`, {},
+    );
+  }
+
+  teacherConversations(_classId: number): Observable<ConversationSummary[]> {
+    return this.http.get<ConversationSummary[]>(`${this.teacherUrl}/classes/${_classId}/conversations`);
+  }
+
+  teacherConversation(_classId: number, conversationId: number): Observable<ConversationThread> {
+    return this.http.get<ConversationThread>(`${this.teacherUrl}/classes/${_classId}/conversations/${conversationId}`);
+  }
+
+  teacherReply(_classId: number, conversationId: number, content: string): Observable<ConversationThread> {
+    return this.http.post<ConversationThread>(
+      `${this.teacherUrl}/classes/${_classId}/conversations/${conversationId}/messages`, { content },
+    );
   }
 
   classPeriods(classId: number): Observable<GradePeriod[]> {
@@ -283,7 +340,7 @@ export class SelfSpaceService {
     return this.http.get<GradeSheet>(`${this.teacherUrl}/evaluations/${evaluationId}/sheet`);
   }
 
-  saveGrades(evaluationId: number, grades: { studentId: number; value: number | null }[], reason: string | null)
+  saveGrades(evaluationId: number, grades: { studentId: number; value: number | null; appreciation?: string | null }[], reason: string | null)
     : Observable<SaveGradesResult> {
     return this.http.put<SaveGradesResult>(`${this.teacherUrl}/evaluations/${evaluationId}/grades`, { grades, reason });
   }
@@ -333,19 +390,19 @@ export class SelfSpaceService {
   }
 
   conversations(): Observable<ConversationSummary[]> {
-    return this.http.get<ConversationSummary[]>(`${this.meUrl}/conversations`);
+    return this.http.get<ConversationSummary[]>(this.apiConversations);
   }
 
   startConversation(payload: NewConversationPayload): Observable<ConversationThread> {
-    return this.http.post<ConversationThread>(`${this.meUrl}/conversations`, payload);
+    return this.http.post<ConversationThread>(this.apiConversations, { ...payload, recipientSchool: payload.recipientSchool ?? true });
   }
 
   conversation(conversationId: number): Observable<ConversationThread> {
-    return this.http.get<ConversationThread>(`${this.meUrl}/conversations/${conversationId}`);
+    return this.http.get<ConversationThread>(`${this.apiConversations}/${conversationId}`);
   }
 
   replyToConversation(conversationId: number, content: string): Observable<ConversationThread> {
-    return this.http.post<ConversationThread>(`${this.meUrl}/conversations/${conversationId}/messages`, { content });
+    return this.http.post<ConversationThread>(`${this.apiConversations}/${conversationId}/messages`, { content });
   }
 }
 

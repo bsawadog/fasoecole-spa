@@ -1,0 +1,111 @@
+<div class="ss">
+  <a class="ss__back" routerLink="/parent">← Retour à l’espace parent</a>
+  <header class="ss__header">
+    <div>
+      <h1>Messages</h1>
+      <p>Écrivez à l’établissement ou aux enseignants de vos enfants.</p>
+    </div>
+    <button class="ss__btn" type="button" (click)="showComposer.set(!showComposer())" [disabled]="!schools().length">
+      Nouveau message
+    </button>
+  </header>
+
+  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
+  @if (success()) { <p class="ss__alert ss__alert--success" role="status">{{ success() }}</p> }
+
+  <div class="ss__split">
+    <aside class="ss__card" aria-label="Conversations">
+      <div class="ss__card-head"><h2>Mes conversations</h2></div>
+      @if (loading()) {
+        <p class="ss__body ss__muted">Chargement…</p>
+      } @else if (!conversations().length) {
+        <p class="ss__body ss__muted">Aucune conversation pour le moment.</p>
+      } @else {
+        @for (item of conversations(); track item.id) {
+          <button type="button" class="ss__conv"
+                  [class.ss__conv--on]="thread()?.conversation?.id === item.id"
+                  [class.ss__conv--unread]="item.unread"
+                  (click)="openConversation(item)">
+            <strong>{{ item.subject }}</strong>
+            <span>{{ item.schoolName }}@if (item.studentName) { · {{ item.studentName }} }</span>
+            <small>{{ item.lastMessageAt | date: 'dd/MM/yyyy HH:mm' }}</small>
+          </button>
+        }
+      }
+    </aside>
+
+    <section class="ss__card ss__body">
+      @if (showComposer()) {
+        <form class="ss__body" (ngSubmit)="startConversation()">
+          <h2>Nouveau message</h2>
+          @if (!schools().length) {
+            <p class="ss__state">Aucun établissement associé à votre compte.</p>
+          } @else {
+            <label class="ss__field">Établissement
+              <select name="schoolId" [(ngModel)]="schoolId" (ngModelChange)="selectSchool($event)" required>
+                @for (school of schools(); track school.schoolId) {
+                  <option [ngValue]="school.schoolId">{{ school.name }}</option>
+                }
+              </select>
+            </label>
+            @if (studentsForSchool().length) {
+              <label class="ss__field">Enfant concerné
+                <select name="studentId" [ngModel]="studentId" (ngModelChange)="selectStudent($event)" required>
+                  <option [ngValue]="null">Choisir un enfant</option>
+                  @for (child of studentsForSchool(); track child.studentId) {
+                    <option [ngValue]="child.studentId">{{ child.fullName }}</option>
+                  }
+                </select>
+              </label>
+            }
+            <label class="ss__field"><span>Destinataires</span>
+              <span><input type="checkbox" [checked]="recipientSchool()" (change)="recipientSchool.set($any($event.target).checked)" /> Établissement</span>
+            </label>
+            @if (recipients().length) {
+              <div class="ss__recipient-list" aria-label="Enseignants destinataires">
+                @for (recipient of recipients(); track recipient.userId) {
+                  @if (recipient.role === 'ENSEIGNANT') {
+                    <label><input type="checkbox" [checked]="selectedRecipientIds().includes(recipient.userId)"
+                                  (change)="toggleRecipient(recipient.userId, $any($event.target).checked)" /> {{ recipient.fullName }} · Enseignant</label>
+                  }
+                }
+              </div>
+            }
+            <label class="ss__field">Objet
+              <input name="subject" [(ngModel)]="subject" maxlength="160" required />
+            </label>
+            <label class="ss__field">Votre message
+              <textarea name="message" [(ngModel)]="message" rows="5" maxlength="4000" required></textarea>
+            </label>
+            <div class="ss__actions">
+              <button class="ss__btn" type="submit" [disabled]="sending()">{{ sending() ? 'Envoi…' : 'Envoyer' }}</button>
+              <button class="ss__mini" type="button" (click)="showComposer.set(false)">Annuler</button>
+            </div>
+          }
+        </form>
+      } @else if (thread(); as current) {
+        <div>
+          <h2>{{ current.conversation.subject }}</h2>
+          <p class="ss__muted">{{ current.conversation.schoolName }}@if (current.conversation.studentName) { · {{ current.conversation.studentName }} }</p>
+        </div>
+        <div class="ss__thread" aria-live="polite">
+          @for (item of current.messages; track item.id) {
+            <article class="ss__msg" [class.ss__msg--mine]="item.mine">
+              <small>{{ item.senderName || (item.fromSchool ? 'Établissement' : 'Vous') }} · {{ item.sentAt | date: 'dd/MM/yyyy HH:mm' }}</small>
+            {{ item.content }}
+            @if (item.mine) { <small>{{ item.readBy?.length ? 'Lu par ' + item.readBy.join(', ') : 'Non lu' }}</small> }
+            </article>
+          }
+        </div>
+        <form class="ss__body" (ngSubmit)="sendReply()">
+          <label class="ss__field">Répondre
+            <textarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" required></textarea>
+          </label>
+          <button class="ss__btn" type="submit" [disabled]="sending() || !reply.trim()">{{ sending() ? 'Envoi…' : 'Envoyer la réponse' }}</button>
+        </form>
+      } @else {
+        <div class="ss__state">Sélectionnez une conversation ou démarrez un nouveau message.</div>
+      }
+    </section>
+  </div>
+</div>

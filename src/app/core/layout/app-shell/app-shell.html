@@ -21,8 +21,15 @@
             @case ('wallet') { <svg lucideWallet [size]="19" aria-hidden="true"></svg> }
             @case ('chart') { <svg lucideChartPie [size]="19" aria-hidden="true"></svg> }
             @case ('shield') { <svg lucideShieldCheck [size]="19" aria-hidden="true"></svg> }
+            @case ('message') { <svg lucideMessageCircle [size]="19" aria-hidden="true"></svg> }
           }
           <span>{{ item.label }}</span>
+          @if (item.badge && item.badge > 0) {
+            <span class="shell__badge" aria-live="polite"
+                  [attr.aria-label]="item.badge + ' message(s) non lu(s)'">
+              {{ item.badge > 99 ? '99+' : item.badge }}
+            </span>
+          }
         </a>
       }
     </nav>

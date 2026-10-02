@@ -132,7 +132,7 @@
           } @else {
             <div class="ss__table-wrap">
               <table class="ss__table">
-                <thead><tr><th>#</th><th>Élève</th><th>Matricule</th><th>Note</th></tr></thead>
+                <thead><tr><th>#</th><th>Élève</th><th>Matricule</th><th>Note</th><th>Appréciation</th></tr></thead>
                 <tbody>
                   @for (row of s.rows; track row.studentId; let i = $index) {
                     <tr>
@@ -144,6 +144,9 @@
                                inputmode="decimal" [(ngModel)]="values[row.studentId]" [disabled]="!editable()"
                                placeholder="—" />
                       </td>
+                      <td><textarea [name]="'appreciation-' + row.studentId" [(ngModel)]="appreciations[row.studentId]"
+                                    [disabled]="!editable()" rows="2" maxlength="500"
+                                    placeholder="Appréciation pour l’élève"></textarea></td>
                     </tr>
                   }
                 </tbody>

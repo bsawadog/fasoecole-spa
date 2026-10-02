@@ -1,0 +1,107 @@
+<div class="ss">
+  <header class="ss__header">
+    <div>
+      <h1>Messages</h1>
+      <p>Échangez avec un ou plusieurs parents ou enseignants de vos établissements.</p>
+    </div>
+    <button class="ss__btn" type="button" (click)="composing.set(!composing())">Nouvelle conversation</button>
+    @if (schools().length > 1) {
+      <label class="ss__picker">Établissement
+        <select [value]="schoolId() ?? ''" (change)="changeSchool($any($event.target).value)">
+          @for (school of schools(); track school.id) {
+            <option [value]="school.id">{{ school.name }}</option>
+          }
+        </select>
+      </label>
+    } @else if (schools().length === 1) {
+      <span class="ss__chip">{{ schools()[0].name }}</span>
+    }
+  </header>
+
+  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
+  @if (success()) { <p class="ss__alert ss__alert--success" role="status">{{ success() }}</p> }
+
+  @if (!loading() && !schools().length) {
+    <p class="ss__state">Aucun établissement n’est associé à votre compte propriétaire.</p>
+  } @else if (loading()) {
+    <p class="ss__state">Chargement des conversations…</p>
+  } @else {
+    <div class="ss__split">
+      <aside class="ss__card" aria-label="Messages reçus des parents">
+        <header class="ss__card-head"><h2>Conversations</h2></header>
+        @if (!conversations().length) {
+          <p class="ss__body ss__muted">Aucun message reçu des parents pour cet établissement.</p>
+        } @else {
+          @for (item of conversations(); track item.id) {
+            <button type="button" class="ss__conv"
+                    [class.ss__conv--on]="thread()?.conversation?.id === item.id"
+                    [class.ss__conv--unread]="item.unread"
+                    (click)="openConversation(item)">
+              <strong>{{ item.subject }}</strong>
+              <span>{{ item.recipientNames?.join(', ') || item.parentName }}@if (item.studentName) { · {{ item.studentName }} }</span>
+              <small>{{ item.lastMessageAt | date: 'dd/MM/yyyy HH:mm' }}</small>
+              @if (item.unread) { <span class="ss__chip ss__chip--red">Non lu</span> }
+            </button>
+          }
+        }
+      </aside>
+
+      <section class="ss__card ss__body" aria-label="Conversation sélectionnée">
+        @if (composing()) {
+          <form class="ss__body" (ngSubmit)="startConversation()">
+            <h2>Nouvelle conversation</h2>
+            <p class="ss__muted">Sélectionnez un ou plusieurs parents ou enseignants.</p>
+            <div class="ss__actions">
+              <button class="ss__mini" type="button" (click)="selectAllRecipients('PARENT')">Tous les parents</button>
+              <button class="ss__mini" type="button" (click)="selectAllRecipients('ENSEIGNANT')">Tous les enseignants</button>
+            </div>
+            <div class="ss__recipient-list">
+              @for (recipient of recipients(); track recipient.userId) {
+                <label><input type="checkbox" [checked]="selectedRecipientIds().includes(recipient.userId)"
+                              (change)="toggleRecipient(recipient.userId, $any($event.target).checked)" />
+                  {{ recipient.fullName }} <small>{{ recipient.role === 'PARENT' ? 'Parent' : 'Enseignant' }}</small>
+                </label>
+              }
+            </div>
+            <label class="ss__field">Objet
+              <input name="subject" [(ngModel)]="subject" maxlength="160" required />
+            </label>
+            <label class="ss__field">Message
+              <textarea name="message" [(ngModel)]="message" rows="4" maxlength="4000" required></textarea>
+            </label>
+            <button class="ss__btn" type="submit" [disabled]="sending() || !selectedRecipientIds().length">
+              {{ sending() ? 'Envoi…' : 'Créer la conversation' }}
+            </button>
+          </form>
+        } @else if (thread(); as current) {
+          <div>
+            <h2>{{ current.conversation.subject }}</h2>
+            <p class="ss__muted">
+              {{ current.conversation.parentName }}@if (current.conversation.parentEmail) { · {{ current.conversation.parentEmail }} }
+              @if (current.conversation.studentName) { · Élève : {{ current.conversation.studentName }} }
+            </p>
+          </div>
+          <div class="ss__thread" aria-live="polite">
+            @for (message of current.messages; track message.id) {
+              <article class="ss__msg" [class.ss__msg--mine]="message.mine">
+                <small>{{ message.senderName || (message.fromSchool ? 'Établissement' : 'Parent') }} · {{ message.sentAt | date: 'dd/MM/yyyy HH:mm' }}</small>
+                {{ message.content }}
+                @if (message.mine) { <small>{{ message.readBy?.length ? 'Lu par ' + message.readBy.join(', ') : 'Non lu' }}</small> }
+              </article>
+            }
+          </div>
+          <form class="ss__body" (ngSubmit)="sendReply()">
+            <label class="ss__field">Répondre au parent
+              <textarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" required></textarea>
+            </label>
+            <button class="ss__btn" type="submit" [disabled]="sending() || !reply.trim()">
+              {{ sending() ? 'Envoi…' : 'Envoyer la réponse' }}
+            </button>
+          </form>
+        } @else {
+          <p class="ss__state">Sélectionnez une conversation pour lire le message et répondre au parent.</p>
+        }
+      </section>
+    </div>
+  }
+</div>

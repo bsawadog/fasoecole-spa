@@ -2,6 +2,10 @@ import { Routes } from '@angular/router';
 
 export const ENSEIGNANT_ROUTES: Routes = [
   {
+    path: 'messages',
+    loadComponent: () => import('./pages/messages/messages').then((m) => m.TeacherMessages),
+  },
+  {
     path: 'classes',
     loadComponent: () => import('./pages/classes/classes').then((m) => m.EnseignantClasses),
   },

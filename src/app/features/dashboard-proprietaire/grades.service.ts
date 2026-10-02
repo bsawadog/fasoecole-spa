@@ -70,6 +70,7 @@ export interface SheetRow {
   fullName: string;
   registrationNumber: string;
   value: number | null;
+  appreciation?: string | null;
 }
 
 export interface GradeSheet {
@@ -294,7 +295,7 @@ export class GradesService {
     return this.http.get<GradeSheet>(`${this.api}/evaluations/${evaluationId}/sheet`);
   }
 
-  saveGrades(evaluationId: number, grades: { studentId: number; value: number | null }[],
+  saveGrades(evaluationId: number, grades: { studentId: number; value: number | null; appreciation?: string | null }[],
              reason: string | null): Observable<SaveGradesResult> {
     return this.http.put<SaveGradesResult>(`${this.api}/evaluations/${evaluationId}/grades`, { grades, reason });
   }

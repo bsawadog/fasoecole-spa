@@ -46,6 +46,54 @@
         @else if (!tabError()) { <p class="ss__state">Chargement…</p> }
       }
       @case ('absences') {
+        <form class="ss__card ss__body" (ngSubmit)="reportAbsence()">
+          <h2>Signaler une absence</h2>
+          <p class="ss__muted">Prévenez l’établissement d’une absence ou d’un retard pour une date précise.</p>
+          <div class="ss__form">
+            <label>Date concernée
+              <input type="date" name="reportDate" [(ngModel)]="reportDate" required />
+            </label>
+            <label>Type de signalement
+              <select name="reportType" [(ngModel)]="reportType">
+                <option value="ABSENT">Absence</option>
+                <option value="LATE">Retard</option>
+              </select>
+            </label>
+            <label class="ss__wide">Motif
+              <textarea name="reportReason" [(ngModel)]="reportReason" rows="3" maxlength="500" required
+                        placeholder="Indiquez brièvement le motif de l’absence"></textarea>
+            </label>
+          </div>
+          <button class="ss__btn" type="submit" [disabled]="reportSaving">
+            {{ reportSaving ? 'Envoi…' : 'Envoyer le signalement' }}
+          </button>
+        </form>
+        @if (reportSuccess()) { <p class="ss__alert ss__alert--success" role="status">{{ reportSuccess() }}</p> }
+        @if (absenceReports(); as reports) {
+          <section class="ss__card ss__body">
+            <h2>Signalements envoyés</h2>
+            @if (!reports.length) {
+              <p class="ss__state">Aucun signalement envoyé.</p>
+            } @else {
+              <div class="ss__table-wrap">
+                <table class="ss__table">
+                  <thead><tr><th>Date</th><th>Type</th><th>Motif</th><th>Statut</th><th>Réponse de l’établissement</th></tr></thead>
+                  <tbody>
+                    @for (report of reports; track report.id) {
+                      <tr>
+                        <td>{{ report.startDate | date: 'dd/MM/yyyy' }}</td>
+                        <td>{{ familyAttendanceLabels[report.attendanceType] }}</td>
+                        <td>{{ report.reason }}</td>
+                        <td>{{ absenceReportLabels[report.status] }}</td>
+                        <td>{{ report.schoolComment || '—' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </section>
+        }
         @if (attendance(); as items) {
           @if (!items.length) {
             <p class="ss__state">Aucune absence ni retard enregistré.</p>

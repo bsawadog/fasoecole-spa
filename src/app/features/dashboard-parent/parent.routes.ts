@@ -10,6 +10,10 @@ export const PARENT_ROUTES: Routes = [
     loadComponent: () => import('./pages/child-detail/child-detail').then((m) => m.ParentChildDetail),
   },
   {
+    path: 'messages',
+    loadComponent: () => import('./pages/messages/messages').then((m) => m.ParentMessages),
+  },
+  {
     path: '',
     pathMatch: 'full',
     loadComponent: () => import('./pages/home/home').then((m) => m.ParentHome),

@@ -8,6 +8,11 @@ export const PROPRIETAIRE_ROUTES: Routes = [
     loadComponent: () => import('./pages/approvals/approvals').then((m) => m.Approvals),
   },
   {
+    path: 'messages',
+    canActivate: [ownerModuleGuard('STUDENTS')],
+    loadComponent: () => import('./pages/messages/messages').then((m) => m.OwnerMessages),
+  },
+  {
     path: 'personnel',
     canActivate: [ownerModuleGuard(null)],
     loadComponent: () => import('./pages/staff/staff').then((m) => m.StaffPage),

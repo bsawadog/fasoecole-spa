@@ -1,0 +1,72 @@
+<div class="ss">
+  <a class="ss__back" routerLink="/enseignant">← Retour à l’espace enseignant</a>
+  <header class="ss__header">
+    <div><h1>Messages</h1><p>Échangez avec les parents de vos élèves et avec l’établissement.</p></div>
+    <button class="ss__btn" type="button" (click)="composing.set(!composing())">Nouvelle conversation</button>
+  </header>
+  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
+  @if (success()) { <p class="ss__alert ss__alert--success" role="status">{{ success() }}</p> }
+  <div class="ss__split">
+    <aside class="ss__card" aria-label="Conversations">
+      <h2 class="ss__card-head">Mes conversations</h2>
+      @if (loading()) { <p class="ss__body ss__muted">Chargement…</p> }
+      @else if (!conversations().length) { <p class="ss__body ss__muted">Aucune conversation pour le moment.</p> }
+      @else {
+        @for (item of conversations(); track item.id) {
+          <button class="ss__conv" type="button" [class.ss__conv--on]="thread()?.conversation?.id === item.id"
+                  [class.ss__conv--unread]="item.unread" (click)="open(item)">
+            <strong>{{ item.subject }}</strong><span>{{ item.recipientNames?.join(', ') || item.parentName || item.schoolName }}</span>
+            <small>{{ item.lastMessageAt | date: 'dd/MM/yyyy HH:mm' }}</small>
+            @if (item.unread) { <span class="ss__chip ss__chip--red">Non lu</span> }
+          </button>
+        }
+      }
+    </aside>
+    <section class="ss__card ss__body">
+      @if (composing()) {
+        <form class="ss__body" (ngSubmit)="startConversation()">
+          <h2>Nouvelle conversation</h2>
+          <label class="ss__field">Classe
+            <select name="classId" [ngModel]="classId" (ngModelChange)="selectClass($event)" required>
+              <option [ngValue]="null">Sélectionner une classe</option>
+              @for (item of classes(); track item.classId) { <option [ngValue]="item.classId">{{ item.className }} · {{ item.schoolName }}</option> }
+            </select>
+          </label>
+          <label class="ss__field">Élève
+            <select name="studentId" [ngModel]="studentId" (ngModelChange)="selectStudent($event)" required>
+              <option [ngValue]="null">Sélectionner un élève</option>
+              @for (student of students(); track student.studentId) { <option [ngValue]="student.studentId">{{ student.fullName }}</option> }
+            </select>
+          </label>
+          <label><input type="checkbox" [checked]="recipientSchool()" (change)="recipientSchool.set($any($event.target).checked)" /> Établissement</label>
+          @if (recipients().length) {
+            <div class="ss__recipient-list">
+              @for (recipient of recipients(); track recipient.userId) {
+                <label><input type="checkbox" [checked]="selectedRecipientIds().includes(recipient.userId)"
+                              (change)="toggleRecipient(recipient.userId, $any($event.target).checked)" /> {{ recipient.fullName }}</label>
+              }
+            </div>
+          }
+          <label class="ss__field">Objet<input name="subject" [(ngModel)]="subject" maxlength="160" required /></label>
+          <label class="ss__field">Message<textarea name="message" [(ngModel)]="message" rows="4" maxlength="4000" required></textarea></label>
+          <button class="ss__btn" type="submit" [disabled]="sending()">{{ sending() ? 'Envoi…' : 'Créer la conversation' }}</button>
+        </form>
+      } @else if (thread(); as current) {
+        <h2>{{ current.conversation.subject }}</h2>
+        <p class="ss__muted">{{ current.conversation.recipientNames?.join(', ') || current.conversation.schoolName }}</p>
+        <div class="ss__thread" aria-live="polite">
+          @for (message of current.messages; track message.id) {
+            <article class="ss__msg" [class.ss__msg--mine]="message.mine">
+              <small>{{ message.senderName }} · {{ message.sentAt | date: 'dd/MM/yyyy HH:mm' }}</small>{{ message.content }}
+              @if (message.mine) { <small>{{ message.readBy?.length ? 'Lu par ' + message.readBy.join(', ') : 'Non lu' }}</small> }
+            </article>
+          }
+        </div>
+        <form class="ss__body" (ngSubmit)="sendReply()">
+          <label class="ss__field">Répondre<textarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" required></textarea></label>
+          <button class="ss__btn" type="submit" [disabled]="sending() || !reply.trim()">Envoyer</button>
+        </form>
+      } @else { <p class="ss__state">Choisissez une conversation ou démarrez-en une nouvelle.</p> }
+    </section>
+  </div>
+</div>

@@ -4,6 +4,8 @@
 .ss__header h1 { margin: 0 0 .2rem; font-size: 1.4rem; color: #fff; }
 .ss__header p { margin: 0; color: #dcfce7; font-size: .9rem; }
 .ss__picker { display: flex; flex-direction: column; gap: .3rem; color: #dcfce7; font-size: .8rem; font-weight: 700; }
+.ss__recipient-list { display: grid; gap: .45rem; max-height: 16rem; overflow: auto; padding: .75rem; border: 1px solid #d8dee8; border-radius: .75rem; }
+.ss__recipient-list label { display: flex; align-items: center; gap: .5rem; }
 .ss select, .ss input, .ss textarea { padding: .45rem .55rem; border: 1px solid #cbd5e1; border-radius: .35rem; font: inherit; font-size: .9rem; color: #0f172a; background: #fff; }
 .ss__alert, .ss__state { margin: 0; padding: .8rem 1rem; border-radius: .4rem; font-size: .9rem; }
 .ss__alert--error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
