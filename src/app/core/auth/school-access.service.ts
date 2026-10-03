@@ -22,6 +22,10 @@ export interface SchoolAccessRequest {
   decidedAt: string | null;
   /** Accès parent : enfants inscrits dans l'établissement. */
   children?: string[];
+  schoolIdentifier?: string | null;
+  identifierReview?: string | null;
+  childRegistrationNumbers?: string[];
+  childReview?: string[];
 }
 
 /** Demandes d'accès à un établissement supplémentaire (enseignants, parents, élèves). */
@@ -34,8 +38,8 @@ export class SchoolAccessService {
     return this.http.get<SchoolAccessRequest[]>(`${this.apiUrl}/users/me/school-requests`);
   }
 
-  request(schoolId: number, requestedRole: ApprovalRole): Observable<SchoolAccessRequest> {
-    return this.http.post<SchoolAccessRequest>(`${this.apiUrl}/users/me/school-requests`, { schoolId, requestedRole });
+  request(schoolId: number, requestedRole: ApprovalRole, childRegistrationNumbers?: string[], schoolIdentifier?: string): Observable<SchoolAccessRequest> {
+    return this.http.post<SchoolAccessRequest>(`${this.apiUrl}/users/me/school-requests`, { schoolId, requestedRole, childRegistrationNumbers, schoolIdentifier });
   }
 
   cancel(id: number): Observable<void> {
@@ -46,8 +50,8 @@ export class SchoolAccessService {
     return this.http.get<SchoolAccessRequest[]>(`${this.apiUrl}/school-access-requests/pending`);
   }
 
-  approve(id: number): Observable<SchoolAccessRequest> {
-    return this.http.post<SchoolAccessRequest>(`${this.apiUrl}/school-access-requests/${id}/approve`, {});
+  approve(id: number, classId?: number | null): Observable<SchoolAccessRequest> {
+    return this.http.post<SchoolAccessRequest>(`${this.apiUrl}/school-access-requests/${id}/approve`, { classId });
   }
 
   reject(id: number): Observable<SchoolAccessRequest> {

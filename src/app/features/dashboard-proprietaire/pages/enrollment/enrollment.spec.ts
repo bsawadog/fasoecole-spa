@@ -34,6 +34,7 @@ const plan: PromotionPlan = {
 
 describe('EnrollmentPage', () => {
   function setup() {
+    vi.spyOn(window, 'open').mockReturnValue(null);
     const api = {
       overview: vi.fn(() => of({ years })),
       plan: vi.fn(() => of(plan)),
@@ -78,7 +79,7 @@ describe('EnrollmentPage', () => {
         { provide: ConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
         { provide: AuthService, useValue: {
           user: () => ({ id: 7 }),
-          getOwnedSchools: () => of([{ id: 5, name: 'École', type: 'PRIMAIRE' }]),
+          selectSchoolContext: vi.fn(), selectedSchoolType: () => 'PRIMAIRE', getOwnedSchools: () => of([{ id: 5, name: 'École', type: 'PRIMAIRE' }]),
         } },
         { provide: EnrollmentService, useValue: api },
       ],
@@ -135,10 +136,10 @@ describe('EnrollmentPage', () => {
 
     page.registerStudent();
     expect(api.registerStudent).not.toHaveBeenCalled();
-    expect(page.error()).toContain('mot de passe');
+    expect(page.error()).toContain('courriel');
 
     Object.assign(page.newStudentForm, {
-      firstName: ' Sali ', lastName: 'Ouédraogo', email: 'sali@ecole.bf', password: 'motdepasse',
+      firstName: ' Sali ', lastName: 'Ouédraogo', email: 'sali@ecole.bf',
     });
     page.registerStudent();
     expect(api.registerStudent).not.toHaveBeenCalled();
@@ -184,7 +185,7 @@ describe('EnrollmentPage', () => {
       const { fixture, page, api } = setup();
       page.openNewStudent();
       Object.assign(page.newStudentForm, {
-        firstName: 'Sali', lastName: 'Kaboré', email: 'sali@ecole.bf', password: 'motdepasse',
+        firstName: 'Sali', lastName: 'Kaboré', email: 'sali@ecole.bf',
       });
       page.setGuardianMode(0, 'existing');
       page.registerStudent();

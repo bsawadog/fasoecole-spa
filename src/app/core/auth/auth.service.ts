@@ -16,13 +16,15 @@ export interface PasswordResetRequestResponse {
   message: string;
 }
 
-/** Réponse d'inscription quand l'adresse appartient à un compte créé par une école. */
+/** Réponse publique commune aux inscriptions et aux demandes d'activation. */
 export interface ActivationRequired {
   activationRequired: true;
   message: string;
 }
 
 export interface RegistrationRequest {
+  schoolIdentifier?: string;
+  childRegistrationNumbers?: string[];
   firstName: string;
   lastName: string;
   email: string;
@@ -39,6 +41,8 @@ export interface RegistrationSchool {
 }
 
 export interface ProfileUpdate {
+  schoolIdentifier?: string;
+  childRegistrationNumbers?: string[];
   firstName: string;
   lastName: string;
   phone: string;
@@ -57,7 +61,7 @@ export const OWNER_MODULES: { code: OwnerModule; label: string; route: string }[
   { code: 'FINANCE', label: 'Frais & paiements', route: '/proprietaire/frais' },
   { code: 'EXPENSES', label: 'Dépenses & budget', route: '/proprietaire/depenses' },
   { code: 'GRADES', label: 'Notes & bulletins', route: '/proprietaire/notes' },
-  { code: 'ENROLLMENT', label: 'Inscriptions & passage', route: '/proprietaire/inscriptions' },
+  { code: 'ENROLLMENT', label: 'Inscriptions', route: '/proprietaire/inscriptions' },
 ];
 
 /** Établissement accessible dans l'espace propriétaire (possédé ou délégué). */
@@ -146,6 +150,7 @@ export class AuthService {
   private readonly _ownerAccess = signal<SchoolAccess[] | null>(null);
   readonly ownerAccess = this._ownerAccess.asReadonly();
   private readonly selectedSchoolId = signal(Number(localStorage.getItem('fasoecole_owner_school')) || null);
+  readonly schoolContextId = this.selectedSchoolId.asReadonly();
   private readonly ownedSchools = signal<RegistrationSchool[]>([]);
   readonly selectedSchoolType = computed(() => {
     const id = this.selectedSchoolId();
@@ -255,8 +260,12 @@ export class AuthService {
     return this.http.get<UserDto[]>(`${this.apiUrl}/users/pending`);
   }
 
-  approvePendingUser(userId: number, schoolId: number, role: ApprovalRole): Observable<UserDto> {
-    return this.http.post<UserDto>(`${this.apiUrl}/users/${userId}/approve`, { schoolId, role });
+  approvePendingUser(userId: number, schoolId: number, role: ApprovalRole, classId?: number | null): Observable<UserDto> {
+    return this.http.post<UserDto>(`${this.apiUrl}/users/${userId}/approve`, { schoolId, role, classId });
+  }
+
+  resendUserInvitation(userId: number): Observable<{ emailSent: boolean }> {
+    return this.http.post<{ emailSent: boolean }>(`${this.apiUrl}/users/${userId}/invitation`, {});
   }
 
   refreshCurrentUser(): Observable<User> {
@@ -306,8 +315,8 @@ export class AuthService {
     return this.http.post<void>(`${this.apiUrl}/auth/verify-email`, newPassword ? { token, newPassword } : { token });
   }
 
-  resendEmailVerification(): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/users/me/email-verification`, {});
+  resendEmailVerification(): Observable<{ emailSent: boolean }> {
+    return this.http.post<{ emailSent: boolean }>(`${this.apiUrl}/users/me/email-verification`, {});
   }
 
   logout(): void {
@@ -328,7 +337,8 @@ export class AuthService {
       this.router.navigateByUrl('/login');
       return;
     }
-    this.router.navigateByUrl(ROLE_HOME_ROUTE[role]);
+    const user = this._user();
+    this.router.navigateByUrl(user?.approved && user.emailVerified === true ? ROLE_HOME_ROUTE[role] : '/profil');
   }
 
   getToken(): string | null {
@@ -350,10 +360,17 @@ export class AuthService {
       phone: profile.phone,
       role,
       approved: profile.approved,
-      emailVerified: profile.emailVerified ?? true,
+      emailVerified: profile.emailVerified === true,
+      passwordSet: profile.passwordSet,
+      onboardingSteps: profile.onboardingSteps,
+      invitationDeliveryStatus: profile.invitationDeliveryStatus,
       requestedSchoolId: profile.requestedSchoolId,
       requestedSchoolName: profile.requestedSchoolName,
       requestedSchoolType: profile.requestedSchoolType,
+      schoolIdentifier: profile.schoolIdentifier,
+      identifierReview: profile.identifierReview,
+      childRegistrationNumbers: profile.childRegistrationNumbers ?? [],
+      childReview: profile.childReview ?? [],
       requestedRole: profile.requestedRole,
       rawRoles: effectiveRoles,
     };

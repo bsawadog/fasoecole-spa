@@ -30,9 +30,23 @@
             <div>
               <h2>{{ request.firstName }} {{ request.lastName }}</h2>
               <p>{{ request.email }}</p>
+              @if (request.emailVerified !== true) {
+                <p>Courriel à confirmer. {{ request.invitationDeliveryStatus === 'FAILED' ? 'Dernier envoi échoué.' : '' }}</p>
+                <button type="button" [disabled]="resendingId() !== null" (click)="resend(request)">Renvoyer le lien</button>
+              }
               <p class="approvals__requested-role">
                 Profil demandé : <strong>{{ requestedRoleLabel(request.requestedRole) }}</strong>
               </p>
+              @if (request.schoolIdentifier || request.identifierReview) {
+                <p>Identifiant déclaré : {{ request.schoolIdentifier || 'À compléter' }}</p>
+                <p>{{ request.identifierReview }}</p>
+                <p>Vérifiez l’identité avant d’approuver le rattachement au dossier existant.</p>
+              }
+              @if (request.childRegistrationNumbers?.length) {
+                <p>Matricules déclarés : {{ request.childRegistrationNumbers!.join(', ') }}</p>
+                <ul>@for (child of request.childReview ?? []; track child) { <li>{{ child }}</li> }</ul>
+                <p>Vérifiez le lien familial avant d’approuver. L’approbation associera ces enfants au parent.</p>
+              }
               @if (request.phone) {
                 <p>{{ request.phone }}</p>
               }
@@ -57,7 +71,7 @@
             </label>
             <button
               type="button"
-              [disabled]="savingUserId() !== null || schools().length === 0"
+              [disabled]="savingUserId() !== null || schools().length === 0 || request.emailVerified !== true"
               (click)="approve(request)"
             >
               {{ savingUserId() === request.id ? 'Validation…' : 'Valider le compte' }}
@@ -128,6 +142,16 @@
                 Demande : <strong>{{ requestedRoleLabel(request.requestedRole) }}</strong>
                 à <strong>{{ request.schoolName }}</strong>
               </p>
+              @if (request.schoolIdentifier || request.identifierReview) {
+                <p>Identifiant déclaré : {{ request.schoolIdentifier || 'À compléter' }}</p>
+                <p>{{ request.identifierReview }}</p>
+                <p>Vérifiez l’identité avant d’approuver le rattachement au dossier existant.</p>
+              }
+              @if (request.childRegistrationNumbers?.length) {
+                <p>Matricules déclarés : {{ request.childRegistrationNumbers!.join(', ') }}</p>
+                <ul>@for (child of request.childReview ?? []; track child) { <li>{{ child }}</li> }</ul>
+                <p>Vérifiez le lien familial avant d’approuver. L’approbation associera ces enfants au parent.</p>
+              }
             </div>
           </div>
           <div class="approvals__controls">

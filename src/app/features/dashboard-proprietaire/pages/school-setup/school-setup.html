@@ -29,7 +29,7 @@
           <option value="UNIVERSITE">Université</option><option value="FORMATION">Centre de formation</option>
         </select></label>
         <label>Adresse<input name="address" [(ngModel)]="form.address" maxlength="255" /></label>
-        <label>Téléphone<input name="phone" [(ngModel)]="form.phone" maxlength="30" /></label>
+        <label>Téléphone<input name="phone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="form.phone" maxlength="30" /></label>
         <label>Courriel<input name="email" type="email" email [(ngModel)]="form.email" maxlength="150" /></label>
         <div class="actions"><button type="submit" [disabled]="saving() || schoolForm.invalid">{{ saving() ? 'Enregistrement…' : 'Enregistrer et continuer' }}</button>
         </div>

@@ -5,6 +5,8 @@ import { environment } from '../../../environments/environment';
 import { OwnerModule } from '../../core/auth';
 
 export interface StaffMember {
+  emailVerified?: boolean;
+  invitationDeliveryStatus?: string | null;
   id: number;
   userId: number;
   firstName: string;
@@ -36,7 +38,7 @@ export interface StaffCreated {
 }
 
 export interface StaffPasswordReset {
-  temporaryPassword: string;
+  temporaryPassword: string | null;
   emailSent: boolean;
 }
 

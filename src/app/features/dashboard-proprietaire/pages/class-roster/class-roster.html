@@ -61,9 +61,9 @@
         <div class="class-roster__edit-grid">
           <label>Prénom <input name="nFirstName" [(ngModel)]="newStudentForm.firstName" required /></label>
           <label>Nom <input name="nLastName" [(ngModel)]="newStudentForm.lastName" required /></label>
-          <label>Courriel <input type="email" name="nEmail" [(ngModel)]="newStudentForm.email" required /></label>
-          <label>Mot de passe <input type="text" name="nPassword" [(ngModel)]="newStudentForm.password" required minlength="8" placeholder="8 caractères min." /></label>
-          <label>Téléphone <input name="nPhone" [(ngModel)]="newStudentForm.phone" /></label>
+          <label>Courriel <input type="email" email name="nEmail" [(ngModel)]="newStudentForm.email" required /></label>
+          <p>Un lien d’activation sera envoyé par courriel pour choisir le mot de passe.</p>
+          <label>Téléphone <input name="nPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="newStudentForm.phone" /></label>
           <label>Matricule <input name="nRegistrationNumber" [(ngModel)]="newStudentForm.registrationNumber" placeholder="Généré automatiquement" /></label>
           <label>Naissance <input type="date" name="nBirthDate" [(ngModel)]="newStudentForm.birthDate" /></label>
           <label>Genre
@@ -124,8 +124,8 @@
                       <div class="class-roster__edit-grid">
                         <label>Prénom <input name="firstName" [(ngModel)]="studentForm.firstName" required /></label>
                         <label>Nom <input name="lastName" [(ngModel)]="studentForm.lastName" required /></label>
-                        <label>Courriel <input type="email" name="email" [(ngModel)]="studentForm.email" required /></label>
-                        <label>Téléphone <input name="phone" [(ngModel)]="studentForm.phone" /></label>
+                        <label>Courriel <input type="email" email name="email" [(ngModel)]="studentForm.email" required /></label>
+                        <label>Téléphone <input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="studentForm.phone" /></label>
                         <label>Matricule <input name="registrationNumber" [(ngModel)]="studentForm.registrationNumber" required /></label>
                         <label>Naissance <input type="date" name="birthDate" [(ngModel)]="studentForm.birthDate" /></label>
                         <label>Genre
@@ -183,6 +183,10 @@
                   </td>
                   <td>
                     <div>{{ row.email }}</div>
+                    @if (row.emailVerified === false) {
+                      <small>{{ row.invitationDeliveryStatus === 'FAILED' ? 'Envoi échoué' : 'Compte à activer' }}</small>
+                      <button type="button" class="class-roster__no-print" [disabled]="saving()" (click)="resendInvitation(row.userId)">Renvoyer le lien</button>
+                    }
                     @if (row.phone) { <div class="class-roster__muted">{{ row.phone }}</div> }
                   </td>
                   <td>{{ row.registrationNumber }}</td>
@@ -193,8 +197,8 @@
                           <div class="class-roster__edit-grid">
                             <label>Prénom <input name="pFirstName" [(ngModel)]="parentForm.firstName" required /></label>
                             <label>Nom <input name="pLastName" [(ngModel)]="parentForm.lastName" required /></label>
-                            <label>Courriel (facultatif) <input type="email" name="pEmail" [(ngModel)]="parentForm.email" /></label>
-                            <label>Téléphone <input name="pPhone" [(ngModel)]="parentForm.phone" /></label>
+                            <label>Courriel (facultatif) <input type="email" email name="pEmail" [(ngModel)]="parentForm.email" /></label>
+                            <label>Téléphone <input name="pPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="parentForm.phone" /></label>
                           </div>
                           <div class="class-roster__edit-actions">
                             <button type="submit" [disabled]="saving()">Enregistrer</button>
@@ -224,7 +228,7 @@
                             <label>Prénom<input name="firstName" [(ngModel)]="newParentForm.firstName" required maxlength="100" /></label>
                             <label>Nom<input name="lastName" [(ngModel)]="newParentForm.lastName" required maxlength="100" /></label>
                             <label>Courriel (facultatif)<input name="email" type="email" email [(ngModel)]="newParentForm.email" maxlength="150" /></label>
-                            <label>Téléphone<input name="phone" [(ngModel)]="newParentForm.phone" maxlength="30" /></label>
+                            <label>Téléphone<input name="phone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="newParentForm.phone" maxlength="30" /></label>
                             <label>Lien avec {{ learner().definite }}<input name="relationship" [(ngModel)]="newParentForm.relationship" maxlength="50" placeholder="Père, mère, tuteur…" /></label>
                           </div>
                           <div class="class-roster__edit-actions">

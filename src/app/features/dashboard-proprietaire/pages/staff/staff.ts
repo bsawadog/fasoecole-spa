@@ -39,6 +39,8 @@ export class StaffPage implements OnInit {
     { title: 'Comptable', modules: ['DASHBOARD', 'FINANCE', 'EXPENSES'] },
     { title: 'Secrétaire', modules: ['STUDENTS', 'FINANCE', 'ENROLLMENT'] },
     { title: 'Surveillant général', modules: ['STUDENTS'] },
+    { title: 'Gardien', modules: [] },
+    { title: 'Agent d’entretien', modules: [] },
   ];
 
   readonly schools = signal<RegistrationSchool[]>([]);
@@ -49,8 +51,6 @@ export class StaffPage implements OnInit {
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
   readonly formOpen = signal(false);
-  /** Identifiants à transmettre après création ou réinitialisation (affichés une seule fois). */
-  readonly credentials = signal<{ name: string; email: string; password: string; emailSent: boolean } | null>(null);
 
   editing: StaffMember | null = null;
   form = this.emptyForm();
@@ -143,10 +143,7 @@ export class StaffPage implements OnInit {
       this.error.set('Saisissez une adresse e-mail valide : elle servira d’identifiant de connexion.');
       return;
     }
-    if (!f.modules.size) {
-      this.error.set('Cochez au moins un module.');
-      return;
-    }
+
     const payload: StaffPayload = {
       firstName: f.firstName.trim(),
       lastName: f.lastName.trim(),
@@ -171,14 +168,9 @@ export class StaffPage implements OnInit {
       next: (created) => {
         this.staff.update((list) => [created.staff, ...list]);
         const name = `${created.staff.firstName} ${created.staff.lastName}`;
-        if (created.temporaryPassword) {
-          this.credentials.set({ name, email: created.staff.email, password: created.temporaryPassword,
-            emailSent: created.emailSent });
-          this.done(`Compte créé pour ${name}.`);
-        } else {
-          this.done(`${name} possède déjà un compte FasoÉcole : l’accès à l’établissement lui a été ajouté`
-            + (created.emailSent ? ' et un e-mail l’en informe.' : '.'));
-        }
+        this.done(`${created.existingAccount ? 'Accès ajouté' : 'Compte créé'} pour ${name}. `
+          + (created.emailSent ? 'Le titulaire a reçu un courriel avec les instructions.'
+            : 'L’envoi du courriel a échoué : utilisez Envoyer un lien pour réessayer.'));
       },
       error: (err) => this.fail(err, 'Impossible de créer ce membre du personnel.'),
     });
@@ -208,20 +200,18 @@ export class StaffPage implements OnInit {
 
   async resetPassword(member: StaffMember): Promise<void> {
     const ok = await this.confirmation.confirm({
-      title: 'Nouveau mot de passe',
-      message: `Un nouveau mot de passe provisoire sera généré pour ${member.firstName} ${member.lastName}. L’ancien ne fonctionnera plus.`,
-      confirmLabel: 'Générer',
+      title: 'Envoyer un lien au titulaire',
+      message: `Un lien sera envoyé à ${member.firstName} ${member.lastName} pour choisir son mot de passe.`,
+      confirmLabel: 'Envoyer',
     });
     if (!ok) return;
     this.busy.set(true);
     this.clearMessages();
     this.api.resetPassword(member.id).subscribe({
       next: (reset) => {
-        this.credentials.set({ name: `${member.firstName} ${member.lastName}`, email: member.email,
-          password: reset.temporaryPassword, emailSent: reset.emailSent });
-        this.done('Nouveau mot de passe généré.');
+        this.done(reset.emailSent ? 'Lien envoyé au titulaire du compte.' : 'L’envoi du courriel a échoué. Réessayez ultérieurement.');
       },
-      error: (err) => this.fail(err, 'Impossible de générer un nouveau mot de passe.'),
+      error: (err) => this.fail(err, 'Impossible d’envoyer le lien.'),
     });
   }
 
@@ -244,21 +234,10 @@ export class StaffPage implements OnInit {
     });
   }
 
-  copyCredentials(): void {
-    const c = this.credentials();
-    if (!c) return;
-    const text = `Identifiant : ${c.email}\nMot de passe provisoire : ${c.password}`;
-    navigator.clipboard?.writeText(text).then(
-      () => this.success.set('Identifiants copiés.'),
-      () => this.error.set('Copie impossible : notez les identifiants manuellement.')
-    );
-  }
-
   private selectSchool(id: number): void {
     this.schoolId.set(id);
     this.auth.selectSchoolContext(id);
     this.closeForm();
-    this.credentials.set(null);
     this.loading.set(true);
     this.api.list(id).subscribe({
       next: (list) => {

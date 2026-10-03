@@ -58,6 +58,7 @@ export interface YearInfo {
   startDate: string;
   endDate: string;
   current: boolean;
+  closed?: boolean;
   classCount: number;
   activeStudents: number;
   completedStudents: number;
@@ -100,7 +101,7 @@ export interface StudentPlan {
   registrationNumber: string;
   annualAverage: number | null;
   passMark: number;
-  suggestedDecision: EnrollmentDecision;
+  suggestedDecision: EnrollmentDecision | null;
   suggestedClassId: number | null;
   decided: boolean;
   decision: EnrollmentDecision | null;
@@ -114,6 +115,7 @@ export interface ClassPlan {
   levelId: number;
   levelName: string;
   lastLevel: boolean;
+  nextLevelId?: number | null;
   students: StudentPlan[];
 }
 
@@ -171,6 +173,10 @@ export class EnrollmentService {
   apply(schoolId: number, fromYearId: number, toYearId: number, decisions: DecisionItem[]): Observable<PromotionResult> {
     return this.http.post<PromotionResult>(`${this.base}/schools/${schoolId}/promotion`,
       { fromYearId, toYearId, decisions });
+  }
+
+  close(schoolId: number, fromYearId: number, toYearId: number, cashBalance: number, bankBalance: number): Observable<{ debtsCarried: number }> {
+    return this.http.post<{ debtsCarried: number }>(`${this.base}/schools/${schoolId}/close`, { fromYearId, toYearId, cashBalance, bankBalance });
   }
 
   undo(enrollmentId: number): Observable<void> {

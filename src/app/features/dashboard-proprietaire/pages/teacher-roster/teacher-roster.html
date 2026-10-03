@@ -61,9 +61,10 @@
         <div class="teacher-roster__edit-grid">
           <label>Prénom<input name="firstName" [(ngModel)]="newTeacher.firstName" required maxlength="100"></label>
           <label>Nom<input name="lastName" [(ngModel)]="newTeacher.lastName" required maxlength="100"></label>
-          <label>Courriel<input name="email" type="email" [(ngModel)]="newTeacher.email" required maxlength="150"></label>
-          <label>Mot de passe initial<input name="password" type="password" [(ngModel)]="newTeacher.password" required minlength="8" placeholder="8 caractères min."></label>
-          <label>Téléphone<input name="phone" [(ngModel)]="newTeacher.phone" maxlength="30"></label>
+          <label>Courriel<input name="email" type="email" email [(ngModel)]="newTeacher.email" required maxlength="150"></label>
+          <p>Un lien d’activation sera envoyé par courriel pour choisir le mot de passe.</p>
+          <label>Téléphone<input name="phone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="newTeacher.phone" maxlength="30"></label>
+          <label>Numéro d’employé<input type="text" name="employeeNumber" [(ngModel)]="newTeacher.employeeNumber" maxlength="50" placeholder="Attribué automatiquement si vide"></label>
           <label>Spécialité<input name="specialty" [(ngModel)]="newTeacher.specialty" maxlength="150"></label>
           <label>Date d’embauche<input name="hireDate" type="date" [(ngModel)]="newTeacher.hireDate"></label>
           <label>Matière enseignée
@@ -150,11 +151,16 @@
               <div class="teacher-roster__person">
                 <span class="teacher-roster__avatar" aria-hidden="true">{{ teacher.firstName.charAt(0) }}{{ teacher.lastName.charAt(0) }}</span>
                 <div><strong>{{ teacher.firstName }} {{ teacher.lastName }}</strong>
-                  <div class="teacher-roster__muted">{{ teacher.specialty || 'Spécialité non renseignée' }}</div></div>
+                  <div class="teacher-roster__muted">{{ teacher.specialty || 'Spécialité non renseignée' }} · {{ teacher.employeeNumber || 'Numéro à attribuer' }}</div></div>
               </div>
             </td>
             <td>{{ teacher.subjects.join(', ') || empty }}</td>
-            <td>{{ teacher.email }}<div class="teacher-roster__muted">{{ teacher.phone || '—' }}</div></td>
+            <td>{{ teacher.email }}<div class="teacher-roster__muted">{{ teacher.phone || '—' }}</div>
+              @if (teacher.emailVerified === false && teacher.userId) {
+                <small>{{ teacher.invitationDeliveryStatus === 'FAILED' ? 'Envoi échoué' : 'Compte à activer' }}</small>
+                <button type="button" [disabled]="saving()" (click)="resendInvitation(teacher.userId)">Renvoyer le lien</button>
+              }
+            </td>
             @if (classMode) {
               <td>
                 @if (teacher.activeInClass === false) {

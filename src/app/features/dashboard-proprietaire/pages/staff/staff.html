@@ -3,7 +3,7 @@
     <div class="stf__identity">
       <span class="stf__header-icon" aria-hidden="true">🔑</span>
       <div>
-        <h1>Personnel &amp; accès</h1>
+        <h1>Personnel et accès</h1>
         <p>Ouvrez des comptes à votre équipe (directeur, comptable, secrétaire…) et choisissez les modules auxquels chacun a accès.</p>
       </div>
     </div>
@@ -18,23 +18,6 @@
 
   @if (error()) { <div class="stf__alert stf__alert--error" role="alert">{{ error() }}</div> }
   @if (success()) { <div class="stf__alert stf__alert--success" role="status">{{ success() }}</div> }
-
-  @if (credentials(); as c) {
-    <div class="stf__credentials" role="status">
-      <div>
-        <strong>Identifiants de {{ c.name }}</strong>
-        <p>Identifiant : <code>{{ c.email }}</code> · Mot de passe provisoire : <code>{{ c.password }}</code></p>
-        <small>
-          @if (c.emailSent) { Ils ont aussi été envoyés par e-mail. } @else { L’e-mail n’a pas pu être envoyé : transmettez-les vous-même. }
-          Ce mot de passe ne sera plus affiché.
-        </small>
-      </div>
-      <div class="stf__actions">
-        <button type="button" class="stf__btn stf__btn--ghost" (click)="copyCredentials()">Copier</button>
-        <button type="button" class="stf__btn" (click)="credentials.set(null)">J’ai noté</button>
-      </div>
-    </div>
-  }
 
   @if (loading()) {
     <p class="stf__state">Chargement…</p>
@@ -67,10 +50,10 @@
               <input name="lastName" [(ngModel)]="form.lastName" [disabled]="!!editing && !editing.managedAccount" required />
             </label>
             <label>E-mail (identifiant)
-              <input name="email" type="email" [(ngModel)]="form.email" [disabled]="!!editing" required />
+              <input name="email" type="email" email [(ngModel)]="form.email" [disabled]="!!editing" required />
             </label>
             <label>Téléphone
-              <input name="phone" [(ngModel)]="form.phone" [disabled]="!!editing && !editing.managedAccount" />
+              <input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="form.phone" [disabled]="!!editing && !editing.managedAccount" />
             </label>
             <label>Fonction
               <input name="jobTitle" [(ngModel)]="form.jobTitle" list="stf-titles" maxlength="80" required />
@@ -83,7 +66,7 @@
             <p class="stf__muted">Ce compte est aussi utilisé ailleurs sur la plateforme : seuls la fonction et les accès sont modifiables ici.</p>
           }
           <fieldset class="stf__modules">
-            <legend>Modules autorisés</legend>
+            <legend>Modules autorisés (aucun pour un employé sans accès à la gestion)</legend>
             @for (m of modules; track m.code) {
               <label class="stf__module" [class.stf__module--on]="form.modules.has(m.code)">
                 <input type="checkbox" [checked]="form.modules.has(m.code)"
@@ -114,6 +97,9 @@
                   <td>
                     <strong>{{ s.lastName }} {{ s.firstName }}</strong>
                     <div class="stf__muted">{{ s.email }}@if (s.phone) { · {{ s.phone }} }</div>
+                    @if (s.emailVerified === false) {
+                      <small>{{ s.invitationDeliveryStatus === 'FAILED' ? 'Envoi du lien échoué' : 'Courriel à confirmer' }}</small>
+                    }
                   </td>
                   <td>{{ s.jobTitle }}</td>
                   <td>
@@ -131,7 +117,7 @@
                         {{ s.active ? 'Suspendre' : 'Réactiver' }}
                       </button>
                       @if (s.managedAccount) {
-                        <button type="button" class="stf__mini" (click)="resetPassword(s)" [disabled]="busy()">Nouveau mot de passe</button>
+                        <button type="button" class="stf__mini" (click)="resetPassword(s)" [disabled]="busy()">Envoyer un lien</button>
                       }
                       <button type="button" class="stf__mini stf__mini--danger" (click)="remove(s)" [disabled]="busy()">Retirer</button>
                     </div>

@@ -14,6 +14,8 @@ export function roleGuard(allowedRoles: Role[]): CanActivateFn {
     const role = auth.role();
 
     if (role && allowedRoles.includes(role)) {
+      const user = auth.user();
+      if (!user?.approved || user.emailVerified !== true) return router.parseUrl('/profil');
       return true;
     }
 
@@ -29,5 +31,6 @@ export const roleHomeRedirectGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const role = auth.isAuthenticated() ? auth.role() : null;
+  if (role && (!auth.user()?.approved || auth.user()?.emailVerified !== true)) return router.parseUrl('/profil');
   return router.parseUrl(role ? ROLE_HOME_ROUTE[role] : '/login');
 };

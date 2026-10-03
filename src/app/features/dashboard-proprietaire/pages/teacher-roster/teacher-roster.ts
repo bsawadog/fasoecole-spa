@@ -6,6 +6,7 @@ import { forkJoin, Subscription } from 'rxjs';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
 import { ClassRecord, LevelRecord, OwnerManagementService, SubjectRecord } from '../../owner-management.service';
 import { TeacherCard, TeacherWorkService } from '../../teacher-work.service';
+import { SchoolDataSyncService } from '../../../../shared/school-data-sync.service';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 
 @Component({
@@ -17,6 +18,8 @@ import { ConfirmationService } from '../../../../shared/confirmation/confirmatio
 })
 export class TeacherRoster implements OnInit, OnDestroy {
   readonly scopeSchoolId = input<number | null>(null);
+  private readonly sync = inject(SchoolDataSyncService);
+  private syncSubscription?: Subscription;
   private readonly auth = inject(AuthService);
   private readonly management = inject(OwnerManagementService);
   private readonly teacherWork = inject(TeacherWorkService);
@@ -45,8 +48,8 @@ export class TeacherRoster implements OnInit, OnDestroy {
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
 
-  newTeacher = { firstName: '', lastName: '', email: '', password: '', phone: '',
-    specialty: '', hireDate: '', subjectId: 0 };
+  newTeacher = { firstName: '', lastName: '', email: '', phone: '',
+    employeeNumber: '', specialty: '', hireDate: '', subjectId: 0 };
   assignment = { teacherId: 0, subjectId: 0 };
 
   ngOnInit(): void {
@@ -75,6 +78,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.syncSubscription?.unsubscribe();
     this.schoolRequest?.unsubscribe();
     this.classRequest?.unsubscribe();
     this.candidatesRequest?.unsubscribe();
@@ -99,8 +103,8 @@ export class TeacherRoster implements OnInit, OnDestroy {
   openAddTeacher(): void {
     this.assigningTeacher.set(false);
     this.addingTeacher.set(true);
-    this.newTeacher = { firstName: '', lastName: '', email: '', password: '', phone: '',
-      specialty: '', hireDate: '', subjectId: this.subjects()[0]?.id ?? 0 };
+    this.newTeacher = { firstName: '', lastName: '', email: '', phone: '',
+      employeeNumber: '', specialty: '', hireDate: '', subjectId: this.subjects()[0]?.id ?? 0 };
     this.error.set(null);
   }
 
@@ -179,26 +183,36 @@ export class TeacherRoster implements OnInit, OnDestroy {
   }
 
   saveTeacher(): void {
+    if (this.saving()) return;
     const classId = this.selectedClassId();
     const form = this.newTeacher;
     if (!classId || !form.firstName.trim() || !form.lastName.trim() ||
-        !form.email.trim() || form.password.length < 8 ||
+        !form.email.trim() ||
         !this.subjects().some(subject => subject.id === form.subjectId)) {
-      this.error.set('Renseignez le prénom, le nom, un courriel, un mot de passe d’au moins 8 caractères et une matière.');
+      this.error.set('Renseignez le prénom, le nom, un courriel et une matière.');
       return;
     }
     this.saving.set(true);
     this.error.set(null);
     this.teacherWork.createTeacher(classId, {
       firstName: form.firstName.trim(), lastName: form.lastName.trim(),
-      email: form.email.trim(), password: form.password,
+      email: form.email.trim(),
+      employeeNumber: form.employeeNumber.trim() || null,
       phone: form.phone.trim() || null, specialty: form.specialty.trim() || null,
       hireDate: form.hireDate || null, subjectId: form.subjectId,
     }).subscribe({
-      next: () => {
+      next: teacher => {
         this.saving.set(false);
         this.cancelForms();
-        this.success.set('Enseignant créé et affecté à la classe.');
+        const identifier = teacher.employeeNumber ? ` Numéro d’employé : ${teacher.employeeNumber}.` : '';
+        const delivery = teacher.emailVerified === true
+          ? ' Le compte utilise son mot de passe existant.'
+          : teacher.invitationDeliveryStatus === 'SENT'
+            ? ' Invitation envoyée : l’enseignant choisira son mot de passe depuis le lien reçu.'
+            : teacher.invitationDeliveryStatus === 'FAILED'
+              ? ' L’envoi de l’invitation a échoué. Utilisez « Renvoyer le lien » dans la liste.'
+              : ' Vérifiez l’état de l’invitation dans la liste et renvoyez le lien si nécessaire.';
+        this.success.set(`Enseignant créé et affecté à la classe.${identifier}${delivery}`);
         this.selectClass(classId);
         this.refreshAllTeachers();
       },
@@ -206,6 +220,24 @@ export class TeacherRoster implements OnInit, OnDestroy {
         this.saving.set(false);
         this.error.set(err?.error?.message ?? 'Impossible de créer et d’affecter cet enseignant.');
       },
+    });
+  }
+
+  resendInvitation(userId: number): void {
+    if (this.saving()) return;
+    this.saving.set(true);
+    this.error.set(null);
+    this.success.set(null);
+    this.auth.resendUserInvitation(userId).subscribe({
+      next: result => {
+        this.saving.set(false);
+        this.success.set(result.emailSent ? 'Lien envoyé au titulaire du compte.' : null);
+        this.error.set(result.emailSent ? null : 'L’envoi du courriel a échoué. Réessayez ultérieurement.');
+        this.refreshAllTeachers();
+        const classId = this.selectedClassId();
+        if (classId) this.selectClass(classId);
+      },
+      error: err => { this.saving.set(false); this.error.set(err?.error?.message ?? 'Impossible de renvoyer le lien.'); },
     });
   }
 
@@ -234,6 +266,14 @@ export class TeacherRoster implements OnInit, OnDestroy {
   }
 
   private selectSchool(schoolId: number): void {
+    this.syncSubscription?.unsubscribe();
+    this.syncSubscription = this.sync.watch(schoolId).subscribe(() => {
+      const id = this.selectedClassId();
+      if (this.loading() || !id) return;
+      this.classRequest?.unsubscribe();
+      this.classRequest = this.teacherWork.teachersByClass(id).subscribe({next: rows => this.teachers.set(rows)});
+      if (this.showAllTeachers()) this.refreshAllTeachers();
+    });
     this.schoolRequest?.unsubscribe();
     this.classRequest?.unsubscribe();
     this.candidatesRequest?.unsubscribe();

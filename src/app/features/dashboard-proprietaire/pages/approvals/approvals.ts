@@ -2,10 +2,12 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService, ApprovalRole, RegistrationSchool, SchoolAccessRequest, SchoolAccessService } from '../../../../core/auth';
 import { UserDto } from '../../../../core/models';
+import { OwnerManagementService, ClassRecord } from '../../owner-management.service';
 
 interface ApprovalSelection {
   schoolId: number;
   role: ApprovalRole;
+  classId?: number | null;
 }
 
 @Component({
@@ -17,6 +19,11 @@ interface ApprovalSelection {
 export class Approvals implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly schoolAccess = inject(SchoolAccessService);
+  private readonly management = inject(OwnerManagementService);
+  readonly classesBySchool = signal<Record<number, ClassRecord[]>>({});
+  readonly yearLabels = signal<Record<number, string>>({});
+  readonly accessClasses = signal<Record<number, number | null>>({});
+  readonly resendingId = signal<number | null>(null);
 
   readonly pending = signal<UserDto[]>([]);
   readonly accessRequests = signal<SchoolAccessRequest[]>([]);
@@ -41,6 +48,16 @@ export class Approvals implements OnInit {
     this.auth.getOwnedSchools(ownerId).subscribe({
       next: (schools) => {
         this.schools.set(schools);
+        for (const school of schools) {
+          this.management.getAcademicYears(school.id).subscribe({
+            next: years => this.yearLabels.update(current => ({ ...current, ...Object.fromEntries(years.map(year => [year.id, year.label])) })),
+            error: () => this.errorMessage.set('Impossible de charger les années scolaires pour les approbations.'),
+          });
+          this.management.getClasses(school.id).subscribe({
+            next: classes => this.classesBySchool.update(current => ({ ...current, [school.id]: classes })),
+            error: () => this.errorMessage.set('Impossible de charger les classes pour les approbations.'),
+          });
+        }
         this.loadRequests(schools);
       },
       error: () => {
@@ -61,7 +78,7 @@ export class Approvals implements OnInit {
     this.decidingAccessId.set(request.id);
     this.errorMessage.set(null);
     this.successMessage.set(null);
-    const decision = approve ? this.schoolAccess.approve(request.id) : this.schoolAccess.reject(request.id);
+    const decision = approve ? this.schoolAccess.approve(request.id, this.accessClasses()[request.id]) : this.schoolAccess.reject(request.id);
     decision.subscribe({
       next: () => {
         this.accessRequests.update((list) => list.filter((r) => r.id !== request.id));
@@ -111,12 +128,33 @@ export class Approvals implements OnInit {
 
   changeSchool(userId: number, event: Event): void {
     const schoolId = Number((event.target as HTMLSelectElement).value);
-    this.updateSelection(userId, { schoolId });
+    this.updateSelection(userId, { schoolId, classId: null });
   }
 
   changeRole(userId: number, event: Event): void {
     const role = (event.target as HTMLSelectElement).value as ApprovalRole;
-    this.updateSelection(userId, { role });
+    this.updateSelection(userId, { role, classId: null });
+  }
+
+  changeClass(userId: number, event: Event): void {
+    this.updateSelection(userId, { classId: Number((event.target as HTMLSelectElement).value) || null });
+  }
+
+  changeAccessClass(requestId: number, event: Event): void {
+    this.accessClasses.update(current => ({ ...current, [requestId]: Number((event.target as HTMLSelectElement).value) || null }));
+  }
+
+  resend(user: UserDto): void {
+    if (this.resendingId() !== null) return;
+    this.resendingId.set(user.id);
+    this.auth.resendUserInvitation(user.id).subscribe({
+      next: result => {
+        this.resendingId.set(null);
+        this.successMessage.set(result.emailSent ? 'Lien envoyé au titulaire du compte.' : null);
+        this.errorMessage.set(result.emailSent ? null : 'Le courriel n’a pas pu être envoyé. Réessayez ultérieurement.');
+      },
+      error: () => { this.resendingId.set(null); this.errorMessage.set('Impossible de renvoyer le lien.'); },
+    });
   }
 
   requestedRoleLabel(role: string | null): string {
@@ -133,19 +171,23 @@ export class Approvals implements OnInit {
     if (!selection || !selection.schoolId || this.savingUserId() !== null) {
       return;
     }
+    if (user.emailVerified !== true) {
+      this.errorMessage.set('Le titulaire doit d’abord confirmer son courriel.');
+      return;
+    }
 
     this.savingUserId.set(user.id);
     this.errorMessage.set(null);
     this.successMessage.set(null);
-    this.auth.approvePendingUser(user.id, selection.schoolId, selection.role).subscribe({
+    this.auth.approvePendingUser(user.id, selection.schoolId, selection.role, selection.classId).subscribe({
       next: () => {
         this.pending.update((requests) => requests.filter((request) => request.id !== user.id));
         this.savingUserId.set(null);
         this.successMessage.set(`Le compte de ${user.firstName} ${user.lastName} est maintenant activé.`);
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.savingUserId.set(null);
-        this.errorMessage.set('La validation a échoué. Vérifiez vos droits et réessayez.');
+        this.errorMessage.set(err.error?.message ?? 'La validation a échoué. Vérifiez vos droits et réessayez.');
       },
     });
   }

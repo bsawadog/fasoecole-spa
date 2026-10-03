@@ -36,6 +36,7 @@
 
   <main class="shell__content">
     <header class="shell__topbar">
+      <app-academic-context />
       <a routerLink="/profil" class="shell__profile-link" routerLinkActive="shell__profile-link--active"
          title="Voir mon profil">
         <span class="shell__avatar" aria-hidden="true">{{ initials() }}</span>
@@ -70,6 +71,11 @@
       </section>
     }
     @if (user(); as currentUser) {
+      @if (currentUser.emailVerified !== true) {
+        <section class="shell__status" role="status">
+          <div><strong>Courriel à confirmer</strong><p>Ouvrez le lien reçu par courriel ou renvoyez-le depuis Mon profil.</p></div>
+        </section>
+      }
       @if (!currentUser.approved) {
         <section class="shell__status" role="status">
           <svg lucideClock3 [size]="22" aria-hidden="true"></svg>

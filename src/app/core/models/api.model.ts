@@ -21,6 +21,13 @@ export interface UserDto {
   active: boolean;
   approved: boolean;
   emailVerified?: boolean;
+  passwordSet?: boolean;
+  invitationDeliveryStatus?: string | null;
+  onboardingSteps?: string[];
+  schoolIdentifier?: string | null;
+  identifierReview?: string | null;
+  childRegistrationNumbers?: string[];
+  childReview?: string[];
   requestedSchoolId: number | null;
   requestedSchoolName: string | null;
   requestedSchoolType: string | null;

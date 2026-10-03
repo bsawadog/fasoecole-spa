@@ -8,7 +8,7 @@ import { ProfilePage } from './profile';
 describe('ProfilePage', () => {
   const baseUser = {
     id: 4, firstName: 'Awa', lastName: 'Diallo', email: 'awa@ecole.bf', phone: '70000000',
-    role: 'enseignant' as const, approved: true, requestedSchoolId: null,
+    role: 'enseignant' as const, approved: true, emailVerified: true, requestedSchoolId: null,
     requestedSchoolName: null, requestedSchoolType: null, requestedRole: null, rawRoles: ['TEACHER'],
   };
 
@@ -17,7 +17,8 @@ describe('ProfilePage', () => {
       user: () => user,
       updateProfile: vi.fn(() => of({ ...baseUser, firstName: 'Aminata' })),
       changePassword: vi.fn(() => of(undefined)),
-      resendEmailVerification: vi.fn(() => of(undefined)),
+      resendEmailVerification: vi.fn(() => of({ emailSent: true })),
+      logout: vi.fn(),
       getRegistrationSchools: vi.fn(() => of([{ id: 2, name: 'École B', type: 'PRIMAIRE' }])),
     };
     const access = {
@@ -58,7 +59,7 @@ describe('ProfilePage', () => {
     page.form.firstName = ' Aminata ';
     submit(fixture, 0);
     expect(auth.updateProfile).toHaveBeenCalledWith({
-      firstName: 'Aminata', lastName: 'Diallo', phone: '70000000',
+      firstName: 'Aminata', lastName: 'Diallo', phone: '70000000', childRegistrationNumbers: undefined, schoolIdentifier: undefined,
     });
     expect(page.success()).toBe(true);
     expect(page.form.firstName).toBe('Aminata');
@@ -85,6 +86,7 @@ describe('ProfilePage', () => {
     expect(auth.changePassword).toHaveBeenCalledWith('ancienMdp1', 'NouveauMdp1');
     expect(page.passwordSuccess()).toBe(true);
     expect(page.passwordForm.currentPassword).toBe('');
+    expect(auth.logout).toHaveBeenCalled();
   });
 
   it('shows the server message when the current password is wrong', () => {
@@ -106,11 +108,33 @@ describe('ProfilePage', () => {
     expect(access.mine).toHaveBeenCalled();
 
     page.accessForm.schoolId = 2;
+    page.accessSchoolIdentifier = 'EMP-01';
     page.requestAccess();
     fixture.detectChanges();
-    expect(access.request).toHaveBeenCalledWith(2, 'TEACHER');
+    expect(access.request).toHaveBeenCalledWith(2, 'TEACHER', undefined, 'EMP-01');
     expect(page.requests()[0].schoolName).toBe('École B');
     expect(fixture.nativeElement.textContent).toContain('En attente');
+  });
+
+  it('requires school-specific child matricules and submits them for parent approval', () => {
+    const { fixture, access } = setup({ ...baseUser, role: 'parent', rawRoles: ['PARENT'] });
+    const page = fixture.componentInstance;
+    page.accessForm.schoolId = 2;
+    page.requestAccess();
+    expect(access.request).not.toHaveBeenCalled();
+    expect(page.accessError()).toContain('matricule');
+    page.accessChildMatricules = ' 001, 002;001 ';
+    page.requestAccess();
+    expect(access.request).toHaveBeenCalledWith(2, 'PARENT', ['001', '002'], undefined);
+    expect(page.accessChildMatricules).toBe('');
+  });
+
+  it('allows a pending parent to correct child matricules on their own profile', () => {
+    const { fixture, auth } = setup({ ...baseUser, approved: false, requestedRole: 'PARENT', childRegistrationNumbers: ['001'] });
+    const page = fixture.componentInstance;
+    page.initialChildMatricules = '002, 003';
+    page.save({ invalid: false } as any);
+    expect(auth.updateProfile).toHaveBeenCalledWith(expect.objectContaining({ childRegistrationNumbers: ['002', '003'] }));
   });
 
   it('hides school access requests for owners and pending accounts', () => {
@@ -136,5 +160,22 @@ describe('ProfilePage', () => {
     fixture.detectChanges();
     expect(auth.resendEmailVerification).toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('vient d’être envoyé');
+  });
+
+  it('does not claim a verification mail was sent when SMTP delivery failed', () => {
+    const { fixture, auth } = setup({ ...baseUser, emailVerified: false });
+    auth.resendEmailVerification.mockImplementation(() => of({ emailSent: false }));
+    fixture.componentInstance.resendVerification();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('n’a pas pu être envoyé');
+    expect(fixture.nativeElement.textContent).not.toContain('vient d’être envoyé');
+  });
+
+  it('shows onboarding steps and blocks school requests while email is unverified', () => {
+    const { fixture, access } = setup({ ...baseUser, emailVerified: false,
+      onboardingSteps: ['EMAIL_VERIFICATION_REQUIRED', 'CHILD_LINK_REQUIRED'] });
+    expect(fixture.nativeElement.textContent).toContain('Courriel à confirmer');
+    expect(fixture.nativeElement.textContent).toContain('Enfant à rattacher');
+    expect(access.mine).not.toHaveBeenCalled();
   });
 });

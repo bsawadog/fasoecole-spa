@@ -4,11 +4,18 @@
     <p>Consultez et modifiez vos informations personnelles et la sécurité de votre compte.</p>
   </header>
 
+  @if (user()?.onboardingSteps?.length) {
+    <section class="profile__card" aria-label="État de votre compte">
+      <h2>État de votre compte</h2>
+      <ul>@for (step of user()?.onboardingSteps ?? []; track step) { <li>{{ onboardingLabel(step) }}</li> }</ul>
+    </section>
+  }
+
   @if (emailUnverified()) {
     <section class="profile__verify" role="status" aria-live="polite">
       <div>
         <strong>Adresse courriel non vérifiée.</strong>
-        <span>Confirmez-la pour que l’accès automatique aux écoles de vos enfants soit activé.</span>
+        <span>Confirmez-la pour accéder aux modules de votre établissement.</span>
         @if (verificationMessage()) { <span>{{ verificationMessage() }}</span> }
       </div>
       <button type="button" class="profile__link-button" [disabled]="verificationSending()" (click)="resendVerification()">
@@ -36,6 +43,16 @@
       <label for="profile-phone">Téléphone</label>
       <input id="profile-phone" name="phone" type="tel" [(ngModel)]="form.phone" maxlength="30" />
 
+      @if (!user()?.approved && (user()?.requestedRole === 'STUDENT' || user()?.requestedRole === 'TEACHER')) {
+        <label for="profile-initial-identifier">{{ user()?.requestedRole === 'STUDENT' ? 'Matricule' : 'Numéro d’employé' }} dans {{ user()?.requestedSchoolName }}</label>
+        <input id="profile-initial-identifier" type="text" name="initialSchoolIdentifier" [(ngModel)]="initialSchoolIdentifier" maxlength="50" required />
+        <small>Vous pouvez corriger ce numéro pendant l’attente de l’approbation.</small>
+      }
+      @if (user()?.requestedRole === 'PARENT' && !user()?.approved) {
+        <label for="profile-initial-matricules">Matricules des enfants dans {{ user()?.requestedSchoolName }}</label>
+        <input id="profile-initial-matricules" type="text" name="initialChildMatricules" [(ngModel)]="initialChildMatricules" maxlength="1100" required />
+        <small>Vous pouvez corriger les matricules pendant l’attente de l’approbation.</small>
+      }
       <button type="submit" [disabled]="saving()">
         {{ saving() ? 'Enregistrement…' : 'Enregistrer les modifications' }}
       </button>
@@ -70,7 +87,7 @@
   </section>
 
   @if (canRequestSchools()) {
-    <section class="profile__card" aria-labelledby="profile-schools-title">
+    <section id="school-access" class="profile__card" aria-labelledby="profile-schools-title">
       <h2 id="profile-schools-title">Accès à d’autres établissements</h2>
       <p class="profile__muted">
         Demandez l’accès à un autre établissement. Le propriétaire de l’établissement validera votre demande.
@@ -97,6 +114,19 @@
             }
           </select>
         </div>
+        @if (accessForm.role !== 'PARENT') {
+          <div>
+            <label for="profile-access-identifier">{{ accessForm.role === 'STUDENT' ? 'Matricule' : 'Numéro d’employé' }} dans l’établissement demandé</label>
+            <input id="profile-access-identifier" type="text" name="accessSchoolIdentifier" [(ngModel)]="accessSchoolIdentifier" maxlength="50" required />
+          </div>
+        }
+        @if (accessForm.role === 'PARENT') {
+          <div>
+            <label for="profile-access-matricules">Matricules de vos enfants dans cet établissement</label>
+            <input id="profile-access-matricules" type="text" name="accessChildMatricules" [(ngModel)]="accessChildMatricules" maxlength="1100" required />
+            <small>Séparez les matricules par une virgule. L’établissement vérifiera et approuvera les associations.</small>
+          </div>
+        }
         <button type="submit" [disabled]="accessSaving()">
           {{ accessSaving() ? 'Envoi…' : 'Envoyer la demande' }}
         </button>
@@ -114,6 +144,8 @@
               <div>
                 <strong>{{ request.schoolName }}</strong>
                 <small>{{ roleLabels[request.requestedRole] }}</small>
+                @if (request.schoolIdentifier) { <small>Identifiant déclaré : {{ request.schoolIdentifier }}</small> }
+                @if (request.childRegistrationNumbers?.length) { <small>Matricules : {{ request.childRegistrationNumbers!.join(', ') }}</small> }
               </div>
               <span class="profile__status profile__status--{{ request.status.toLowerCase() }}">
                 {{ statusLabel(request.status) }}

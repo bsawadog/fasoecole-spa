@@ -12,6 +12,8 @@ import {
   SchoolAccessStatus,
 } from '../../core/auth';
 
+import { parseChildMatricules, childMatriculesError } from '../../core/auth/child-matricules';
+
 const REQUESTABLE_ROLES: ApprovalRole[] = ['TEACHER', 'PARENT', 'STUDENT'];
 
 export const ROLE_LABELS: Record<ApprovalRole, string> = {
@@ -62,7 +64,7 @@ export class ProfilePage implements OnInit {
   // Accès à d'autres établissements
   readonly canRequestSchools = computed(() => {
     const user = this.user();
-    return !!user?.approved && REQUESTABLE_ROLES.some((role) => user.rawRoles.includes(role));
+    return !!user?.approved && user.emailVerified === true && REQUESTABLE_ROLES.some((role) => user.rawRoles.includes(role));
   });
   readonly schools = signal<RegistrationSchool[]>([]);
   readonly requests = signal<SchoolAccessRequest[]>([]);
@@ -76,13 +78,25 @@ export class ProfilePage implements OnInit {
   readonly verificationSending = signal(false);
   readonly verificationMessage = signal<string | null>(null);
 
+  onboardingLabel(step: string): string {
+    const labels: Record<string, string> = {
+      ACCOUNT_INACTIVE: 'Compte désactivé', PASSWORD_REQUIRED: 'Mot de passe à choisir',
+      EMAIL_VERIFICATION_REQUIRED: 'Courriel à confirmer', APPROVAL_REQUIRED: 'Approbation de l’établissement en attente',
+      CHILD_LINK_REQUIRED: 'Enfant à rattacher par l’établissement', CLASS_ASSIGNMENT_REQUIRED: 'Classe à affecter par l’établissement',
+      TEACHING_ASSIGNMENT_REQUIRED: 'Classe et matière à affecter par l’établissement', READY: 'Compte prêt',
+    };
+    return labels[step] ?? step;
+  }
+
   resendVerification(): void {
     this.verificationSending.set(true);
     this.verificationMessage.set(null);
     this.auth.resendEmailVerification().subscribe({
-      next: () => {
+      next: (result) => {
         this.verificationSending.set(false);
-        this.verificationMessage.set('Un lien de vérification vient d’être envoyé à votre adresse courriel.');
+        this.verificationMessage.set(result.emailSent
+          ? 'Un lien de vérification vient d’être envoyé à votre adresse courriel.'
+          : 'Le courriel n’a pas pu être envoyé. Réessayez plus tard ou contactez l’établissement.');
       },
       error: () => {
         this.verificationSending.set(false);
@@ -96,6 +110,11 @@ export class ProfilePage implements OnInit {
     lastName: this.user()?.lastName ?? '',
     phone: this.user()?.phone ?? '',
   };
+
+  initialChildMatricules = (this.user()?.childRegistrationNumbers ?? []).join(', ');
+  accessChildMatricules = '';
+  accessSchoolIdentifier = '';
+  initialSchoolIdentifier = this.user()?.schoolIdentifier ?? '';
 
   passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
 
@@ -117,10 +136,22 @@ export class ProfilePage implements OnInit {
       this.success.set(false);
       return;
     }
+    const childRegistrationNumbers = this.user()?.requestedRole === 'PARENT' && !this.user()?.approved
+      ? parseChildMatricules(this.initialChildMatricules) : undefined;
+    if (childRegistrationNumbers) {
+      const error = childMatriculesError(childRegistrationNumbers);
+      if (error) { this.error.set(error); return; }
+    }
     this.error.set(null);
     this.success.set(false);
     this.saving.set(true);
+    const schoolIdentifier = !this.user()?.approved && ['TEACHER', 'STUDENT'].includes(this.user()?.requestedRole ?? '') ? this.initialSchoolIdentifier.trim() : undefined;
+    if (schoolIdentifier !== undefined && !schoolIdentifier) {
+      this.saving.set(false); this.error.set('Renseignez votre identifiant dans l’établissement.'); return;
+    }
     this.auth.updateProfile({
+      schoolIdentifier,
+      childRegistrationNumbers,
       firstName: this.form.firstName.trim(),
       lastName: this.form.lastName.trim(),
       phone: this.form.phone.trim(),
@@ -171,6 +202,7 @@ export class ProfilePage implements OnInit {
           this.passwordSuccess.set(true);
           this.passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
           passwordForm.resetForm(this.passwordForm);
+          this.auth.logout();
         },
         error: (err) => {
           this.passwordSaving.set(false);
@@ -187,15 +219,26 @@ export class ProfilePage implements OnInit {
       this.accessError.set('Choisissez un établissement.');
       return;
     }
+    const numbers = this.accessForm.role === 'PARENT' ? parseChildMatricules(this.accessChildMatricules) : undefined;
+    if (numbers) {
+      const error = childMatriculesError(numbers);
+      if (error) { this.accessError.set(error); return; }
+    }
     this.accessError.set(null);
     this.accessSaving.set(true);
-    this.schoolAccess.request(schoolId, this.accessForm.role)
+    const schoolIdentifier = this.accessForm.role === 'PARENT' ? undefined : this.accessSchoolIdentifier.trim();
+    if (schoolIdentifier !== undefined && !schoolIdentifier) {
+      this.accessSaving.set(false); this.accessError.set('Renseignez votre identifiant dans l’établissement.'); return;
+    }
+    this.schoolAccess.request(schoolId, this.accessForm.role, numbers, schoolIdentifier)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (created) => {
           this.accessSaving.set(false);
           this.requests.update((list) => [created, ...list]);
           this.accessForm = { schoolId: null, role: this.defaultRequestedRole() };
+          this.accessChildMatricules = '';
+          this.accessSchoolIdentifier = '';
           this.accessSuccess.set(
             `Votre demande pour ${created.schoolName} a été envoyée au propriétaire de l’établissement.`
           );

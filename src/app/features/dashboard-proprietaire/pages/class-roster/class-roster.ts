@@ -1,8 +1,9 @@
 import { Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { catchError, forkJoin, of, Subscription } from 'rxjs';
+import { catchError, EMPTY, forkJoin, of, Subscription, switchMap } from 'rxjs';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
+import { SchoolDataSyncService } from '../../../../shared/school-data-sync.service';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import {
   AcademicYearRecord,
@@ -35,7 +36,6 @@ interface NewStudentForm {
   firstName: string;
   lastName: string;
   email: string;
-  password: string;
   phone: string;
   registrationNumber: string;
   birthDate: string;
@@ -51,6 +51,8 @@ interface NewStudentForm {
 })
 export class ClassRoster implements OnInit, OnDestroy {
   readonly scopeSchoolId = input<number | null>(null);
+  private readonly sync = inject(SchoolDataSyncService);
+  private syncSubscription?: Subscription;
   private readonly auth = inject(AuthService);
   private readonly api = inject(OwnerManagementService);
   private readonly confirmation = inject(ConfirmationService);
@@ -121,6 +123,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.syncSubscription?.unsubscribe();
     this.request?.unsubscribe();
     this.classRequest?.unsubscribe();
   }
@@ -262,9 +265,8 @@ export class ClassRoster implements OnInit, OnDestroy {
   submitNewStudent(): void {
     const classId = this.selectedClassId();
     if (!classId || !this.newStudentForm.firstName.trim() || !this.newStudentForm.lastName.trim() ||
-      !this.newStudentForm.email.trim() || !this.newStudentForm.password.trim() ||
-      this.newStudentForm.password.trim().length < 8) {
-      this.errorMessage.set('Veuillez remplir tous les champs obligatoires (mot de passe : 8 caractères minimum).');
+      !this.newStudentForm.email.trim()) {
+      this.errorMessage.set('Veuillez remplir tous les champs obligatoires.');
       return;
     }
     this.saving.set(true);
@@ -272,7 +274,6 @@ export class ClassRoster implements OnInit, OnDestroy {
       firstName: this.newStudentForm.firstName.trim(),
       lastName: this.newStudentForm.lastName.trim(),
       email: this.newStudentForm.email.trim(),
-      password: this.newStudentForm.password.trim(),
       phone: this.newStudentForm.phone.trim() || null,
       registrationNumber: this.newStudentForm.registrationNumber.trim() || null,
       birthDate: this.newStudentForm.birthDate || null,
@@ -357,6 +358,23 @@ export class ClassRoster implements OnInit, OnDestroy {
     });
   }
 
+  resendInvitation(userId: number): void {
+    if (this.saving()) return;
+    this.saving.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    this.auth.resendUserInvitation(userId).subscribe({
+      next: result => {
+        this.saving.set(false);
+        this.rows.update(rows => rows.map(row => row.userId === userId
+          ? { ...row, invitationDeliveryStatus: result.emailSent ? 'SENT' : 'FAILED' } : row));
+        if (result.emailSent) this.successMessage.set('Lien envoyé au titulaire du compte.');
+        else this.errorMessage.set('L’envoi du courriel a échoué. Réessayez ultérieurement.');
+      },
+      error: err => this.fail(err?.error?.message ?? 'Impossible de renvoyer le lien.'),
+    });
+  }
+
   startAddParent(row: ClassRosterRow): void {
     if (this.saving() || row.parents.length) return;
     this.cancelEdit();
@@ -391,6 +409,11 @@ export class ClassRoster implements OnInit, OnDestroy {
   }
 
   private selectSchool(schoolId: number): void {
+    this.syncSubscription?.unsubscribe();
+    this.syncSubscription = this.sync.watch(schoolId).pipe(switchMap(() => {
+      const id = this.selectedClassId();
+      return id && !this.loading() ? this.api.getClassRoster(id).pipe(catchError(() => EMPTY)) : EMPTY;
+    })).subscribe(rows => this.rows.set(rows));
     this.request?.unsubscribe();
     this.selectedSchoolId.set(schoolId);
     this.auth.selectSchoolContext(schoolId);
@@ -450,7 +473,7 @@ export class ClassRoster implements OnInit, OnDestroy {
 
   private emptyNewStudentForm(): NewStudentForm {
     return {
-      firstName: '', lastName: '', email: '', password: '', phone: '',
+      firstName: '', lastName: '', email: '', phone: '',
       registrationNumber: '', birthDate: '', gender: '',
     };
   }

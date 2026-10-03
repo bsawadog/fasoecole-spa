@@ -4,6 +4,10 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface TeacherCard {
+  employeeNumber?: string;
+  userId?: number;
+  emailVerified?: boolean;
+  invitationDeliveryStatus?: string | null;
   id: number;
   schoolId: number;
   firstName: string;
@@ -90,8 +94,8 @@ export class TeacherWorkService {
   }
 
   createTeacher(classId: number, payload: {
-    firstName: string; lastName: string; email: string; password: string; phone: string | null;
-    specialty: string | null; hireDate: string | null; subjectId: number;
+    firstName: string; lastName: string; email: string; password?: string; phone: string | null;
+    employeeNumber?: string | null; specialty: string | null; hireDate: string | null; subjectId: number;
   }): Observable<TeacherCard> {
     return this.http.post<TeacherCard>(`${this.url}/classes/${classId}/teachers`, payload);
   }

@@ -5,6 +5,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LucideArrowLeft, LucideArrowRight, LucideEye, LucideEyeOff } from '@lucide/angular';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
 
+import { parseChildMatricules, childMatriculesError } from '../../../../core/auth/child-matricules';
+
 type AuthMode = 'login' | 'register' | 'forgot' | 'reset' | 'activate';
 
 function initialMode(params: { has(name: string): boolean }): AuthMode {
@@ -69,8 +71,10 @@ export class Login implements OnInit {
   readonly registerForm = this.fb.nonNullable.group({
     firstName: ['', [Validators.required, Validators.maxLength(100)]],
     lastName: ['', [Validators.required, Validators.maxLength(100)]],
-    email: ['', [Validators.required, Validators.email]],
-    phone: [''],
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
+    phone: ['', Validators.maxLength(30)],
+    childMatricules: ['', Validators.maxLength(1100)],
+    schoolIdentifier: ['', Validators.maxLength(50)],
     schoolId: [0, [Validators.required, Validators.min(1)]],
     requestedRole: ['TEACHER' as 'TEACHER' | 'PARENT' | 'STUDENT', Validators.required],
     password: ['', [Validators.required, Validators.minLength(8)]],
@@ -147,9 +151,21 @@ export class Login implements OnInit {
       return;
     }
 
+    const schoolIdentifier = requestedRole === 'PARENT' ? undefined : controls.schoolIdentifier.value.trim();
+    if (requestedRole !== 'PARENT' && !schoolIdentifier) {
+      this.errorMessage.set(requestedRole === 'STUDENT' ? 'Renseignez votre matricule.' : 'Renseignez votre numéro d’employé.');
+      controls.schoolIdentifier.markAsTouched(); return;
+    }
+    const childRegistrationNumbers = requestedRole === 'PARENT' ? parseChildMatricules(controls.childMatricules.value) : [];
+    if (requestedRole === 'PARENT') {
+      const error = childMatriculesError(childRegistrationNumbers);
+      if (error) { this.errorMessage.set(error); controls.childMatricules.markAsTouched(); return; }
+    }
     this.loading.set(true);
     this.errorMessage.set(null);
     this.auth.register({
+      schoolIdentifier,
+      childRegistrationNumbers,
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: email.trim().toLowerCase(),
@@ -188,7 +204,7 @@ export class Login implements OnInit {
     if (control.hasError('required')) return 'Ce champ est obligatoire.';
     if (control.hasError('email')) return 'Saisissez une adresse e-mail valide.';
     if (control.hasError('minlength')) return 'Le mot de passe doit contenir au moins 8 caractères.';
-    if (control.hasError('maxlength')) return 'Ce champ est limité à 100 caractères.';
+    if (control.hasError('maxlength')) return `Ce champ est limité à ${control.getError('maxlength').requiredLength} caractères.`;
     if (field === 'confirmPassword' && control.value !== this.registerForm.controls.password.value) {
       return 'Les deux mots de passe ne correspondent pas.';
     }

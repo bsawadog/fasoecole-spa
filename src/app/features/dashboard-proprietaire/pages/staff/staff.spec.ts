@@ -18,7 +18,7 @@ describe('StaffPage', () => {
       list: vi.fn(() => of([member])),
       create: vi.fn(() => of({
         staff: { ...member, id: 4, firstName: 'Ali', email: 'ali@ecole.bf', modules: ['STUDENTS'] },
-        temporaryPassword: 'Xy7kP2mQ9a', existingAccount: false, emailSent: false,
+        temporaryPassword: null, existingAccount: false, emailSent: false,
       })),
       update: vi.fn(),
       setActive: vi.fn(() => of({ ...member, active: false })),
@@ -32,7 +32,7 @@ describe('StaffPage', () => {
         { provide: ConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
         { provide: AuthService, useValue: {
           user: () => ({ id: 7 }),
-          getOwnedSchools: () => of([{ id: 5, name: 'École', type: 'SECONDAIRE' }]),
+          selectSchoolContext: vi.fn(), selectedSchoolType: () => 'PRIMAIRE', getOwnedSchools: () => of([{ id: 5, name: 'École', type: 'SECONDAIRE' }]),
         } },
         { provide: StaffService, useValue: api },
       ],
@@ -52,7 +52,7 @@ describe('StaffPage', () => {
     expect(text).toContain('Actif');
   });
 
-  it('requires a module, then shows the temporary password once the account is created', () => {
+  it('requires a module and reports a failed invitation without showing a password', () => {
     const { fixture, api } = setup();
     const page = fixture.componentInstance;
     page.openCreate();
@@ -70,7 +70,8 @@ describe('StaffPage', () => {
       email: 'ali@ecole.bf', jobTitle: 'Surveillant général', modules: ['STUDENTS'],
     }));
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Xy7kP2mQ9a');
+    expect(fixture.nativeElement.textContent).toContain('L’envoi du courriel a échoué');
+    expect(fixture.nativeElement.textContent).not.toContain('Mot de passe provisoire');
   });
 
   it('suspends a member after confirmation', async () => {

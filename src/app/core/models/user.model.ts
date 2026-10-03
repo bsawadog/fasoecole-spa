@@ -10,6 +10,13 @@ export interface User {
   approved: boolean;
   /** Faux tant que l'adresse courriel n'a pas été confirmée par lien. */
   emailVerified?: boolean;
+  passwordSet?: boolean;
+  invitationDeliveryStatus?: string | null;
+  onboardingSteps?: string[];
+  schoolIdentifier?: string | null;
+  identifierReview?: string | null;
+  childRegistrationNumbers?: string[];
+  childReview?: string[];
   requestedSchoolId: number | null;
   requestedSchoolName: string | null;
   requestedSchoolType: string | null;

@@ -2,6 +2,10 @@ import { Routes } from '@angular/router';
 import { ownerModuleGuard } from '../../core/auth';
 
 export const PROPRIETAIRE_ROUTES: Routes = [
+  { path: 'cloture', data: { closure: true }, canActivate: [ownerModuleGuard(null)],
+    loadComponent: () => import('./pages/enrollment/enrollment').then(m => m.EnrollmentPage) },
+  { path: 'employes', canActivate: [ownerModuleGuard(null)],
+    loadComponent: () => import('./pages/employees/employees').then(m => m.EmployeesPage) },
   {
     path: 'portail-parents',
     canActivate: [ownerModuleGuard('STUDENTS')],

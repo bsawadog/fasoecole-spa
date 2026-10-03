@@ -21,8 +21,9 @@ import {
 import { AuthService, OwnerModule } from '../../auth';
 import { OwnerFamilyMessagesService } from '../../../features/dashboard-proprietaire/family-messages.service';
 import { SelfSpaceService } from '../../../shared/self-space/self-space.service';
+import { AcademicContextPicker } from '../../../shared/academic-context';
 import { Role } from '../../models';
-import { catchError, EMPTY, exhaustMap, filter, timer } from 'rxjs';
+import { catchError, EMPTY, exhaustMap, filter, timer, take } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface NavigationItem {
@@ -38,6 +39,9 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
   admin: [
     { label: 'Accueil', icon: 'home', routerLink: '/admin' },
     { label: 'Créer une école', icon: 'building', routerLink: '/admin/creer-ecole' },
+    { label: 'Créer un employé', icon: 'users', routerLink: '/admin/employes' },
+    { label: 'Inscriptions', icon: 'calendar', routerLink: '/admin/inscriptions' },
+    { label: 'Clôturer année', icon: 'calendar', routerLink: '/admin/cloture' },
     { label: 'Élèves par classe', icon: 'graduation', routerLink: '/admin/classes' },
     { label: 'Enseignants par classe', icon: 'users', routerLink: '/admin/enseignants' },
     { label: 'Écoles', icon: 'building', routerLink: '/admin/ecoles' },
@@ -46,6 +50,9 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
   proprietaire: [
     { label: 'Accueil', icon: 'home', routerLink: '/proprietaire', module: 'DASHBOARD' },
     { label: 'Créer une école', icon: 'building', routerLink: '/proprietaire/creer-ecole', module: null },
+    { label: 'Créer un employé', icon: 'users', routerLink: '/proprietaire/employes', module: null },
+    { label: 'Inscriptions', icon: 'calendar', routerLink: '/proprietaire/inscriptions', module: 'ENROLLMENT' },
+    { label: 'Clôturer année', icon: 'calendar', routerLink: '/proprietaire/cloture', module: null },
     { label: 'Élèves par classe', icon: 'graduation', routerLink: '/proprietaire/classes', module: 'STUDENTS' },
     { label: 'Enseignants par classe', icon: 'users', routerLink: '/proprietaire/enseignants', module: 'TEACHERS' },
     { label: 'Demandes de compte', icon: 'users', routerLink: '/proprietaire/demandes', module: null },
@@ -55,7 +62,6 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Frais & paiements', icon: 'wallet', routerLink: '/proprietaire/frais', module: 'FINANCE' },
     { label: 'Dépenses & budget', icon: 'chart', routerLink: '/proprietaire/depenses', module: 'EXPENSES' },
     { label: 'Notes & bulletins', icon: 'notes', routerLink: '/proprietaire/notes', module: 'GRADES' },
-    { label: 'Inscriptions & passage', icon: 'calendar', routerLink: '/proprietaire/inscriptions', module: 'ENROLLMENT' },
     { label: 'Personnel & accès', icon: 'shield', routerLink: '/proprietaire/personnel', module: null },
   ],
   enseignant: [
@@ -97,6 +103,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
   standalone: true,
   imports: [
     RouterOutlet,
+    AcademicContextPicker,
     RouterLink,
     RouterLinkActive,
     LucideBookOpen,
@@ -134,7 +141,7 @@ export class AppShell implements OnInit {
   });
   private readonly accessibleNavigation = computed<NavigationItem[]>(() => {
     const role = this.auth.role();
-    if (!role) {
+    if (!role || this.user()?.approved !== true || this.user()?.emailVerified !== true) {
       return [];
     }
     if (role !== 'proprietaire') {
@@ -182,6 +189,7 @@ export class AppShell implements OnInit {
   ngOnInit(): void {
     if (this.auth.role() === 'parent' || this.auth.role() === 'enseignant' || this.auth.role() === 'etudiant') {
       timer(0, 20_000).pipe(
+        filter(() => this.user()?.approved === true && this.user()?.emailVerified === true),
         exhaustMap(() => this.selfSpace.unreadConversationCount().pipe(
           catchError(() => EMPTY),
         )),
@@ -191,7 +199,10 @@ export class AppShell implements OnInit {
     if (this.auth.role() === 'proprietaire' && this.auth.isSchoolOwner()) {
       const ownerId = this.user()?.id;
       if (ownerId) {
-        this.auth.getOwnedSchools(ownerId, 'DASHBOARD').pipe(
+        timer(0, 20_000).pipe(
+          filter(() => this.user()?.approved === true && this.user()?.emailVerified === true),
+          take(1),
+          exhaustMap(() => this.auth.getOwnedSchools(ownerId, 'DASHBOARD')),
           catchError(() => EMPTY),
           takeUntilDestroyed(this.destroyRef),
         ).subscribe((schools) => {
@@ -200,13 +211,16 @@ export class AppShell implements OnInit {
       }
     }
     if (this.auth.role() === 'proprietaire' && !this.auth.isSchoolOwner()) {
-      this.auth.loadOwnerAccess().pipe(catchError(() => EMPTY), takeUntilDestroyed(this.destroyRef)).subscribe((access) => {
+      timer(0, 20_000).pipe(
+        filter(() => this.user()?.approved === true && this.user()?.emailVerified === true), take(1),
+        exhaustMap(() => this.auth.loadOwnerAccess()), catchError(() => EMPTY), takeUntilDestroyed(this.destroyRef),
+      ).subscribe((access) => {
         this.watchSchoolUnread(access.filter((school) => school.modules.includes('STUDENTS')).map((school) => school.schoolId));
       });
     }
     timer(0, 20_000)
       .pipe(
-        filter(() => this.user()?.approved !== true),
+        filter(() => this.user()?.approved !== true || this.user()?.emailVerified !== true),
         exhaustMap(() =>
           this.auth.refreshCurrentUser().pipe(
             catchError(() => {

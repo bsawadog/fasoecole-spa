@@ -177,9 +177,24 @@
                 @if (registrationFieldError('requestedRole'); as error) { <small class="auth-card__field-error" id="register-role-error">{{ error }}</small> }
                 <small>Le profil pourra être confirmé ou ajusté par le propriétaire.</small>
               </div>
+              @if (registerForm.controls.requestedRole.value !== 'PARENT') {
+                <div class="auth-card__field">
+                  <label for="register-identifier">{{ registerForm.controls.requestedRole.value === 'STUDENT' ? 'Matricule élève / étudiant' : 'Numéro d’employé' }}</label>
+                  <input id="register-identifier" type="text" formControlName="schoolIdentifier" maxlength="50" required />
+                  <small>Indiquez le numéro attribué par cet établissement. Si vous n’en avez pas, contactez l’administration pour une invitation.</small>
+                </div>
+              }
+              @if (registerForm.controls.requestedRole.value === 'PARENT') {
+                <div class="auth-card__field">
+                  <label for="register-child-matricules">Matricules de vos enfants dans cet établissement</label>
+                  <input id="register-child-matricules" type="text" formControlName="childMatricules" maxlength="1100" aria-describedby="register-child-hint" />
+                  <small id="register-child-hint">Séparez les matricules par une virgule. L’établissement vérifiera votre lien avec les enfants avant de vous donner accès à leurs informations.</small>
+                </div>
+              }
               <div class="auth-card__field">
                 <label for="register-phone">Téléphone <span>(facultatif)</span></label>
-                <input id="register-phone" type="tel" formControlName="phone" autocomplete="tel" />
+                <input id="register-phone" type="tel" inputmode="tel" formControlName="phone" autocomplete="tel" maxlength="30" [attr.aria-invalid]="!!registrationFieldError('phone')" aria-describedby="register-phone-error" />
+                @if (registrationFieldError('phone'); as error) { <small class="auth-card__field-error" id="register-phone-error">{{ error }}</small> }
               </div>
               <div class="auth-card__field-row">
                 <div class="auth-card__field">

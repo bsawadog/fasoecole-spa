@@ -61,8 +61,8 @@
               </select>
             </label>
             <label class="owner-management__wide">Adresse<input name="schoolAddress" [(ngModel)]="schoolForm.address" maxlength="255"></label>
-            <label>Téléphone<input name="schoolPhone" [(ngModel)]="schoolForm.phone" maxlength="30"></label>
-            <label>Email<input name="schoolEmail" type="email" [(ngModel)]="schoolForm.email" maxlength="150"></label>
+            <label>Téléphone<input name="schoolPhone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="schoolForm.phone" maxlength="30"></label>
+            <label>Email<input name="schoolEmail" type="email" email [(ngModel)]="schoolForm.email" maxlength="150"></label>
             <div class="owner-management__form-actions owner-management__wide">
               <span>Établissement {{ currentSchool.status === 'ACTIVE' ? 'actif' : currentSchool.status.toLowerCase() }}</span>
               <button type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer les coordonnées' }}</button>

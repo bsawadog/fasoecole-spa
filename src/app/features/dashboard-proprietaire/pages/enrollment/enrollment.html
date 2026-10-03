@@ -3,8 +3,8 @@
     <div class="enr__identity">
       <span class="enr__header-icon" aria-hidden="true">🎓</span>
       <div>
-        <h1>Inscriptions &amp; passage d’année</h1>
-        <p>Préparez la nouvelle année scolaire, décidez du passage de chaque élève et réinscrivez-les en un clic.</p>
+        <h1>{{ closure ? "Clôturer année" : "Inscriptions" }}</h1>
+        <p>{{ closure ? "Préparez la nouvelle année, validez les décisions puis confirmez la clôture. Les notes restent dans leur année d’origine." : "Inscrivez un élève et associez ses parents à son dossier." }}</p>
       </div>
     </div>
     @if (schools().length > 1) {
@@ -42,6 +42,7 @@
   } @else if (!schools().length) {
     <p class="enr__state">Aucun établissement associé à votre compte.</p>
   } @else {
+    @if (!closure) {
     <!-- Nouvel élève -->
     <div class="enr__card">
       <div class="enr__card-head">
@@ -74,10 +75,10 @@
             }
             <label>Prénom<input name="nsFirstName" [(ngModel)]="newStudentForm.firstName" maxlength="100" required></label>
             <label>Nom<input name="nsLastName" [(ngModel)]="newStudentForm.lastName" maxlength="100" required></label>
-            <label>Courriel<input name="nsEmail" type="email" [(ngModel)]="newStudentForm.email" maxlength="150" required></label>
-            <label>Mot de passe<input name="nsPassword" type="text" [(ngModel)]="newStudentForm.password" minlength="8" placeholder="8 caractères min." required></label>
+            <label>Courriel<input name="nsEmail" type="email" email [(ngModel)]="newStudentForm.email" maxlength="150" required></label>
+            <p>Un lien d’activation sera envoyé par courriel pour choisir le mot de passe.</p>
             <label>Matricule<input name="nsRegistration" value="Généré automatiquement" disabled title="Format MAT-AAAA-NNN, attribué à l’enregistrement"></label>
-            <label>Téléphone<input name="nsPhone" [(ngModel)]="newStudentForm.phone" maxlength="30"></label>
+            <label>Téléphone<input name="nsPhone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="newStudentForm.phone" maxlength="30"></label>
             <label>Date de naissance<input name="nsBirthDate" type="date" [(ngModel)]="newStudentForm.birthDate"></label>
             <label>Genre
               <select name="nsGender" [(ngModel)]="newStudentForm.gender">
@@ -93,7 +94,7 @@
 
           <fieldset class="enr__fees">
             <legend>Parent / tuteur</legend>
-            <p class="enr__muted">Choisissez un parent déjà enregistré (ex. pour un frère ou une sœur) ou saisissez-en un nouveau : seuls le prénom et le nom sont obligatoires. Avec un courriel, le parent pourra activer son espace via « Mot de passe oublié ».</p>
+            <p class="enr__muted">Choisissez un parent déjà enregistré (ex. pour un frère ou une sœur) ou saisissez-en un nouveau : seuls le prénom et le nom sont obligatoires. Avec un courriel, le parent recevra un lien pour activer son espace.</p>
             @for (g of guardians; track $index; let i = $index) {
               <div class="enr__guardian">
                 <div class="enr__guardian-mode" role="radiogroup" [attr.aria-label]="'Type du ' + (i === 0 ? 'parent' : 'second parent')">
@@ -111,7 +112,7 @@
                       </div>
                     } @else {
                       <label class="enr__guardian-search">Rechercher un parent
-                        <input [name]="'gSearch' + i" [(ngModel)]="g.query" (ngModelChange)="searchGuardian(i, $event)"
+                        <input type="search" [name]="'gSearch' + i" [(ngModel)]="g.query" (ngModelChange)="searchGuardian(i, $event)"
                                placeholder="Nom, prénom, téléphone ou courriel (2 caractères min.)" autocomplete="off">
                         @if (guardianSearching() === i) { <span class="enr__muted">Recherche…</span> }
                         @if (guardianResults()[i]?.length) {
@@ -134,7 +135,7 @@
                     <label>Prénom du {{ i === 0 ? 'parent' : 'second parent' }}<input [name]="'gFirst' + i" [(ngModel)]="g.firstName" maxlength="100" required></label>
                     <label>Nom<input [name]="'gLast' + i" [(ngModel)]="g.lastName" maxlength="100" required></label>
                     <label>Téléphone (facultatif)<input [name]="'gPhone' + i" type="tel" [(ngModel)]="g.phone" maxlength="30"></label>
-                    <label>Courriel (facultatif)<input [name]="'gEmail' + i" type="email" [(ngModel)]="g.email" maxlength="150"></label>
+                    <label>Courriel (facultatif)<input [name]="'gEmail' + i" type="email" email [(ngModel)]="g.email" maxlength="150"></label>
                   }
                   <label>Lien
                     <select [name]="'gRel' + i" [(ngModel)]="g.relationship">
@@ -202,6 +203,8 @@
     </div>
 
     <!-- Années scolaires -->
+    }
+    @if (closure) {
     <div class="enr__card">
       <div class="enr__card-head">
         <h2>1. Années scolaires</h2>
@@ -229,7 +232,7 @@
               <label><input type="checkbox" name="copyPeriods" [(ngModel)]="yearForm.copyPeriods"> Reprendre les périodes de notes (trimestres / semestres), dates décalées</label>
             </div>
           }
-          <label class="enr__check-line"><input type="checkbox" name="makeCurrent" [(ngModel)]="yearForm.makeCurrent"> Définir tout de suite comme année en cours</label>
+          <p>La nouvelle année devient l’année en cours lors de la clôture finale.</p>
           <div class="enr__actions">
             <button type="submit" class="enr__btn" [disabled]="busy()">Créer l’année</button>
             <button type="button" class="enr__btn enr__btn--ghost" (click)="yearFormOpen.set(false)">Annuler</button>
@@ -245,6 +248,7 @@
             <article class="enr__year" [class.enr__year--current]="y.current">
               <header>
                 <strong>{{ y.label }}</strong>
+                @if (y.closed) { <span class="enr__badge">Clôturée · archive</span> }
                 @if (y.current) { <span class="enr__badge enr__badge--on">Année en cours</span> }
               </header>
               <p class="enr__muted">{{ formatDate(y.startDate) }} → {{ formatDate(y.endDate) }}</p>
@@ -254,9 +258,7 @@
                 <li><b>{{ y.completedStudents }}</b> clôturé(s)</li>
               </ul>
               @if (y.pendingDecisions) { <p class="enr__warn">{{ y.pendingDecisions }} élève(s) sans décision de fin d’année</p> }
-              @if (!y.current) {
-                <button type="button" class="enr__mini" (click)="setCurrent(y)" [disabled]="busy()">Définir comme année en cours</button>
-              }
+              
             </article>
           }
         </div>
@@ -271,7 +273,7 @@
       <div class="enr__toolbar">
         <label>Année qui se termine
           <select [ngModel]="fromYearId()" (ngModelChange)="changeFromYear($event)">
-            @for (y of years(); track y.id) { <option [ngValue]="y.id">{{ y.label }}</option> }
+            @for (y of years(); track y.id) { <option [ngValue]="y.id" [disabled]="!y.current">{{ y.label }}</option> }
           </select>
         </label>
         <span class="enr__arrow" aria-hidden="true">→</span>
@@ -344,7 +346,7 @@
                           <td>{{ row.annualAverage ?? '—' }}</td>
                           <td><span [class]="'enr__badge enr__badge--' + row.decision">{{ label(row.decision) }}</span></td>
                           <td>{{ row.targetClassName ?? '—' }}</td>
-                          <td><button type="button" class="enr__mini enr__mini--danger" (click)="undo(row)" [disabled]="busy()">Annuler</button></td>
+                          <td><button type="button" class="enr__mini enr__mini--danger" (click)="undo(row)" [disabled]="busy() || sourceClosed()">Annuler</button></td>
                         </tr>
                       } @else if (draft(row); as d) {
                         <tr [class.enr__selected]="d.selected">
@@ -355,6 +357,7 @@
                           </td>
                           <td>
                             <select [ngModel]="d.decision" (ngModelChange)="setDecision(row, cls, $event)" [attr.aria-label]="'Décision pour ' + row.firstName">
+                              <option [ngValue]="null">Décision à valider</option>
                               @for (opt of decisions; track opt.code) { <option [ngValue]="opt.code">{{ opt.label }}</option> }
                             </select>
                             @if (d.decision !== row.suggestedDecision) { <small class="enr__muted"> (proposé : {{ label(row.suggestedDecision) }})</small> }
@@ -383,10 +386,23 @@
         @if (p.pending) {
           <div class="enr__footer">
             <span>{{ selectedCount() }} élève(s) sélectionné(s)</span>
-            <button type="button" class="enr__btn enr__btn--green" (click)="applySelected()" [disabled]="busy() || !selectedCount()">Enregistrer les décisions et réinscrire</button>
+            <button type="button" class="enr__btn enr__btn--green" (click)="applySelected()" [disabled]="busy() || sourceClosed() || !selectedCount()">Enregistrer les décisions et réinscrire</button>
           </div>
         }
       }
     </div>
+    <div class="enr__card">
+      <h2>3. Finaliser la clôture</h2>
+      <p>Validez toutes les décisions avant de clôturer. Vérifiez les soldes réels à reporter (FCFA).</p>
+      <div class="enr__form">
+        <label>Solde de caisse<input type="number" min="0" step="0.01" [(ngModel)]="cashBalance" required></label>
+        <label>Solde de banque<input type="number" step="0.01" [(ngModel)]="bankBalance" required></label>
+      </div>
+      <button type="button" class="enr__btn enr__btn--green" (click)="finalizeYear()"
+        [disabled]="busy() || !plan() || !!plan()?.pending || sourceClosed() || cashBalance === null || bankBalance === null">Finaliser la clôture</button>
+      @if (sourceClosed()) { <p>Cette année est clôturée. Ses données restent consultables.</p> }
+    </div>
+    }
+
   }
 </section>

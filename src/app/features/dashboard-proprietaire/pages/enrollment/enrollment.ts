@@ -1,8 +1,9 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { forkJoin, Subscription } from 'rxjs';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
+import { SchoolDataSyncService } from '../../../../shared/school-data-sync.service';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import {
   ClassPlan,
@@ -46,7 +47,7 @@ interface GuardianDraft {
 }
 
 interface Draft {
-  decision: EnrollmentDecision;
+  decision: EnrollmentDecision | null;
   targetClassId: number | null;
   selected: boolean;
 }
@@ -59,6 +60,13 @@ interface Draft {
   styleUrl: './enrollment.scss',
 })
 export class EnrollmentPage implements OnInit {
+  readonly closure = inject(ActivatedRoute, { optional: true })?.snapshot.data['closure'] === true;
+  cashBalance: number | null = null;
+  bankBalance: number | null = null;
+  readonly sourceClosed = computed(() => !!this.years().find(y => y.id === this.fromYearId())?.closed);
+  private readonly sync = inject(SchoolDataSyncService);
+  private syncSubscription?: Subscription;
+  private readonly destroyRef = inject(DestroyRef);
   private readonly auth = inject(AuthService);
   private readonly api = inject(EnrollmentService);
   private readonly confirmation = inject(ConfirmationService);
@@ -204,6 +212,9 @@ export class EnrollmentPage implements OnInit {
   });
 
   ngOnInit(): void {
+    this.destroyRef.onDestroy(() => this.syncSubscription?.unsubscribe());
+    const closedMessage = sessionStorage.getItem('fasoecole_closure_success');
+    if (closedMessage) { this.success.set(closedMessage); sessionStorage.removeItem('fasoecole_closure_success'); }
     const ownerId = this.auth.user()?.id;
     if (!ownerId) {
       this.loading.set(false);
@@ -236,7 +247,7 @@ export class EnrollmentPage implements OnInit {
     return decision ? DECISION_LABELS[decision] : '';
   }
 
-  continues(decision: EnrollmentDecision): boolean {
+  continues(decision: EnrollmentDecision | null): boolean {
     return decision === 'PROMOTED' || decision === 'REPEATED';
   }
 
@@ -276,7 +287,7 @@ export class EnrollmentPage implements OnInit {
       copyClasses: !!sourceYearId && f.copyClasses,
       copyTeachers: !!sourceYearId && f.copyClasses && f.copyTeachers,
       copyPeriods: !!sourceYearId && f.copyPeriods,
-      makeCurrent: f.makeCurrent,
+      makeCurrent: this.closure && this.years().length > 0 ? false : f.makeCurrent,
     }).subscribe({
       next: (result) => {
         this.busy.set(false);
@@ -381,7 +392,7 @@ export class EnrollmentPage implements OnInit {
     const schoolId = this.schoolId();
     this.newStudentClasses.set([]);
     this.newStudentForm.classId = null;
-    const years = this.orderedYears();
+    const years = this.orderedYears().filter(y => !y.closed);
     if (!schoolId || !years.length) return;
     this.newStudentClassesLoading.set(true);
     forkJoin(years.map((y) => this.api.yearClasses(schoolId, y.id))).subscribe({
@@ -419,9 +430,8 @@ export class EnrollmentPage implements OnInit {
     const schoolId = this.schoolId();
     const f = this.newStudentForm;
     if (!schoolId) return;
-    if (!f.classId || !f.firstName.trim() || !f.lastName.trim() || !f.email.trim()
-      || f.password.trim().length < 8) {
-      this.error.set('Renseignez la classe, le prénom, le nom, le courriel et un mot de passe de 8 caractères minimum.');
+    if (!f.classId || !f.firstName.trim() || !f.lastName.trim() || !f.email.trim()) {
+      this.error.set('Renseignez la classe, le prénom, le nom et le courriel.');
       return;
     }
     if (this.guardians.some((g) => g.mode === 'existing' && !g.selected)) {
@@ -453,7 +463,6 @@ export class EnrollmentPage implements OnInit {
       firstName: f.firstName.trim(),
       lastName: f.lastName.trim(),
       email: f.email.trim(),
-      password: f.password.trim(),
       phone: f.phone.trim() || null,
       registrationNumber: null,
       birthDate: f.birthDate || null,
@@ -604,13 +613,13 @@ export class EnrollmentPage implements OnInit {
     return this.drafts().get(row.enrollmentId);
   }
 
-  targetsFor(cls: ClassPlan, decision: EnrollmentDecision): TargetClass[] {
+  targetsFor(cls: ClassPlan, decision: EnrollmentDecision | null): TargetClass[] {
     const targets = this.plan()?.targetClasses ?? [];
     if (decision === 'REPEATED') {
       const same = targets.filter((t) => t.levelId === cls.levelId);
-      return same.length ? same : targets;
+      return same;
     }
-    return targets;
+    return cls.nextLevelId === undefined ? targets : targets.filter(t => t.levelId === cls.nextLevelId);
   }
 
   setDecision(row: StudentPlan, cls: ClassPlan, decision: EnrollmentDecision): void {
@@ -688,6 +697,7 @@ export class EnrollmentPage implements OnInit {
     let missing = 0;
     for (const [enrollmentId, d] of this.drafts()) {
       if (!d.selected) continue;
+      if (!d.decision) { missing++; continue; }
       if (this.continues(d.decision) && !d.targetClassId) {
         missing++;
         continue;
@@ -695,7 +705,7 @@ export class EnrollmentPage implements OnInit {
       items.push({ enrollmentId, decision: d.decision, targetClassId: this.continues(d.decision) ? d.targetClassId : null });
     }
     if (missing) {
-      this.error.set(`${missing} élève(s) sélectionné(s) sans classe d’arrivée : choisissez-la ou créez la classe pour ${plan.toYearLabel}.`);
+      this.error.set(`${missing} élève(s) sélectionné(s) sans décision ou classe d’arrivée : validez la décision et choisissez la classe ou créez la classe pour ${plan.toYearLabel}.`);
       return;
     }
     if (!items.length) {
@@ -720,6 +730,20 @@ export class EnrollmentPage implements OnInit {
         this.refresh(new Set(result.skipped.map((s) => s.enrollmentId)));
       },
       error: (err) => this.fail(err, 'Impossible d’enregistrer les décisions.'),
+    });
+  }
+
+  async finalizeYear(): Promise<void> {
+    const schoolId = this.schoolId(), plan = this.plan();
+    if (!schoolId || !plan || plan.pending || this.sourceClosed() || this.cashBalance === null || this.bankBalance === null) return;
+    const confirmed = await this.confirmation.confirm({ title: 'Clôturer l’année scolaire',
+      message: `${plan.fromYearLabel} sera verrouillée. ${plan.toYearLabel} deviendra l’année en cours. Les identités, décisions et impayés sont conservés ; aucune note n’est copiée. Confirmez les soldes de caisse et de banque saisis.`,
+      confirmLabel: 'Confirmer la clôture' });
+    if (!confirmed) return;
+    this.busy.set(true);
+    this.api.close(schoolId, plan.fromYearId, plan.toYearId, this.cashBalance, this.bankBalance).subscribe({
+      next: result => { this.busy.set(false); sessionStorage.setItem('fasoecole_closure_success', 'Année scolaire clôturée. La nouvelle année est en cours ; aucune note n’a été copiée.'); this.success.set(`Année clôturée. ${result.debtsCarried} impayé(s) reporté(s), sans duplication de factures.`); this.reloadYears(plan.fromYearId, plan.toYearId); },
+      error: err => this.fail(err, 'Impossible de clôturer cette année.'),
     });
   }
 
@@ -748,6 +772,11 @@ export class EnrollmentPage implements OnInit {
   // ------------------------------------------------------------------ interne
 
   private selectSchool(id: number): void {
+    this.syncSubscription?.unsubscribe();
+    this.syncSubscription = this.sync.watch(id).subscribe(() => {
+      if (this.loading() || this.busy()) return;
+      this.refreshCounts();
+    });
     this.schoolId.set(id);
     this.auth.selectSchoolContext(id);
     this.yearFormOpen.set(false);
@@ -777,7 +806,7 @@ export class EnrollmentPage implements OnInit {
         this.toYearId.set(toId && candidates.some((y) => y.id === toId) ? toId
           : keepTo && candidates.some((y) => y.id === keepTo) ? keepTo
           : this.closestNext(this.fromYearId()));
-        this.loadPlan();
+        if (this.closure) this.loadPlan();
       },
       error: (err) => {
         this.loading.set(false);
@@ -863,7 +892,7 @@ export class EnrollmentPage implements OnInit {
 
   private emptyNewStudentForm() {
     return {
-      classId: null as number | null, firstName: '', lastName: '', email: '', password: '', phone: '',
+      classId: null as number | null, firstName: '', lastName: '', email: '', phone: '',
       registrationNumber: '', birthDate: '', gender: '',
       paymentMethod: 'CASH' as PaymentMethodCode | null, paymentDate: new Date().toISOString().slice(0, 10),
     };

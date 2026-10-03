@@ -1,3 +1,6 @@
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../../environments/environment';
+import { SchoolDataSyncService } from '../../../../shared/school-data-sync.service';
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -27,6 +30,13 @@ const monthStart = () => today().slice(0, 8) + '01';
   styleUrl: './finance.scss',
 })
 export class FinancePage implements OnInit, OnDestroy {
+  private readonly http = inject(HttpClient);
+  private readonly sync = inject(SchoolDataSyncService);
+  private syncSubscription?: Subscription;
+  readonly balances = signal<{accounts:{account:string;opening_balance:number}[];receivables:{invoice_id:number;amount_at_closure:number;remaining:number;first_name:string;last_name:string;registration_number:string}[]} | null>(null);
+  readonly balanceError = signal('');
+  readonly carriedPayment = signal<number | null>(null);
+  carriedAmount: number | null = null;
   private readonly auth = inject(AuthService);
   private readonly management = inject(OwnerManagementService);
   private readonly finance = inject(FinanceService);
@@ -97,6 +107,7 @@ export class FinancePage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.syncSubscription?.unsubscribe();
     this.requests.unsubscribe();
   }
 
@@ -364,10 +375,31 @@ export class FinancePage implements OnInit, OnDestroy {
     }
   }
 
+  private loadBalances(): void {
+    const schoolId = this.schoolId(); if (!schoolId) return;
+    const year = Number(localStorage.getItem(`fasoecole_year_${schoolId}`));
+    if (!year) return;
+    this.requests.add(this.http.get<NonNullable<ReturnType<typeof this.balances>>>(`${environment.apiUrl}/owner/enrollment/schools/${schoolId}/years/${year}/balances`).subscribe({
+      next: result => { this.balances.set(result); this.balanceError.set(''); },
+      error: () => this.balanceError.set('Impossible de charger les reports de l’année.'),
+    }));
+  }
+
+  settleCarried(invoiceId: number): void {
+    if (!this.carriedAmount || this.carriedAmount <= 0 || this.busy()) return;
+    const row = this.balances()?.receivables.find(r => r.invoice_id === invoiceId);
+    if (!row || this.carriedAmount > row.remaining) { this.error.set('Le paiement dépasse le solde restant.'); return; }
+    this.run(this.finance.recordPayment(invoiceId,{amount:this.carriedAmount,paymentDate:this.pay.paymentDate,method:this.pay.method}),
+      'Paiement du report enregistré sur la facture originale.', () => { this.carriedPayment.set(null); this.loadBalances(); this.loadTab(); });
+  }
+
   private selectSchool(schoolId: number): void {
     this.requests.unsubscribe();
     this.requests = new Subscription();
+    this.syncSubscription?.unsubscribe();
     this.schoolId.set(schoolId);
+    this.balances.set(null);
+    this.syncSubscription = this.sync.watch(schoolId).subscribe(() => { if (!this.loading()) { this.loadTab(); this.loadBalances(); } });
     this.auth.selectSchoolContext(schoolId);
     this.loading.set(true);
     this.panel.set(null);

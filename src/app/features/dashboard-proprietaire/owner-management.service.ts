@@ -87,6 +87,8 @@ export interface RosterParent {
 }
 
 export interface ClassRosterRow {
+  emailVerified?: boolean;
+  invitationDeliveryStatus?: string | null;
   studentId: number;
   userId: number;
   firstName: string;
@@ -121,7 +123,7 @@ export interface CreateRosterStudentPayload {
   firstName: string;
   lastName: string;
   email: string;
-  password: string;
+  password?: string;
   phone: string | null;
   /** Laisser vide pour un matricule généré automatiquement (MAT-AAAA-NNN). */
   registrationNumber: string | null;
