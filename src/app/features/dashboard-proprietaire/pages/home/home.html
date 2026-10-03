@@ -77,14 +77,18 @@
 
     <div class="owner-dashboard__columns">
       <section class="owner-dashboard__panel" id="attendance">
+        @if (syncError()) { <p class="owner-dashboard__hint" role="alert">Actualisation indisponible : les chiffres affichés peuvent être anciens.</p> }
+        @if (lastUpdated()) { <small>Mise à jour : {{ lastUpdated() | date:'HH:mm:ss' }} · {{ sync.connections()[data.schoolId] ? 'Synchronisation active' : 'Reconnexion en cours' }}</small> }
         <div class="owner-dashboard__panel-heading">
           <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--blue"><svg lucideCalendarCheck2 [size]="20" aria-hidden="true"></svg></span>
           <div><h2>Présences du jour</h2><p>{{ data.generatedDate | date: 'dd/MM/yyyy' }}</p></div>
+          <button class="owner-dashboard__refresh" type="button" (click)="refreshDashboard(data.schoolId)">Actualiser</button>
         </div>
         <div class="owner-dashboard__attendance-total">
           <strong>{{ data.attendanceRecorded }}</strong>
           <span>enregistrements</span>
         </div>
+        <p class="owner-dashboard__hint">Saisies du jour par élève et par classe. Les présences non renseignées ne sont pas comptées comme absences.</p>
         <div class="owner-dashboard__attendance-grid">
           <div><span class="owner-dashboard__status-dot owner-dashboard__status-dot--present"></span><span>Présents</span><strong>{{ data.presentToday }}</strong></div>
           <div><span class="owner-dashboard__status-dot owner-dashboard__status-dot--absent"></span><span>Absents</span><strong>{{ data.absentToday }}</strong></div>
@@ -94,6 +98,52 @@
         @if (data.attendanceRecorded === 0) {
           <p class="owner-dashboard__hint">Aucune présence n’a encore été saisie aujourd’hui.</p>
         }
+        <div class="owner-dashboard__handled-reports">
+          <h3>Signalements en attente pour cette journée <span class="owner-dashboard__pending-count">{{ data.pendingAttendanceReportsCount ?? 0 }}</span></h3>
+          @if (reportError()) { <p class="owner-dashboard__hint" role="alert">{{ reportError() }}</p> }
+          @if (reportSuccess()) { <p class="owner-dashboard__hint" role="status">{{ reportSuccess() }}</p> }
+          <p class="owner-dashboard__hint">Signalements des parents à traiter. Ils apparaîtront dans les compteurs après l’enregistrement d’une présence.</p>
+          <ul>
+            @for (report of data.pendingAttendanceReports ?? []; track report.id) {
+              <li>
+                <div><strong>{{ report.studentName }}</strong><span>{{ report.attendanceType === 'LATE' ? 'Retard' : 'Absence' }} · {{ report.startDate | date:'dd/MM/yyyy' }}@if (report.endDate !== report.startDate) { au {{ report.endDate | date:'dd/MM/yyyy' }} }</span></div>
+                <small>En attente · Signalé le {{ report.createdAt | date:'dd/MM/yyyy à HH:mm' }}</small>
+                @if (canRecordReport()) {
+                  @if (report.startDate === report.endDate) {
+                    <button class="owner-dashboard__record-report" type="button" [disabled]="reportBusyId() !== null" (click)="recordReport(report)">{{ reportBusyId() === report.id ? 'Enregistrement…' : report.attendanceType === 'LATE' ? 'Enregistrer le retard' : 'Enregistrer l’absence' }}</button>
+                  } @else {
+                    <small>Plusieurs jours : saisir les présences depuis la fiche de l’élève.</small>
+                  }
+                }
+              </li>
+            } @empty {
+              <li>Aucun signalement en attente pour cette journée.</li>
+            }
+          </ul>
+          @if ((data.pendingAttendanceReportsCount ?? 0) > 10) {
+            <small>Les 10 derniers signalements sur {{ data.pendingAttendanceReportsCount }} en attente.</small>
+          }
+        </div>
+        <div class="owner-dashboard__handled-reports">
+          <button class="owner-dashboard__history-toggle" type="button" [attr.aria-expanded]="showAttendanceHistory()" aria-controls="attendance-history" (click)="showAttendanceHistory.set(!showAttendanceHistory())">
+            Historique <span aria-hidden="true">{{ showAttendanceHistory() ? '−' : '+' }}</span>
+          </button>
+          <div id="attendance-history" [hidden]="!showAttendanceHistory()" class="owner-dashboard__history-content">
+          <h3>Signalements pris en compte pour cette journée</h3>
+          <p class="owner-dashboard__hint">Les compteurs indiquent le dernier statut enregistré par élève et classe. Un retard peut remplacer une absence ; les signalements restent visibles ci-dessous.</p>
+          <ul>
+            @for (report of data.handledAttendanceReports ?? []; track report.id) {
+              <li>
+                <div><strong>{{ report.studentName }}</strong><span>{{ report.attendanceType === 'LATE' ? 'Retard' : 'Absence' }} · {{ report.startDate | date:'dd/MM/yyyy' }}@if (report.endDate !== report.startDate) { au {{ report.endDate | date:'dd/MM/yyyy' }} }</span></div>
+                <small>Pris en compte@if (report.handledAt) { le {{ report.handledAt | date:'dd/MM/yyyy à HH:mm' }} }</small>
+              </li>
+            } @empty {
+              <li>Aucun signalement pris en compte pour cette journée.</li>
+            }
+          </ul>
+          <small>Les 10 derniers signalements pris en compte concernant cette date.</small>
+          </div>
+        </div>
       </section>
 
       <section class="owner-dashboard__panel" id="finance">

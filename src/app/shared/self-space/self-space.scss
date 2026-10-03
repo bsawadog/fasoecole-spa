@@ -89,3 +89,12 @@
 .ss__msg { max-width: 80%; align-self: flex-start; padding: .55rem .8rem; border-radius: .6rem; background: #f1f5f9; color: #0f172a; font-size: .9rem; white-space: pre-wrap; }
 .ss__msg--mine { align-self: flex-end; background: #dcfce7; }
 .ss__msg small { display: block; margin-bottom: .2rem; color: #64748b; font-size: .72rem; font-weight: 700; }
+.ss__mini--selected { background: #dcfce7; border-color: #15803d; font-weight: 600; }
+.ss__recipient-tools { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-top: .75rem; }
+.ss__recipient-info { display: grid; min-width: 0; overflow-wrap: anywhere; }
+.ss__recipient-info small { color: #64748b; }
+@media print {
+  .ss__no-print, .ss__tabs, .ss__back { display: none !important; }
+  .ss__table-wrap { overflow: visible; }
+  .ss__card { box-shadow: none; }
+}

@@ -749,7 +749,7 @@ export class EnrollmentPage implements OnInit {
 
   private selectSchool(id: number): void {
     this.schoolId.set(id);
-    localStorage.setItem('fasoecole_owner_school', String(id));
+    this.auth.selectSchoolContext(id);
     this.yearFormOpen.set(false);
     this.plan.set(null);
     this.fromYearId.set(null);

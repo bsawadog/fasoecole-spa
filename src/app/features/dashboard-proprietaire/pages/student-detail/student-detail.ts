@@ -1,4 +1,6 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { SchoolDataSyncService } from '../../../../shared/school-data-sync.service';
 import { DecimalPipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -46,6 +48,10 @@ export class StudentDetailPage implements OnInit {
   private readonly api = inject(OwnerManagementService);
   private readonly confirmation = inject(ConfirmationService);
   private studentId = 0;
+  private readonly sync = inject(SchoolDataSyncService);
+  private readonly destroyRef = inject(DestroyRef);
+  private watchedSchool = false;
+  private detailVersion = 0;
 
   readonly detail = signal<StudentDetail | null>(null);
   readonly loading = signal(true);
@@ -77,16 +83,26 @@ export class StudentDetailPage implements OnInit {
   }
 
   private loadDetail(): void {
-    this.api.getStudentDetail(this.studentId).subscribe({
+    const version = ++this.detailVersion;
+    this.api.getStudentDetail(this.studentId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (detail) => {
+        if (version !== this.detailVersion) return;
         this.detail.set(detail);
+        this.errorMessage.set(null);
         this.loading.set(false);
+        if (!this.watchedSchool) {
+          this.watchedSchool = true;
+          this.sync.watch(detail.schoolId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+            if (!this.saving()) this.loadDetail();
+          });
+        }
         this.api.getFeeTypes(detail.schoolId).subscribe({
           next: (types) => this.feeTypes.set(types.filter((type) => type.active !== false)),
           error: () => undefined,
         });
       },
       error: () => {
+        if (version !== this.detailVersion) return;
         this.errorMessage.set('Impossible de charger la fiche de l’élève.');
         this.loading.set(false);
       },

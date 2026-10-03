@@ -2,7 +2,6 @@
   <aside class="shell__sidebar">
     <div class="shell__brand">
       <img src="assets/images/fasoecole-logo-alt.svg" alt="FasoEcole" />
-      <span>Faso École</span>
     </div>
 
     <nav class="shell__nav">
@@ -45,6 +44,15 @@
           <small>{{ roleLabel() }}</small>
         </span>
       </a>
+      @if (messageNavigation(); as messages) {
+        <a [routerLink]="messages.routerLink" class="shell__action shell__messages" routerLinkActive="shell__action--active"
+           title="Messages" [attr.aria-label]="messages.badge ? 'Messages, ' + messages.badge + ' non lu(s)' : 'Messages'">
+          <svg lucideMessagesSquare [size]="22" [strokeWidth]="1.8" aria-hidden="true"></svg>
+          @if (messages.badge && messages.badge > 0) {
+            <span class="shell__message-count" aria-hidden="true">{{ messages.badge > 99 ? '99+' : messages.badge }}</span>
+          }
+        </a>
+      }
       <a routerLink="/profil" class="shell__action" routerLinkActive="shell__action--active">
         <svg lucideUserRound [size]="18" aria-hidden="true"></svg>
         <span>Mon profil</span>

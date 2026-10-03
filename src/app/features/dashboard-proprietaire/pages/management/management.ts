@@ -458,7 +458,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
   private selectSchool(schoolId: number): void {
     this.dataRequest?.unsubscribe();
     this.selectedSchoolId.set(schoolId);
-    localStorage.setItem('fasoecole_owner_school', String(schoolId));
+    this.auth.selectSchoolContext(schoolId);
     this.loading.set(true);
     this.errorMessage.set(null);
     this.successMessage.set(null);

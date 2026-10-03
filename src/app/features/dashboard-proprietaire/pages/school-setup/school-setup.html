@@ -2,19 +2,14 @@
   <header>
     <h1>Créer une école</h1>
     <p>Préparez votre établissement, de sa création à l’arrivée des enseignants et des élèves.</p>
-    @if (schools().length) {
-      <label>Établissement
-        <select [ngModel]="schoolId()" (ngModelChange)="selectSchool($event)" [disabled]="saving()">
-          @for (school of schools(); track school.id) { <option [ngValue]="school.id">{{ school.name }}</option> }
-        </select>
-      </label>
-      <button type="button" (click)="creating.set(true); step.set('school')" [disabled]="saving()">Créer un autre établissement</button>
-    }
+    @if (schoolName()) { <strong>{{ schoolName() }}</strong> }
   </header>
   @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
   @if (success()) { <p class="success" role="status">{{ success() }}</p> }
-  @if (loading()) { <p>Chargement des établissements…</p> }
-  @else {
+  @if (loading()) { <p>Chargement de votre école en cours de création…</p> }
+  @else if (finalized()) {
+    <button type="button" (click)="startAnother()">Créer une autre école</button>
+  } @else {
     <nav aria-label="Étapes de mise en place de l’école">
       @for (item of steps; track item.id; let index = $index) {
         <button type="button" [class.active]="step() === item.id" [attr.aria-current]="step() === item.id ? 'step' : null"
@@ -36,8 +31,7 @@
         <label>Adresse<input name="address" [(ngModel)]="form.address" maxlength="255" /></label>
         <label>Téléphone<input name="phone" [(ngModel)]="form.phone" maxlength="30" /></label>
         <label>Courriel<input name="email" type="email" email [(ngModel)]="form.email" maxlength="150" /></label>
-        <div class="actions"><button type="submit" [disabled]="saving() || schoolForm.invalid">{{ saving() ? 'Création…' : 'Créer et configurer' }}</button>
-          @if (schoolId()) { <button type="button" (click)="creating.set(false)" [disabled]="saving()">Annuler</button> }
+        <div class="actions"><button type="submit" [disabled]="saving() || schoolForm.invalid">{{ saving() ? 'Enregistrement…' : 'Enregistrer et continuer' }}</button>
         </div>
       </form>
     } @else if (schoolId()) {
@@ -50,6 +44,9 @@
         @case ('fees') { <app-owner-management initialSection="fees" [scopeSchoolId]="schoolId()" /> }
         @case ('staff') { <app-staff [scopeSchoolId]="schoolId()" /> }
       }
+      }
+      @if (step() === 'staff') {
+        <div class="actions"><button type="button" class="active" (click)="finalize()" [disabled]="saving()">{{ saving() ? 'Finalisation…' : 'Finaliser' }}</button></div>
       }
     }
   }

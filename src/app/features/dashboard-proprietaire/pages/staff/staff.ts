@@ -256,7 +256,7 @@ export class StaffPage implements OnInit {
 
   private selectSchool(id: number): void {
     this.schoolId.set(id);
-    localStorage.setItem('fasoecole_owner_school', String(id));
+    this.auth.selectSchoolContext(id);
     this.closeForm();
     this.credentials.set(null);
     this.loading.set(true);

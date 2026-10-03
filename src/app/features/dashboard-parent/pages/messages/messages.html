@@ -75,8 +75,9 @@
               <input name="subject" [(ngModel)]="subject" maxlength="160" required />
             </label>
             <label class="ss__field">Votre message
-              <textarea name="message" [(ngModel)]="message" rows="5" maxlength="4000" required></textarea>
+              <textarea name="message" [(ngModel)]="message" rows="5" maxlength="4000" [required]="!messageFiles.length"></textarea>
             </label>
+            <app-conversation-files [(files)]="messageFiles" [disabled]="sending()" />
             <div class="ss__actions">
               <button class="ss__btn" type="submit" [disabled]="sending()">{{ sending() ? 'Envoi…' : 'Envoyer' }}</button>
               <button class="ss__mini" type="button" (click)="showComposer.set(false)">Annuler</button>
@@ -93,15 +94,17 @@
             <article class="ss__msg" [class.ss__msg--mine]="item.mine">
               <small>{{ item.senderName || (item.fromSchool ? 'Établissement' : 'Vous') }} · {{ item.sentAt | date: 'dd/MM/yyyy HH:mm' }}</small>
             {{ item.content }}
-            @if (item.mine) { <small>{{ item.readBy?.length ? 'Lu par ' + item.readBy.join(', ') : 'Non lu' }}</small> }
+            <app-message-attachments [attachments]="item.attachments ?? []" />
+            @if (item.mine) { <small>{{ item.readBy?.length ? 'Lu par ' + item.readBy.length + ' personne(s)' : 'Non lu' }}</small> }
             </article>
           }
         </div>
         <form class="ss__body" (ngSubmit)="sendReply()">
           <label class="ss__field">Répondre
-            <textarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" required></textarea>
+            <textarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" [required]="!replyFiles.length"></textarea>
           </label>
-          <button class="ss__btn" type="submit" [disabled]="sending() || !reply.trim()">{{ sending() ? 'Envoi…' : 'Envoyer la réponse' }}</button>
+          <app-conversation-files [(files)]="replyFiles" [disabled]="sending()" />
+          <button class="ss__btn" type="submit" [disabled]="sending() || (!reply.trim() && !replyFiles.length)">{{ sending() ? 'Envoi…' : 'Envoyer la réponse' }}</button>
         </form>
       } @else {
         <div class="ss__state">Sélectionnez une conversation ou démarrez un nouveau message.</div>

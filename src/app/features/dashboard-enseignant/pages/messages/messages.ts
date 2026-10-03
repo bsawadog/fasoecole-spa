@@ -3,6 +3,7 @@ import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { ConversationFiles, MessageAttachments } from '../../../../shared/self-space/message-attachments';
 import { catchError, exhaustMap, forkJoin, of, timer } from 'rxjs';
 import {
   apiError, ConversationRecipient, ConversationSummary, ConversationThread, RosterStudent, SelfSpaceService, TeacherClass,
@@ -11,7 +12,7 @@ import {
 @Component({
   selector: 'app-teacher-messages',
   standalone: true,
-  imports: [DatePipe, FormsModule, RouterLink],
+  imports: [DatePipe, FormsModule, RouterLink, ConversationFiles, MessageAttachments],
   templateUrl: './messages.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })
@@ -38,6 +39,8 @@ export class TeacherMessages implements OnInit {
   subject = '';
   message = '';
   reply = '';
+  messageFiles: File[] = [];
+  replyFiles: File[] = [];
 
   ngOnInit(): void {
     timer(20_000, 20_000).pipe(
@@ -51,7 +54,10 @@ export class TeacherMessages implements OnInit {
       takeUntilDestroyed(this.destroyRef),
     ).subscribe(({ conversations, thread }) => {
       if (conversations) this.conversations.set(conversations);
-      if (thread) this.thread.set(thread);
+      if (thread && thread.conversation.id === this.thread()?.conversation.id) {
+        this.thread.set(thread);
+        this.conversations.update(items => items.map(item => item.id === thread.conversation.id ? thread.conversation : item));
+      }
     });
     this.api.teacherClasses().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (classes) => this.classes.set(classes),
@@ -90,19 +96,21 @@ export class TeacherMessages implements OnInit {
   }
 
   startConversation(): void {
+    if (this.sending()) return;
     const selectedClass = this.classes().find((item) => item.classId === this.classId);
     if (!selectedClass || this.studentId === null || (!this.recipientSchool() && !this.selectedRecipientIds().length)
-      || !this.subject.trim() || !this.message.trim()) return;
+      || !this.subject.trim() || (!this.message.trim() && !this.messageFiles.length)) return;
     this.sending.set(true);
     this.error.set(null);
     this.api.startConversation({ schoolId: selectedClass.schoolId, studentId: this.studentId, subject: this.subject.trim(),
-      content: this.message.trim(), recipientUserIds: this.selectedRecipientIds(), recipientSchool: this.recipientSchool() })
+      content: this.message.trim(), recipientUserIds: this.selectedRecipientIds(), recipientSchool: this.recipientSchool() }, this.messageFiles)
       .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (thread) => {
           this.thread.set(thread);
           this.conversations.update((items) => [thread.conversation, ...items]);
           this.subject = '';
           this.message = '';
+          this.messageFiles = [];
           this.selectedRecipientIds.set([]);
           this.composing.set(false);
           this.success.set('Votre message a été envoyé.');
@@ -116,6 +124,7 @@ export class TeacherMessages implements OnInit {
   }
 
   open(item: ConversationSummary): void {
+    this.replyFiles = [];
     this.composing.set(false);
     this.api.conversation(item.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (thread) => {
@@ -128,12 +137,13 @@ export class TeacherMessages implements OnInit {
 
   sendReply(): void {
     const current = this.thread();
-    if (!current || !this.reply.trim()) return;
+    if (this.sending() || !current || (!this.reply.trim() && !this.replyFiles.length)) return;
     this.sending.set(true);
-    this.api.replyToConversation(current.conversation.id, this.reply.trim()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.replyToConversation(current.conversation.id, this.reply.trim(), this.replyFiles).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (thread) => {
         this.thread.set(thread);
         this.reply = '';
+        this.replyFiles = [];
         this.sending.set(false);
       },
       error: (err) => {

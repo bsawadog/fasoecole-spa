@@ -1,0 +1,58 @@
+<div class="ss">
+  <header class="ss__header"><div><h1>Portail parents</h1><p>Publiez les informations et traitez les demandes de rendez-vous.</p></div>
+    @if (schools().length) {
+      <label class="ss__picker">Établissement<select [value]="schoolId()" [disabled]="saving()" (change)="selectSchool(+$any($event.target).value)">
+        @for (school of schools(); track school.id) { <option [value]="school.id">{{ school.name }}</option> }
+      </select></label>
+      <button type="button" class="ss__mini" [disabled]="loading() || saving()" (click)="reload()">Actualiser</button>
+    }
+  </header>
+  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
+  @if (success()) { <p class="ss__alert ss__alert--success" role="status">{{ success() }}</p> }
+  @if (loading()) { <p class="ss__state">Chargement…</p> }
+  @else if (!schools().length) { <p class="ss__state">Aucun établissement accessible.</p> }
+  @else {
+    <form class="ss__card ss__body" (ngSubmit)="publish()"><h2>Nouvelle publication</h2>
+      <div class="ss__form">
+        <label>Type<select name="kind" [(ngModel)]="kind"><option value="ANNOUNCEMENT">Annonce</option><option value="HOMEWORK">Devoir</option><option value="DOCUMENT">Document</option></select></label>
+        <label>Destinataires<select name="classId" [ngModel]="classId" (ngModelChange)="chooseClass($event)" [required]="kind === 'HOMEWORK'">
+          <option [ngValue]="null">Tous les parents de l’établissement</option>
+          @for (schoolClass of classes(); track schoolClass.id) { <option [ngValue]="schoolClass.id">Parents de {{ schoolClass.name }}</option> }
+        </select></label>
+        @if (classId !== null) {
+          <label>Enfant concerné<select name="studentId" [(ngModel)]="studentId" [disabled]="loadingStudents()">
+            <option [ngValue]="null">Tous les enfants de la classe</option>
+            @for (student of students(); track student.studentId) { <option [ngValue]="student.studentId">{{ student.firstName }} {{ student.lastName }} · {{ student.registrationNumber }}</option> }
+          </select></label>
+        }
+        @if (kind === 'DOCUMENT') { <p class="ss__muted">Pour un document personnel, sélectionnez la classe puis l’enfant concerné.</p> }
+        <label class="ss__wide">Titre<input name="title" [(ngModel)]="title" maxlength="160" required /></label>
+        <label class="ss__wide">Contenu / consignes<textarea name="content" [(ngModel)]="content" rows="4" maxlength="4000" required></textarea></label>
+        @if (kind === 'HOMEWORK') { <label>Date de remise<input type="date" name="dueDate" [(ngModel)]="dueDate" required /></label> }
+      </div>
+      <app-conversation-files [(files)]="files" [disabled]="saving()" />
+      <button type="submit" class="ss__btn" [disabled]="saving() || loadingStudents()">{{ saving() ? 'Publication…' : 'Publier pour les parents' }}</button>
+    </form>
+    <section class="ss__card ss__body"><h2>Demandes de rendez-vous</h2>
+      @if (!appointments().length) { <p class="ss__state">Aucune demande.</p> }
+      @for (appointment of appointments(); track appointment.id) {
+        <article class="ss__card ss__body"><h3>{{ appointment.studentName }} · {{ appointment.parentName }}</h3>
+          <p>{{ appointment.proposedAt | date:'dd/MM/yyyy HH:mm' }} · {{ appointment.teacherName }}</p>
+          <span class="ss__chip">{{ labels[appointment.status] }}</span><p>{{ appointment.reason }}</p>
+          @if (appointment.response) { <p>Réponse : {{ appointment.response }}</p> }
+          @if (appointment.status === 'PENDING') {
+            <label class="ss__field">Réponse au parent<textarea [(ngModel)]="responses[appointment.id]" maxlength="1000" placeholder="Lieu de rencontre ou motif du refus" rows="2"></textarea></label>
+            <div class="ss__actions"><button type="button" class="ss__btn" [disabled]="saving()" (click)="decide(appointment, 'ACCEPTED')">Confirmer</button>
+              <button type="button" class="ss__mini" [disabled]="saving()" (click)="decide(appointment, 'REJECTED')">Refuser</button></div>
+          }
+        </article>
+      }
+    </section>
+    <h2>Publications</h2>
+    @for (post of posts(); track post.id) {
+      <div><app-portal-posts [posts]="[post]" scope="school" [scopeId]="schoolId()!" />
+        <button type="button" class="ss__mini" [disabled]="saving()" (click)="deletePost(post)">Retirer cette publication</button></div>
+    }
+    @if (!posts().length) { <p class="ss__state">Aucune publication.</p> }
+  }
+</div>

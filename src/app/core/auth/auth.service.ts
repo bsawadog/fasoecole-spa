@@ -90,6 +90,23 @@ export interface OwnerDashboard {
   absentToday: number;
   lateToday: number;
   excusedToday: number;
+  pendingAttendanceReportsCount?: number;
+  pendingAttendanceReports?: {
+    id: number;
+    studentName: string;
+    attendanceType: 'ABSENT' | 'LATE';
+    startDate: string;
+    endDate: string;
+    createdAt: string;
+  }[];
+  handledAttendanceReports?: {
+    id: number;
+    studentName: string;
+    attendanceType: 'ABSENT' | 'LATE';
+    startDate: string;
+    endDate: string;
+    handledAt: string | null;
+  }[];
   validatedReportCards: number;
   schoolAverage: number | null;
   averagePeriodName: string | null;
@@ -128,6 +145,20 @@ export class AuthService {
 
   private readonly _ownerAccess = signal<SchoolAccess[] | null>(null);
   readonly ownerAccess = this._ownerAccess.asReadonly();
+  private readonly selectedSchoolId = signal(Number(localStorage.getItem('fasoecole_owner_school')) || null);
+  private readonly ownedSchools = signal<RegistrationSchool[]>([]);
+  readonly selectedSchoolType = computed(() => {
+    const id = this.selectedSchoolId();
+    const access = this.ownerAccess() ?? [];
+    return access.find(school => school.schoolId === id)?.schoolType
+      ?? this.ownedSchools().find(school => school.id === id)?.type
+      ?? (id === null ? access[0]?.schoolType ?? this.ownedSchools()[0]?.type : undefined);
+  });
+
+  selectSchoolContext(schoolId: number): void {
+    localStorage.setItem('fasoecole_owner_school', String(schoolId));
+    this.selectedSchoolId.set(schoolId);
+  }
   /** Vrai pour le propriétaire (ou l'administrateur) : accès complet à l'espace propriétaire. */
   readonly isSchoolOwner = computed(() => {
     const roles = this._user()?.rawRoles ?? [];
@@ -190,7 +221,9 @@ export class AuthService {
    */
   getOwnedSchools(ownerId: number, module?: OwnerModule): Observable<RegistrationSchool[]> {
     if (!module) {
-      return this.http.get<RegistrationSchool[]>(`${this.apiUrl}/schools/by-owner/${ownerId}`);
+      return this.http.get<RegistrationSchool[]>(`${this.apiUrl}/schools/by-owner/${ownerId}`).pipe(
+        tap(schools => this.ownedSchools.set(schools)),
+      );
     }
     return this.loadOwnerAccess(true).pipe(
       map((access) =>

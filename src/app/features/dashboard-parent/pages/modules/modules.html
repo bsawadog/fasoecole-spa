@@ -1,0 +1,89 @@
+<div class="ss portal" [class.portal--receipt]="receipt()">
+  <header class="ss__header portal-no-print">
+    <div><h1>{{ title() }}</h1><p>Suivez les informations de votre enfant.</p></div>
+    @if (children().length) {
+      <label class="ss__picker">Enfant
+        <select [value]="selectedId()" [disabled]="saving()" (change)="choose($any($event.target).value)">
+          @for (child of children(); track child.studentId) { <option [value]="child.studentId">{{ child.fullName }} · {{ child.schoolName }}</option> }
+        </select>
+      </label>
+      <button type="button" class="ss__mini" [disabled]="loading() || saving()" (click)="load()">Actualiser</button>
+    }
+  </header>
+  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
+  @if (success()) { <p class="ss__alert ss__alert--success" role="status">{{ success() }}</p> }
+  @if (loadingChildren()) { <p class="ss__state">Chargement de vos enfants…</p> }
+  @else if (!children().length && !error()) { <p class="ss__state">Aucun enfant accessible n’est rattaché à votre compte.</p> }
+  @for (entry of detail(); track entry.key) {
+    <app-parent-child-detail [selectedStudentId]="entry.id" [initialTab]="entry.tab" [embedded]="true" />
+  }
+  @if (selected(); as child) {
+    @if (loading()) { <p class="ss__state">Chargement…</p> }
+    @else {
+      @if (module() === 'annonces' || module() === 'documents' || module() === 'devoirs') {
+        <app-portal-posts [posts]="posts()" [scopeId]="child.studentId" />
+      }
+      @if (module() === 'devoirs') {
+        <section class="ss__card ss__body"><h2>Évaluations de la classe</h2>
+          @if (!evaluations().length) { <p class="ss__state">Aucune évaluation enregistrée.</p> }
+          @for (evaluation of evaluations(); track evaluation.id) {
+            <p><strong>{{ evaluation.title }}</strong> · {{ evaluation.subjectName }} · {{ evaluation.date | date:'dd/MM/yyyy' }}</p>
+          }
+        </section>
+      }
+      @if (module() === 'frais') {
+        <section class="ss__card ss__body"><h2>Historique des paiements</h2>
+          @if (!payments().length) { <p class="ss__state">Aucun paiement enregistré.</p> }
+          @else {
+            <div class="ss__table-wrap"><table class="ss__table">
+              <thead><tr><th>Date</th><th>Frais</th><th>Montant</th><th>Mode</th><th>Référence</th><th>Reçu</th></tr></thead>
+              <tbody>@for (payment of payments(); track payment.id) {
+                <tr><td>{{ payment.paymentDate | date:'dd/MM/yyyy' }}</td><td>{{ payment.feeName }}</td>
+                  <td>{{ payment.amount | number:'1.0-0' }} F</td><td>{{ paymentLabels[payment.method] || payment.method }}</td>
+                  <td>{{ payment.reference || '—' }}</td><td><button type="button" class="ss__mini" (click)="receipt.set(payment)">Voir le reçu</button></td></tr>
+              }</tbody>
+            </table></div>
+          }
+        </section>
+      }
+      @if (module() === 'rendez-vous') {
+        <form class="ss__card ss__body" (ngSubmit)="requestAppointment()">
+          <h2>Demander un rendez-vous</h2>
+          <p class="ss__muted">L’établissement confirme la date proposée et coordonne la rencontre avec l’enseignant.</p>
+          <div class="ss__form">
+            <label>Interlocuteur<select name="teacher" [(ngModel)]="teacherUserId"><option [ngValue]="null">Administration</option>
+              @for (teacher of teachers(); track teacher.userId) { <option [ngValue]="teacher.userId">{{ teacher.fullName }}</option> }
+            </select></label>
+            <label>Date et heure proposées<input name="proposedAt" type="datetime-local" [(ngModel)]="proposedAt" required /></label>
+            <label class="ss__wide">Motif<textarea name="reason" [(ngModel)]="reason" rows="3" maxlength="1000" required></textarea></label>
+          </div>
+          <button class="ss__btn" type="submit" [disabled]="saving()">{{ saving() ? 'Envoi…' : 'Envoyer la demande' }}</button>
+        </form>
+        <section class="ss__card ss__body"><h2>Mes demandes</h2>
+          @if (!appointments().length) { <p class="ss__state">Aucun rendez-vous demandé.</p> }
+          @for (appointment of appointments(); track appointment.id) {
+            <article class="portal-appointment"><strong>{{ appointment.proposedAt | date:'dd/MM/yyyy HH:mm' }} · {{ appointment.teacherName }}</strong>
+              <span class="ss__chip">{{ appointmentLabels[appointment.status] }}</span><p>{{ appointment.reason }}</p>
+              @if (appointment.response) { <p>Réponse : {{ appointment.response }}</p> }
+              @if (appointment.status === 'PENDING' || appointment.status === 'ACCEPTED') {
+                <button type="button" class="ss__mini" [disabled]="saving()" (click)="cancel(appointment)">Annuler la demande</button>
+              }
+            </article>
+          }
+        </section>
+      }
+    }
+    @if (receipt(); as payment) {
+      <section class="ss__card ss__body portal-receipt">
+        <h2>Reçu de paiement</h2><p><strong>{{ child.schoolName }}</strong></p>
+        <p>Enfant : {{ child.fullName }} · Matricule : {{ child.registrationNumber }}</p>
+        <p>Référence : {{ payment.reference || ('Paiement #' + payment.id) }}</p>
+        <p>Date : {{ payment.paymentDate | date:'dd/MM/yyyy' }}</p><p>Frais : {{ payment.feeName }}</p>
+        <p>Montant payé : <strong>{{ payment.amount | number:'1.0-0' }} F</strong></p>
+        <p>Mode : {{ paymentLabels[payment.method] || payment.method }}</p>
+        <div class="portal-no-print ss__actions"><button type="button" class="ss__btn" (click)="printReceipt()">Imprimer / enregistrer en PDF</button>
+          <button type="button" class="ss__mini" (click)="receipt.set(null)">Fermer</button></div>
+      </section>
+    }
+  }
+</div>

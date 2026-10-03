@@ -213,7 +213,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
     const classId = this.selectedClassId();
     if (!classId || !this.candidates().some(teacher => teacher.id === this.assignment.teacherId) ||
         !this.subjects().some(subject => subject.id === this.assignment.subjectId)) {
-      this.error.set('Sélectionnez un enseignant et une matière de cet établissement.');
+      this.error.set('Sélectionnez un enseignant disponible et une matière de cet établissement.');
       return;
     }
     this.saving.set(true);
@@ -238,7 +238,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
     this.classRequest?.unsubscribe();
     this.candidatesRequest?.unsubscribe();
     this.selectedSchoolId.set(schoolId);
-    localStorage.setItem('fasoecole_owner_school', String(schoolId));
+    this.auth.selectSchoolContext(schoolId);
     this.classes.set([]);
     this.subjects.set([]);
     this.teachers.set([]);

@@ -1,6 +1,11 @@
 import { Routes } from '@angular/router';
 
 export const PARENT_ROUTES: Routes = [
+  ...['notes', 'absences', 'frais', 'emploi', 'devoirs', 'annonces', 'documents', 'rendez-vous'].map(module => ({
+    path: module,
+    data: { module },
+    loadComponent: () => import('./pages/modules/modules').then(m => m.ParentModule),
+  })),
   {
     path: 'enfants',
     loadComponent: () => import('./pages/children/children').then((m) => m.ParentChildren),

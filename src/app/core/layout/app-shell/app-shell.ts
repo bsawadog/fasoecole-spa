@@ -10,6 +10,7 @@ import {
   LucideHouse,
   LucideLogOut,
   LucideMessageCircle,
+  LucideMessagesSquare,
   LucideNotebookPen,
   LucideShieldCheck,
   LucideStar,
@@ -49,6 +50,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Enseignants par classe', icon: 'users', routerLink: '/proprietaire/enseignants', module: 'TEACHERS' },
     { label: 'Demandes de compte', icon: 'users', routerLink: '/proprietaire/demandes', module: null },
     { label: 'Messages', icon: 'message', routerLink: '/proprietaire/messages', module: 'STUDENTS' },
+    { label: 'Portail parents', icon: 'book', routerLink: '/proprietaire/portail-parents', module: 'STUDENTS' },
     { label: 'Gestion de l’école', icon: 'book', routerLink: '/proprietaire/gestion', module: 'MANAGEMENT' },
     { label: 'Frais & paiements', icon: 'wallet', routerLink: '/proprietaire/frais', module: 'FINANCE' },
     { label: 'Dépenses & budget', icon: 'chart', routerLink: '/proprietaire/depenses', module: 'EXPENSES' },
@@ -61,15 +63,31 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Mes classes', icon: 'users', routerLink: '/enseignant/classes' },
     { label: 'Messages', icon: 'message', routerLink: '/enseignant/messages' },
     { label: 'Notes', icon: 'notes', routerLink: '/enseignant/notes' },
+    { label: 'Mon emploi du temps', icon: 'calendar', routerLink: '/enseignant/emploi' },
+    { label: 'Présences et retards', icon: 'users', routerLink: '/enseignant/presences' },
+    { label: 'Signalements des parents', icon: 'shield', routerLink: '/enseignant/signalements' },
+    { label: 'Devoirs', icon: 'book', routerLink: '/enseignant/devoirs' },
+    { label: 'Documents de classe', icon: 'notes', routerLink: '/enseignant/documents' },
+    { label: 'Annonces de classe', icon: 'building', routerLink: '/enseignant/annonces' },
+    { label: 'Rendez-vous parents', icon: 'calendar', routerLink: '/enseignant/rendez-vous' },
   ],
   etudiant: [
     { label: 'Accueil', icon: 'home', routerLink: '/etudiant' },
+    { label: 'Messages', icon: 'message', routerLink: '/etudiant/messages' },
     { label: 'Mes notes', icon: 'star', routerLink: '/etudiant/notes' },
     { label: 'Emploi du temps', icon: 'calendar', routerLink: '/etudiant/emploi-du-temps' },
   ],
   parent: [
     { label: 'Accueil', icon: 'home', routerLink: '/parent' },
     { label: 'Mes enfants', icon: 'users', routerLink: '/parent/enfants' },
+    { label: 'Notes et bulletins', icon: 'notes', routerLink: '/parent/notes' },
+    { label: 'Présences et retards', icon: 'users', routerLink: '/parent/absences' },
+    { label: 'Frais et paiements', icon: 'wallet', routerLink: '/parent/frais' },
+    { label: 'Emploi du temps', icon: 'calendar', routerLink: '/parent/emploi' },
+    { label: 'Devoirs et évaluations', icon: 'book', routerLink: '/parent/devoirs' },
+    { label: 'Annonces', icon: 'building', routerLink: '/parent/annonces' },
+    { label: 'Documents', icon: 'notes', routerLink: '/parent/documents' },
+    { label: 'Rendez-vous', icon: 'calendar', routerLink: '/parent/rendez-vous' },
     { label: 'Messages', icon: 'message', routerLink: '/parent/messages' },
   ],
 };
@@ -90,6 +108,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     LucideHouse,
     LucideLogOut,
     LucideMessageCircle,
+    LucideMessagesSquare,
     LucideNotebookPen,
     LucideShieldCheck,
     LucideStar,
@@ -113,7 +132,7 @@ export class AppShell implements OnInit {
     const user = this.user();
     return `${user?.firstName?.charAt(0) ?? ''}${user?.lastName?.charAt(0) ?? ''}`.toUpperCase();
   });
-  readonly menuItems = computed<NavigationItem[]>(() => {
+  private readonly accessibleNavigation = computed<NavigationItem[]>(() => {
     const role = this.auth.role();
     if (!role) {
       return [];
@@ -131,6 +150,10 @@ export class AppShell implements OnInit {
       .map((item) => item.routerLink === '/proprietaire/messages'
         ? { ...item, badge: this.familyMessages.unreadCount() } : item);
   });
+  readonly menuItems = computed(() => this.accessibleNavigation().filter(item => item.icon !== 'message')
+    .map(item => item.label === 'Élèves par classe' && this.auth.selectedSchoolType() === 'UNIVERSITE'
+      ? { ...item, label: 'Étudiants par classe' } : item));
+  readonly messageNavigation = computed(() => this.accessibleNavigation().find(item => item.icon === 'message'));
   /** Libellé affiché sous le nom : fonction du membre du personnel, sinon le rôle. */
   readonly roleLabel = computed(() => {
     const user = this.user();
@@ -157,7 +180,7 @@ export class AppShell implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.auth.role() === 'parent' || this.auth.role() === 'enseignant') {
+    if (this.auth.role() === 'parent' || this.auth.role() === 'enseignant' || this.auth.role() === 'etudiant') {
       timer(0, 20_000).pipe(
         exhaustMap(() => this.selfSpace.unreadConversationCount().pipe(
           catchError(() => EMPTY),

@@ -25,6 +25,8 @@
         </header>
         <div class="ss__body">
           @if (p.bulletin; as b) {
+            <button type="button" class="ss__btn ss__no-print" (click)="printBulletin()">Imprimer / enregistrer le bulletin en PDF</button>
+            <p><strong>{{ d.fullName }}</strong> · {{ d.academicYearLabel }}</p>
             <div class="ss__summary">
               <div><span>Moyenne générale</span><strong>{{ b.average === null ? '—' : (b.average | number: '1.2-2') }}</strong></div>
               <div><span>Rang</span><strong>{{ b.rank ? b.rank + ' / ' + b.classSize : '—' }}</strong></div>

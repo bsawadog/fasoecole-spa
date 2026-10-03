@@ -1,17 +1,25 @@
 <main class="auth-page">
   <a class="auth-page__brand" routerLink="/" aria-label="Retour à l’accueil Faso École">
     <img class="auth-page__brand-logo" src="assets/images/fasoecole-logo-alt.svg" alt="FasoEcole" />
-    <span>FasoÉcole</span>
   </a>
 
   <section class="auth-card" aria-label="Authentification FasoÉcole">
-    <aside class="auth-card__visual">
+    <aside class="auth-card__visual" [class.auth-card__visual--paused]="imagePaused()">
       <img
         src="assets/images/login_image.PNG"
         alt="Une élève qui apprend en classe"
         class="auth-card__image"
       />
       <div class="auth-card__image-shade"></div>
+      <button
+        class="auth-card__animation-toggle"
+        type="button"
+        [attr.aria-pressed]="imagePaused()"
+        [attr.aria-label]="imagePaused() ? 'Reprendre le défilement de l’image' : 'Mettre le défilement de l’image en pause'"
+        (click)="imagePaused.set(!imagePaused())"
+      >
+        {{ imagePaused() ? 'Animer l’image' : 'Pause' }}
+      </button>
       <div class="auth-card__visual-copy">
         <span class="auth-card__visual-label">FasoÉcole</span>
         <h1>Chaque parcours mérite les bons outils.</h1>
@@ -119,11 +127,13 @@
               <div class="auth-card__field-row">
                 <div class="auth-card__field">
                   <label for="register-first-name">Prénom</label>
-                  <input id="register-first-name" formControlName="firstName" autocomplete="given-name" required />
+                  <input id="register-first-name" formControlName="firstName" autocomplete="given-name" required [attr.aria-invalid]="!!registrationFieldError('firstName')" aria-describedby="register-first-name-error" />
+                  @if (registrationFieldError('firstName'); as error) { <small class="auth-card__field-error" id="register-first-name-error">{{ error }}</small> }
                 </div>
                 <div class="auth-card__field">
                   <label for="register-last-name">Nom</label>
-                  <input id="register-last-name" formControlName="lastName" autocomplete="family-name" required />
+                  <input id="register-last-name" formControlName="lastName" autocomplete="family-name" required [attr.aria-invalid]="!!registrationFieldError('lastName')" aria-describedby="register-last-name-error" />
+                  @if (registrationFieldError('lastName'); as error) { <small class="auth-card__field-error" id="register-last-name-error">{{ error }}</small> }
                 </div>
               </div>
               <div class="auth-card__field">
@@ -132,14 +142,17 @@
                   id="register-email"
                   type="email"
                   formControlName="email"
+                  [attr.aria-invalid]="!!registrationFieldError('email')"
+                  aria-describedby="register-email-error"
                   placeholder="nom@exemple.com"
                   autocomplete="email"
                   required
                 />
+                @if (registrationFieldError('email'); as error) { <small class="auth-card__field-error" id="register-email-error">{{ error }}</small> }
               </div>
               <div class="auth-card__field">
                 <label for="register-school">Établissement concerné</label>
-                <select id="register-school" formControlName="schoolId" required [disabled]="schoolsLoading() || schools().length === 0">
+                <select id="register-school" formControlName="schoolId" required [disabled]="schoolsLoading() || schools().length === 0" [attr.aria-invalid]="!!registrationFieldError('schoolId')" aria-describedby="register-school-error">
                   <option [ngValue]="0" disabled>
                     @if (schoolsLoading()) {
                       Chargement des établissements…
@@ -151,15 +164,17 @@
                     <option [ngValue]="school.id">{{ school.name }}</option>
                   }
                 </select>
+                @if (registrationFieldError('schoolId'); as error) { <small class="auth-card__field-error" id="register-school-error">{{ error }}</small> }
                 <small>Le propriétaire de cet établissement validera votre demande.</small>
               </div>
               <div class="auth-card__field">
                 <label for="register-role">Profil demandé</label>
-                <select id="register-role" formControlName="requestedRole" required>
+                <select id="register-role" formControlName="requestedRole" required [attr.aria-invalid]="!!registrationFieldError('requestedRole')" aria-describedby="register-role-error">
                   <option value="TEACHER">Enseignant</option>
                   <option value="PARENT">Parent</option>
                   <option value="STUDENT">Étudiant</option>
                 </select>
+                @if (registrationFieldError('requestedRole'); as error) { <small class="auth-card__field-error" id="register-role-error">{{ error }}</small> }
                 <small>Le profil pourra être confirmé ou ajusté par le propriétaire.</small>
               </div>
               <div class="auth-card__field">
@@ -171,22 +186,29 @@
                   <label for="register-password">Mot de passe</label>
                   <input
                     id="register-password"
+                    [attr.aria-invalid]="!!registrationFieldError('password')"
+                    aria-describedby="register-password-error register-password-hint"
                     type="password"
                     formControlName="password"
                     autocomplete="new-password"
                     minlength="8"
                     required
                   />
+                  <small id="register-password-hint">8 caractères minimum.</small>
+                  @if (registrationFieldError('password'); as error) { <small class="auth-card__field-error" id="register-password-error">{{ error }}</small> }
                 </div>
                 <div class="auth-card__field">
                   <label for="register-confirm">Confirmer</label>
                   <input
                     id="register-confirm"
+                    [attr.aria-invalid]="!!registrationFieldError('confirmPassword')"
+                    aria-describedby="register-confirm-error"
                     type="password"
                     formControlName="confirmPassword"
                     autocomplete="new-password"
                     required
                   />
+                  @if (registrationFieldError('confirmPassword'); as error) { <small class="auth-card__field-error" id="register-confirm-error">{{ error }}</small> }
                 </div>
               </div>
               <button class="auth-card__submit" type="submit" [disabled]="loading() || schoolsLoading() || schools().length === 0">

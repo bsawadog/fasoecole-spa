@@ -1,5 +1,5 @@
 <div class="ss">
-  <a class="ss__back" routerLink="/parent/enfants">← Mes enfants</a>
+  @if (!embedded()) { <a class="ss__back" routerLink="/parent/enfants">← Mes enfants</a> }
 
   @if (error()) {
     <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p>
@@ -12,7 +12,7 @@
       </div>
     </header>
 
-    <div class="ss__kpis">
+    <div class="ss__kpis ss__no-print">
       <div class="ss__kpi" [class.ss__kpi--danger]="c.attendance.unjustifiedAbsences > 0">
         <span>Absences</span><strong>{{ c.attendance.absences }}</strong>
         <small class="ss__muted">{{ c.attendance.unjustifiedAbsences }} non justifiée(s)</small>
@@ -28,12 +28,14 @@
       </div>
     </div>
 
+    @if (!embedded()) {
     <div class="ss__tabs" role="tablist" aria-label="Dossier de l’enfant">
       <button type="button" role="tab" class="ss__tab" [class.ss__tab--on]="tab() === 'notes'" [attr.aria-selected]="tab() === 'notes'" (click)="open('notes')">Notes & bulletins</button>
       <button type="button" role="tab" class="ss__tab" [class.ss__tab--on]="tab() === 'emploi'" [attr.aria-selected]="tab() === 'emploi'" (click)="open('emploi')">Emploi du temps</button>
       <button type="button" role="tab" class="ss__tab" [class.ss__tab--on]="tab() === 'absences'" [attr.aria-selected]="tab() === 'absences'" (click)="open('absences')">Absences</button>
       <button type="button" role="tab" class="ss__tab" [class.ss__tab--on]="tab() === 'frais'" [attr.aria-selected]="tab() === 'frais'" (click)="open('frais')">Frais scolaires</button>
     </div>
+    }
 
     @if (tabError()) { <p class="ss__alert ss__alert--error" role="alert">{{ tabError() }}</p> }
 

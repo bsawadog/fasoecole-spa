@@ -3,6 +3,11 @@ import { ownerModuleGuard } from '../../core/auth';
 
 export const PROPRIETAIRE_ROUTES: Routes = [
   {
+    path: 'portail-parents',
+    canActivate: [ownerModuleGuard('STUDENTS')],
+    loadComponent: () => import('./pages/parent-portal/parent-portal').then(m => m.OwnerParentPortal),
+  },
+  {
     path: 'creer-ecole',
     canActivate: [ownerModuleGuard(null)],
     loadComponent: () => import('./pages/school-setup/school-setup').then((m) => m.SchoolSetup),

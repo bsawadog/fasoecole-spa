@@ -1,7 +1,8 @@
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { AuthService, RegistrationSchool } from '../../../../core/auth';
+import { AuthService } from '../../../../core/auth';
+import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import { OwnerManagementService } from '../../owner-management.service';
 import { apiError } from '../../../../shared/self-space/self-space.service';
 import { OwnerManagement } from '../management/management';
@@ -22,12 +23,14 @@ export class SchoolSetup implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly api = inject(OwnerManagementService);
   private readonly destroyRef = inject(DestroyRef);
-  readonly schools = signal<RegistrationSchool[]>([]);
+  private readonly confirmation = inject(ConfirmationService);
+  readonly schoolName = signal('');
+  readonly finalized = signal(false);
   readonly step = signal<Step>('school');
   readonly schoolId = signal<number | null>(null);
   readonly saving = signal(false);
   readonly loading = signal(true);
-  readonly creating = signal(false);
+  readonly creating = signal(true);
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
   readonly steps: { id: Step; label: string; description: string }[] = [
@@ -41,26 +44,44 @@ export class SchoolSetup implements OnInit {
   form = { name: '', type: 'PRIMAIRE', address: '', phone: '', email: '' };
 
   ngOnInit(): void {
-    const userId = this.auth.user()?.id;
-    if (!userId) { this.loading.set(false); return; }
-    this.auth.getOwnedSchools(userId, 'MANAGEMENT').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (schools) => {
-        this.schools.set(schools);
+    const draftId = Number(localStorage.getItem(this.draftKey));
+    if (!draftId) { this.loading.set(false); return; }
+    this.api.getSchool(draftId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (school) => {
         this.loading.set(false);
-        this.creating.set(!schools.length);
-        const stored = Number(localStorage.getItem('fasoecole_owner_school'));
-        if (schools.length) this.selectSchool(schools.find(s => s.id === stored)?.id ?? schools[0].id);
+        if (school.status === 'ACTIVE') {
+          localStorage.removeItem(this.draftKey);
+          this.schoolName.set(school.name);
+          this.finalized.set(true);
+          this.success.set(`L’établissement « ${school.name} » a été créé et activé avec succès.`);
+          return;
+        }
+        if (school.status !== 'DRAFT') { localStorage.removeItem(this.draftKey); return; }
+        this.schoolId.set(school.id);
+        this.schoolName.set(school.name);
+        this.creating.set(false);
+        this.step.set('academic');
       },
-      error: (err) => { this.loading.set(false); this.error.set(apiError(err, 'Impossible de charger les établissements.')); },
+      error: (err) => {
+        this.loading.set(false);
+        if (err.status === 403 || err.status === 404) localStorage.removeItem(this.draftKey);
+        this.error.set(apiError(err, 'Impossible de reprendre la création de votre école.'));
+      },
     });
   }
 
-  selectSchool(id: number): void {
-    if (!this.schools().some(s => s.id === id)) return;
-    this.schoolId.set(id);
-    localStorage.setItem('fasoecole_owner_school', String(id));
+  private get draftKey(): string {
+    return `fasoecole_school_draft_${this.auth.user()?.id}`;
+  }
+
+  startAnother(): void {
+    this.schoolId.set(null);
+    this.schoolName.set('');
+    this.finalized.set(false);
+    this.success.set(null);
+    this.error.set(null);
     this.step.set('school');
-    this.creating.set(false);
+    this.creating.set(true);
   }
 
   create(): void {
@@ -68,17 +89,44 @@ export class SchoolSetup implements OnInit {
     if (!ownerId || this.saving() || !this.form.name.trim()) return;
     this.saving.set(true);
     this.error.set(null);
-    this.api.createSchool({ ...this.form, name: this.form.name.trim(), ownerId, status: 'ACTIVE' })
+    this.api.createSchool({ ...this.form, name: this.form.name.trim(), ownerId, status: 'DRAFT' })
       .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (school) => {
-          this.schools.update(items => [...items, school]);
-          this.selectSchool(school.id);
+          this.schoolId.set(school.id);
+          this.schoolName.set(school.name);
+          this.creating.set(false);
+          localStorage.setItem(this.draftKey, String(school.id));
+          this.auth.selectSchoolContext(school.id);
           this.step.set('academic');
           this.form = { name: '', type: 'PRIMAIRE', address: '', phone: '', email: '' };
-          this.success.set('Établissement créé. Vous pouvez maintenant configurer son organisation scolaire.');
+          this.success.set('Brouillon enregistré. Configurez votre école, puis confirmez sa création avec « Finaliser ».');
           this.saving.set(false);
         },
         error: (err) => { this.saving.set(false); this.error.set(apiError(err, 'Impossible de créer l’établissement.')); },
       });
+  }
+
+  async finalize(): Promise<void> {
+    const id = this.schoolId();
+    if (!id || this.saving() || this.finalized()) return;
+    this.saving.set(true);
+    const confirmed = await this.confirmation.confirm({
+      title: 'Finaliser la création de cette école ?',
+      message: `Confirmez la création de « ${this.schoolName()} ». Les configurations déjà enregistrées seront conservées et l’établissement sera activé.`,
+      confirmLabel: 'Confirmer la création',
+    });
+    if (this.destroyRef.destroyed) return;
+    if (!confirmed) { this.saving.set(false); return; }
+    this.error.set(null);
+    this.api.finalizeSchool(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (school) => {
+        localStorage.removeItem(this.draftKey);
+        this.finalized.set(true);
+        this.schoolName.set(school.name);
+        this.success.set(`L’établissement « ${school.name} » a été créé et activé avec succès.`);
+        this.saving.set(false);
+      },
+      error: (err) => { this.saving.set(false); this.error.set(apiError(err, 'Impossible de finaliser la création de l’école.')); },
+    });
   }
 }

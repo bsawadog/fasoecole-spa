@@ -40,6 +40,7 @@ export class Login implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly showPassword = signal(false);
+  readonly imagePaused = signal(false);
   readonly resetToken = this.route.snapshot.queryParamMap.get('token');
   readonly activationToken = this.route.snapshot.queryParamMap.get('activate');
   private readonly verificationToken = this.route.snapshot.queryParamMap.get('verify');
@@ -117,13 +118,28 @@ export class Login implements OnInit {
   }
 
   submitRegistration(): void {
+    if (this.loading()) return;
+    this.errorMessage.set(null);
+    const controls = this.registerForm.controls;
+    for (const control of [controls.firstName, controls.lastName, controls.email, controls.phone]) {
+      control.setValue(control.value.trim());
+    }
+    if (this.schoolsLoading()) {
+      this.errorMessage.set('Veuillez attendre le chargement des établissements.');
+      return;
+    }
+    if (this.schools().length === 0) {
+      this.errorMessage.set(this.schoolsError() ?? 'Aucun établissement disponible pour le moment.');
+      return;
+    }
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
+      this.errorMessage.set('La demande n’a pas été envoyée. Corrigez les champs indiqués ci-dessous.');
       return;
     }
     const { firstName, lastName, email, phone, schoolId, requestedRole, password, confirmPassword } = this.registerForm.getRawValue();
-    if (this.schools().length === 0) {
-      this.errorMessage.set('Aucun établissement disponible pour le moment.');
+    if (!this.schools().some(school => school.id === schoolId)) {
+      this.errorMessage.set('Choisissez un établissement dans la liste.');
       return;
     }
     if (password !== confirmPassword) {
@@ -163,6 +179,20 @@ export class Login implements OnInit {
         );
       },
     });
+  }
+
+  registrationFieldError(field: keyof typeof this.registerForm.controls): string | null {
+    const control = this.registerForm.controls[field];
+    if (!control.touched) return null;
+    if (field === 'schoolId' && control.invalid) return 'Choisissez un établissement.';
+    if (control.hasError('required')) return 'Ce champ est obligatoire.';
+    if (control.hasError('email')) return 'Saisissez une adresse e-mail valide.';
+    if (control.hasError('minlength')) return 'Le mot de passe doit contenir au moins 8 caractères.';
+    if (control.hasError('maxlength')) return 'Ce champ est limité à 100 caractères.';
+    if (field === 'confirmPassword' && control.value !== this.registerForm.controls.password.value) {
+      return 'Les deux mots de passe ne correspondent pas.';
+    }
+    return null;
   }
 
   /** Lien « vérifier mon adresse » : confirmé automatiquement à l'ouverture de la page. */

@@ -1,6 +1,11 @@
 import { Routes } from '@angular/router';
 
 export const ENSEIGNANT_ROUTES: Routes = [
+  ...['emploi', 'presences', 'signalements', 'devoirs', 'documents', 'annonces', 'rendez-vous'].map(module => ({
+    path: module,
+    data: { module },
+    loadComponent: () => import('./pages/modules/modules').then(m => m.TeacherModule),
+  })),
   {
     path: 'messages',
     loadComponent: () => import('./pages/messages/messages').then((m) => m.TeacherMessages),

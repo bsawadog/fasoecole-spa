@@ -51,7 +51,7 @@
       @if (!subjects().length) {
         <p class="teacher-roster__hint">Créez d’abord une matière dans Gestion de l’établissement → Académique pour pouvoir affecter un enseignant.</p>
       } @else if (!candidates().length) {
-        <p class="teacher-roster__hint">Aucun enseignant n’existe encore dans cet établissement : utilisez « Ajouter un enseignant » pour en créer un.</p>
+        <p class="teacher-roster__hint">Aucun enseignant existant n’est disponible : utilisez « Ajouter un enseignant » pour en créer un.</p>
       }
     </section>
 
@@ -86,7 +86,7 @@
           <label>Enseignant
             <select name="existingTeacher" [(ngModel)]="assignment.teacherId" required>
               @for (candidate of candidates(); track candidate.id) {
-                <option [ngValue]="candidate.id">{{ candidate.firstName }} {{ candidate.lastName }}</option>
+                <option [ngValue]="candidate.id">{{ candidate.firstName }} {{ candidate.lastName }} · {{ candidate.email }}</option>
               }
             </select>
           </label>

@@ -58,4 +58,5 @@ export class StudentGradesView {
   on20(value: number, max: number): number {
     return max ? (value / max) * 20 : value;
   }
+  printBulletin(): void { window.print(); }
 }

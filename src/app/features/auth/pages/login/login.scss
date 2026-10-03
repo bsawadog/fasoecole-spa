@@ -70,6 +70,39 @@
 .auth-card__image {
   object-fit: cover;
   object-position: center;
+  animation: auth-image-pan 22s ease-in-out infinite alternate;
+}
+
+@keyframes auth-image-pan {
+  from { object-position: 0% 0%; }
+  to { object-position: 100% 100%; }
+}
+
+.auth-card__visual--paused .auth-card__image {
+  animation-play-state: paused;
+}
+
+.auth-card__animation-toggle {
+  position: absolute;
+  z-index: 1;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid rgb(255 255 255 / 50%);
+  border-radius: 2rem;
+  color: #fff;
+  background: rgb(11 38 29 / 65%);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+
+  &:hover { background: rgb(11 38 29 / 85%); }
+  &:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-card__image { animation: none; }
+  .auth-card__animation-toggle { display: none; }
 }
 
 .auth-card__image-shade {
@@ -188,6 +221,16 @@
 }
 
 .auth-card__field,
+.auth-card__field {
+  input[aria-invalid='true'], select[aria-invalid='true'] {
+    border-color: #b7483c;
+  }
+  small.auth-card__field-error {
+    color: #963c35;
+    line-height: 1.4;
+  }
+}
+
 .auth-card__field-row {
   display: flex;
   gap: 1rem;

@@ -1,4 +1,5 @@
 import { HttpClient } from '@angular/common/http';
+import { conversationBody } from './message-attachments';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -213,9 +214,11 @@ export interface ConversationSummary {
   lastMessageAt: string;
   unread: boolean;
   recipientNames?: string[];
+  recipientCount?: number;
 }
 
 export interface ConversationMessage {
+  attachments?: import('./message-attachments').MessageAttachment[];
   id: number;
   fromSchool: boolean;
   senderId: number | null;
@@ -240,10 +243,16 @@ export interface NewConversationPayload {
   recipientSchool?: boolean;
 }
 
+export interface TeacherAttendanceItem {
+  studentId: number; fullName: string; registrationNumber: string;
+  status: AttendanceItem['status'] | null; justification: string | null;
+}
+
 export interface ConversationRecipient {
+  email?: string | null;
   userId: number;
   fullName: string;
-  role: 'PARENT' | 'ENSEIGNANT';
+  role: 'PARENT' | 'ENSEIGNANT' | 'ELEVE';
 }
 
 export type FamilyAttendanceType = 'ABSENT' | 'LATE';
@@ -290,6 +299,13 @@ export class SelfSpaceService {
 
   teacherSchedule(): Observable<ScheduleEntry[]> {
     return this.http.get<ScheduleEntry[]>(`${this.teacherUrl}/schedule`);
+  }
+
+  teacherAttendance(classId: number, date: string): Observable<TeacherAttendanceItem[]> {
+    return this.http.get<TeacherAttendanceItem[]>(`${this.teacherUrl}/classes/${classId}/attendance`, { params: { date } });
+  }
+  saveTeacherAttendance(classId: number, studentId: number, payload: { date: string; status: AttendanceItem['status']; justification: string | null }): Observable<void> {
+    return this.http.put<void>(`${this.teacherUrl}/classes/${classId}/students/${studentId}/attendance`, payload);
   }
 
   teacherFamilyReports(classId: number, date: string): Observable<AbsenceReport[]> {
@@ -393,16 +409,16 @@ export class SelfSpaceService {
     return this.http.get<ConversationSummary[]>(this.apiConversations);
   }
 
-  startConversation(payload: NewConversationPayload): Observable<ConversationThread> {
-    return this.http.post<ConversationThread>(this.apiConversations, { ...payload, recipientSchool: payload.recipientSchool ?? true });
+  startConversation(payload: NewConversationPayload, files: File[] = []): Observable<ConversationThread> {
+    return this.http.post<ConversationThread>(this.apiConversations, conversationBody({ ...payload, recipientSchool: payload.recipientSchool ?? true }, files));
   }
 
   conversation(conversationId: number): Observable<ConversationThread> {
     return this.http.get<ConversationThread>(`${this.apiConversations}/${conversationId}`);
   }
 
-  replyToConversation(conversationId: number, content: string): Observable<ConversationThread> {
-    return this.http.post<ConversationThread>(`${this.apiConversations}/${conversationId}/messages`, { content });
+  replyToConversation(conversationId: number, content: string, files: File[] = []): Observable<ConversationThread> {
+    return this.http.post<ConversationThread>(`${this.apiConversations}/${conversationId}/messages`, conversationBody({ content }, files));
   }
 }
 

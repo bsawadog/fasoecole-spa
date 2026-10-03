@@ -1,0 +1,78 @@
+<div class="ss">
+  <header class="ss__header"><div><h1>{{ title() }}</h1><p>Informations et actions pour vos classes affectées.</p></div>
+    @if (module() !== 'emploi' && classes().length) {
+      <label class="ss__picker">Classe<select [value]="classId()" [disabled]="saving()" (change)="choose($any($event.target).value)">
+        @for (item of classes(); track item.classId) { <option [value]="item.classId">{{ item.schoolName }} · {{ item.className }} · {{ item.academicYearLabel }}</option> }
+      </select></label>
+    }
+    <button type="button" class="ss__mini" [disabled]="loadingClasses() || loading() || saving()" (click)="reload()">Actualiser</button>
+  </header>
+  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
+  @if (success()) { <p class="ss__alert ss__alert--success" role="status">{{ success() }}</p> }
+  @if (loadingClasses()) { <p class="ss__state">Chargement de vos classes…</p> }
+  @else if (module() !== 'emploi' && !classes().length && !error()) { <p class="ss__state">Aucune classe ne vous est affectée.</p> }
+  @else {
+    @if (module() === 'presences' || module() === 'signalements') {
+      <label class="ss__picker">Date<input type="date" [value]="date()" [max]="module() === 'presences' ? today : null" [disabled]="saving()" (change)="changeDate($any($event.target).value)" /></label>
+    }
+    @if (loading()) { <p class="ss__state">Chargement…</p> }
+    @else {
+      @switch (module()) {
+        @case ('emploi') { <app-schedule-view [entries]="schedule()" /> }
+        @case ('presences') {
+          <section class="ss__card ss__body">
+            <label class="ss__field">Rechercher un élève<input type="search" [value]="filter()" (input)="filter.set($any($event.target).value)" placeholder="Nom ou matricule" /></label>
+            <p class="ss__muted">{{ filteredAttendance().length }} / {{ attendance().length }} élève(s). Une ligne sans statut n’a pas encore été renseignée.</p>
+            <div class="ss__table-wrap"><table class="ss__table"><thead><tr><th>Élève</th><th>Matricule</th><th>Statut</th><th>Motif</th><th></th></tr></thead><tbody>
+              @for (row of filteredAttendance(); track row.studentId) {
+                <tr><td>{{ row.fullName }}</td><td>{{ row.registrationNumber }}</td>
+                  <td><select [(ngModel)]="attendanceDrafts[row.studentId].status" [disabled]="saving()" [attr.aria-label]="'Présence de ' + row.fullName">
+                    <option value="">Non renseigné</option>@for (status of attendanceStatuses; track status) { <option [value]="status">{{ attendanceLabels[status] }}</option> }
+                  </select></td>
+                  <td><input [(ngModel)]="attendanceDrafts[row.studentId].justification" [disabled]="saving()" maxlength="500" [attr.aria-label]="'Motif pour ' + row.fullName" /></td>
+                  <td><button type="button" class="ss__mini" [disabled]="saving() || !attendanceDrafts[row.studentId].status" (click)="saveAttendance(row)">Enregistrer</button></td></tr>
+              } @empty { <tr><td colspan="5">Aucun élève ne correspond.</td></tr> }
+            </tbody></table></div>
+          </section>
+        }
+        @case ('signalements') {
+          <p class="ss__muted">L’enregistrement ajoute l’absence ou le retard à la présence de l’enfant et passe le signalement à « Prise en compte ».</p>
+          <section class="ss__card ss__body"><div class="ss__table-wrap"><table class="ss__table">
+            <thead><tr><th>Élève</th><th>Type</th><th>Motif du parent</th><th></th></tr></thead><tbody>
+              @for (report of reports(); track report.id) {
+                <tr><td>{{ report.studentName }}</td><td>{{ familyLabels[report.attendanceType] }}</td><td>{{ report.reason }}</td>
+                  <td><button type="button" class="ss__mini" [disabled]="saving()" (click)="record(report)">Enregistrer {{ familyLabels[report.attendanceType].toLowerCase() }}</button></td></tr>
+              } @empty { <tr><td colspan="4">Aucun signalement en attente pour cette date.</td></tr> }
+            </tbody></table></div></section>
+        }
+        @case ('rendez-vous') {
+          @for (appointment of appointments(); track appointment.id) {
+            <article class="ss__card ss__body"><h2>{{ appointment.studentName }} · {{ appointment.parentName }}</h2>
+              <p>{{ appointment.proposedAt | date:'dd/MM/yyyy HH:mm' }}</p><span class="ss__chip">{{ appointmentLabels[appointment.status] }}</span><p>{{ appointment.reason }}</p>
+              @if (appointment.response) { <p>Réponse : {{ appointment.response }}</p> }
+              @if (appointment.status === 'PENDING') {
+                <label class="ss__field">Réponse<textarea [(ngModel)]="responses[appointment.id]" rows="2" maxlength="1000" placeholder="Lieu de rencontre ou motif du refus"></textarea></label>
+                <div class="ss__actions"><button type="button" class="ss__btn" [disabled]="saving()" (click)="decide(appointment,'ACCEPTED')">Confirmer</button>
+                  <button type="button" class="ss__mini" [disabled]="saving()" (click)="decide(appointment,'REJECTED')">Refuser</button></div>
+              }
+            </article>
+          } @empty { <p class="ss__state">Aucune demande de rendez-vous ne vous est destinée pour cette classe.</p> }
+        }
+      }
+      @if (kind(); as postKind) {
+        <form class="ss__card ss__body" (ngSubmit)="publish()"><h2>Publier pour les parents de la classe</h2>
+          <label class="ss__field">Titre<input name="title" [(ngModel)]="postTitle" maxlength="160" required /></label>
+          <label class="ss__field">Contenu / consignes<textarea name="content" [(ngModel)]="content" rows="4" maxlength="4000" required></textarea></label>
+          @if (postKind === 'HOMEWORK') { <label class="ss__field">Date de remise<input type="date" name="dueDate" [(ngModel)]="dueDate" [min]="today" required /></label> }
+          <app-conversation-files [(files)]="files" [disabled]="saving()" />
+          <button type="submit" class="ss__btn" [disabled]="saving()">{{ saving() ? 'Publication…' : 'Publier' }}</button>
+        </form>
+        @for (post of posts(); track post.id) {
+          <div><app-portal-posts [posts]="[post]" scope="teacher" [scopeId]="classId()!" />
+            @if (post.mine && post.classId === classId()) { <button type="button" class="ss__mini" [disabled]="saving()" (click)="remove(post)">Retirer ma publication</button> }
+          </div>
+        } @empty { <p class="ss__state">Aucune publication disponible.</p> }
+      }
+    }
+  }
+</div>

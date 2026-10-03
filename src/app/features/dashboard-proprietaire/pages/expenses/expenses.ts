@@ -325,7 +325,7 @@ export class ExpensesPage implements OnInit, OnDestroy {
     this.requests.unsubscribe();
     this.requests = new Subscription();
     this.schoolId.set(schoolId);
-    localStorage.setItem('fasoecole_owner_school', String(schoolId));
+    this.auth.selectSchoolContext(schoolId);
     this.loading.set(true);
     this.summary.set(null);
     this.expenses.set([]);

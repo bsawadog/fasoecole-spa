@@ -3,8 +3,8 @@
     <div class="class-roster__identity">
       <span class="class-roster__header-icon" aria-hidden="true">É</span>
       <div>
-        <h1>Élèves par classe</h1>
-        <p>Consultez les élèves d’une classe, leurs parents et leurs enseignants.</p>
+        <h1>{{ learner().title }} par classe</h1>
+        <p>Consultez les {{ learner().plural }} d’une classe, leurs parents et leurs enseignants.</p>
       </div>
     </div>
     @if (schools().length > 1) {
@@ -42,7 +42,7 @@
         </label>
         <div class="class-roster__toolbar-actions">
           @if (selectedClassId() && !addingStudent()) {
-            <button type="button" class="class-roster__add-btn" (click)="openAddStudent()">+ Ajouter un élève</button>
+            <button type="button" class="class-roster__add-btn" (click)="openAddStudent()">+ Ajouter un {{ learner().singular }}</button>
           }
           @if (selectedClassId() && rows().length > 0) {
             <button type="button" class="class-roster__print-btn" (click)="printRoster()">🖨️ Imprimer / Enregistrer en PDF</button>
@@ -52,12 +52,12 @@
     </section>
 
     <h2 class="class-roster__print-title">
-      Liste des élèves — {{ currentSchoolName() }} — {{ currentClassLabel() }}
+      Liste des {{ learner().plural }} — {{ currentSchoolName() }} — {{ currentClassLabel() }}
     </h2>
 
     @if (addingStudent()) {
       <form class="class-roster__new-form class-roster__card class-roster__no-print" (ngSubmit)="submitNewStudent()">
-        <div class="class-roster__card-head"><h2>Ajouter un élève à cette classe</h2></div>
+        <div class="class-roster__card-head"><h2>Ajouter un {{ learner().singular }} à cette classe</h2></div>
         <div class="class-roster__edit-grid">
           <label>Prénom <input name="nFirstName" [(ngModel)]="newStudentForm.firstName" required /></label>
           <label>Nom <input name="nLastName" [(ngModel)]="newStudentForm.lastName" required /></label>
@@ -75,27 +75,36 @@
           </label>
         </div>
         <div class="class-roster__edit-actions">
-          <button type="submit" [disabled]="saving()">Ajouter l’élève</button>
+          <button type="submit" [disabled]="saving()">Ajouter {{ learner().definite }}</button>
           <button type="button" (click)="cancelAddStudent()">Annuler</button>
         </div>
       </form>
     }
 
     @if (loadingRoster()) {
-      <p class="class-roster__state">Chargement des élèves…</p>
+      <p class="class-roster__state">Chargement des {{ learner().plural }}…</p>
     } @else if (rows().length === 0) {
-      <p class="class-roster__state">Aucun élève actif inscrit dans cette classe.</p>
+      <p class="class-roster__state">Aucun {{ learner().singular }} actif inscrit dans cette classe.</p>
     } @else {
       <section class="class-roster__card class-roster__list">
         <div class="class-roster__card-head class-roster__no-print">
-          <h2>Liste des élèves</h2>
-          <span class="class-roster__count">{{ rows().length }} élève(s)</span>
+          <h2>Liste des {{ learner().plural }}</h2>
+          <span class="class-roster__count" role="status">{{ filteredRows().length }} / {{ rows().length }} {{ learner().plural }}</span>
+        </div>
+        <div class="class-roster__search class-roster__no-print">
+          <label for="roster-student-search">Rechercher un {{ learner().singular }}</label>
+          <input id="roster-student-search" type="search" class="class-roster__select"
+                 [ngModel]="studentSearch()" (ngModelChange)="studentSearch.set($event)"
+                 placeholder="Nom, prénom, matricule ou courriel" />
+          @if (studentSearch()) {
+            <button type="button" class="class-roster__action" (click)="studentSearch.set('')">Effacer</button>
+          }
         </div>
         <div class="class-roster__table-wrap">
         <table class="class-roster__table">
           <thead>
             <tr>
-              <th>Élève</th>
+              <th>{{ learner().column }}</th>
               <th>Contact</th>
               <th>Matricule</th>
               <th>Parents</th>
@@ -104,7 +113,10 @@
             </tr>
           </thead>
           <tbody>
-            @for (row of rows(); track row.studentId) {
+            @if (!filteredRows().length) {
+              <tr><td colspan="6" class="class-roster__state">Aucun {{ learner().singular }} ne correspond à votre recherche.</td></tr>
+            }
+            @for (row of filteredRows(); track row.studentId) {
               <tr class="class-roster__row">
                 @if (editingStudentId() === row.studentId) {
                   <td colspan="6">
@@ -153,7 +165,7 @@
                             }
                           </select>
                         </label>
-                        <p class="class-roster__muted">La fiche de l’élève (notes, présences, paiements, parents) est conservée.</p>
+                        <p class="class-roster__muted">La fiche de {{ learner().definite }} (notes, présences, paiements, parents) est conservée.</p>
                         <div class="class-roster__edit-actions">
                           <button type="submit" [disabled]="saving() || !transferTargetId">Transférer</button>
                           <button type="button" (click)="cancelEdit()">Annuler</button>
@@ -206,7 +218,27 @@
                         </div>
                       }
                     } @empty {
-                      <span class="class-roster__muted">Aucun parent associé</span>
+                      @if (addingParentStudentId() === row.studentId) {
+                        <form class="class-roster__edit-form" #newParent="ngForm" (ngSubmit)="newParent.valid && addParent(row.studentId)">
+                          <div class="class-roster__edit-grid">
+                            <label>Prénom<input name="firstName" [(ngModel)]="newParentForm.firstName" required maxlength="100" /></label>
+                            <label>Nom<input name="lastName" [(ngModel)]="newParentForm.lastName" required maxlength="100" /></label>
+                            <label>Courriel (facultatif)<input name="email" type="email" email [(ngModel)]="newParentForm.email" maxlength="150" /></label>
+                            <label>Téléphone<input name="phone" [(ngModel)]="newParentForm.phone" maxlength="30" /></label>
+                            <label>Lien avec {{ learner().definite }}<input name="relationship" [(ngModel)]="newParentForm.relationship" maxlength="50" placeholder="Père, mère, tuteur…" /></label>
+                          </div>
+                          <div class="class-roster__edit-actions">
+                            <button type="submit" [disabled]="saving() || newParent.invalid">{{ saving() ? 'Enregistrement…' : 'Ajouter' }}</button>
+                            <button type="button" (click)="cancelEdit()" [disabled]="saving()">Annuler</button>
+                          </div>
+                        </form>
+                      } @else {
+                        <span class="class-roster__muted">Aucun parent associé</span>
+                        <div class="class-roster__parent-actions class-roster__no-print">
+                          <button type="button" class="class-roster__link" (click)="startAddParent(row)" [disabled]="saving()"
+                            [attr.aria-label]="'Ajouter un parent pour ' + row.firstName + ' ' + row.lastName">+ Ajouter un parent</button>
+                        </div>
+                      }
                     }
                   </td>
                   <td>

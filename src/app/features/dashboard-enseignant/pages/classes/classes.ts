@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { ScheduleView } from '../../../../shared/self-space/schedule-view';
+import { Subscription } from 'rxjs';
+import { SchoolDataSyncService } from '../../../../shared/school-data-sync.service';
 import {
   apiError,
   AbsenceReport,
@@ -26,6 +28,8 @@ import {
 export class EnseignantClasses implements OnInit {
   private readonly api = inject(SelfSpaceService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly sync = inject(SchoolDataSyncService);
+  private syncSubscription?: Subscription;
 
   readonly classes = signal<TeacherClass[]>([]);
   readonly schedule = signal<ScheduleEntry[]>([]);
@@ -76,16 +80,23 @@ export class EnseignantClasses implements OnInit {
   }
 
   select(classId: number): void {
+    this.syncSubscription?.unsubscribe();
     this.selectedId.set(classId);
+    const schoolId = this.selected()?.schoolId;
+    if (schoolId) this.syncSubscription = this.sync.watch(schoolId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (!this.reportBusyId()) this.loadFamilyReports();
+    });
     this.filter.set('');
     this.studentsLoading.set(true);
     this.studentsError.set(null);
     this.api.classStudents(classId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (students) => {
+        if (classId !== this.selectedId()) return;
         this.students.set(students);
         this.studentsLoading.set(false);
       },
       error: (err) => {
+        if (classId !== this.selectedId()) return;
         this.students.set([]);
         this.studentsLoading.set(false);
         this.studentsError.set(apiError(err, 'Impossible de charger les élèves.'));
@@ -114,12 +125,15 @@ export class EnseignantClasses implements OnInit {
     if (!classId) return;
     this.reportsLoading.set(true);
     this.reportError.set(null);
-    this.api.teacherFamilyReports(classId, this.reportDate()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    const date = this.reportDate();
+    this.api.teacherFamilyReports(classId, date).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (reports) => {
+        if (classId !== this.selectedId() || date !== this.reportDate()) return;
         this.familyReports.set(reports);
         this.reportsLoading.set(false);
       },
       error: (err) => {
+        if (classId !== this.selectedId() || date !== this.reportDate()) return;
         this.reportError.set(apiError(err, 'Impossible de charger les signalements des parents.'));
         this.reportsLoading.set(false);
       },

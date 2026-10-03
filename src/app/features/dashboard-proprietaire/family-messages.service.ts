@@ -1,4 +1,5 @@
 import { HttpClient } from '@angular/common/http';
+import { conversationBody } from '../../shared/self-space/message-attachments';
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable, forkJoin, map, of, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -21,6 +22,10 @@ export class OwnerFamilyMessagesService {
     return this.http.get<FamilyInboxSummary>(`${this.api}/schools/${schoolId}/summary`);
   }
 
+  recordAttendanceReport(reportId: number): Observable<unknown> {
+    return this.http.post(`${this.api}/absence-reports/${reportId}/record`, {});
+  }
+
   conversations(schoolId: number): Observable<ConversationSummary[]> {
     return this.http.get<ConversationSummary[]>(this.conversationApi, { params: { schoolId } });
   }
@@ -31,16 +36,16 @@ export class OwnerFamilyMessagesService {
     return this.http.get<ConversationRecipient[]>(`${this.conversationApi}/recipients`, { params });
   }
 
-  start(payload: NewConversationPayload): Observable<ConversationThread> {
-    return this.http.post<ConversationThread>(this.conversationApi, payload);
+  start(payload: NewConversationPayload, files: File[] = []): Observable<ConversationThread> {
+    return this.http.post<ConversationThread>(this.conversationApi, conversationBody(payload, files));
   }
 
   conversation(conversationId: number): Observable<ConversationThread> {
     return this.http.get<ConversationThread>(`${this.conversationApi}/${conversationId}`);
   }
 
-  reply(conversationId: number, content: string): Observable<ConversationThread> {
-    return this.http.post<ConversationThread>(`${this.conversationApi}/${conversationId}/messages`, { content });
+  reply(conversationId: number, content: string, files: File[] = []): Observable<ConversationThread> {
+    return this.http.post<ConversationThread>(`${this.conversationApi}/${conversationId}/messages`, conversationBody({ content }, files));
   }
 
   refreshUnreadCount(schoolIds: number[]): Observable<number> {

@@ -196,6 +196,50 @@
     }
   }
 
+  &__messages {
+    position: relative;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 1px solid #16a34a;
+    border-radius: 50%;
+    color: #fff;
+    background: #16a34a;
+    box-shadow: 0 2px 6px rgba(22, 163, 74, .12);
+    transition: background .15s ease, box-shadow .15s ease;
+
+    &:hover {
+      border-color: #15803d;
+      color: #fff;
+      background: #15803d;
+      box-shadow: 0 3px 10px rgba(22, 163, 74, .2);
+    }
+
+    &.shell__action--active {
+      border-color: #166534;
+      color: #fff;
+      background: #166534;
+    }
+  }
+
+  &__message-count {
+    position: absolute;
+    top: -.2rem;
+    right: -.2rem;
+    display: grid;
+    place-items: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 .2rem;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #fff;
+    font-size: .65rem;
+    font-weight: 700;
+    border: 2px solid #fff;
+  }
+
   &__page {
     flex: 1;
     padding: 2rem;
@@ -276,7 +320,7 @@
 }
 
 @media (max-width: 420px) {
-  .shell__action span {
+  .shell__action:not(.shell__messages) span {
     position: absolute;
     width: 1px;
     height: 1px;

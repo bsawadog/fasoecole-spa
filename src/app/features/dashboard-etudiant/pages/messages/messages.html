@@ -1,0 +1,36 @@
+<div class="ss">
+  <header class="ss__header"><div><h1>Messages</h1><p>Lisez les messages de votre établissement et répondez aux conversations.</p></div></header>
+  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
+  <div class="ss__split">
+    <aside class="ss__card" aria-label="Conversations">
+      <h2 class="ss__card-head">Mes conversations</h2>
+      @if (loading()) { <p class="ss__body">Chargement…</p> }
+      @for (item of conversations(); track item.id) {
+        <button type="button" class="ss__conv" [disabled]="sending()" [class.ss__conv--on]="thread()?.conversation?.id === item.id" [class.ss__conv--unread]="item.unread" (click)="open(item)">
+          <strong>{{ item.subject }}</strong><span>{{ item.schoolName }}</span>
+          <small>{{ item.lastMessageAt | date:'dd/MM/yyyy HH:mm' }}</small>
+          @if (item.unread) { <span class="ss__chip ss__chip--red">Non lu</span> }
+        </button>
+      } @empty { @if (!loading()) { <p class="ss__body">Aucune conversation.</p> } }
+    </aside>
+    <section class="ss__card ss__body">
+      @if (thread(); as current) {
+        <h2>{{ current.conversation.subject }}</h2><p class="ss__muted">{{ current.conversation.recipientCount ?? current.conversation.recipientNames?.length ?? 0 }} destinataire(s)</p>
+        <div class="ss__thread" aria-live="polite">
+          @for (message of current.messages; track message.id) {
+            <article class="ss__msg" [class.ss__msg--mine]="message.mine">
+              <small>{{ message.senderName }} · {{ message.sentAt | date:'dd/MM/yyyy HH:mm' }}</small>{{ message.content }}
+              <app-message-attachments [attachments]="message.attachments ?? []" />
+              @if (message.mine) { <small>{{ message.readBy?.length ? 'Lu par ' + message.readBy.length + ' personne(s)' : 'Non lu' }}</small> }
+            </article>
+          }
+        </div>
+        <form (ngSubmit)="send()" class="ss__body">
+          <label class="ss__field">Répondre<textarea name="reply" [(ngModel)]="reply" [required]="!files.length" maxlength="4000" rows="3"></textarea></label>
+          <app-conversation-files [(files)]="files" [disabled]="sending()" />
+          <button class="ss__btn" type="submit" [disabled]="sending() || (!reply.trim() && !files.length)">{{ sending() ? 'Envoi…' : 'Envoyer' }}</button>
+        </form>
+      } @else { <p>Choisissez une conversation.</p> }
+    </section>
+  </div>
+</div>

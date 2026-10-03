@@ -231,6 +231,9 @@ export class OwnerManagementService {
   createSchool(payload: Omit<SchoolRecord, 'id'>): Observable<SchoolRecord> {
     return this.http.post<SchoolRecord>(`${environment.apiUrl}/schools`, payload);
   }
+  finalizeSchool(id: number): Observable<SchoolRecord> {
+    return this.http.post<SchoolRecord>(`${environment.apiUrl}/schools/${id}/finalize`, {});
+  }
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
@@ -348,6 +351,11 @@ export class OwnerManagementService {
 
   updateRosterParent(classId: number, parentId: number, payload: UpdateParentProfilePayload): Observable<ClassRosterRow> {
     return this.http.put<ClassRosterRow>(`${this.apiUrl}/classes/${classId}/roster/parents/${parentId}`, payload);
+  }
+
+  addRosterParent(classId: number, studentId: number,
+                  payload: UpdateParentProfilePayload & { relationship: string | null }): Observable<ClassRosterRow> {
+    return this.http.post<ClassRosterRow>(`${this.apiUrl}/classes/${classId}/roster/students/${studentId}/parents`, payload);
   }
 
   getStudentDetail(studentId: number): Observable<StudentDetail> {

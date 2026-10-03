@@ -15,7 +15,7 @@
         @for (item of conversations(); track item.id) {
           <button class="ss__conv" type="button" [class.ss__conv--on]="thread()?.conversation?.id === item.id"
                   [class.ss__conv--unread]="item.unread" (click)="open(item)">
-            <strong>{{ item.subject }}</strong><span>{{ item.recipientNames?.join(', ') || item.parentName || item.schoolName }}</span>
+            <strong>{{ item.subject }}</strong><span>{{ item.recipientCount ?? item.recipientNames?.length ?? 0 }} destinataire(s)</span>
             <small>{{ item.lastMessageAt | date: 'dd/MM/yyyy HH:mm' }}</small>
             @if (item.unread) { <span class="ss__chip ss__chip--red">Non lu</span> }
           </button>
@@ -48,7 +48,8 @@
             </div>
           }
           <label class="ss__field">Objet<input name="subject" [(ngModel)]="subject" maxlength="160" required /></label>
-          <label class="ss__field">Message<textarea name="message" [(ngModel)]="message" rows="4" maxlength="4000" required></textarea></label>
+          <label class="ss__field">Message<textarea name="message" [(ngModel)]="message" rows="4" maxlength="4000" [required]="!messageFiles.length"></textarea></label>
+          <app-conversation-files [(files)]="messageFiles" [disabled]="sending()" />
           <div class="ss__emoji-picker" aria-label="Ajouter un emoji">
             @for (emoji of emojis; track emoji) { <button type="button" (click)="addEmoji(emoji, 'message')" [attr.aria-label]="'Ajouter ' + emoji">{{ emoji }}</button> }
           </div>
@@ -56,21 +57,23 @@
         </form>
       } @else if (thread(); as current) {
         <h2>{{ current.conversation.subject }}</h2>
-        <p class="ss__muted">{{ current.conversation.recipientNames?.join(', ') || current.conversation.schoolName }}</p>
+        <p class="ss__muted">{{ current.conversation.recipientCount ?? current.conversation.recipientNames?.length ?? 0 }} destinataire(s)</p>
         <div class="ss__thread" aria-live="polite">
           @for (message of current.messages; track message.id) {
             <article class="ss__msg" [class.ss__msg--mine]="message.mine">
               <small>{{ message.senderName }} · {{ message.sentAt | date: 'dd/MM/yyyy HH:mm' }}</small>{{ message.content }}
-              @if (message.mine) { <small>{{ message.readBy?.length ? 'Lu par ' + message.readBy.join(', ') : 'Non lu' }}</small> }
+              <app-message-attachments [attachments]="message.attachments ?? []" />
+              @if (message.mine) { <small>{{ message.readBy?.length ? 'Lu par ' + message.readBy.length + ' personne(s)' : 'Non lu' }}</small> }
             </article>
           }
         </div>
         <form class="ss__body" (ngSubmit)="sendReply()">
-          <label class="ss__field">Répondre<textarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" required></textarea></label>
+          <label class="ss__field">Répondre<textarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" [required]="!replyFiles.length"></textarea></label>
+          <app-conversation-files [(files)]="replyFiles" [disabled]="sending()" />
           <div class="ss__emoji-picker" aria-label="Ajouter un emoji">
             @for (emoji of emojis; track emoji) { <button type="button" (click)="addEmoji(emoji, 'reply')" [attr.aria-label]="'Ajouter ' + emoji">{{ emoji }}</button> }
           </div>
-          <button class="ss__btn" type="submit" [disabled]="sending() || !reply.trim()">Envoyer</button>
+          <button class="ss__btn" type="submit" [disabled]="sending() || (!reply.trim() && !replyFiles.length)">Envoyer</button>
         </form>
       } @else { <p class="ss__state">Choisissez une conversation ou démarrez-en une nouvelle.</p> }
     </section>

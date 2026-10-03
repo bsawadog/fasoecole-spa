@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 export const ETUDIANT_ROUTES: Routes = [
+  { path: 'messages', loadComponent: () => import('./pages/messages/messages').then(m => m.StudentMessages) },
   {
     path: 'notes',
     loadComponent: () => import('./pages/notes/notes').then((m) => m.EtudiantNotes),

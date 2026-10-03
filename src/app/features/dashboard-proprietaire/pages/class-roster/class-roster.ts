@@ -1,4 +1,4 @@
-import { Component, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, of, Subscription } from 'rxjs';
@@ -59,11 +59,23 @@ export class ClassRoster implements OnInit, OnDestroy {
 
   readonly schools = signal<RegistrationSchool[]>([]);
   readonly selectedSchoolId = signal<number | null>(null);
+  readonly learner = computed(() => this.schools().find(school => school.id === this.selectedSchoolId())?.type === 'UNIVERSITE'
+    ? { singular: 'étudiant', plural: 'étudiants', title: 'Étudiants', column: 'Étudiant', definite: 'l’étudiant' }
+    : { singular: 'élève', plural: 'élèves', title: 'Élèves', column: 'Élève', definite: 'l’élève' });
   readonly classes = signal<ClassRecord[]>([]);
   readonly levels = signal<LevelRecord[]>([]);
   readonly years = signal<AcademicYearRecord[]>([]);
   readonly selectedClassId = signal<number | null>(null);
   readonly rows = signal<ClassRosterRow[]>([]);
+  readonly studentSearch = signal('');
+  readonly filteredRows = computed(() => {
+    const normalize = (value: string) => value.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase();
+    const terms = normalize(this.studentSearch()).trim().split(/\s+/).filter(Boolean);
+    return this.rows().filter(row => {
+      const text = normalize(`${row.firstName} ${row.lastName} ${row.registrationNumber} ${row.email ?? ''}`);
+      return terms.every(term => text.includes(term));
+    });
+  });
   readonly loading = signal(true);
   readonly loadingRoster = signal(false);
   readonly saving = signal(false);
@@ -72,6 +84,8 @@ export class ClassRoster implements OnInit, OnDestroy {
 
   readonly editingStudentId = signal<number | null>(null);
   readonly editingParentId = signal<number | null>(null);
+  readonly addingParentStudentId = signal<number | null>(null);
+  newParentForm = { firstName: '', lastName: '', email: '', phone: '', relationship: '' };
   readonly addingStudent = signal(false);
   readonly transferringStudentId = signal<number | null>(null);
   transferTargetId: number | null = null;
@@ -156,6 +170,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   }
 
   startEditParent(parent: RosterParent): void {
+    this.addingParentStudentId.set(null);
     this.editingStudentId.set(null);
     this.transferringStudentId.set(null);
     this.editingParentId.set(parent.parentId);
@@ -169,6 +184,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   }
 
   cancelEdit(): void {
+    this.addingParentStudentId.set(null);
     this.editingStudentId.set(null);
     this.editingParentId.set(null);
     this.transferringStudentId.set(null);
@@ -216,7 +232,7 @@ export class ClassRoster implements OnInit, OnDestroy {
     }
     const targetLabel = this.transferLabel(target);
     if (!await this.confirmation.confirm({
-      title: 'Transférer cet élève ?',
+      title: `Transférer cet ${this.learner().singular} ?`,
       message: `${row.firstName} ${row.lastName} sera transféré(e) en ${targetLabel}. Sa fiche, ses notes, ses présences, ses paiements et ses parents sont conservés.`,
       confirmLabel: 'Transférer',
     })) return;
@@ -228,7 +244,7 @@ export class ClassRoster implements OnInit, OnDestroy {
         this.transferringStudentId.set(null);
         this.successMessage.set(`${row.firstName} ${row.lastName} a été transféré(e) en ${targetLabel}. Sa fiche est conservée.`);
       },
-      error: (err) => this.fail(err?.error?.message ?? 'Le transfert de l’élève a échoué.'),
+      error: (err) => this.fail(err?.error?.message ?? `Le transfert de ${this.learner().definite} a échoué.`),
     });
   }
 
@@ -267,9 +283,9 @@ export class ClassRoster implements OnInit, OnDestroy {
         this.rows.update((rows) => [...rows, created]);
         this.saving.set(false);
         this.addingStudent.set(false);
-        this.successMessage.set('L’élève a été ajouté à la classe.');
+        this.successMessage.set(`${this.learner().column} ajouté à la classe.`);
       },
-      error: (err) => this.fail(err?.error?.message ?? 'L’ajout de l’élève a échoué.'),
+      error: (err) => this.fail(err?.error?.message ?? `L’ajout de ${this.learner().definite} a échoué.`),
     });
   }
 
@@ -293,9 +309,9 @@ export class ClassRoster implements OnInit, OnDestroy {
         this.rows.update((rows) => rows.map((row) => (row.studentId === studentId ? updated : row)));
         this.saving.set(false);
         this.editingStudentId.set(null);
-        this.successMessage.set('Les informations de l’élève ont été mises à jour.');
+        this.successMessage.set(`Les informations de ${this.learner().definite} ont été mises à jour.`);
       },
-      error: () => this.fail('La mise à jour de l’élève a échoué.'),
+      error: () => this.fail(`La mise à jour de ${this.learner().definite} a échoué.`),
     });
   }
 
@@ -303,7 +319,7 @@ export class ClassRoster implements OnInit, OnDestroy {
     const classId = this.selectedClassId();
     if (!classId) return;
     if (!await this.confirmation.confirm({
-      title: 'Supprimer cet élève définitivement ?',
+      title: `Supprimer cet ${this.learner().singular} définitivement ?`,
       message: `Supprimer ${row.firstName} ${row.lastName} ainsi que son compte, ses notes, ses présences et ses paiements ?`,
       confirmLabel: 'Supprimer définitivement',
       destructive: true,
@@ -313,9 +329,9 @@ export class ClassRoster implements OnInit, OnDestroy {
       next: () => {
         this.rows.update((rows) => rows.filter((r) => r.studentId !== row.studentId));
         this.saving.set(false);
-        this.successMessage.set('L’élève a été supprimé de l’établissement.');
+        this.successMessage.set(`${this.learner().column} supprimé de l’établissement.`);
       },
-      error: () => this.fail('La suppression de l’élève a échoué.'),
+      error: () => this.fail(`La suppression de ${this.learner().definite} a échoué.`),
     });
   }
 
@@ -341,10 +357,43 @@ export class ClassRoster implements OnInit, OnDestroy {
     });
   }
 
+  startAddParent(row: ClassRosterRow): void {
+    if (this.saving() || row.parents.length) return;
+    this.cancelEdit();
+    this.addingStudent.set(false);
+    this.newParentForm = { firstName: '', lastName: '', email: '', phone: '', relationship: '' };
+    this.addingParentStudentId.set(row.studentId);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+  }
+
+  addParent(studentId: number): void {
+    const classId = this.selectedClassId();
+    const form = this.newParentForm;
+    if (!classId || this.saving() || !form.firstName.trim() || !form.lastName.trim()) return;
+    this.saving.set(true);
+    this.errorMessage.set(null);
+    this.api.addRosterParent(classId, studentId, {
+      firstName: form.firstName.trim(), lastName: form.lastName.trim(),
+      email: form.email.trim() || null, phone: form.phone.trim() || null,
+      relationship: form.relationship.trim() || null,
+    }).subscribe({
+      next: (updated) => {
+        if (this.selectedClassId() === classId) {
+          this.rows.update(rows => rows.map(row => row.studentId === studentId ? updated : row));
+          this.addingParentStudentId.set(null);
+          this.successMessage.set(`Le parent a été ajouté et associé à ${this.learner().definite}.`);
+        }
+        this.saving.set(false);
+      },
+      error: (err) => this.fail(err?.error?.message ?? 'Impossible d’ajouter le parent.'),
+    });
+  }
+
   private selectSchool(schoolId: number): void {
     this.request?.unsubscribe();
     this.selectedSchoolId.set(schoolId);
-    localStorage.setItem('fasoecole_owner_school', String(schoolId));
+    this.auth.selectSchoolContext(schoolId);
     this.loading.set(true);
     this.errorMessage.set(null);
     this.successMessage.set(null);
@@ -371,6 +420,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   }
 
   private selectClass(classId: number): void {
+    this.studentSearch.set('');
     this.classRequest?.unsubscribe();
     this.selectedClassId.set(classId);
     this.loadingRoster.set(true);
@@ -385,7 +435,7 @@ export class ClassRoster implements OnInit, OnDestroy {
       },
       error: () => {
         this.loadingRoster.set(false);
-        this.errorMessage.set('Impossible de charger les élèves de cette classe.');
+        this.errorMessage.set(`Impossible de charger les ${this.learner().plural} de cette classe.`);
       },
     });
   }
