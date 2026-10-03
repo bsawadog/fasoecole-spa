@@ -26,8 +26,14 @@
         {{ schools()[0].name }}
       </div>
     }
+    @if (canCreateSchool()) { <a routerLink="/proprietaire/creer-ecole" class="owner-dashboard__school-badge">Ajouter un établissement</a> }
   </header>
 
+  @if (schoolStatus() === 'PENDING_APPROVAL') {
+    <p class="owner-dashboard__message" role="status">Votre établissement est en attente de validation et d’activation par le SUPER_ADMIN.</p>
+  } @else if (schoolStatus() === 'DRAFT') {
+    <p class="owner-dashboard__message" role="status">Votre établissement est en préparation. <a routerLink="/proprietaire/creer-ecole" [queryParams]="{schoolId:selectedSchoolId()}">Terminer et soumettre pour validation</a>.</p>
+  }
   @if (errorMessage()) {
     <p class="owner-dashboard__message owner-dashboard__message--error" role="alert">{{ errorMessage() }}</p>
   }

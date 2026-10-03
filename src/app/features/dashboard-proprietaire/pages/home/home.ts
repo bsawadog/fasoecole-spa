@@ -53,6 +53,8 @@ import { apiError } from '../../../../shared/self-space/self-space.service';
 })
 export class ProprietaireHome implements OnDestroy, OnInit {
   private readonly auth = inject(AuthService);
+  readonly schoolStatus = computed(() => this.auth.ownerAccess()?.find(a => a.schoolId === this.selectedSchoolId())?.status);
+  readonly canCreateSchool = this.auth.isSchoolOwner;
   private readonly family = inject(OwnerFamilyMessagesService);
   private readonly destroyRef = inject(DestroyRef);
   readonly reportBusyId = signal<number | null>(null);
@@ -144,6 +146,7 @@ export class ProprietaireHome implements OnDestroy, OnInit {
   }
 
   refreshDashboard(schoolId: number): void {
+    this.auth.loadOwnerAccess(true).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ error: () => {} });
     this.dashboardRequest?.unsubscribe();
     this.dashboardRequest = this.auth.getOwnerDashboard(schoolId).subscribe({
       next: (dashboard) => {

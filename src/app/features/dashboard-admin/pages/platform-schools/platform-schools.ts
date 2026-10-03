@@ -9,7 +9,7 @@ import { environment } from '../../../../../environments/environment';
 interface SchoolRow {
   id: number; name: string; type: string; status: string; ownerId: number;
   ownerName: string; ownerEmail: string | null; ownerPhone: string | null;
-  activatedAt: string | null; deactivatedAt: string | null;
+  submittedAt: string | null; activatedAt: string | null; deactivatedAt: string | null;
 }
 interface SchoolPage { items: SchoolRow[]; total: number; page: number; size: number; }
 
@@ -26,7 +26,7 @@ interface SchoolPage { items: SchoolRow[]; total: number; page: number; size: nu
         <label>Statut<select [(ngModel)]="status" (ngModelChange)="filterChanged()">
           <option value="">Tous les statuts</option><option value="ACTIVE">Actifs</option>
           <option value="SUSPENDED">Désactivés</option><option value="DRAFT">En création</option>
-          <option value="ARCHIVED">Archivés</option></select></label>
+          <option value="PENDING_APPROVAL">En attente de validation</option><option value="ARCHIVED">Archivés</option></select></label>
         <button type="button" class="secondary" (click)="reload.next()" [disabled]="loading()">Actualiser</button>
       </div>
       @if (notice()) { <p class="notice" role="status">{{ notice() }}</p> }
@@ -37,11 +37,11 @@ interface SchoolPage { items: SchoolRow[]; total: number; page: number; size: nu
         @for (school of rows(); track school.id) {
           <tr><td><strong>{{ school.name }}</strong><small>{{ typeLabel(school.type) }}</small></td>
             <td>{{ school.ownerName }}<small>{{ school.ownerEmail || 'Courriel non renseigné' }}</small></td>
-            <td><span class="badge" [class.active]="school.status === 'ACTIVE'">{{ statusLabel(school.status) }}</span></td>
+            <td><span class="badge" [class.active]="school.status === 'ACTIVE'">{{ statusLabel(school.status) }}</span>@if (school.submittedAt) { <small>Soumis le {{ school.submittedAt | date:'dd/MM/yyyy HH:mm' }}</small> }</td>
             <td>{{ school.activatedAt ? (school.activatedAt | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
             <td>{{ school.deactivatedAt ? (school.deactivatedAt | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
             <td><div class="actions"><button type="button" [class.danger]="school.status === 'ACTIVE'"
-              [disabled]="saving()" (click)="confirmation.set(school)">{{ school.status === 'ACTIVE' ? 'Désactiver' : 'Activer' }}</button>
+              [disabled]="saving() || school.status === 'DRAFT'" (click)="confirmation.set(school)">{{ school.status === 'ACTIVE' ? 'Désactiver' : school.status === 'PENDING_APPROVAL' ? 'Valider et activer' : 'Activer' }}</button>
               <button type="button" class="secondary" (click)="contact.set(school)">Contacter</button></div></td></tr>
         } @empty { <tr><td colspan="6">{{ loading() ? 'Chargement des établissements…' : 'Aucun établissement ne correspond à la recherche.' }}</td></tr> }
       </tbody></table></div>
@@ -112,7 +112,7 @@ export class PlatformSchools {
   filterChanged(): void { this.page=0; this.reload.next(); }
   changePage(delta:number): void { this.page+=delta; this.reload.next(); }
   pageCount(): number { return Math.max(1,Math.ceil(this.total()/this.size)); }
-  statusLabel(status:string): string { return ({ACTIVE:'Actif',SUSPENDED:'Désactivé',DRAFT:'En création',ARCHIVED:'Archivé'} as Record<string,string>)[status] ?? status; }
+  statusLabel(status:string): string { return ({PENDING_APPROVAL:'En attente de validation',ACTIVE:'Actif',SUSPENDED:'Désactivé',DRAFT:'En création',ARCHIVED:'Archivé'} as Record<string,string>)[status] ?? status; }
   typeLabel(type:string): string { return ({PRESCOLAIRE:'Préscolaire',PRIMAIRE:'Primaire',SECONDAIRE:'Secondaire',MIXTE:'Établissement mixte',UNIVERSITE:'Université',FORMATION:'Centre de formation'} as Record<string,string>)[type] ?? type; }
   saveStatus(school:SchoolRow): void {
     if (this.saving()) return;

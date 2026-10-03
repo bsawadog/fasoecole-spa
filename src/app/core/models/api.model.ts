@@ -23,6 +23,7 @@ export interface UserDto {
   emailVerified?: boolean;
   passwordSet?: boolean;
   mustChangePassword?: boolean;
+  ownerAccount?: boolean;
   invitationDeliveryStatus?: string | null;
   onboardingSteps?: string[];
   schoolIdentifier?: string | null;

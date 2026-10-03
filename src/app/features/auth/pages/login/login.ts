@@ -112,7 +112,8 @@ export class Login implements OnInit {
     this.auth.login(email.trim().toLowerCase(), password).subscribe({
       next: () => {
         this.loading.set(false);
-        this.auth.redirectAfterLogin();
+        if (this.route.snapshot.queryParamMap.get('next') === 'school-setup') this.auth.redirectAfterLogin('school-setup');
+        else this.auth.redirectAfterLogin();
       },
       error: () => {
         this.loading.set(false);

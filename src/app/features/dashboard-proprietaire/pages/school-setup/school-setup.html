@@ -46,7 +46,7 @@
       }
       }
       @if (step() === 'staff') {
-        <div class="actions"><button type="button" class="active" (click)="finalize()" [disabled]="saving()">{{ saving() ? 'Finalisation…' : 'Finaliser' }}</button></div>
+        <div class="actions"><button type="button" class="active" (click)="finalize()" [disabled]="saving()">{{ saving() ? 'Finalisation…' : 'Soumettre pour validation' }}</button></div>
       }
     }
   }

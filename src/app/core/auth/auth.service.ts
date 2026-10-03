@@ -34,6 +34,10 @@ export interface RegistrationRequest {
   requestedRole: ApprovalRole;
 }
 
+export interface OwnerRegistrationRequest {
+  firstName:string;lastName:string;email:string;phone:string;password:string;
+}
+
 export interface RegistrationSchool {
   id: number;
   name: string;
@@ -69,6 +73,8 @@ export interface SchoolAccess {
   schoolId: number;
   schoolName: string;
   schoolType: string;
+  status?: string;
+  submittedAt?: string | null;
   owner: boolean;
   jobTitle: string;
   modules: OwnerModule[];
@@ -220,6 +226,18 @@ export class AuthService {
     return this.http.get<RegistrationSchool[]>(`${this.apiUrl}/schools/registration-options`);
   }
 
+  registerOwner(request:OwnerRegistrationRequest):Observable<ActivationRequired> {
+    return this.http.post<ActivationRequired>(`${this.apiUrl}/auth/register-owner`,request);
+  }
+
+  enableOwnerAccount():Observable<User> {
+    const token=this._token();
+    return this.http.post<UserDto>(`${this.apiUrl}/users/me/owner-account`,{}).pipe(
+      map(profile=>this.toUser(profile,profile.roles)),
+      tap(user=>{ if(token) this.setSession(token,user);this._ownerAccess.set(null); }),
+    );
+  }
+
   /**
    * Établissements accessibles dans l'espace propriétaire. Avec un module, la liste inclut aussi
    * les établissements où ce module a été délégué à l'utilisateur (personnel administratif).
@@ -331,14 +349,15 @@ export class AuthService {
     localStorage.removeItem(STORAGE_KEY);
   }
 
-  redirectAfterLogin(): void {
+  redirectAfterLogin(next?:'school-setup'): void {
     const role = this.role();
     if (!role) {
       this.router.navigateByUrl('/login');
       return;
     }
     const user = this._user();
-    this.router.navigateByUrl(user?.approved && user.emailVerified === true && !user.mustChangePassword ? ROLE_HOME_ROUTE[role] : '/profil');
+    const ready=user?.approved && user.emailVerified === true && !user.mustChangePassword;
+    this.router.navigateByUrl(ready ? next==='school-setup' ? (this.isSchoolOwner()?'/proprietaire/creer-ecole':'/ajouter-etablissement') : ROLE_HOME_ROUTE[role] : '/profil');
   }
 
   getToken(): string | null {
@@ -363,6 +382,7 @@ export class AuthService {
       emailVerified: profile.emailVerified === true,
       passwordSet: profile.passwordSet,
       mustChangePassword: profile.mustChangePassword,
+      ownerAccount: profile.ownerAccount,
       onboardingSteps: profile.onboardingSteps,
       invitationDeliveryStatus: profile.invitationDeliveryStatus,
       requestedSchoolId: profile.requestedSchoolId,

@@ -1,5 +1,7 @@
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
+import { map, switchMap } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../core/auth';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
@@ -21,6 +23,7 @@ type Step = 'school' | 'academic' | 'teachers' | 'students' | 'fees' | 'staff';
 })
 export class SchoolSetup implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   private readonly api = inject(OwnerManagementService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly confirmation = inject(ConfirmationService);
@@ -44,11 +47,17 @@ export class SchoolSetup implements OnInit {
   form = { name: '', type: 'PRIMAIRE', address: '', phone: '', email: '' };
 
   ngOnInit(): void {
-    const draftId = Number(localStorage.getItem(this.draftKey));
+    const draftId = Number(this.route.snapshot.queryParamMap.get('schoolId') ?? localStorage.getItem(this.draftKey));
     if (!draftId) { this.loading.set(false); return; }
     this.api.getSchool(draftId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (school) => {
         this.loading.set(false);
+        if (school.status === 'PENDING_APPROVAL') {
+          this.schoolName.set(school.name);
+          this.finalized.set(true);
+          this.success.set('Établissement soumis : en attente de validation et d’activation par le SUPER_ADMIN.');
+          return;
+        }
         if (school.status === 'ACTIVE') {
           localStorage.removeItem(this.draftKey);
           this.schoolName.set(school.name);
@@ -57,6 +66,7 @@ export class SchoolSetup implements OnInit {
           return;
         }
         if (school.status !== 'DRAFT') { localStorage.removeItem(this.draftKey); return; }
+        localStorage.setItem(this.draftKey, String(school.id));
         this.schoolId.set(school.id);
         this.schoolName.set(school.name);
         this.creating.set(false);
@@ -75,6 +85,7 @@ export class SchoolSetup implements OnInit {
   }
 
   startAnother(): void {
+    localStorage.removeItem(this.draftKey);
     this.schoolId.set(null);
     this.schoolName.set('');
     this.finalized.set(false);
@@ -90,7 +101,7 @@ export class SchoolSetup implements OnInit {
     this.saving.set(true);
     this.error.set(null);
     this.api.createSchool({ ...this.form, name: this.form.name.trim(), ownerId, status: 'DRAFT' })
-      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      .pipe(switchMap(school => this.auth.loadOwnerAccess(true).pipe(map(() => school))), takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (school) => {
           this.schoolId.set(school.id);
           this.schoolName.set(school.name);
@@ -99,7 +110,7 @@ export class SchoolSetup implements OnInit {
           this.auth.selectSchoolContext(school.id);
           this.step.set('academic');
           this.form = { name: '', type: 'PRIMAIRE', address: '', phone: '', email: '' };
-          this.success.set('Brouillon enregistré. Configurez votre école, puis confirmez sa création avec « Finaliser ».');
+          this.success.set('Brouillon enregistré. Configurez votre école, puis soumettez-le à la validation du SUPER_ADMIN.');
           this.saving.set(false);
         },
         error: (err) => { this.saving.set(false); this.error.set(apiError(err, 'Impossible de créer l’établissement.')); },
@@ -111,19 +122,18 @@ export class SchoolSetup implements OnInit {
     if (!id || this.saving() || this.finalized()) return;
     this.saving.set(true);
     const confirmed = await this.confirmation.confirm({
-      title: 'Finaliser la création de cette école ?',
-      message: `Confirmez la création de « ${this.schoolName()} ». Les configurations déjà enregistrées seront conservées et l’établissement sera activé.`,
-      confirmLabel: 'Confirmer la création',
+      title: 'Soumettre cet établissement à validation ?',
+      message: `Soumettez « ${this.schoolName()} » au SUPER_ADMIN. Les configurations seront conservées. L’établissement sera disponible après son activation.`,
+      confirmLabel: 'Confirmer la soumission',
     });
     if (this.destroyRef.destroyed) return;
     if (!confirmed) { this.saving.set(false); return; }
     this.error.set(null);
     this.api.finalizeSchool(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (school) => {
-        localStorage.removeItem(this.draftKey);
         this.finalized.set(true);
         this.schoolName.set(school.name);
-        this.success.set(`L’établissement « ${school.name} » a été créé et activé avec succès.`);
+        this.success.set(`L’établissement « ${school.name} » est soumis et attend la validation du SUPER_ADMIN.`);
         this.saving.set(false);
       },
       error: (err) => { this.saving.set(false); this.error.set(apiError(err, 'Impossible de finaliser la création de l’école.')); },
