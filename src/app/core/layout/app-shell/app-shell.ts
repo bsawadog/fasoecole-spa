@@ -63,6 +63,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Dépenses & budget', icon: 'chart', routerLink: '/proprietaire/depenses', module: 'EXPENSES' },
     { label: 'Notes & bulletins', icon: 'notes', routerLink: '/proprietaire/notes', module: 'GRADES' },
     { label: 'Personnel & accès', icon: 'shield', routerLink: '/proprietaire/personnel', module: null },
+    { label: 'Exporter mes données', icon: 'notes', routerLink: '/proprietaire/export', module: null },
   ],
   enseignant: [
     { label: 'Accueil', icon: 'home', routerLink: '/enseignant' },
@@ -141,9 +142,12 @@ export class AppShell implements OnInit {
   });
   private readonly accessibleNavigation = computed<NavigationItem[]>(() => {
     const role = this.auth.role();
-    if (!role || this.user()?.approved !== true || this.user()?.emailVerified !== true) {
+    if (!role || this.user()?.approved !== true || this.user()?.emailVerified !== true || this.user()?.mustChangePassword) {
       return [];
     }
+    if (this.user()?.rawRoles.includes('SUPER_ADMIN')) return [
+      { label: 'Établissements', icon: 'building', routerLink: '/admin' },
+    ];
     if (role !== 'proprietaire') {
       return MENU_BY_ROLE[role].map((item) => item.routerLink.endsWith('/messages')
         ? { ...item, badge: this.unreadMessages() } : item);

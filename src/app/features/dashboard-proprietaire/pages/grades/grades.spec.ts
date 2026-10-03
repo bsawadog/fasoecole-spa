@@ -44,7 +44,7 @@ describe('GradesPage', () => {
         { provide: ConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
         { provide: AuthService, useValue: {
           user: () => ({ id: 7 }),
-          getOwnedSchools: () => of([{ id: 5, name: 'École', type: 'SECONDAIRE' }]),
+          selectSchoolContext: vi.fn(), selectedSchoolType: () => 'PRIMAIRE', getOwnedSchools: () => of([{ id: 5, name: 'École', type: 'SECONDAIRE' }]),
         } },
         { provide: OwnerManagementService, useValue: {
           getAcademicYears: () => of([{ id: 9, schoolId: 5, label: '2026-2027', startDate: '2026-09-01',

@@ -18,7 +18,7 @@ describe('OwnerManagement academic years', () => {
         provideRouter([]),
         { provide: AuthService, useValue: {
           user: () => ({ id: 2 }),
-          getOwnedSchools: () => of([school]),
+          selectSchoolContext: vi.fn(), selectedSchoolType: () => 'PRIMAIRE', getOwnedSchools: () => of([school]),
         } },
         { provide: ConfirmationService, useValue: {} },
         { provide: OwnerManagementService, useValue: {

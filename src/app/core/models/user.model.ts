@@ -11,6 +11,7 @@ export interface User {
   /** Faux tant que l'adresse courriel n'a pas été confirmée par lien. */
   emailVerified?: boolean;
   passwordSet?: boolean;
+  mustChangePassword?: boolean;
   invitationDeliveryStatus?: string | null;
   onboardingSteps?: string[];
   schoolIdentifier?: string | null;

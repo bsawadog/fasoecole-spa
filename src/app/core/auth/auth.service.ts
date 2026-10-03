@@ -338,7 +338,7 @@ export class AuthService {
       return;
     }
     const user = this._user();
-    this.router.navigateByUrl(user?.approved && user.emailVerified === true ? ROLE_HOME_ROUTE[role] : '/profil');
+    this.router.navigateByUrl(user?.approved && user.emailVerified === true && !user.mustChangePassword ? ROLE_HOME_ROUTE[role] : '/profil');
   }
 
   getToken(): string | null {
@@ -362,6 +362,7 @@ export class AuthService {
       approved: profile.approved,
       emailVerified: profile.emailVerified === true,
       passwordSet: profile.passwordSet,
+      mustChangePassword: profile.mustChangePassword,
       onboardingSteps: profile.onboardingSteps,
       invitationDeliveryStatus: profile.invitationDeliveryStatus,
       requestedSchoolId: profile.requestedSchoolId,

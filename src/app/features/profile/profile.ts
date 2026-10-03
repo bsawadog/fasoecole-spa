@@ -80,7 +80,7 @@ export class ProfilePage implements OnInit {
 
   onboardingLabel(step: string): string {
     const labels: Record<string, string> = {
-      ACCOUNT_INACTIVE: 'Compte désactivé', PASSWORD_REQUIRED: 'Mot de passe à choisir',
+      ACCOUNT_INACTIVE: 'Compte désactivé', PASSWORD_REQUIRED: 'Mot de passe à choisir', PASSWORD_CHANGE_REQUIRED: 'Mot de passe temporaire à remplacer',
       EMAIL_VERIFICATION_REQUIRED: 'Courriel à confirmer', APPROVAL_REQUIRED: 'Approbation de l’établissement en attente',
       CHILD_LINK_REQUIRED: 'Enfant à rattacher par l’établissement', CLASS_ASSIGNMENT_REQUIRED: 'Classe à affecter par l’établissement',
       TEACHING_ASSIGNMENT_REQUIRED: 'Classe et matière à affecter par l’établissement', READY: 'Compte prêt',

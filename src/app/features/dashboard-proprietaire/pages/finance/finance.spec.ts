@@ -36,7 +36,7 @@ describe('FinancePage', () => {
         { provide: ConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
         { provide: AuthService, useValue: {
           user: () => ({ id: 7 }),
-          getOwnedSchools: () => of([{ id: 5, name: 'École', type: 'SECONDAIRE' }]),
+          selectSchoolContext: vi.fn(), selectedSchoolType: () => 'PRIMAIRE', getOwnedSchools: () => of([{ id: 5, name: 'École', type: 'SECONDAIRE' }]),
         } },
         { provide: OwnerManagementService, useValue: {
           getClasses: () => of([{ id: 1, schoolId: 5, name: '6e A', levelId: 8, academicYearId: 9, capacity: 30 }]),

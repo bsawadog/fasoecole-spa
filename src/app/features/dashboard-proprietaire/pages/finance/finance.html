@@ -18,6 +18,30 @@
     }
   </header>
 
+  @if (balanceError()) { <p role="alert">{{ balanceError() }}</p> }
+  @if (balances(); as b) {
+    @if (b.accounts.length || b.receivables.length) {
+      <section class="fin__card">
+        <h2>Reports de début d’année</h2>
+        @for (account of b.accounts; track account.account) { <p>{{ account.account === 'CASH' ? 'Caisse' : 'Banque' }} : {{ account.opening_balance | number:'1.0-2' }} FCFA à l’ouverture</p> }
+        <p>Les impayés ci-dessous restent sur leurs factures originales ; ils ne sont pas inclus dans les nouveaux frais facturés.</p>
+        @for (debt of b.receivables; track debt.invoice_id) {
+          <p>{{ debt.first_name }} {{ debt.last_name }} · {{ debt.registration_number }} : {{ debt.remaining | number:'1.0-2' }} FCFA restant ({{ debt.amount_at_closure | number:'1.0-2' }} reporté)</p>
+          @if (debt.remaining > 0) { <button type="button" (click)="carriedPayment.set(debt.invoice_id); carriedAmount = null">Encaisser</button> }
+          @if (carriedPayment() === debt.invoice_id) {
+            <form (ngSubmit)="settleCarried(debt.invoice_id)" #carryForm="ngForm">
+              <label>Montant<input type="number" name="carriedAmount" min="0.01" [max]="debt.remaining" step="0.01" [(ngModel)]="carriedAmount" required></label>
+              <label>Date<input type="date" name="carriedDate" [(ngModel)]="pay.paymentDate" required></label>
+              <label>Mode<select name="carriedMethod" [(ngModel)]="pay.method">@for (method of methods; track method) { <option [value]="method">{{ methodLabels[method] }}</option> }</select></label>
+              <button type="submit" [disabled]="busy() || carryForm.invalid">Enregistrer le paiement</button>
+              <button type="button" (click)="carriedPayment.set(null)">Annuler</button>
+            </form>
+          }
+        }
+      </section>
+    }
+  }
+
   <nav class="fin__tabs" aria-label="Sections financières">
     @for (item of tabs; track item.id) {
       <button type="button" class="fin__tab" [class.fin__tab--on]="tab() === item.id"

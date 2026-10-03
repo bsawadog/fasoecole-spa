@@ -41,7 +41,7 @@ describe('ExpensesPage', () => {
         { provide: ConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
         { provide: AuthService, useValue: {
           user: () => ({ id: 7 }),
-          getOwnedSchools: () => of([{ id: 5, name: 'École', type: 'SECONDAIRE' }]),
+          selectSchoolContext: vi.fn(), selectedSchoolType: () => 'PRIMAIRE', getOwnedSchools: () => of([{ id: 5, name: 'École', type: 'SECONDAIRE' }]),
         } },
         { provide: ExpensesService, useValue: api },
       ],

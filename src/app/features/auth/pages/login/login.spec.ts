@@ -31,13 +31,38 @@ describe('Login', () => {
     page.setMode('register');
     page.registerForm.setValue({
       firstName: 'Awa', lastName: 'Diallo', email: 'awa@ecole.bf', phone: '', schoolId: 1,
-      requestedRole: 'PARENT', password: 'MotDePasse1', confirmPassword: 'MotDePasse1',
+      requestedRole: 'PARENT', schoolIdentifier: '', childMatricules: '001, MAT-02', password: 'MotDePasse1', confirmPassword: 'MotDePasse1',
     });
     page.submitRegistration();
-    expect(auth.register).toHaveBeenCalled();
+    expect(auth.register).toHaveBeenCalledWith(expect.objectContaining({ childRegistrationNumbers: ['001', 'MAT-02'] }));
     expect(auth.redirectAfterLogin).not.toHaveBeenCalled();
     expect(page.mode()).toBe('login');
     expect(page.successMessage()).toBe('Consultez votre boîte courriel.');
+  });
+
+  it('requires child matricules for parents, and clears claims for other roles', () => {
+    const { fixture, auth } = setup();
+    const page = fixture.componentInstance;
+    page.setMode('register');
+    page.registerForm.patchValue({ firstName: 'Awa', lastName: 'Diallo', email: 'awa@ecole.bf', schoolId: 1,
+      requestedRole: 'PARENT', password: 'MotDePasse1', confirmPassword: 'MotDePasse1' });
+    page.submitRegistration();
+    expect(auth.register).not.toHaveBeenCalled();
+    expect(page.errorMessage()).toContain('matricule');
+    page.registerForm.patchValue({ requestedRole: 'TEACHER', schoolIdentifier: 'EMP-01', childMatricules: '001' });
+    page.submitRegistration();
+    expect(auth.register).toHaveBeenCalledWith(expect.objectContaining({ childRegistrationNumbers: [] }));
+  });
+
+  it.each(['STUDENT', 'TEACHER'] as const)('requires the school identifier for %s and preserves leading zeroes', role => {
+    const { fixture, auth } = setup();
+    const page = fixture.componentInstance;
+    page.registerForm.patchValue({ firstName: 'Awa', lastName: 'Diallo', email: 'awa@test.bf', schoolId: 1,
+      requestedRole: role, password: 'MotDePasse1', confirmPassword: 'MotDePasse1' });
+    page.submitRegistration(); expect(auth.register).not.toHaveBeenCalled();
+    page.registerForm.controls.schoolIdentifier.setValue(' 001 ');
+    page.submitRegistration();
+    expect(auth.register).toHaveBeenCalledWith(expect.objectContaining({ schoolIdentifier: '001', requestedRole: role }));
   });
 
   it('activates an account with the password chosen from the emailed link', () => {

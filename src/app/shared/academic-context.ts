@@ -11,8 +11,12 @@ export const academicContextInterceptor: HttpInterceptorFn = (request, next) => 
   const school = Number(localStorage.getItem('fasoecole_owner_school'));
   const year = Number(localStorage.getItem(`fasoecole_year_${school}`));
   const path = request.url.startsWith(environment.apiUrl) ? request.url.slice(environment.apiUrl.length) : '';
+  const requestedSchool = request.params.get('schoolId')
+    ?? /\/schools\/(\d+)(?:\/|$)/.exec(path)?.[1]
+    ?? /\/by-school\/(\d+)(?:\/|$)/.exec(path)?.[1];
+  const matchesSchool = requestedSchool === undefined || requestedSchool === null || Number(requestedSchool) === school;
   const contextual = /^\/(academic-years(?!\/context-schools)|classes|students|teacher-work|owner\/(dashboard|grades|finance|expenses|enrollment|parent-portal)|me\/|schools\/\d+\/changes)/.test(path);
-  if (contextual && auth.user()?.approved && auth.user()?.emailVerified === true && school && year && request.url.startsWith(environment.apiUrl) && request.method === 'GET') {
+  if (contextual && matchesSchool && auth.user()?.approved && auth.user()?.emailVerified === true && school && year && request.url.startsWith(environment.apiUrl) && request.method === 'GET') {
     request = request.clone({ setHeaders: { 'X-Academic-School': String(school), 'X-Academic-Year': String(year) } });
   }
   return next(request);
@@ -50,7 +54,7 @@ export class AcademicContextPicker {
       if (id && id !== this.schoolId() && this.schools().some(s => s.id === id)) { this.schoolId.set(id); this.loadYears(id); }
     });
     effect(() => {
-      if (!this.auth.user()?.approved || this.auth.user()?.emailVerified !== true) return;
+      if (!this.auth.user()?.approved || this.auth.user()?.emailVerified !== true || this.auth.user()?.mustChangePassword || this.auth.user()?.rawRoles.includes('SUPER_ADMIN')) return;
       this.http.get<{id:number;name:string}[]>(`${environment.apiUrl}/academic-years/context-schools`).subscribe({next: schools => {
         this.schools.set(schools);
         const id = schools.find(s => s.id === Number(localStorage.getItem('fasoecole_owner_school')))?.id ?? schools[0]?.id;

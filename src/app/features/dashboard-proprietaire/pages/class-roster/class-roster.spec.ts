@@ -36,7 +36,7 @@ describe('ClassRoster transfer', () => {
         provideRouter([]),
         {
           provide: AuthService,
-          useValue: { user: () => ({ id: 10 }), getOwnedSchools: vi.fn(() => of([{ id: 1, name: 'École A', type: 'PRIMAIRE' }])) },
+          useValue: { user: () => ({ id: 10 }), selectSchoolContext: vi.fn(), selectedSchoolType: () => 'PRIMAIRE', getOwnedSchools: vi.fn(() => of([{ id: 1, name: 'École A', type: 'PRIMAIRE' }])) },
         },
         { provide: OwnerManagementService, useValue: api },
         { provide: ConfirmationService, useValue: confirmation },

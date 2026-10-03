@@ -4,6 +4,13 @@
     <p>Consultez et modifiez vos informations personnelles et la sécurité de votre compte.</p>
   </header>
 
+  @if (user()?.mustChangePassword) {
+    <section class="profile__verify" role="alert">
+      <div><strong>Remplacez votre mot de passe temporaire.</strong>
+        <span>Utilisez la section Mot de passe ci-dessous. Reconnectez-vous ensuite avec votre nouveau mot de passe pour accéder à la plateforme.</span></div>
+    </section>
+  }
+
   @if (user()?.onboardingSteps?.length) {
     <section class="profile__card" aria-label="État de votre compte">
       <h2>État de votre compte</h2>
