@@ -42,7 +42,7 @@ export class AcademicContextPicker {
   private readonly destroyRef = inject(DestroyRef);
   private readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
-  readonly schools = signal<{id:number;name:string}[]>([]);
+  readonly schools = signal<{id:number;name:string;status?:string}[]>([]);
   readonly years = signal<Year[]>([]);
   readonly schoolId = signal<number | null>(null);
   readonly yearId = signal<number | null>(null);
@@ -55,7 +55,7 @@ export class AcademicContextPicker {
     });
     effect(() => {
       if (!this.auth.user()?.approved || this.auth.user()?.emailVerified !== true || this.auth.user()?.mustChangePassword || this.auth.user()?.rawRoles.includes('SUPER_ADMIN')) return;
-      this.http.get<{id:number;name:string}[]>(`${environment.apiUrl}/academic-years/context-schools`).subscribe({next: schools => {
+      this.http.get<{id:number;name:string;status?:string}[]>(`${environment.apiUrl}/academic-years/context-schools`).subscribe({next: schools => {
         this.schools.set(schools);
         const id = schools.find(s => s.id === Number(localStorage.getItem('fasoecole_owner_school')))?.id ?? schools[0]?.id;
         if (id) { this.schoolId.set(id); this.auth.selectSchoolContext(id); this.loadYears(id); }
@@ -64,6 +64,10 @@ export class AcademicContextPicker {
   }
   private loadYears(schoolId: number): void {
     this.subscription?.unsubscribe();
+    this.years.set([]);
+    this.yearId.set(null);
+    const school = this.schools().find(school => school.id === schoolId);
+    if (school?.status && school.status !== 'ACTIVE') return;
     this.subscription = this.sync.watch(schoolId).subscribe(() => this.refreshYears(schoolId));
     this.refreshYears(schoolId);
   }

@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 import { SchoolDataSyncService } from '../../../../shared/school-data-sync.service';
@@ -25,7 +26,7 @@ const monthStart = () => today().slice(0, 8) + '01';
 @Component({
   selector: 'app-finance',
   standalone: true,
-  imports: [FormsModule, RouterLink, DecimalPipe],
+  imports: [FormValidationDirective, FormsModule, RouterLink, DecimalPipe],
   templateUrl: './finance.html',
   styleUrl: './finance.scss',
 })

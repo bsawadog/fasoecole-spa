@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -55,7 +56,7 @@ interface Draft {
 @Component({
   selector: 'app-enrollment',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormValidationDirective, FormsModule, RouterLink],
   templateUrl: './enrollment.html',
   styleUrl: './enrollment.scss',
 })

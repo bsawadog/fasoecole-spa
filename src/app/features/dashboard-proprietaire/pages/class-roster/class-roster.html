@@ -17,6 +17,10 @@
       </label>
     }
   </header>
+  @if (selectedSchoolId() && !loading()) {
+    <app-roster-import [schoolId]="selectedSchoolId()!" kind="students" [classes]="classes()" (completed)="importCompleted()" />
+  }
+
 
   @if (errorMessage()) {
     <div class="class-roster__alert class-roster__alert--error class-roster__no-print">{{ errorMessage() }}</div>
@@ -64,7 +68,7 @@
           <label>Courriel <input type="email" email name="nEmail" [(ngModel)]="newStudentForm.email" required /></label>
           <p>Un lien d’activation sera envoyé par courriel pour choisir le mot de passe.</p>
           <label>Téléphone <input name="nPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="newStudentForm.phone" /></label>
-          <label>Matricule <input name="nRegistrationNumber" [(ngModel)]="newStudentForm.registrationNumber" placeholder="Généré automatiquement" /></label>
+          <label>Matricule <input type="text" autocomplete="off" [name]="'matricule_' + selectedSchoolId() + '_nouveau'" maxlength="50" [(ngModel)]="newStudentForm.registrationNumber" placeholder="Généré automatiquement" /></label>
           <label>Naissance <input type="date" name="nBirthDate" [(ngModel)]="newStudentForm.birthDate" /></label>
           <label>Genre
             <select name="nGender" [(ngModel)]="newStudentForm.gender">
@@ -126,7 +130,7 @@
                         <label>Nom <input name="lastName" [(ngModel)]="studentForm.lastName" required /></label>
                         <label>Courriel <input type="email" email name="email" [(ngModel)]="studentForm.email" required /></label>
                         <label>Téléphone <input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="studentForm.phone" /></label>
-                        <label>Matricule <input name="registrationNumber" [(ngModel)]="studentForm.registrationNumber" required /></label>
+                        <label>Matricule <input type="text" autocomplete="off" [name]="'matricule_' + selectedSchoolId() + '_' + row.studentId" maxlength="50" [(ngModel)]="studentForm.registrationNumber" required /></label>
                         <label>Naissance <input type="date" name="birthDate" [(ngModel)]="studentForm.birthDate" /></label>
                         <label>Genre
                           <select name="gender" [(ngModel)]="studentForm.gender">
@@ -232,7 +236,7 @@
                             <label>Lien avec {{ learner().definite }}<input name="relationship" [(ngModel)]="newParentForm.relationship" maxlength="50" placeholder="Père, mère, tuteur…" /></label>
                           </div>
                           <div class="class-roster__edit-actions">
-                            <button type="submit" [disabled]="saving() || newParent.invalid">{{ saving() ? 'Enregistrement…' : 'Ajouter' }}</button>
+                            <button type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Ajouter' }}</button>
                             <button type="button" (click)="cancelEdit()" [disabled]="saving()">Annuler</button>
                           </div>
                         </form>

@@ -52,7 +52,7 @@ describe('StaffPage', () => {
     expect(text).toContain('Actif');
   });
 
-  it('requires a module and reports a failed invitation without showing a password', () => {
+  it('reports a failed invitation without showing a password', () => {
     const { fixture, api } = setup();
     const page = fixture.componentInstance;
     page.openCreate();
@@ -60,10 +60,6 @@ describe('StaffPage', () => {
     page.form.lastName = 'Sawadogo';
     page.form.email = 'ali@ecole.bf';
     page.form.jobTitle = 'Surveillant';
-    page.save();
-    expect(api.create).not.toHaveBeenCalled();
-    expect(page.error()).toContain('module');
-
     page.applyPreset(page.presets[3]);
     page.save();
     expect(api.create).toHaveBeenCalledWith(5, expect.objectContaining({
@@ -72,6 +68,15 @@ describe('StaffPage', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('L’envoi du courriel a échoué');
     expect(fixture.nativeElement.textContent).not.toContain('Mot de passe provisoire');
+  });
+
+  it('creates an employee without delegated application modules', () => {
+    const { fixture, api } = setup();
+    const page = fixture.componentInstance;
+    page.openCreate();
+    Object.assign(page.form, { firstName: 'Ali', lastName: 'Sawadogo', email: 'ali@ecole.bf', jobTitle: 'Gardien' });
+    page.save();
+    expect(api.create).toHaveBeenCalledWith(5, expect.objectContaining({ jobTitle: 'Gardien', modules: [] }));
   });
 
   it('suspends a member after confirmation', async () => {

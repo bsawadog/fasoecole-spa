@@ -12,6 +12,9 @@ export interface SchoolRecord {
   email: string | null;
   ownerId: number;
   status: string;
+  expectedStudentCount?: number | null;
+  expectedClassCount?: number | null;
+  expectedTeacherCount?: number | null;
 }
 
 export interface AcademicYearRecord {
@@ -235,6 +238,10 @@ export class OwnerManagementService {
   }
   finalizeSchool(id: number): Observable<SchoolRecord> {
     return this.http.post<SchoolRecord>(`${environment.apiUrl}/schools/${id}/finalize`, {});
+  }
+
+  requestSchool(payload: Omit<SchoolRecord, 'id'>): Observable<SchoolRecord> {
+    return this.http.post<SchoolRecord>(`${environment.apiUrl}/schools/requests`, payload);
   }
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;

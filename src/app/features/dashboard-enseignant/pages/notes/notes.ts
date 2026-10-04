@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -37,7 +38,7 @@ interface EvaluationForm {
 @Component({
   selector: 'app-enseignant-notes',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule],
+  imports: [FormValidationDirective, DatePipe, DecimalPipe, FormsModule],
   templateUrl: './notes.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

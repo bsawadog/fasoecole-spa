@@ -1,3 +1,5 @@
+import { RosterImport } from '../../roster-import';
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -45,7 +47,7 @@ interface NewStudentForm {
 @Component({
   selector: 'app-class-roster',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [RosterImport, FormValidationDirective, FormsModule, RouterLink],
   templateUrl: './class-roster.html',
   styleUrl: './class-roster.scss',
 })
@@ -120,6 +122,11 @@ export class ClassRoster implements OnInit, OnDestroy {
         this.errorMessage.set('Impossible de charger vos établissements.');
       },
     });
+  }
+
+  importCompleted(): void {
+    const id = this.selectedClassId();
+    if (id) this.selectClass(id);
   }
 
   ngOnDestroy(): void {
@@ -409,6 +416,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   }
 
   private selectSchool(schoolId: number): void {
+    this.classRequest?.unsubscribe();
     this.syncSubscription?.unsubscribe();
     this.syncSubscription = this.sync.watch(schoolId).pipe(switchMap(() => {
       const id = this.selectedClassId();
@@ -421,6 +429,7 @@ export class ClassRoster implements OnInit, OnDestroy {
     this.errorMessage.set(null);
     this.successMessage.set(null);
     this.rows.set([]);
+    this.classes.set([]);
     this.selectedClassId.set(null);
 
     this.request = forkJoin({
@@ -429,6 +438,7 @@ export class ClassRoster implements OnInit, OnDestroy {
       years: this.api.getAcademicYears(schoolId).pipe(catchError(() => of([] as AcademicYearRecord[]))),
     }).subscribe({
       next: (data) => {
+        if (this.selectedSchoolId() !== schoolId) return;
         this.classes.set(data.classes);
         this.levels.set(data.levels);
         this.years.set(data.years);
@@ -443,9 +453,11 @@ export class ClassRoster implements OnInit, OnDestroy {
   }
 
   private selectClass(classId: number): void {
+    const schoolId = this.selectedSchoolId();
     this.studentSearch.set('');
     this.classRequest?.unsubscribe();
     this.selectedClassId.set(classId);
+    this.rows.set([]);
     this.loadingRoster.set(true);
     this.errorMessage.set(null);
     this.cancelEdit();
@@ -453,6 +465,7 @@ export class ClassRoster implements OnInit, OnDestroy {
 
     this.classRequest = this.api.getClassRoster(classId).subscribe({
       next: (rows) => {
+        if (this.selectedSchoolId() !== schoolId || this.selectedClassId() !== classId) return;
         this.rows.set(rows);
         this.loadingRoster.set(false);
       },

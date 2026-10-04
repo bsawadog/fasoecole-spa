@@ -1,53 +1,42 @@
 <main class="setup">
-  <header>
-    <h1>Créer une école</h1>
-    <p>Préparez votre établissement, de sa création à l’arrivée des enseignants et des élèves.</p>
-    @if (schoolName()) { <strong>{{ schoolName() }}</strong> }
-  </header>
+  <header><h1>Demander un nouvel établissement</h1><p>Présentez votre établissement en quelques informations. Vous organiserez les classes et ajouterez les personnes après approbation.</p></header>
   @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
   @if (success()) { <p class="success" role="status">{{ success() }}</p> }
-  @if (loading()) { <p>Chargement de votre école en cours de création…</p> }
-  @else if (finalized()) {
-    <button type="button" (click)="startAnother()">Créer une autre école</button>
-  } @else {
-    <nav aria-label="Étapes de mise en place de l’école">
-      @for (item of steps; track item.id; let index = $index) {
-        <button type="button" [class.active]="step() === item.id" [attr.aria-current]="step() === item.id ? 'step' : null"
-          [disabled]="saving() || ((creating() || !schoolId()) && item.id !== 'school')" (click)="step.set(item.id)">
-          {{ index + 1 }}. {{ item.label }}
-        </button>
-      }
-    </nav>
-    @for (item of steps; track item.id) { @if (step() === item.id) { <p class="hint">{{ item.description }}</p> } }
-    @if (step() === 'school' && creating()) {
+  @if (loading()) { <p>Chargement de la demande…</p> }
+  @else {
+    @if (!finalized()) {
       <form #schoolForm="ngForm" (ngSubmit)="schoolForm.valid && create()">
-        <h2>Nouvel établissement</h2>
-        <label>Nom de l’établissement<input name="name" [(ngModel)]="form.name" required maxlength="150" /></label>
-        <label>Type<select name="type" [(ngModel)]="form.type" required>
-          <option value="PRESCOLAIRE">Préscolaire</option><option value="PRIMAIRE">Primaire</option>
-          <option value="SECONDAIRE">Secondaire</option><option value="MIXTE">Mixte</option>
-          <option value="UNIVERSITE">Université</option><option value="FORMATION">Centre de formation</option>
+        <h2>Identité et effectifs prévus</h2>
+        <label>Nom de l’établissement<input name="name" [(ngModel)]="form.name" required maxlength="200" [readonly]="saving()" /></label>
+        <label>Type<select name="type" [(ngModel)]="form.type" required [disabled]="saving()">
+          <option value="PRESCOLAIRE">Préscolaire</option><option value="PRIMAIRE">Primaire</option><option value="SECONDAIRE">Secondaire</option><option value="MIXTE">Mixte</option><option value="UNIVERSITE">Université</option><option value="FORMATION">Centre de formation</option>
         </select></label>
-        <label>Adresse<input name="address" [(ngModel)]="form.address" maxlength="255" /></label>
-        <label>Téléphone<input name="phone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="form.phone" maxlength="30" /></label>
-        <label>Courriel<input name="email" type="email" email [(ngModel)]="form.email" maxlength="150" /></label>
-        <div class="actions"><button type="submit" [disabled]="saving() || schoolForm.invalid">{{ saving() ? 'Enregistrement…' : 'Enregistrer et continuer' }}</button>
-        </div>
+        <label>Adresse<input name="address" [(ngModel)]="form.address" required maxlength="255" [readonly]="saving()" /></label>
+        <label>Téléphone (facultatif)<input name="phone" type="tel" inputmode="tel" [(ngModel)]="form.phone" maxlength="30" [readonly]="saving()" /></label>
+        <label>Courriel (facultatif)<input name="email" type="email" email [(ngModel)]="form.email" maxlength="150" [readonly]="saving()" /></label>
+        <label>Nombre prévu d’élèves / étudiants<input name="expectedStudentCount" type="number" min="0" max="2147483647" step="1" [(ngModel)]="form.expectedStudentCount" required [readonly]="saving()" /></label>
+        <label>Nombre prévu de classes<input name="expectedClassCount" type="number" min="1" max="2147483647" step="1" [(ngModel)]="form.expectedClassCount" required [readonly]="saving()" /></label>
+        <label>Nombre prévu d’enseignants<input name="expectedTeacherCount" type="number" min="0" max="2147483647" step="1" [(ngModel)]="form.expectedTeacherCount" required [readonly]="saving()" /></label>
+        <p class="hint">Ces nombres sont des estimations. Il n’est pas nécessaire de saisir les classes, les enseignants ou les élèves pour envoyer la demande.</p>
+        <div class="actions"><button type="submit" [disabled]="saving()">{{ saving() ? 'Envoi…' : 'Envoyer pour approbation' }}</button></div>
       </form>
-    } @else if (schoolId()) {
-      @for (currentSchoolId of [schoolId()]; track currentSchoolId) {
-      @switch (step()) {
-        @case ('school') { <app-owner-management [scopeSchoolId]="schoolId()" /> }
-        @case ('academic') { <app-owner-management initialSection="academic" [scopeSchoolId]="schoolId()" /> }
-        @case ('teachers') { <app-teacher-roster [scopeSchoolId]="schoolId()" /> }
-        @case ('students') { <app-class-roster [scopeSchoolId]="schoolId()" /> }
-        @case ('fees') { <app-owner-management initialSection="fees" [scopeSchoolId]="schoolId()" /> }
-        @case ('staff') { <app-staff [scopeSchoolId]="schoolId()" /> }
-      }
-      }
-      @if (step() === 'staff') {
-        <div class="actions"><button type="button" class="active" (click)="finalize()" [disabled]="saving()">{{ saving() ? 'Finalisation…' : 'Soumettre pour validation' }}</button></div>
-      }
+    } @else {
+      <h2>{{ schoolName() }}</h2>
+      <p>{{ form.address }} · {{ form.expectedStudentCount ?? '—' }} élèves / étudiants · {{ form.expectedClassCount ?? '—' }} classes · {{ form.expectedTeacherCount ?? '—' }} enseignants prévus</p>
+      @if (active()) {
+        <a routerLink="/proprietaire/gestion">Commencer la configuration de l’établissement</a>
+      } @else { <button type="button" (click)="refresh()" [disabled]="saving()">Vérifier l’approbation</button> }
+      <button type="button" (click)="startAnother()" [disabled]="saving()">Demander un autre établissement</button>
     }
+    <section aria-label="Aperçu des fonctionnalités">
+      <h2>Découvrez les modules</h2>
+      <nav aria-label="Modules disponibles après approbation">
+        @for (item of modules; track item.name) { <button type="button" [class.active]="module() === item.name" (click)="module.set(item.name)">{{ item.name }}</button> }
+      </nav>
+      @for (item of modules; track item.name) { @if (module() === item.name) {
+        <h3>{{ item.name }}</h3><p>{{ item.description }}</p>
+        @if (!active()) { <p class="hint" role="status">Les informations de ce module seront visibles et pourront être renseignées lorsque la demande de création d’établissement sera approuvée par le SUPER_ADMIN.</p> }
+      } }
+    </section>
   }
 </main>

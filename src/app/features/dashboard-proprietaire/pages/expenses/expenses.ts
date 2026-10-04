@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -19,7 +20,7 @@ const monthStart = () => today().slice(0, 8) + '01';
 @Component({
   selector: 'app-expenses',
   standalone: true,
-  imports: [FormsModule, DecimalPipe],
+  imports: [FormValidationDirective, FormsModule, DecimalPipe],
   templateUrl: './expenses.html',
   styleUrl: './expenses.scss',
 })

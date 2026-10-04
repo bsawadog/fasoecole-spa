@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe } from '@angular/common';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -21,7 +22,7 @@ import {
 @Component({
   selector: 'app-enseignant-classes',
   standalone: true,
-  imports: [DatePipe, FormsModule, RouterLink, ScheduleView],
+  imports: [FormValidationDirective, DatePipe, FormsModule, RouterLink, ScheduleView],
   templateUrl: './classes.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

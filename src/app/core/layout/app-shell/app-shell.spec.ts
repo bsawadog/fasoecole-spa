@@ -1,11 +1,16 @@
-import { signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { AuthService } from '../../auth';
 import { OwnerFamilyMessagesService } from '../../../features/dashboard-proprietaire/family-messages.service';
 import { SelfSpaceService } from '../../../shared/self-space/self-space.service';
+import { AcademicContextPicker } from '../../../shared/academic-context';
 import { AppShell } from './app-shell';
+
+// These tests exercise shell account gates; academic context has its own API lifecycle.
+@Component({ selector: 'app-academic-context', standalone: true, template: '' })
+class AcademicContextStub {}
 
 describe('AppShell account readiness', () => {
   beforeEach(() => vi.useFakeTimers());
@@ -13,6 +18,7 @@ describe('AppShell account readiness', () => {
 
   function setup(role: 'parent' | 'proprietaire') {
     const user = signal({ id: 7, firstName: 'Awa', lastName: 'Diallo', email: 'awa@test.bf', role,
+      rawRoles: role === 'proprietaire' ? ['SCHOOL_ADMIN'] : ['PARENT'],
       approved: false, emailVerified: false, requestedSchoolName: 'École', requestedSchoolType: 'PRIMAIRE' });
     const auth = {
       user, role: () => role, isSchoolOwner: () => role === 'proprietaire', selectedSchoolType: () => 'PRIMAIRE',
@@ -27,6 +33,7 @@ describe('AppShell account readiness', () => {
       { provide: AuthService, useValue: auth }, { provide: SelfSpaceService, useValue: self },
       { provide: OwnerFamilyMessagesService, useValue: messages },
     ] });
+    TestBed.overrideComponent(AppShell, { remove: { imports: [AcademicContextPicker] }, add: { imports: [AcademicContextStub] } });
     const fixture = TestBed.createComponent(AppShell); fixture.detectChanges(); vi.advanceTimersByTime(1);
     return { fixture, user, auth, self, messages };
   }

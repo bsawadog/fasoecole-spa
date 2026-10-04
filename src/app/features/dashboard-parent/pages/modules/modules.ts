@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -15,7 +16,7 @@ const TITLES: Record<Module, string> = { notes: 'Notes et bulletins', absences: 
 
 @Component({
   selector: 'app-parent-module', standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, ParentChildDetail, PortalPosts],
+  imports: [FormValidationDirective, DatePipe, DecimalPipe, FormsModule, ParentChildDetail, PortalPosts],
   templateUrl: './modules.html', styleUrls: ['../../../../shared/self-space/self-space.scss', './modules.scss'],
 })
 export class ParentModule implements OnInit {

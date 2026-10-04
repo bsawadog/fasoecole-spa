@@ -42,6 +42,7 @@ export interface RegistrationSchool {
   id: number;
   name: string;
   type: string;
+  status?: string;
 }
 
 export interface ProfileUpdate {
@@ -245,27 +246,28 @@ export class AuthService {
   getOwnedSchools(ownerId: number, module?: OwnerModule): Observable<RegistrationSchool[]> {
     if (!module) {
       return this.http.get<RegistrationSchool[]>(`${this.apiUrl}/schools/by-owner/${ownerId}`).pipe(
-        tap(schools => this.ownedSchools.set(schools)),
+        tap(schools => { if (this.user()?.id === ownerId) this.ownedSchools.set(schools); }),
       );
     }
     return this.loadOwnerAccess(true).pipe(
       map((access) =>
         access
           .filter((a) => a.modules.includes(module))
-          .map((a) => ({ id: a.schoolId, name: a.schoolName, type: a.schoolType }))
+          .map((a) => ({ id: a.schoolId, name: a.schoolName, type: a.schoolType, status: a.status }))
       )
     );
   }
 
   /** Charge (une fois par session) les établissements et modules accessibles à l'utilisateur. */
   loadOwnerAccess(force = false): Observable<SchoolAccess[]> {
+    const sessionToken = this._token();
     const cached = this._ownerAccess();
     if (cached && !force) {
       return of(cached);
     }
     return this.http
       .get<SchoolAccess[]>(`${this.apiUrl}/owner/staff/my-access`)
-      .pipe(tap((access) => this._ownerAccess.set(access)));
+      .pipe(tap((access) => { if (this._token() === sessionToken) this._ownerAccess.set(access); }));
   }
 
   getOwnerDashboard(schoolId: number): Observable<OwnerDashboard> {
@@ -346,6 +348,11 @@ export class AuthService {
     this._user.set(null);
     this._token.set(null);
     this._ownerAccess.set(null);
+    this.ownedSchools.set([]);
+    this.selectedSchoolId.set(null);
+    for (const key of Object.keys(localStorage)) {
+      if (key === 'fasoecole_owner_school' || key.startsWith('fasoecole_year_')) localStorage.removeItem(key);
+    }
     localStorage.removeItem(STORAGE_KEY);
   }
 

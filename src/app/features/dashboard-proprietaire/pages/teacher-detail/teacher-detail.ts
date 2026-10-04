@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DecimalPipe } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -10,7 +11,7 @@ import { TeacherDetail, TeacherSession, TeacherWorkService } from '../../teacher
 @Component({
   selector: 'app-teacher-detail',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, RouterLink],
+  imports: [FormValidationDirective, FormsModule, DecimalPipe, RouterLink],
   templateUrl: './teacher-detail.html',
   styleUrl: './teacher-detail.scss',
 })

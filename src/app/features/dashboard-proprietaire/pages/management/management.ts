@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -41,7 +42,7 @@ interface AcademicForm {
 @Component({
   selector: 'app-owner-management',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe, DecimalPipe],
+  imports: [FormValidationDirective, FormsModule, RouterLink, DatePipe, DecimalPipe],
   templateUrl: './management.html',
   styleUrl: './management.scss',
 })

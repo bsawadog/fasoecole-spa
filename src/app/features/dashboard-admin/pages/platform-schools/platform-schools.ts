@@ -10,6 +10,7 @@ interface SchoolRow {
   id: number; name: string; type: string; status: string; ownerId: number;
   ownerName: string; ownerEmail: string | null; ownerPhone: string | null;
   submittedAt: string | null; activatedAt: string | null; deactivatedAt: string | null;
+  address: string | null; expectedStudentCount: number | null; expectedClassCount: number | null; expectedTeacherCount: number | null;
 }
 interface SchoolPage { items: SchoolRow[]; total: number; page: number; size: number; }
 
@@ -35,7 +36,9 @@ interface SchoolPage { items: SchoolRow[]; total: number; page: number; size: nu
       <div class="table-wrap"><table><thead><tr><th>Établissement</th><th>Propriétaire</th><th>Statut</th>
         <th>Dernière activation</th><th>Dernière désactivation</th><th>Actions</th></tr></thead><tbody>
         @for (school of rows(); track school.id) {
-          <tr><td><strong>{{ school.name }}</strong><small>{{ typeLabel(school.type) }}</small></td>
+          <tr><td><strong>{{ school.name }}</strong><small>{{ typeLabel(school.type) }}</small><small>{{ school.address }}</small>
+            @if (school.expectedClassCount !== null) { <small>Prévu : {{ school.expectedStudentCount }} élèves / étudiants · {{ school.expectedClassCount }} classes · {{ school.expectedTeacherCount }} enseignants</small> }
+          </td>
             <td>{{ school.ownerName }}<small>{{ school.ownerEmail || 'Courriel non renseigné' }}</small></td>
             <td><span class="badge" [class.active]="school.status === 'ACTIVE'">{{ statusLabel(school.status) }}</span>@if (school.submittedAt) { <small>Soumis le {{ school.submittedAt | date:'dd/MM/yyyy HH:mm' }}</small> }</td>
             <td>{{ school.activatedAt ? (school.activatedAt | date:'dd/MM/yyyy HH:mm') : '—' }}</td>

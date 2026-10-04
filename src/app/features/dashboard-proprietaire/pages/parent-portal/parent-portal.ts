@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,7 +15,7 @@ import { ClassRecord, ClassRosterRow, OwnerManagementService } from '../../owner
 
 @Component({
   selector: 'app-owner-parent-portal', standalone: true,
-  imports: [DatePipe, FormsModule, ConversationFiles, PortalPosts],
+  imports: [FormValidationDirective, DatePipe, FormsModule, ConversationFiles, PortalPosts],
   templateUrl: './parent-portal.html', styleUrl: '../../../../shared/self-space/self-space.scss',
 })
 export class OwnerParentPortal implements OnInit {

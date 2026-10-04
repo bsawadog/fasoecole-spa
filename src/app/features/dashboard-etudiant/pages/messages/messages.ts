@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -9,7 +10,7 @@ import { ConversationFiles, MessageAttachments } from '../../../../shared/self-s
 @Component({
   selector: 'app-student-messages',
   standalone: true,
-  imports: [FormsModule, DatePipe, ConversationFiles, MessageAttachments],
+  imports: [FormValidationDirective, FormsModule, DatePipe, ConversationFiles, MessageAttachments],
   templateUrl: './messages.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

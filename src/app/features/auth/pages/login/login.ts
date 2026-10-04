@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -18,7 +19,7 @@ function initialMode(params: { has(name: string): boolean }): AuthMode {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [
+  imports: [FormValidationDirective,
     ReactiveFormsModule,
     RouterLink,
     LucideArrowLeft,

@@ -7,7 +7,7 @@ import { OwnerManagementService } from '../../owner-management.service';
 import { OwnerManagement } from './management';
 
 describe('OwnerManagement academic years', () => {
-  it('saves an academic year for a university when the form is submitted', () => {
+  it('saves an academic year for a university when the form is submitted', async () => {
     const school = { id: 11, name: 'Université', type: 'UNIVERSITE', address: null,
       phone: null, email: null, ownerId: 2, status: 'ACTIVE' };
     const saveAcademicYear = vi.fn((year: { schoolId: number; label: string; startDate: string;
@@ -36,31 +36,37 @@ describe('OwnerManagement academic years', () => {
     });
 
     const fixture = TestBed.createComponent(OwnerManagement);
+    fixture.changeDetectorRef.markForCheck();
     fixture.detectChanges();
     const component = fixture.componentInstance;
     component.selectSection('academic');
     component.editAcademic();
+    fixture.changeDetectorRef.markForCheck();
     fixture.detectChanges();
 
     const form = fixture.nativeElement.querySelector('form.owner-management__editor') as HTMLFormElement;
-    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    fixture.detectChanges();
-    expect(component.academicError()).toBe('Indiquez le nom de l’année scolaire.');
+    async function submit(values: Record<string, string> = {}) {
+      await fixture.whenStable();
+      for (const [name, value] of Object.entries(values)) {
+        const input = form.querySelector<HTMLInputElement>('input[name="' + name + '"]')!;
+        input.value = value;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      fixture.detectChanges();
+      await fixture.whenStable();
+      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      fixture.detectChanges();
+    }
+    await submit();
+    expect(form.querySelector('.form-validation-error')?.textContent).toContain('obligatoire');
+    expect(form.querySelector('[aria-invalid="true"]')).not.toBeNull();
     expect(saveAcademicYear).not.toHaveBeenCalled();
 
-    component.academicForm.label = '2026-2027';
-    component.academicForm.startDate = '2026-10-01';
-    component.academicForm.endDate = '2026-09-30';
-    fixture.detectChanges();
-    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    fixture.detectChanges();
+    await submit({ yearLabel: '2026-2027', yearStart: '2026-10-01', yearEnd: '2026-09-30' });
     expect(component.academicError()).toBe('La date de fin doit être postérieure ou égale à la date de début.');
     expect(saveAcademicYear).not.toHaveBeenCalled();
 
-    component.academicForm.endDate = '2027-07-31';
-    fixture.detectChanges();
-    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    fixture.detectChanges();
+    await submit({ yearEnd: '2027-07-31' });
 
     expect(saveAcademicYear).toHaveBeenCalledWith({
       schoolId: 11, label: '2026-2027', startDate: '2026-10-01',

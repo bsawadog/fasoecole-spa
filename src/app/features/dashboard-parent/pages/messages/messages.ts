@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -18,7 +19,7 @@ import {
 @Component({
   selector: 'app-parent-messages',
   standalone: true,
-  imports: [DatePipe, FormsModule, RouterLink, ConversationFiles, MessageAttachments],
+  imports: [FormValidationDirective, DatePipe, FormsModule, RouterLink, ConversationFiles, MessageAttachments],
   templateUrl: './messages.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { AuthService } from '../../../../core/auth';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
@@ -33,7 +33,7 @@ const plan: PromotionPlan = {
 };
 
 describe('EnrollmentPage', () => {
-  function setup() {
+  function setup(closure = false) {
     vi.spyOn(window, 'open').mockReturnValue(null);
     const api = {
       overview: vi.fn(() => of({ years })),
@@ -76,6 +76,7 @@ describe('EnrollmentPage', () => {
       imports: [EnrollmentPage],
       providers: [
         provideRouter([]),
+        { provide: ActivatedRoute, useValue: { snapshot: { data: { closure } } } },
         { provide: ConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
         { provide: AuthService, useValue: {
           user: () => ({ id: 7 }),
@@ -90,7 +91,7 @@ describe('EnrollmentPage', () => {
   }
 
   it('loads the current year towards the next one with suggested decisions', () => {
-    const { fixture, api } = setup();
+    const { fixture, api } = setup(true);
     expect(api.plan).toHaveBeenCalledWith(5, 1, 2);
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('Année en cours');
@@ -100,7 +101,7 @@ describe('EnrollmentPage', () => {
   });
 
   it('sends the selected decisions with their target class', async () => {
-    const { page, api } = setup();
+    const { page, api } = setup(true);
     page.resetSuggestions(page.plan()!.classes[0]);
     await page.applySelected();
     expect(api.apply).toHaveBeenCalledWith(5, 1, 2, [
@@ -110,7 +111,7 @@ describe('EnrollmentPage', () => {
   });
 
   it('flags an over-full target class and blocks a continuing student without a class', async () => {
-    const { page, api } = setup();
+    const { page, api } = setup(true);
     const cls = page.plan()!.classes[0];
     page.resetSuggestions(cls);
     page.setDecision(cls.students[1], cls, 'PROMOTED');
@@ -120,7 +121,15 @@ describe('EnrollmentPage', () => {
     page.setTarget(cls.students[1], null);
     await page.applySelected();
     expect(api.apply).not.toHaveBeenCalled();
-    expect(page.error()).toContain('sans classe');
+    expect(page.error()).toContain('sans décision ou classe');
+  });
+
+  it('keeps promotion decisions in closure instead of enrollment', () => {
+    const { fixture, api } = setup();
+    expect(api.plan).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.plan()).toBeNull();
+    expect(fixture.nativeElement.querySelector('h1').textContent).toBe('Inscriptions');
+    expect(fixture.nativeElement.textContent).not.toContain('Kaboré Awa');
   });
 
   it('registers a new student in the first class with room of the current year', () => {

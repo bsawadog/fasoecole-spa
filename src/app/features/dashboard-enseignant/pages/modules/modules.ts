@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe } from '@angular/common';
 import { Component, computed, DestroyRef, effect, inject, OnInit, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -19,7 +20,7 @@ const today = () => new Date(Date.now()-new Date().getTimezoneOffset()*60_000).t
 
 @Component({
   selector: 'app-teacher-module', standalone: true,
-  imports: [DatePipe, FormsModule, ConversationFiles, PortalPosts, ScheduleView],
+  imports: [FormValidationDirective, DatePipe, FormsModule, ConversationFiles, PortalPosts, ScheduleView],
   templateUrl: './modules.html', styleUrl: '../../../../shared/self-space/self-space.scss',
 })
 export class TeacherModule implements OnInit {

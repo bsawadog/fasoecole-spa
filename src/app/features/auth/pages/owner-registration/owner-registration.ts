@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -5,7 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../../../core/auth';
 
 @Component({
-  selector:'app-owner-registration',standalone:true,imports:[ReactiveFormsModule,RouterLink],
+  selector:'app-owner-registration',standalone:true,imports: [FormValidationDirective, ReactiveFormsModule,RouterLink],
   template:`
     <main class="onboarding">
       <a class="brand" routerLink="/"><img src="assets/images/fasoecole-logo-alt.svg" alt="FasoEcole · retour à l’accueil" /></a>

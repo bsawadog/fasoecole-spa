@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Component, DestroyRef, inject, input, OnInit, signal } from '@angular/core';
@@ -33,7 +34,7 @@ const INVOICE_LABELS: Record<string, string> = {
 @Component({
   selector: 'app-parent-child-detail',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, ScheduleView, StudentGradesView],
+  imports: [FormValidationDirective, DatePipe, DecimalPipe, FormsModule, RouterLink, ScheduleView, StudentGradesView],
   templateUrl: './child-detail.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

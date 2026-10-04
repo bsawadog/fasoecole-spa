@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, inject, input, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService, OWNER_MODULES, OwnerModule, RegistrationSchool } from '../../../../core/auth';
@@ -23,7 +24,7 @@ const MODULE_HINTS: Record<OwnerModule, string> = {
 @Component({
   selector: 'app-staff',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormValidationDirective, FormsModule],
   templateUrl: './staff.html',
   styleUrl: './staff.scss',
 })

@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -6,7 +7,7 @@ import { StaffPage } from '../staff/staff';
 import { environment } from '../../../../../environments/environment';
 
 @Component({
-  selector: 'app-employees', standalone: true, imports: [FormsModule, StaffPage],
+  selector: 'app-employees', standalone: true, imports: [FormValidationDirective, FormsModule, StaffPage],
   template: `
     <h1>Créer un employé</h1>
     <p>Créez un enseignant ou un membre du personnel. Les identités sont conservées d’une année à l’autre.</p>
@@ -25,7 +26,7 @@ import { environment } from '../../../../../environments/environment';
         <label>Spécialité<input name="specialty" [(ngModel)]="form.specialty" maxlength="150"></label>
         <label>Date d’embauche<input name="hireDate" type="date" [(ngModel)]="form.hireDate"></label>
         <p>Un lien permet à l’enseignant de choisir son mot de passe. Affectez-le ensuite depuis Enseignants par classe.</p>
-        <button type="submit" [disabled]="teacherForm.invalid || busy()">Créer l’enseignant</button>
+        <button type="submit" [disabled]="busy()">Créer l’enseignant</button>
       </form>
       @if (error()) { <p role="alert">{{ error() }}</p> }
       @if (success()) { <p role="status">{{ success() }}</p> }

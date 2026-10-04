@@ -1,3 +1,5 @@
+import { RosterImport } from '../../roster-import';
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +14,7 @@ import { ConfirmationService } from '../../../../shared/confirmation/confirmatio
 @Component({
   selector: 'app-teacher-roster',
   standalone: true,
-  imports: [FormsModule, RouterLink, NgTemplateOutlet],
+  imports: [RosterImport, FormValidationDirective, FormsModule, RouterLink, NgTemplateOutlet],
   templateUrl: './teacher-roster.html',
   styleUrl: './teacher-roster.scss',
 })
@@ -28,6 +30,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
   private classRequest?: Subscription;
   private candidatesRequest?: Subscription;
   private allTeachersRequest?: Subscription;
+  private candidateSchoolIds = new Set<number>();
 
   readonly schools = signal<RegistrationSchool[]>([]);
   readonly selectedSchoolId = signal<number | null>(null);
@@ -61,6 +64,8 @@ export class TeacherRoster implements OnInit, OnDestroy {
     }
     this.auth.getOwnedSchools(ownerId, 'TEACHERS').subscribe({
       next: schools => {
+        // Preserve the owner's other schools when this wizard is scoped to a new school.
+        this.candidateSchoolIds = new Set(schools.map(school => school.id));
         if (this.scopeSchoolId() !== null) schools = schools.filter(school => school.id === this.scopeSchoolId());
         this.schools.set(schools);
         if (!schools.length) {
@@ -75,6 +80,11 @@ export class TeacherRoster implements OnInit, OnDestroy {
         this.error.set('Impossible de charger vos établissements.');
       },
     });
+  }
+
+  importCompleted(): void {
+    const id = this.selectedClassId();
+    if (id) this.selectClass(id);
   }
 
   ngOnDestroy(): void {
@@ -330,7 +340,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
       },
     });
     this.candidatesRequest = this.teacherWork.candidatesByClass(classId).subscribe({
-      next: teachers => this.candidates.set(teachers),
+      next: teachers => this.candidates.set(teachers.filter(teacher => this.candidateSchoolIds.has(teacher.schoolId))),
       error: () => this.error.set('Impossible de charger les enseignants disponibles pour cette classe.'),
     });
   }

@@ -33,7 +33,7 @@
               <label>Montant<input type="number" name="carriedAmount" min="0.01" [max]="debt.remaining" step="0.01" [(ngModel)]="carriedAmount" required></label>
               <label>Date<input type="date" name="carriedDate" [(ngModel)]="pay.paymentDate" required></label>
               <label>Mode<select name="carriedMethod" [(ngModel)]="pay.method">@for (method of methods; track method) { <option [value]="method">{{ methodLabels[method] }}</option> }</select></label>
-              <button type="submit" [disabled]="busy() || carryForm.invalid">Enregistrer le paiement</button>
+              <button type="submit" [disabled]="busy()">Enregistrer le paiement</button>
               <button type="button" (click)="carriedPayment.set(null)">Annuler</button>
             </form>
           }

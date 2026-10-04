@@ -17,6 +17,10 @@
       </label>
     }
   </header>
+  @if (selectedSchoolId() && !loading()) {
+    <app-roster-import [schoolId]="selectedSchoolId()!" kind="teachers" [classes]="classes()" [subjects]="subjects()" (completed)="importCompleted()" />
+  }
+
 
   @if (error()) { <div class="teacher-roster__alert teacher-roster__alert--error" role="alert">{{ error() }}</div> }
   @if (success()) { <div class="teacher-roster__alert teacher-roster__alert--success" role="status">{{ success() }}</div> }
@@ -83,6 +87,7 @@
     @if (assigningTeacher()) {
       <form class="teacher-roster__new-form teacher-roster__card" (ngSubmit)="saveAssignment()">
         <div class="teacher-roster__card-head"><h2>Affecter un enseignant existant</h2></div>
+        <p class="teacher-roster__hint">Seuls les enseignants liés à vos établissements sont proposés.</p>
         <div class="teacher-roster__edit-grid">
           <label>Enseignant
             <select name="existingTeacher" [(ngModel)]="assignment.teacherId" required>

@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -43,13 +43,25 @@ describe('ProfilePage', () => {
     return { fixture, auth, access };
   }
 
-  function submit(fixture: { nativeElement: HTMLElement }, index: number): void {
+  async function submit(fixture: ComponentFixture<ProfilePage>, index: number): Promise<void> {
+    const values = index === 0 ? fixture.componentInstance.form : fixture.componentInstance.passwordForm;
+    const form = fixture.nativeElement.querySelectorAll('form')[index] as HTMLFormElement;
+    for (const [name, value] of Object.entries(values)) {
+      const input = form.querySelector<HTMLInputElement>('input[name="' + name + '"]');
+      if (!input) continue;
+      input.value = String(value ?? '');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
     fixture.nativeElement.querySelectorAll('form')[index].dispatchEvent(
       new Event('submit', { bubbles: true, cancelable: true })
     );
   }
 
-  it('displays personal details and saves editable fields', () => {
+  it('displays personal details and saves editable fields', async () => {
     const { fixture, auth } = setup();
     const page = fixture.componentInstance;
     const email = fixture.nativeElement.querySelector('#profile-email') as HTMLInputElement;
@@ -57,7 +69,7 @@ describe('ProfilePage', () => {
     expect(email.readOnly).toBe(true);
 
     page.form.firstName = ' Aminata ';
-    submit(fixture, 0);
+    await submit(fixture, 0);
     expect(auth.updateProfile).toHaveBeenCalledWith({
       firstName: 'Aminata', lastName: 'Diallo', phone: '70000000', childRegistrationNumbers: undefined, schoolIdentifier: undefined,
     });
@@ -65,38 +77,38 @@ describe('ProfilePage', () => {
     expect(page.form.firstName).toBe('Aminata');
   });
 
-  it('reports profile errors without claiming success', () => {
+  it('reports profile errors without claiming success', async () => {
     const { fixture, auth } = setup();
     auth.updateProfile.mockImplementation(() => throwError(() => new Error('API unavailable')));
-    submit(fixture, 0);
+    await submit(fixture, 0);
     expect(fixture.componentInstance.error()).toContain('Impossible');
     expect(fixture.componentInstance.success()).toBe(false);
   });
 
-  it('validates and changes the password', () => {
+  it('validates and changes the password', async () => {
     const { fixture, auth } = setup();
     const page = fixture.componentInstance;
     page.passwordForm = { currentPassword: 'ancienMdp1', newPassword: 'NouveauMdp1', confirmPassword: 'Autre' };
-    submit(fixture, 1);
+    await submit(fixture, 1);
     expect(auth.changePassword).not.toHaveBeenCalled();
     expect(page.passwordError()).toContain('confirmation');
 
     page.passwordForm = { currentPassword: 'ancienMdp1', newPassword: 'NouveauMdp1', confirmPassword: 'NouveauMdp1' };
-    submit(fixture, 1);
+    await submit(fixture, 1);
     expect(auth.changePassword).toHaveBeenCalledWith('ancienMdp1', 'NouveauMdp1');
     expect(page.passwordSuccess()).toBe(true);
     expect(page.passwordForm.currentPassword).toBe('');
     expect(auth.logout).toHaveBeenCalled();
   });
 
-  it('shows the server message when the current password is wrong', () => {
+  it('shows the server message when the current password is wrong', async () => {
     const { fixture, auth } = setup();
     auth.changePassword.mockImplementation(() => throwError(() => new HttpErrorResponse({
       status: 400, error: { message: 'Le mot de passe actuel est incorrect' },
     })));
     const page = fixture.componentInstance;
     page.passwordForm = { currentPassword: 'mauvais12', newPassword: 'NouveauMdp1', confirmPassword: 'NouveauMdp1' };
-    submit(fixture, 1);
+    await submit(fixture, 1);
     expect(page.passwordError()).toBe('Le mot de passe actuel est incorrect');
     expect(page.passwordSuccess()).toBe(false);
   });

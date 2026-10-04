@@ -36,7 +36,14 @@
 
   <main class="shell__content">
     <header class="shell__topbar">
-      <app-academic-context />
+      @if (!schoolPreview()) { <app-academic-context /> }
+      @else {
+        <label>Établissement
+          <select aria-label="Établissement consulté" [value]="selectedContextSchool()?.schoolId" (change)="selectPreviewSchool($event)">
+            @for (school of contextSchools(); track school.schoolId) { <option [value]="school.schoolId">{{ school.schoolName }}</option> }
+          </select>
+        </label>
+      }
       <a routerLink="/profil" class="shell__profile-link" routerLinkActive="shell__profile-link--active"
          title="Voir mon profil">
         <span class="shell__avatar" aria-hidden="true">{{ initials() }}</span>
@@ -93,7 +100,20 @@
         </section>
       }
     }
-    <router-outlet />
+    @if (ownerContextLoading()) { <p role="status">Chargement de vos établissements…</p> }
+    @else if (previewPage()) {
+      <section class="shell__status" role="status">
+        <div>
+          <h1>{{ previewTitle() }}</h1>
+          <h2>{{ schoolPreview()?.schoolName }}</h2>
+          <p>{{ previewDescription() }}</p>
+          <strong>Les informations seront visibles et pourront être renseignées lorsque la demande de création d’établissement sera approuvée par le SUPER_ADMIN.</strong>
+          <p>{{ schoolPreview()?.status === 'DRAFT' ? 'Votre demande reste à soumettre.' : 'Votre demande est en attente d’approbation.' }}</p>
+          <a routerLink="/proprietaire/creer-ecole" [queryParams]="{ schoolId: schoolPreview()?.schoolId }">Consulter la demande d’établissement</a>
+          <p>Vous pouvez parcourir les autres modules depuis le menu pour découvrir leurs fonctionnalités.</p>
+        </div>
+      </section>
+    } @else { <router-outlet /> }
     </div>
   </main>
 </div>

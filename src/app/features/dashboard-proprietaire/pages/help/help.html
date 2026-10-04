@@ -1,0 +1,33 @@
+<main class="help">
+  <header><span class="help__eyebrow">GUIDE DU PROPRIÉTAIRE</span><h1>Aide</h1>
+    <p>Sélectionnez une question pour afficher les étapes à suivre.</p></header>
+  @if (waitingApproval()) {
+    <p class="help__notice" role="status">Vous pouvez consulter cette aide pendant l’attente d’approbation. La saisie des informations de l’établissement commencera après activation par le SUPER_ADMIN.</p>
+  }
+  <section class="help__filters" aria-label="Rechercher dans l’aide">
+    <label for="help-search">Votre objectif
+      <input id="help-search" type="search" placeholder="Ex. ajouter un parent, importer, paiement…" [value]="search()" (input)="search.set($any($event.target).value)" />
+    </label>
+    <label for="help-category">Rubrique
+      <select id="help-category" [value]="category()" (change)="category.set($any($event.target).value)">
+        @for (item of categories; track item) { <option [value]="item">{{ item }}</option> }
+      </select>
+    </label>
+    @if (search() || category() !== 'Toutes') { <button type="button" class="help__reset" (click)="reset()">Effacer les filtres</button> }
+  </section>
+  <p class="help__count" role="status">{{ questions().length }} question{{ questions().length > 1 ? 's' : '' }}</p>
+  <section aria-label="Questions et réponses">
+    @for (item of questions(); track item.id) {
+      <article class="help__item" [class.help__item--open]="selected() === item.id">
+        <h2><button type="button" class="help__question" [id]="'question-' + item.id" [attr.aria-expanded]="selected() === item.id" [attr.aria-controls]="'answer-' + item.id" (click)="choose(item.id)">
+          <span><small>{{ item.category }}</small>{{ item.question }}</span><span aria-hidden="true">{{ selected() === item.id ? '−' : '+' }}</span>
+        </button></h2>
+        <div class="help__answer" [id]="'answer-' + item.id" role="region" [attr.aria-labelledby]="'question-' + item.id" [hidden]="selected() !== item.id">
+          <ol>@for (step of item.steps; track $index) { <li>{{ step }}</li> }</ol>
+          @if (item.note) { <p class="help__note">{{ item.note }}</p> }
+          <a [routerLink]="item.route">{{ item.linkLabel }} <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+    } @empty { <p class="help__empty">Aucune question ne correspond. Essayez un autre mot ou effacez les filtres.</p> }
+  </section>
+</main>

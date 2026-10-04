@@ -1,3 +1,4 @@
+import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SchoolDataSyncService } from '../../../../shared/school-data-sync.service';
@@ -38,7 +39,7 @@ interface PaymentForm {
 @Component({
   selector: 'app-student-detail',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, NgClass],
+  imports: [FormValidationDirective, DecimalPipe, FormsModule, NgClass],
   templateUrl: './student-detail.html',
   styleUrl: './student-detail.scss',
 })

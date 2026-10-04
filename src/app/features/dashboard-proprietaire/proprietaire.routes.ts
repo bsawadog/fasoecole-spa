@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { ownerModuleGuard } from '../../core/auth';
 
 export const PROPRIETAIRE_ROUTES: Routes = [
+  { path: 'aide', canActivate: [ownerModuleGuard(null)],
+    loadComponent: () => import('./pages/help/help').then(m => m.OwnerHelp) },
   { path: 'export', canActivate: [ownerModuleGuard(null)],
     loadComponent: () => import('./pages/data-export/data-export').then(m => m.SchoolDataExport) },
   { path: 'cloture', data: { closure: true }, canActivate: [ownerModuleGuard(null)],
