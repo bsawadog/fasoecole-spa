@@ -35,6 +35,9 @@
   </aside>
 
   <main class="shell__content">
+    @if (platformIntervention()) {
+      <p role="status">Intervention SUPER_ADMIN · {{ selectedContextSchool()?.schoolName }}. Les actions sont effectuées avec votre identité d’administrateur.</p>
+    }
     <header class="shell__topbar">
       @if (!schoolPreview()) { <app-academic-context /> }
       @else {

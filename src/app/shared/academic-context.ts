@@ -54,7 +54,7 @@ export class AcademicContextPicker {
       if (id && id !== this.schoolId() && this.schools().some(s => s.id === id)) { this.schoolId.set(id); this.loadYears(id); }
     });
     effect(() => {
-      if (!this.auth.user()?.approved || this.auth.user()?.emailVerified !== true || this.auth.user()?.mustChangePassword || this.auth.user()?.rawRoles.includes('SUPER_ADMIN')) return;
+      if (!this.auth.user()?.approved || this.auth.user()?.emailVerified !== true || this.auth.user()?.mustChangePassword) return;
       this.http.get<{id:number;name:string;status?:string}[]>(`${environment.apiUrl}/academic-years/context-schools`).subscribe({next: schools => {
         this.schools.set(schools);
         const id = schools.find(s => s.id === Number(localStorage.getItem('fasoecole_owner_school')))?.id ?? schools[0]?.id;
@@ -67,7 +67,7 @@ export class AcademicContextPicker {
     this.years.set([]);
     this.yearId.set(null);
     const school = this.schools().find(school => school.id === schoolId);
-    if (school?.status && school.status !== 'ACTIVE') return;
+    if (school?.status && school.status !== 'ACTIVE' && !this.auth.user()?.rawRoles.includes('SUPER_ADMIN')) return;
     this.subscription = this.sync.watch(schoolId).subscribe(() => this.refreshYears(schoolId));
     this.refreshYears(schoolId);
   }

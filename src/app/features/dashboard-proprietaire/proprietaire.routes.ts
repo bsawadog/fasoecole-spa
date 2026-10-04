@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { ownerModuleGuard } from '../../core/auth';
 
 export const PROPRIETAIRE_ROUTES: Routes = [
+ { path: 'incidents', canActivate: [ownerModuleGuard(null)], loadComponent: () => import('../../shared/support-incidents').then(m => m.SupportIncidents) },
   { path: 'aide', canActivate: [ownerModuleGuard(null)],
     loadComponent: () => import('./pages/help/help').then(m => m.OwnerHelp) },
   { path: 'export', canActivate: [ownerModuleGuard(null)],

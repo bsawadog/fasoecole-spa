@@ -1,4 +1,6 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import {
   LucideBookOpen,
@@ -48,6 +50,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Utilisateurs', icon: 'users', routerLink: '/admin/utilisateurs' },
   ],
   proprietaire: [
+    { label: 'Incidents', icon: 'shield', routerLink: '/proprietaire/incidents', module: null },
     { label: 'Accueil', icon: 'home', routerLink: '/proprietaire', module: 'DASHBOARD' },
     { label: 'Créer une école', icon: 'building', routerLink: '/proprietaire/creer-ecole', module: null },
     { label: 'Créer un employé', icon: 'users', routerLink: '/proprietaire/employes', module: null },
@@ -130,6 +133,8 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
 })
 export class AppShell implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly supportHttp = inject(HttpClient);
+  readonly incidentsAttention = signal(0);
   private readonly familyMessages = inject(OwnerFamilyMessagesService);
   private readonly selfSpace = inject(SelfSpaceService);
   private readonly destroyRef = inject(DestroyRef);
@@ -142,8 +147,8 @@ export class AppShell implements OnInit {
     const school = this.selectedContextSchool();
     return school && ['DRAFT', 'PENDING_APPROVAL'].includes(school.status ?? '') ? school : null;
   });
-  readonly previewPage = computed(() => !!this.schoolPreview() && this.routeUrl().split('?')[0].startsWith('/proprietaire') && !/\/(creer-ecole|aide)(?:\?|$)/.test(this.routeUrl()));
-  readonly ownerContextLoading = computed(() => this.auth.role() === 'proprietaire' && this.auth.ownerAccess() === null && this.routeUrl().startsWith('/proprietaire') && !/\/(creer-ecole|aide)(?:\?|$)/.test(this.routeUrl()));
+  readonly previewPage = computed(() => !!this.schoolPreview() && this.routeUrl().split('?')[0].startsWith('/proprietaire') && !/\/(creer-ecole|aide|incidents)(?:\?|$)/.test(this.routeUrl()));
+  readonly ownerContextLoading = computed(() => this.auth.role() === 'proprietaire' && this.auth.ownerAccess() === null && this.routeUrl().startsWith('/proprietaire') && !/\/(creer-ecole|aide|incidents)(?:\?|$)/.test(this.routeUrl()));
   readonly previewTitle = computed(() => this.menuItems().find(item => item.routerLink === this.routeUrl().split('?')[0])?.label ?? 'Découvrez votre espace établissement');
   readonly previewDescription = computed(() => {
     const route = this.routeUrl().split('?')[0].split('/').pop() ?? '';
@@ -155,6 +160,7 @@ export class AppShell implements OnInit {
   }
 
   readonly user = this.auth.user;
+  readonly platformIntervention = computed(() => this.user()?.rawRoles.includes('SUPER_ADMIN') && this.routeUrl().startsWith('/proprietaire'));
   readonly accountStatusError = signal(false);
   readonly unreadMessages = signal(0);
   readonly initials = computed(() => {
@@ -166,7 +172,11 @@ export class AppShell implements OnInit {
     if (!role || this.user()?.approved !== true || this.user()?.emailVerified !== true || this.user()?.mustChangePassword) {
       return [];
     }
+    if (this.user()?.rawRoles.includes('SUPER_ADMIN') && this.routeUrl().startsWith('/proprietaire')) return [
+      { label: 'Administration plateforme', icon: 'shield', routerLink: '/admin' }, ...MENU_BY_ROLE.proprietaire
+    ];
     if (this.user()?.rawRoles.includes('SUPER_ADMIN')) return [
+      { label: 'Incidents', icon: 'shield', routerLink: '/admin/incidents' },
       { label: 'Établissements', icon: 'building', routerLink: '/admin' },
     ];
     if (role !== 'proprietaire') {
@@ -183,6 +193,7 @@ export class AppShell implements OnInit {
         ? { ...item, badge: this.familyMessages.unreadCount() } : item);
   });
   readonly menuItems = computed(() => this.accessibleNavigation().filter(item => item.icon !== 'message')
+    .map(item => item.routerLink.endsWith('/incidents') ? { ...item, badge: this.incidentsAttention() } : item)
     .map(item => item.label === 'Élèves par classe' && this.auth.selectedSchoolType() === 'UNIVERSITE'
       ? { ...item, label: 'Étudiants par classe' } : item));
   readonly messageNavigation = computed(() => this.accessibleNavigation().find(item => item.icon === 'message'));
@@ -212,7 +223,14 @@ export class AppShell implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.auth.role() === 'proprietaire') {
+    if (this.auth.isSchoolOwner()) {
+      timer(0, 20_000).pipe(
+        filter(() => this.user()?.approved === true && this.user()?.emailVerified === true),
+        exhaustMap(() => this.supportHttp.get<number>(`${environment.apiUrl}/support/incidents/attention-count`).pipe(catchError(() => EMPTY))),
+        takeUntilDestroyed(this.destroyRef),
+      ).subscribe(count => this.incidentsAttention.set(count));
+    }
+    if (this.auth.role() === 'proprietaire' || this.user()?.rawRoles.includes('SUPER_ADMIN')) {
       timer(0, 20_000).pipe(
         filter(() => this.user()?.approved === true && this.user()?.emailVerified === true),
         exhaustMap(() => this.auth.loadOwnerAccess(true).pipe(catchError(() => EMPTY))),

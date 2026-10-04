@@ -244,6 +244,9 @@ export class AuthService {
    * les établissements où ce module a été délégué à l'utilisateur (personnel administratif).
    */
   getOwnedSchools(ownerId: number, module?: OwnerModule): Observable<RegistrationSchool[]> {
+    if (!module && this.user()?.rawRoles.includes('SUPER_ADMIN')) {
+      return this.loadOwnerAccess(true).pipe(map(access => access.map(a => ({id:a.schoolId,name:a.schoolName,type:a.schoolType,status:a.status}))));
+    }
     if (!module) {
       return this.http.get<RegistrationSchool[]>(`${this.apiUrl}/schools/by-owner/${ownerId}`).pipe(
         tap(schools => { if (this.user()?.id === ownerId) this.ownedSchools.set(schools); }),

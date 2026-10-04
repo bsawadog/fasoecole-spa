@@ -1,4 +1,6 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from '../../../../core/auth';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -45,7 +47,7 @@ interface SchoolPage { items: SchoolRow[]; total: number; page: number; size: nu
             <td>{{ school.deactivatedAt ? (school.deactivatedAt | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
             <td><div class="actions"><button type="button" [class.danger]="school.status === 'ACTIVE'"
               [disabled]="saving() || school.status === 'DRAFT'" (click)="confirmation.set(school)">{{ school.status === 'ACTIVE' ? 'Désactiver' : school.status === 'PENDING_APPROVAL' ? 'Valider et activer' : 'Activer' }}</button>
-              <button type="button" class="secondary" (click)="contact.set(school)">Contacter</button></div></td></tr>
+              <button type="button" class="secondary" (click)="openSchool(school.id)">Ouvrir l’espace</button><button type="button" class="secondary" (click)="contact.set(school)">Contacter</button></div></td></tr>
         } @empty { <tr><td colspan="6">{{ loading() ? 'Chargement des établissements…' : 'Aucun établissement ne correspond à la recherche.' }}</td></tr> }
       </tbody></table></div>
       <footer><span>Page {{ page + 1 }} / {{ pageCount() }}</span><div class="actions">
@@ -83,6 +85,8 @@ interface SchoolPage { items: SchoolRow[]; total: number; page: number; size: nu
   `],
 })
 export class PlatformSchools {
+ private auth = inject(AuthService); private router = inject(Router);
+ openSchool(id:number):void {this.http.post(environment.apiUrl+'/support/school-access/'+id,{}).subscribe({next:()=>{this.auth.selectSchoolContext(id);this.router.navigateByUrl('/proprietaire');},error:()=>this.error.set('Acc?s impossible.')});}
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
   private readonly endpoint = `${environment.apiUrl}/platform/schools`;
