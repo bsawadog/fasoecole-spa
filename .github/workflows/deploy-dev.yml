@@ -18,6 +18,23 @@ jobs:
     environment: dev
     steps:
       - uses: actions/checkout@v4
+      - name: Diagnose AWS OIDC identity
+        uses: actions/github-script@v7
+        env:
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+        with:
+          script: |
+            const token = await core.getIDToken('sts.amazonaws.com');
+            core.setSecret(token);
+            const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf8'));
+            core.info(JSON.stringify({
+              role: process.env.AWS_ROLE_ARN,
+              repository: process.env.GITHUB_REPOSITORY,
+              ref: process.env.GITHUB_REF,
+              sub: claims.sub,
+              aud: claims.aud,
+              iss: claims.iss
+            }, null, 2));
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
