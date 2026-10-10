@@ -47,6 +47,9 @@
       <p>Créez ou associez un établissement à votre compte pour consulter son tableau de bord.</p>
     </section>
   } @else if (dashboard(); as data) {
+    @if (canCreateSchool()) {
+      <p><a class="owner-dashboard__school-badge" routerLink="/proprietaire/tous-les-employes"><svg lucideUsers [size]="18" aria-hidden="true"></svg>Tous les employés de l’école · Accès aux fiches</a></p>
+    }
     <section class="owner-dashboard__metrics" aria-label="Effectifs et structure">
       <a class="owner-dashboard__metric owner-dashboard__metric--green" routerLink="/proprietaire/eleves">
         <span class="owner-dashboard__metric-icon"><svg lucideGraduationCap [size]="21" aria-hidden="true"></svg></span>

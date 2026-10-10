@@ -1,0 +1,95 @@
+<section class="dep">
+  <header class="dep__header"><div><h1>Brouillard de caisse</h1><p>Espèces, dépôts, paiements et report mensuel du solde.</p></div></header>
+  <div class="dep__toolbar cash-controls">
+    <label>Établissement<select [ngModel]="schoolId()" (ngModelChange)="selectSchool($event)" [disabled]="busy()">
+      @for (school of schools(); track school.id) {<option [ngValue]="school.id">{{ school.name }}</option>}
+    </select></label>
+    <label>Mois<input type="month" [(ngModel)]="month" (ngModelChange)="load()" [min]="data()?.book?.openedOn?.slice(0,7)" [max]="data()?.book?.closedOn?.slice(0,7) ?? currentMonth" [disabled]="busy()"></label>
+    <button type="button" class="dep__btn" (click)="load()" [disabled]="busy() || loading()">Actualiser</button>
+    @if (data()?.book) {
+      <button type="button" class="dep__btn" (click)="exportCsv()" [disabled]="loading()">Exporter CSV</button>
+      <button type="button" class="dep__btn" (click)="print()" [disabled]="loading()">Imprimer / PDF</button>
+    }
+  </div>
+  @if (error()) {<p class="dep__alert dep__alert--error" role="alert">{{ error() }}</p>}
+  @if (success()) {<p class="dep__alert dep__alert--success" role="status">{{ success() }}</p>}
+  @if (loading()) {<p role="status">Chargement de la caisse…</p>}
+  @else if (!schools().length) {<p>Aucun établissement accessible.</p>}
+  @else if (data(); as d) {
+    @if (!d.book) {
+      <section class="dep__card cash-controls"><div class="dep__card-head"><h2>Ouvrir la caisse</h2></div>
+        <p class="dep__intro">Indiquez les espèces présentes juste avant les premières opérations de la date d’ouverture. Les encaissements scolaires et dépenses enregistrés en espèces à partir de cette date seront repris automatiquement.</p>
+        <form class="dep__form" (ngSubmit)="open()">
+          <label>Date d’ouverture<input name="openingDate" type="date" [(ngModel)]="opening.date" [max]="currentDate" required></label>
+          <label>Solde initial (FCFA)<input name="openingAmount" type="number" [(ngModel)]="opening.amount" min="0" max="999999999999.99" step="0.01" required></label>
+          <button class="dep__btn" type="submit" [disabled]="busy()">Ouvrir la caisse</button>
+        </form>
+      </section>
+    } @else {
+      <h2>{{ schoolName() }}</h2>
+      <p>Ouverte le {{ d.book.openedOn | date:'dd/MM/yyyy' }} · Mois : {{ d.month }} · FCFA
+        @if (d.book.closedOn) {<strong> · Caisse clôturée le {{ d.book.closedOn | date:'dd/MM/yyyy' }}</strong>}
+        @else if (d.closure) {<strong> · Mois clôturé</strong>}
+      </p>
+      <p class="dep__muted">Les frais scolaires, dépenses et salaires versés depuis « Dépenses &amp; budget » avec le mode Espèces sont repris une seule fois. Saisissez ici les dépôts, retraits et autres mouvements qui ne sont pas déjà enregistrés ailleurs. Un dépôt bancaire vers la caisse est une entrée ; un versement de la caisse en banque est une sortie.</p>
+      <p class="dep__muted">Les anciens versements enseignants sans mode de paiement connu ne sont pas repris automatiquement. Les mouvements saisis ici suivent la caisse ; ils ne créent pas de recette scolaire ni de dépense dans le budget.</p>
+      <div class="dep__kpis">
+        <div class="dep__kpi"><span>Report du solde précédent</span><strong>{{ d.openingBalance | number:'1.0-2' }} FCFA</strong></div>
+        <div class="dep__kpi dep__kpi--ok"><span>Entrées du mois</span><strong>{{ d.receipts | number:'1.0-2' }} FCFA</strong></div>
+        <div class="dep__kpi dep__kpi--warn"><span>Sorties du mois</span><strong>{{ d.payments | number:'1.0-2' }} FCFA</strong></div>
+        <div class="dep__kpi" [class.dep__kpi--bad]="d.closingBalance < 0"><span>Solde de caisse</span><strong>{{ d.closingBalance | number:'1.0-2' }} FCFA</strong></div>
+      </div>
+      @if (hasNegativeBalance()) {<p class="dep__alert dep__alert--error">Un solde de caisse est négatif pendant ce mois. Vérifiez le report initial, les dates, les dépôts et les sorties avant de clôturer.</p>}
+      @if (editable()) {
+        <section class="dep__card cash-controls"><div class="dep__card-head"><h2>Enregistrer un mouvement en espèces</h2></div>
+          <form class="dep__form" (ngSubmit)="saveEntry()">
+            <label>Date<input name="date" type="date" [(ngModel)]="entry.date" [min]="d.book.openedOn" [max]="currentDate" required></label>
+            <label>Type<select name="direction" [(ngModel)]="entry.direction"><option value="IN">Entrée / dépôt</option><option value="OUT">Sortie / paiement / retrait</option></select></label>
+            <label>Montant (FCFA)<input name="amount" type="number" [(ngModel)]="entry.amount" min="0.01" max="9999999999.99" step="0.01" required></label>
+            <label>Libellé<input name="label" [(ngModel)]="entry.label" maxlength="150" required placeholder="Ex. Dépôt du propriétaire"></label>
+            <label>Pièce / référence<input name="reference" [(ngModel)]="entry.reference" maxlength="100"></label>
+            <button class="dep__btn" type="submit" [disabled]="busy()">Enregistrer</button>
+          </form>
+        </section>
+      }
+      <section class="dep__card"><div class="dep__card-head"><h2>Brouillard mensuel</h2><span>{{ d.rows.length }} mouvement(s)</span></div>
+        <div class="dep__table-wrap"><table class="dep__table">
+          <thead><tr><th>Date</th><th>Libellé / pièce</th><th>Origine</th><th>Entrées</th><th>Sorties</th><th>Solde</th><th class="cash-controls"></th></tr></thead>
+          <tbody><tr class="cash-opening"><td></td><td>Report du solde précédent</td><td></td><td></td><td></td><td>{{ d.openingBalance | number:'1.0-2' }}</td><td class="cash-controls"></td></tr>
+            @for (row of pageRows(); track row.source + row.id) {
+              <tr><td>{{ row.date | date:'dd/MM/yyyy' }}</td><td>{{ row.label }}@if (row.reference) {<small class="cash-reference">{{ row.reference }}</small>}</td><td>{{ sourceLabels[row.source] }}</td>
+                <td>{{ row.direction === 'IN' ? (row.amount | number:'1.0-2') : '—' }}</td><td>{{ row.direction === 'OUT' ? (row.amount | number:'1.0-2') : '—' }}</td>
+                <td [class.dep__neg]="row.balance < 0">{{ row.balance | number:'1.0-2' }}</td><td class="cash-controls">
+                  @if (editable() && row.source === 'MANUAL') {<button type="button" class="dep__link" (click)="remove(row)" [disabled]="busy()">Supprimer</button>}
+                </td></tr>
+            } @empty {<tr><td colspan="7">Aucun mouvement pour ce mois. Le solde précédent est conservé.</td></tr>}
+          </tbody><tfoot><tr><td></td><td>Total du mois (FCFA)</td><td></td><td>{{ d.receipts | number:'1.0-2' }}</td><td>{{ d.payments | number:'1.0-2' }}</td><td>{{ d.closingBalance | number:'1.0-2' }}</td><td class="cash-controls"></td></tr></tfoot>
+        </table></div>
+        @if (pageCount() > 1) {<div class="dep__toolbar cash-controls"><button type="button" (click)="page.set(page()-1)" [disabled]="page() === 0">Précédent</button><span>Page {{ page()+1 }} / {{ pageCount() }}</span><button type="button" (click)="page.set(page()+1)" [disabled]="page()+1 === pageCount()">Suivant</button></div>}
+        @if (printing()) {<div class="cash-print-only"><table class="dep__table"><thead><tr><th>Date</th><th>Libellé / pièce</th><th>Entrées</th><th>Sorties</th><th>Solde</th></tr></thead><tbody>
+          <tr><td></td><td>Report</td><td></td><td></td><td>{{ d.openingBalance | number:'1.0-2' }}</td></tr>
+          @for (row of d.rows; track row.source + row.id) {<tr><td>{{ row.date | date:'dd/MM/yyyy' }}</td><td>{{ row.label }} {{ row.reference }}</td><td>{{ row.direction === 'IN' ? (row.amount | number:'1.0-2') : '—' }}</td><td>{{ row.direction === 'OUT' ? (row.amount | number:'1.0-2') : '—' }}</td><td>{{ row.balance | number:'1.0-2' }}</td></tr>}
+        </tbody><tfoot><tr><td></td><td>Total (FCFA)</td><td>{{ d.receipts | number:'1.0-2' }}</td><td>{{ d.payments | number:'1.0-2' }}</td><td>{{ d.closingBalance | number:'1.0-2' }}</td></tr></tfoot></table></div>}
+      </section>
+      @if (d.closure) {<p>Mois clôturé le {{ d.closure.closedAt | date:'dd/MM/yyyy HH:mm' }} · Espèces comptées : {{ d.closure.countedBalance | number:'1.0-2' }} FCFA. {{ d.closure.note }}</p>}
+      @if (d.closure && !d.book.closedOn && month < currentMonth) {<button type="button" class="dep__btn cash-controls" (click)="nextMonth()" [disabled]="busy()">Consulter le mois suivant</button>}
+      @if (editable()) {
+        <section class="dep__card cash-controls"><div class="dep__card-head"><h2>Contrôle et clôture</h2></div>
+          <p class="dep__intro">Clôturez les mois dans l’ordre, après leur fin. Le solde est reporté même lorsqu’un mois n’a aucun mouvement. Comptez les espèces et vérifiez qu’elles correspondent au solde calculé avant de valider.</p>
+          <div class="dep__toolbar">
+            <label>Espèces réellement comptées (FCFA)<input type="number" [(ngModel)]="countedBalance" min="0" max="999999999999.99" step="0.01"></label>
+            <label>Note de clôture<textarea [(ngModel)]="closureNote" maxlength="500"></textarea></label>
+            <button type="button" class="dep__btn" (click)="close(false)" [disabled]="busy() || month >= currentMonth">Clôturer le mois</button>
+            <button type="button" class="dep__btn" (click)="close(true)" [disabled]="busy()">Clôturer définitivement la caisse</button>
+          </div>
+        </section>
+      }
+      @if (d.history.length) {
+        <section class="dep__card"><div class="dep__card-head"><h2>Historique des clôtures</h2></div><div class="dep__table-wrap cash-history"><table class="dep__table">
+          <thead><tr><th>Mois</th><th>Report</th><th>Entrées</th><th>Sorties</th><th>Solde reporté</th></tr></thead><tbody>
+            @for (closure of d.history; track closure.month) {<tr><td><button type="button" class="dep__link" (click)="month=closure.month; load()" [disabled]="busy()">{{ closure.month }}</button></td><td>{{ closure.openingBalance | number:'1.0-2' }}</td><td>{{ closure.receipts | number:'1.0-2' }}</td><td>{{ closure.payments | number:'1.0-2' }}</td><td>{{ closure.closingBalance | number:'1.0-2' }}</td></tr>}
+          </tbody></table></div></section>
+      }
+    }
+  }
+</section>

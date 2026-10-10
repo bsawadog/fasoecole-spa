@@ -10,7 +10,7 @@ import { SelectableAcademicYear, selectAcademicYear } from './academic-year-sele
 export const academicContextInterceptor: HttpInterceptorFn = (request, next) => {
   const auth = inject(AuthService);
   const school = Number(localStorage.getItem('fasoecole_owner_school'));
-  const year = Number(localStorage.getItem(`fasoecole_year_${school}`));
+  const year = Number(request.params.get('academicYearId') ?? localStorage.getItem(`fasoecole_year_${school}`));
   const path = request.url.startsWith(environment.apiUrl) ? request.url.slice(environment.apiUrl.length) : '';
   const requestedSchool = request.params.get('schoolId')
     ?? /\/schools\/(\d+)(?:\/|$)/.exec(path)?.[1]

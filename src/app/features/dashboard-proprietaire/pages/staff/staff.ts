@@ -1,5 +1,6 @@
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, inject, input, OnInit, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService, OWNER_MODULES, OwnerModule, RegistrationSchool } from '../../../../core/auth';
@@ -16,7 +17,7 @@ const MODULE_HINTS: Record<OwnerModule, string> = {
   MANAGEMENT: 'Années, niveaux, classes et matières.',
   STUDENTS: 'Listes de classe, inscriptions, dossiers élèves, présences et factures de l’élève.',
   TEACHERS: 'Affectations, emplois du temps, heures et paie des enseignants.',
-  FINANCE: 'Frais scolaires, factures, encaissements, relances et versement des salaires.',
+  FINANCE: 'Frais scolaires, factures, encaissements et relances.',
   EXPENSES: 'Charges à payer, salaires, versements, budget annuel et bilan recettes / dépenses.',
   GRADES: 'Périodes, évaluations, notes, bulletins et coefficients.',
   ENROLLMENT: 'Nouvelle année scolaire, réinscriptions et passage en classe supérieure.',
@@ -31,6 +32,7 @@ const MODULE_HINTS: Record<OwnerModule, string> = {
 })
 export class StaffPage implements OnInit {
   readonly scopeSchoolId = input<number | null>(null);
+  private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
   private readonly api = inject(StaffService);
   private readonly confirmation = inject(ConfirmationService);
@@ -246,6 +248,9 @@ export class StaffPage implements OnInit {
     this.api.list(id).subscribe({
       next: (list) => {
         this.staff.set(list);
+        const requested = Number(this.route.snapshot.queryParamMap.get('staffId'));
+        const member = list.find(s => s.id === requested);
+        if (member) this.openEdit(member);
         this.loading.set(false);
       },
       error: (err) => {

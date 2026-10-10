@@ -47,6 +47,7 @@
     }
 
     @switch (tab()) {
+      @case ('salaries') { @if (schoolId(); as id) { <app-payables [schoolId]="id" [salariesOnly]="true" /> } }
       @case ('payables') { @if (schoolId(); as id) { <app-payables [schoolId]="id" /> } }
       @case ('summary') {
         @if (summary(); as s) {

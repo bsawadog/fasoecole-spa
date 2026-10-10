@@ -4,7 +4,7 @@
       <span class="fin__header-icon" aria-hidden="true">₣</span>
       <div>
         <h1>Recouvrement</h1>
-        <p>Frais scolaires, encaissements, impayés, reçus et paiement des salaires.</p>
+        <p>Frais scolaires, encaissements, impayés et reçus.</p>
       </div>
     </div>
     @if (schools().length > 1) {
@@ -58,7 +58,6 @@
     <p class="fin__state">Aucun établissement associé à votre compte.</p>
   } @else {
     @switch (tab()) {
-      @case ('salaries') { @if (schoolId(); as id) { <app-payables [schoolId]="id" [salariesOnly]="true" /> } }
       @case ('overview') {
         @if (overview(); as o) {
           <div class="fin__kpis">

@@ -68,6 +68,8 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Messages', icon: 'message', routerLink: '/proprietaire/messages', module: 'STUDENTS' },
     { label: 'Portail parents', icon: 'book', routerLink: '/proprietaire/portail-parents', module: 'STUDENTS' },
     { label: 'Gestion de l’école', icon: 'book', routerLink: '/proprietaire/gestion', module: 'MANAGEMENT' },
+    { label: 'Brouillard de caisse', icon: 'wallet', routerLink: '/proprietaire/caisse', module: 'EXPENSES' },
+    { label: 'États financiers', icon: 'chart', routerLink: '/proprietaire/etats-financiers', module: 'EXPENSES' },
     { label: 'Recouvrement', icon: 'wallet', routerLink: '/proprietaire/frais', module: 'FINANCE' },
     { label: 'Dépenses & budget', icon: 'chart', routerLink: '/proprietaire/depenses', module: 'EXPENSES' },
     { label: 'Notes & bulletins', icon: 'notes', routerLink: '/proprietaire/notes', module: 'GRADES' },
@@ -227,7 +229,7 @@ export class AppShell implements OnInit {
       proprietaire: [
       { title: 'Scolarité', routes: ['inscriptions', 'classes', 'enseignants', 'notes', 'suivi-devoirs'] },
       { title: 'Vie scolaire et familles', routes: ['calendrier', 'discipline', 'bibliotheque', 'portail-parents', 'demandes-administratives'] },
-      { title: 'Finances', routes: ['frais', 'depenses'] },
+      { title: 'Finances', routes: ['frais', 'depenses', 'caisse', 'etats-financiers'] },
       { title: 'Administration', routes: ['gestion', 'creer-ecole', 'employes', 'demandes', 'personnel', 'cloture', 'export'] },
       { title: 'Assistance', routes: ['incidents', 'aide'] },
       ],

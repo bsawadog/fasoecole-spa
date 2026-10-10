@@ -13,10 +13,9 @@ import {
   FeeFrequency, FeeTypeInfo, FinanceOverview, FinanceService, FREQUENCY_LABELS, InvoiceFilter, InvoiceRow,
   METHOD_LABELS, PaymentMethod, PaymentRow, STATUS_LABELS,
 } from '../../finance.service';
-import { Payables } from '../../shared/payables/payables';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 
-type Tab = 'overview' | 'invoices' | 'payments' | 'catalog' | 'billing' | 'salaries';
+type Tab = 'overview' | 'invoices' | 'payments' | 'catalog' | 'billing';
 type Panel = { kind: 'pay' | 'discount'; invoice: InvoiceRow } | null;
 
 const isoDate = (date: Date) =>
@@ -27,7 +26,7 @@ const monthStart = () => today().slice(0, 8) + '01';
 @Component({
   selector: 'app-finance',
   standalone: true,
-  imports: [FormValidationDirective, FormsModule, RouterLink, DecimalPipe, Payables],
+  imports: [FormValidationDirective, FormsModule, RouterLink, DecimalPipe],
   templateUrl: './finance.html',
   styleUrl: './finance.scss',
 })
@@ -51,7 +50,6 @@ export class FinancePage implements OnInit, OnDestroy {
   readonly frequencies = Object.keys(FREQUENCY_LABELS) as FeeFrequency[];
   readonly methods = Object.keys(METHOD_LABELS) as PaymentMethod[];
   readonly tabs: { id: Tab; label: string }[] = [
-    { id: 'salaries', label: 'Salaires' },
     { id: 'overview', label: 'Vue d’ensemble' },
     { id: 'invoices', label: 'Impayés & factures' },
     { id: 'payments', label: 'Paiements & reçus' },
@@ -350,7 +348,6 @@ export class FinancePage implements OnInit, OnDestroy {
     const schoolId = this.schoolId();
     if (!schoolId) return;
     switch (this.tab()) {
-      case 'salaries': return;
       case 'overview':
         this.requests.add(this.finance.overview(schoolId).subscribe({
           next: data => this.overview.set(data),

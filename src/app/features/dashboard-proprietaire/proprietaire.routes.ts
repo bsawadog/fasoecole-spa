@@ -2,6 +2,12 @@ import { Routes } from '@angular/router';
 import { ownerModuleGuard } from '../../core/auth';
 
 export const PROPRIETAIRE_ROUTES: Routes = [
+  { path: 'caisse', canActivate: [ownerModuleGuard('EXPENSES')],
+    loadComponent: () => import('./pages/cash-book/cash-book').then(m => m.CashBookPage) },
+  { path: 'etats-financiers', canActivate: [ownerModuleGuard('EXPENSES')],
+    loadComponent: () => import('./pages/financial-statements/financial-statements').then(m => m.FinancialStatements) },
+  { path: 'tous-les-employes', canActivate: [ownerModuleGuard(null)],
+    loadComponent: () => import('./pages/employee-directory/employee-directory').then(m => m.EmployeeDirectory) },
   {
     path: 'rendez-vous', canActivate: [ownerModuleGuard('STUDENTS')],
     loadComponent: () => import('./pages/appointments/appointments').then(m => m.OwnerAppointmentsPage),

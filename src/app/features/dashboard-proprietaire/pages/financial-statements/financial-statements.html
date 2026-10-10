@@ -1,0 +1,40 @@
+<section class="dep">
+  <header class="dep__header"><div><h1>États financiers</h1><p>Encaissements, décaissements et suivi financier de l’établissement.</p></div></header>
+  <div class="dep__toolbar report-controls">
+    <label>Établissement<select [ngModel]="schoolId()" (ngModelChange)="selectSchool($event)">
+      @for (school of schools(); track school.id) { <option [ngValue]="school.id">{{ school.name }}</option> }
+    </select></label>
+    @if (summary(); as s) {
+      @if (s.years.length) {
+        <label>Année scolaire<select [(ngModel)]="yearId" (ngModelChange)="load()" [disabled]="loading()">
+          @for (year of s.years; track year.id) { <option [ngValue]="year.id">{{ year.label }}</option> }
+        </select></label>
+      }
+      <button type="button" class="dep__btn" (click)="exportCsv()" [disabled]="loading()">Exporter CSV</button>
+      <button type="button" class="dep__btn" (click)="print()" [disabled]="loading()">Imprimer / PDF</button>
+    }
+  </div>
+  @if (error()) { <p class="dep__alert dep__alert--error" role="alert">{{ error() }} <button type="button" (click)="load()">Réessayer</button></p> }
+  @if (loading()) { <p role="status">Chargement des états…</p> }
+  @else if (!schools().length) { <p>Aucun établissement accessible.</p> }
+  @else if (summary(); as s) {
+    <h2>{{ s.schoolName }}</h2><p>Du {{ s.from | date:'dd/MM/yyyy' }} au {{ s.to | date:'dd/MM/yyyy' }} · {{ s.year?.label ?? 'Année civile' }} · FCFA</p>
+    <p class="dep__muted">Ces états portent sur les encaissements et les dépenses payées enregistrés. Le solde représente les mouvements de la période, sans solde d’ouverture. Les factures impayées et les charges restant à payer sont exclues. Les états comptables SYSCOHADA complets nécessitent une comptabilité avec écritures et clôture.</p>
+    <div class="dep__kpis">
+      <div class="dep__kpi dep__kpi--ok"><span>Recettes encaissées</span><strong>{{ s.income | number:'1.0-0' }} FCFA</strong></div>
+      <div class="dep__kpi dep__kpi--warn"><span>Dépenses payées</span><strong>{{ s.expenses | number:'1.0-0' }} FCFA</strong><small>Salaires et autres dépenses</small></div>
+      <div class="dep__kpi" [class.dep__kpi--bad]="s.balance < 0"><span>Solde des mouvements</span><strong>{{ s.balance | number:'1.0-0' }} FCFA</strong></div>
+    </div>
+    <div class="dep__card"><div class="dep__card-head"><h2>État des recettes et dépenses</h2></div><div class="dep__table-wrap"><table class="dep__table">
+      <thead><tr><th>Rubrique</th><th>Montant (FCFA)</th></tr></thead><tbody>
+        <tr><td>Frais scolaires encaissés</td><td>{{ s.income | number:'1.0-0' }}</td></tr>
+        @for (category of s.categories; track category.categoryId) { <tr><td>{{ category.name }}</td><td>{{ category.spent | number:'1.0-0' }}</td></tr> }
+      </tbody><tfoot><tr><td>Total des dépenses payées</td><td>{{ s.expenses | number:'1.0-0' }}</td></tr><tr><td>Solde des mouvements</td><td>{{ s.balance | number:'1.0-0' }}</td></tr></tfoot>
+    </table></div></div>
+    <div class="dep__card"><div class="dep__card-head"><h2>Mouvements mensuels de trésorerie</h2></div><div class="dep__table-wrap"><table class="dep__table">
+      <thead><tr><th>Mois</th><th>Encaissements</th><th>Décaissements</th><th>Solde</th></tr></thead><tbody>
+        @for (month of s.months; track month.month) { <tr><td>{{ month.month }}</td><td>{{ month.income | number:'1.0-0' }}</td><td>{{ month.expenses | number:'1.0-0' }}</td><td>{{ month.balance | number:'1.0-0' }}</td></tr> }
+      </tbody><tfoot><tr><td>Total (FCFA)</td><td>{{ s.income | number:'1.0-0' }}</td><td>{{ s.expenses | number:'1.0-0' }}</td><td>{{ s.balance | number:'1.0-0' }}</td></tr></tfoot>
+    </table></div></div>
+  }
+</section>
