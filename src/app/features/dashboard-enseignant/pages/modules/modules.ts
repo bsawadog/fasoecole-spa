@@ -1,5 +1,4 @@
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
-import { DatePipe } from '@angular/common';
 import { Component, computed, DestroyRef, effect, inject, OnInit, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -12,6 +11,7 @@ import { APPOINTMENT_LABELS, ParentAppointment, ParentPortalService, PortalPost,
 import { ConversationFiles } from '../../../../shared/self-space/message-attachments';
 import { PortalPosts } from '../../../../shared/self-space/portal-posts';
 import { ScheduleView } from '../../../../shared/self-space/schedule-view';
+import { Appointments } from '../../../../shared/appointments/appointments';
 
 type Module = 'emploi' | 'presences' | 'signalements' | 'devoirs' | 'documents' | 'annonces' | 'rendez-vous';
 type Status = AttendanceItem['status'];
@@ -20,7 +20,7 @@ const today = () => new Date(Date.now()-new Date().getTimezoneOffset()*60_000).t
 
 @Component({
   selector: 'app-teacher-module', standalone: true,
-  imports: [FormValidationDirective, DatePipe, FormsModule, ConversationFiles, PortalPosts, ScheduleView],
+  imports: [FormValidationDirective, FormsModule, ConversationFiles, PortalPosts, ScheduleView, Appointments],
   templateUrl: './modules.html', styleUrl: '../../../../shared/self-space/self-space.scss',
 })
 export class TeacherModule implements OnInit {

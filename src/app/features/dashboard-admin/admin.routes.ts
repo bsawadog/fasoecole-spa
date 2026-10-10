@@ -4,6 +4,7 @@ import { inject } from '@angular/core';
 import { AuthService } from '../../core/auth';
 
 export const ADMIN_ROUTES: Routes = [
+  { path: 'mes-rendez-vous', loadComponent: () => import('../../shared/appointments/personal-appointments-page').then(m => m.PersonalAppointmentsPage) },
   {
     path: '', pathMatch: 'full',
     canMatch: [() => inject(AuthService).user()?.rawRoles.includes('SUPER_ADMIN') === true],

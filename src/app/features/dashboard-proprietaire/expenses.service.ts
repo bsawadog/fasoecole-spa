@@ -21,7 +21,7 @@ export interface ExpenseCategoryPayload {
 
 export interface ExpenseRow {
   id: number;
-  source: 'MANUAL' | 'PAYROLL';
+  source: 'MANUAL' | 'PAYROLL' | 'PAYABLE';
   expenseDate: string;
   categoryId: number;
   categoryName: string;

@@ -63,6 +63,23 @@
     }
   }
 
+  &__nav-section {
+    margin-top: 0.4rem;
+    .shell__nav-link { margin: 0.2rem 0 0.2rem 0.4rem; }
+  }
+
+  &__nav-heading {
+    padding: 0.7rem 0.75rem;
+    border-radius: 8px;
+    color: #e5e7eb;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover { background: rgba(255, 255, 255, 0.06); }
+    &:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
+  }
+
   &__badge {
     display: inline-grid;
     min-width: 1.35rem;
@@ -94,12 +111,27 @@
     top: 0;
     z-index: 20;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
     gap: 0.5rem;
     padding: 0.65rem 2rem;
     border-bottom: 1px solid #e5e7eb;
     background: #fff;
+  }
+
+  &__academic-context {
+    flex: 1 1 18rem;
+    min-width: 0;
+
+    > label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      font-size: 0.75rem;
+    }
+
+    select { width: 100%; min-width: 0; max-width: 100%; padding: 0.45rem; }
   }
 
   &__profile-link {
@@ -279,6 +311,12 @@
   }
 }
 
+@media (max-width: 1100px) {
+  .shell__academic-context { flex-basis: 100%; }
+  .shell__topbar { padding-inline: 0.75rem; }
+  .shell__profile-link { flex: 1 1 0; }
+}
+
 @media (max-width: 700px) {
   .shell {
     flex-direction: column;
@@ -297,8 +335,7 @@
     }
 
     &__nav {
-      flex-direction: row;
-      flex-wrap: wrap;
+      flex-direction: column;
     }
 
     &__content {
@@ -307,10 +344,13 @@
 
     &__topbar {
       padding: 0.5rem 0.75rem;
+      gap: 0.5rem;
     }
 
+    &__action { min-width: 2.75rem; min-height: 2.75rem; justify-content: center; padding: 0.5rem; box-sizing: border-box; }
+
     &__user-info {
-      display: none;
+      font-size: 0.8rem;
     }
 
     &__page {
@@ -319,7 +359,7 @@
   }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 700px) {
   .shell__action:not(.shell__messages) span {
     position: absolute;
     width: 1px;

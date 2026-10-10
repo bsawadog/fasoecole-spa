@@ -2,6 +2,19 @@ import { Routes } from '@angular/router';
 import { ownerModuleGuard } from '../../core/auth';
 
 export const PROPRIETAIRE_ROUTES: Routes = [
+  {
+    path: 'rendez-vous', canActivate: [ownerModuleGuard('STUDENTS')],
+    loadComponent: () => import('./pages/appointments/appointments').then(m => m.OwnerAppointmentsPage),
+  },
+  ...['eleves', 'parents'].map(path => ({
+    path, canActivate: [ownerModuleGuard('STUDENTS')],
+    loadComponent: () => import('./pages/people-directory/people-directory').then(m => m.PeopleDirectory),
+  })),
+  ...["calendrier","discipline","demandes-administratives","bibliotheque","suivi-devoirs"].map(lifeModule => ({
+    path: lifeModule, data: { lifeModule, lifeScope: 'schools' },
+    canActivate: [ownerModuleGuard('STUDENTS')],
+    loadComponent: () => import('../../shared/school-life/school-life').then(m => m.SchoolLifePage),
+  })),
  { path: 'incidents', canActivate: [ownerModuleGuard(null)], loadComponent: () => import('../../shared/support-incidents').then(m => m.SupportIncidents) },
   { path: 'aide', canActivate: [ownerModuleGuard(null)],
     loadComponent: () => import('./pages/help/help').then(m => m.OwnerHelp) },

@@ -14,6 +14,7 @@ export interface StaffMember {
   email: string;
   phone: string | null;
   jobTitle: string;
+  monthlySalary?: number | null;
   modules: OwnerModule[];
   active: boolean;
   /** Compte utilisé uniquement comme personnel : le propriétaire peut modifier l'identité et le mot de passe. */
@@ -27,6 +28,7 @@ export interface StaffPayload {
   email: string;
   phone: string | null;
   jobTitle: string;
+  monthlySalary?: number | null;
   modules: OwnerModule[];
 }
 

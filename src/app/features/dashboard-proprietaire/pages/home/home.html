@@ -48,37 +48,46 @@
     </section>
   } @else if (dashboard(); as data) {
     <section class="owner-dashboard__metrics" aria-label="Effectifs et structure">
-      <article class="owner-dashboard__metric owner-dashboard__metric--green">
+      <a class="owner-dashboard__metric owner-dashboard__metric--green" routerLink="/proprietaire/eleves">
         <span class="owner-dashboard__metric-icon"><svg lucideGraduationCap [size]="21" aria-hidden="true"></svg></span>
         <span class="owner-dashboard__metric-label">Élèves</span>
         <strong>{{ data.students }}</strong>
-      </article>
-      <article class="owner-dashboard__metric owner-dashboard__metric--blue">
+      <span class="owner-dashboard__metric-action">Voir les détails <svg lucideArrowRight [size]="15" aria-hidden="true"></svg></span></a>
+      <a class="owner-dashboard__metric owner-dashboard__metric--blue" routerLink="/proprietaire/enseignants">
         <span class="owner-dashboard__metric-icon"><svg lucideUsers [size]="21" aria-hidden="true"></svg></span>
         <span class="owner-dashboard__metric-label">Enseignants</span>
         <strong>{{ data.teachers }}</strong>
-      </article>
-      <article class="owner-dashboard__metric owner-dashboard__metric--violet">
+      <span class="owner-dashboard__metric-action">Voir les détails <svg lucideArrowRight [size]="15" aria-hidden="true"></svg></span></a>
+      <a class="owner-dashboard__metric owner-dashboard__metric--violet" routerLink="/proprietaire/classes">
         <span class="owner-dashboard__metric-icon"><svg lucidePanelsTopLeft [size]="21" aria-hidden="true"></svg></span>
         <span class="owner-dashboard__metric-label">Classes</span>
         <strong>{{ data.classes }}</strong>
-      </article>
-      <article class="owner-dashboard__metric owner-dashboard__metric--amber">
+      <span class="owner-dashboard__metric-action">Voir les détails <svg lucideArrowRight [size]="15" aria-hidden="true"></svg></span></a>
+      <a class="owner-dashboard__metric owner-dashboard__metric--amber" routerLink="/proprietaire/gestion" [queryParams]="{section: 'academic', kind: 'levels'}">
         <span class="owner-dashboard__metric-icon"><svg lucideLayers3 [size]="21" aria-hidden="true"></svg></span>
         <span class="owner-dashboard__metric-label">Niveaux</span>
         <strong>{{ data.levels }}</strong>
-      </article>
-      <article class="owner-dashboard__metric owner-dashboard__metric--teal">
+      <span class="owner-dashboard__metric-action">Voir les détails <svg lucideArrowRight [size]="15" aria-hidden="true"></svg></span></a>
+      <a class="owner-dashboard__metric owner-dashboard__metric--teal" routerLink="/proprietaire/parents">
         <span class="owner-dashboard__metric-icon"><svg lucideHeartHandshake [size]="21" aria-hidden="true"></svg></span>
         <span class="owner-dashboard__metric-label">Parents actifs</span>
         <strong>{{ data.parents }}</strong>
-      </article>
+      <span class="owner-dashboard__metric-action">Voir les détails <svg lucideArrowRight [size]="15" aria-hidden="true"></svg></span></a>
       <a class="owner-dashboard__metric owner-dashboard__metric--rose" routerLink="/proprietaire/demandes">
         <span class="owner-dashboard__metric-icon"><svg lucideUserRoundCheck [size]="21" aria-hidden="true"></svg></span>
         <span class="owner-dashboard__metric-label">Comptes à approuver</span>
         <strong>{{ data.pendingAccountApprovals }}</strong>
         <span class="owner-dashboard__metric-action">Traiter les demandes <svg lucideArrowRight [size]="15" aria-hidden="true"></svg></span>
       </a>
+      @if (canRecordReport()) {
+        <a class="owner-dashboard__metric owner-dashboard__metric--blue" routerLink="/proprietaire/rendez-vous">
+          <span class="owner-dashboard__metric-icon"><svg lucideCalendarCheck2 [size]="21" aria-hidden="true"></svg></span>
+          <span class="owner-dashboard__metric-label">Rendez-vous</span>
+          <strong>{{ appointmentCount() ?? '—' }}</strong>
+          <span class="owner-dashboard__metric-label">{{ appointmentError() ? 'Compteur indisponible' : 'Demandes non expirées en attente' }}</span>
+          <span class="owner-dashboard__metric-action">Consulter et gérer <svg lucideArrowRight [size]="15" aria-hidden="true"></svg></span>
+        </a>
+      }
     </section>
 
     <div class="owner-dashboard__columns">
@@ -87,7 +96,7 @@
         @if (lastUpdated()) { <small>Mise à jour : {{ lastUpdated() | date:'HH:mm:ss' }} · {{ sync.connections()[data.schoolId] ? 'Synchronisation active' : 'Reconnexion en cours' }}</small> }
         <div class="owner-dashboard__panel-heading">
           <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--blue"><svg lucideCalendarCheck2 [size]="20" aria-hidden="true"></svg></span>
-          <div><h2>Présences du jour</h2><p>{{ data.generatedDate | date: 'dd/MM/yyyy' }}</p></div>
+          <div><h2><a routerLink="/proprietaire/eleves">Présences du jour</a></h2><p>{{ data.generatedDate | date: 'dd/MM/yyyy' }}</p></div>
           <button class="owner-dashboard__refresh" type="button" (click)="refreshDashboard(data.schoolId)">Actualiser</button>
         </div>
         <div class="owner-dashboard__attendance-total">
@@ -155,7 +164,7 @@
       <section class="owner-dashboard__panel" id="finance">
         <div class="owner-dashboard__panel-heading">
           <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--green"><svg lucideWallet [size]="20" aria-hidden="true"></svg></span>
-          <div><h2>Situation financière</h2><p>Montants enregistrés dans FasoÉcole</p></div>
+          <div><h2><a routerLink="/proprietaire/frais">Situation financière</a></h2><p>Montants enregistrés dans FasoÉcole</p></div>
         </div>
         <div class="owner-dashboard__finance-row">
           <div><span>Total à encaisser (frais actifs)</span><strong>{{ formatAmount(data.expectedAmount) }}</strong></div>
@@ -174,7 +183,7 @@
       <section class="owner-dashboard__panel" id="academic">
         <div class="owner-dashboard__panel-heading">
           <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--violet"><svg lucideBookOpen [size]="20" aria-hidden="true"></svg></span>
-          <div><h2>Résultats scolaires</h2><p>{{ data.averagePeriodName ?? 'Aucune période de notation' }}</p></div>
+          <div><h2><a routerLink="/proprietaire/notes">Résultats scolaires</a></h2><p>{{ data.averagePeriodName ?? 'Aucune période de notation' }}</p></div>
         </div>
         <div class="owner-dashboard__average">
           @if (data.schoolAverage !== null) {
@@ -194,7 +203,7 @@
       <section class="owner-dashboard__panel" id="communication">
         <div class="owner-dashboard__panel-heading">
           <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--amber"><svg lucideMessageCircle [size]="20" aria-hidden="true"></svg></span>
-          <div><h2>Communication</h2><p>Sur votre compte propriétaire</p></div>
+          <div><h2><a routerLink="/proprietaire/messages">Communication</a></h2><p>Sur votre compte propriétaire</p></div>
         </div>
         <div class="owner-dashboard__unread">
           <svg lucideMail [size]="20" aria-hidden="true"></svg>
@@ -218,7 +227,7 @@
     <section class="owner-dashboard__panel owner-dashboard__payments">
       <div class="owner-dashboard__panel-heading">
         <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--green"><svg lucideReceiptText [size]="20" aria-hidden="true"></svg></span>
-        <div><h2>Derniers paiements</h2><p>Les cinq dernières transactions enregistrées</p></div>
+        <div><h2><a routerLink="/proprietaire/frais">Derniers paiements</a></h2><p>Les cinq dernières transactions enregistrées</p></div>
       </div>
       @if (data.recentPayments.length > 0) {
         <div class="owner-dashboard__table-wrap">

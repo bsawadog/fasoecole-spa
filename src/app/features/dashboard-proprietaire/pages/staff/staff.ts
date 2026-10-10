@@ -1,5 +1,6 @@
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, inject, input, OnInit, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService, OWNER_MODULES, OwnerModule, RegistrationSchool } from '../../../../core/auth';
 import { StaffMember, StaffPayload, StaffService } from '../../staff.service';
@@ -15,8 +16,8 @@ const MODULE_HINTS: Record<OwnerModule, string> = {
   MANAGEMENT: 'Années, niveaux, classes et matières.',
   STUDENTS: 'Listes de classe, inscriptions, dossiers élèves, présences et factures de l’élève.',
   TEACHERS: 'Affectations, emplois du temps, heures et paie des enseignants.',
-  FINANCE: 'Frais scolaires, factures, encaissements et relances.',
-  EXPENSES: 'Dépenses, budget annuel et bilan recettes / dépenses.',
+  FINANCE: 'Frais scolaires, factures, encaissements, relances et versement des salaires.',
+  EXPENSES: 'Charges à payer, salaires, versements, budget annuel et bilan recettes / dépenses.',
   GRADES: 'Périodes, évaluations, notes, bulletins et coefficients.',
   ENROLLMENT: 'Nouvelle année scolaire, réinscriptions et passage en classe supérieure.',
 };
@@ -24,7 +25,7 @@ const MODULE_HINTS: Record<OwnerModule, string> = {
 @Component({
   selector: 'app-staff',
   standalone: true,
-  imports: [FormValidationDirective, FormsModule],
+  imports: [FormValidationDirective, FormsModule, DecimalPipe],
   templateUrl: './staff.html',
   styleUrl: './staff.scss',
 })
@@ -109,6 +110,7 @@ export class StaffPage implements OnInit {
       email: member.email,
       phone: member.phone ?? '',
       jobTitle: member.jobTitle,
+      monthlySalary: member.monthlySalary ?? null,
       modules: new Set(member.modules),
     };
     this.formOpen.set(true);
@@ -151,6 +153,7 @@ export class StaffPage implements OnInit {
       email: f.email.trim(),
       phone: f.phone.trim() || null,
       jobTitle: f.jobTitle.trim(),
+      monthlySalary: f.monthlySalary,
       modules: this.modules.map((m) => m.code).filter((c) => f.modules.has(c)),
     };
     this.busy.set(true);
@@ -275,6 +278,6 @@ export class StaffPage implements OnInit {
   }
 
   private emptyForm() {
-    return { firstName: '', lastName: '', email: '', phone: '', jobTitle: '', modules: new Set<OwnerModule>() };
+    return { firstName: '', lastName: '', email: '', phone: '', jobTitle: '', monthlySalary: null as number | null, modules: new Set<OwnerModule>() };
   }
 }

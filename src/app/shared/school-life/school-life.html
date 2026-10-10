@@ -1,0 +1,145 @@
+<div class="ss life">
+  <header class="ss__header">
+    <div><h1>{{ title() }}</h1><p>Les informations de votre établissement, de votre classe ou de votre enfant.</p></div>
+    <button class="ss__btn ss__btn--ghost" type="button" (click)="reload()" [disabled]="loading() || saving() || contextId() === null">Actualiser</button>
+  </header>
+  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
+  @if (success()) { <p class="ss__alert ss__alert--success" role="status">{{ success() }}</p> }
+  @if (contexts().length) {
+    <label class="ss__field">{{ owner() ? 'Établissement' : teacher() ? 'Classe' : 'Élève' }}
+      <select name="context" [ngModel]="contextId()" (ngModelChange)="choose($event)" [disabled]="saving()">
+        @for (context of contexts(); track context.id) { <option [ngValue]="context.id">{{ context.name }}</option> }
+      </select>
+    </label>
+  }
+  @if (loading()) { <p role="status">Chargement…</p> }
+  @else if (contextId() === null) { <p class="ss__state">Aucun établissement, classe ou élève accessible.</p> }
+  @else {
+    @switch (module()) {
+      @case ('calendrier') {
+        @if (owner()) {
+          <form class="ss__card ss__body life__form" (ngSubmit)="createEvent()">
+            <h2>Ajouter un événement</h2>
+            <label class="ss__field">Titre<input name="title" [(ngModel)]="event.title" maxlength="160" required /></label>
+            <label class="ss__field">Type<select name="kind" [(ngModel)]="event.kind"><option value="EVENT">Événement</option><option value="EXAM">Examen</option><option value="HOLIDAY">Vacances</option><option value="MEETING">Réunion</option></select></label>
+            <label class="ss__field">Destinataires<select name="class" [(ngModel)]="event.classId"><option [ngValue]="null">Tout l’établissement</option>@for (cls of classChoices(); track cls.id) { <option [ngValue]="cls.id">{{ cls.name }}</option> }</select></label>
+            <label class="ss__field">Début<input type="date" name="start" [(ngModel)]="event.startsOn" required /></label>
+            <label class="ss__field">Fin<input type="date" name="end" [(ngModel)]="event.endsOn" [min]="event.startsOn" required /></label>
+            <label class="ss__field">Informations<textarea name="description" [(ngModel)]="event.description" maxlength="2000" rows="3"></textarea></label>
+            <button class="ss__btn" type="submit" [disabled]="saving()">Ajouter</button>
+          </form>
+        }
+        <div class="life__list">
+          @for (item of data().events; track item.id) {
+            <article class="ss__card ss__body"><h2>{{ item.title }}</h2><span class="ss__chip">{{ labels[item.kind] }}</span>
+              <p>{{ item.startsOn | date:'dd/MM/yyyy' }} — {{ item.endsOn | date:'dd/MM/yyyy' }} · {{ item.className ?? 'Tout l’établissement' }}</p>
+              <p class="life__text">{{ item.description }}</p>
+              @if (owner()) { <button type="button" class="ss__mini" (click)="deleteEvent(item)" [disabled]="saving()">Retirer</button> }
+            </article>
+          } @empty { <p class="ss__state">Aucun événement prévu.</p> }
+        </div>
+      }
+      @case ('discipline') {
+        @if (canObserve()) {
+          <form class="ss__card ss__body life__form" (ngSubmit)="createObservation()">
+            <h2>Ajouter une observation</h2>
+            <label class="ss__field">Élève<select name="student" [(ngModel)]="observation.studentId" required><option [ngValue]="null">Choisir un élève</option>@for (student of data().students; track student.id) { <option [ngValue]="student.id">{{ student.name }} · {{ student.className }}</option> }</select></label>
+            <label class="ss__field">Type<select name="kind" [(ngModel)]="observation.kind"><option value="INCIDENT">Incident</option><option value="POSITIVE">Observation positive</option></select></label>
+            <label class="ss__field">Date<input type="date" name="date" [(ngModel)]="observation.observedOn" [max]="today" required /></label>
+            <label class="ss__field">Observation<textarea name="description" [(ngModel)]="observation.description" maxlength="2000" rows="3" required></textarea></label>
+            <label class="ss__field">Mesure prise / accompagnement<textarea name="action" [(ngModel)]="observation.action" maxlength="2000" rows="2"></textarea></label>
+            <label><input type="checkbox" name="shared" [(ngModel)]="observation.sharedWithFamily" /> Partager cette observation et la mesure prise avec la famille</label>
+            <button class="ss__btn" type="submit" [disabled]="saving()">Enregistrer</button>
+          </form>
+        }
+        <div class="life__list">
+          @for (item of data().observations; track item.id) {
+            <article class="ss__card ss__body"><h2>{{ item.studentName }}</h2><span class="ss__chip">{{ labels[item.kind] }}</span>
+              <p>{{ item.observedOn | date:'dd/MM/yyyy' }} · {{ item.resolved ? 'Traité' : 'À suivre' }}</p><p class="life__text">{{ item.description }}</p>
+              @if (item.action) { <p class="life__text">Mesure prise : {{ item.action }}</p> }
+              @if (canObserve()) { <p class="ss__muted">{{ item.sharedWithFamily ? 'Partagé avec la famille' : 'Observation interne' }}</p> }
+              @if (owner()) {
+                <label class="ss__field">Suivi<textarea [name]="'observation-' + item.id" [(ngModel)]="observationActions[item.id]" maxlength="2000" rows="2"></textarea></label>
+                <div class="ss__actions"><button type="button" class="ss__btn" (click)="resolve(item)" [disabled]="saving()">Marquer comme traité</button>
+                  @if (!item.sharedWithFamily) { <button type="button" class="ss__btn ss__btn--ghost" (click)="resolve(item, true)" [disabled]="saving()">Traiter et partager avec la famille</button> }
+                </div>
+              }
+            </article>
+          } @empty { <p class="ss__state">Aucune observation disponible.</p> }
+        </div>
+      }
+      @case ('demandes-administratives') {
+        @if (!owner()) {
+          <form class="ss__card ss__body life__form" (ngSubmit)="requestDocument()"><h2>Demander un document</h2>
+            <label class="ss__field">Document<select name="kind" [(ngModel)]="document.kind"><option value="SCHOOL_CERTIFICATE">Certificat de scolarité</option><option value="ATTESTATION">Attestation</option><option value="OTHER">Autre document</option></select></label>
+            <label class="ss__field">Motif / précisions<textarea name="reason" [(ngModel)]="document.reason" maxlength="1000" rows="3" required></textarea></label>
+            <p class="ss__muted">L’établissement vous précisera les modalités de retrait du document.</p>
+            <button class="ss__btn" type="submit" [disabled]="saving()">Envoyer la demande</button>
+          </form>
+        }
+        <div class="life__list">
+          @for (item of data().requests; track item.id) {
+            <article class="ss__card ss__body"><h2>{{ labels[item.kind] }} · {{ item.studentName }}</h2><span class="ss__chip">{{ labels[item.status] }}</span>
+              <p>{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</p><p class="life__text">{{ item.reason }}</p>
+              @if (item.response) { <p class="life__text">Réponse de l’établissement : {{ item.response }}</p> }
+              @if (owner() && (item.status === 'PENDING' || item.status === 'IN_PROGRESS')) {
+                <label class="ss__field">Réponse / modalités de retrait<textarea [name]="'response-' + item.id" [(ngModel)]="responses[item.id]" maxlength="2000" rows="2"></textarea></label>
+                <div class="ss__actions"><button type="button" class="ss__btn ss__btn--ghost" (click)="decide(item, 'IN_PROGRESS')" [disabled]="saving()">En cours</button>
+                  <button type="button" class="ss__btn" (click)="decide(item, 'READY')" [disabled]="saving()">Prêt à retirer</button>
+                  <button type="button" class="ss__mini" (click)="decide(item, 'REJECTED')" [disabled]="saving()">Refuser</button></div>
+              }
+              @if (!owner() && item.mine && item.status === 'PENDING') { <button type="button" class="ss__mini" (click)="cancel(item)" [disabled]="saving()">Annuler ma demande</button> }
+            </article>
+          } @empty { <p class="ss__state">Aucune demande administrative.</p> }
+        </div>
+      }
+      @case ('bibliotheque') {
+        @if (owner()) {
+          <div class="life__forms">
+            <form class="ss__card ss__body life__form" (ngSubmit)="createBook()"><h2>Ajouter un livre</h2>
+              <label class="ss__field">Titre<input name="title" [(ngModel)]="book.title" maxlength="200" required /></label>
+              <label class="ss__field">Auteur<input name="author" [(ngModel)]="book.author" maxlength="160" /></label>
+              <label class="ss__field">Référence / ISBN<input name="reference" [(ngModel)]="book.reference" maxlength="80" required /></label>
+              <label class="ss__field">Nombre d’exemplaires<input type="number" name="copies" [(ngModel)]="book.copies" min="1" max="10000" required /></label>
+              <button class="ss__btn" type="submit" [disabled]="saving()">Ajouter</button>
+            </form>
+            <form class="ss__card ss__body life__form" (ngSubmit)="lend()"><h2>Enregistrer un prêt</h2>
+              <label class="ss__field">Livre<select name="book" [(ngModel)]="loan.bookId" required><option [ngValue]="null">Choisir un livre</option>@for (item of data().books; track item.id) { <option [ngValue]="item.id" [disabled]="item.available < 1">{{ item.title }} · {{ item.available }} disponible(s)</option> }</select></label>
+              <label class="ss__field">Élève<select name="student" [(ngModel)]="loan.studentId" required><option [ngValue]="null">Choisir un élève</option>@for (student of data().students; track student.id) { <option [ngValue]="student.id">{{ student.name }} · {{ student.className }}</option> }</select></label>
+              <label class="ss__field">Retour prévu<input type="date" name="due" [(ngModel)]="loan.dueOn" [min]="today" required /></label>
+              <button class="ss__btn" type="submit" [disabled]="saving()">Prêter</button>
+            </form>
+          </div>
+        }
+        <h2>Catalogue</h2><label class="ss__field">Rechercher un livre<input name="bookSearch" [ngModel]="bookSearch()" (ngModelChange)="bookSearch.set($event)" /></label>
+        <div class="life__list">@for (item of visibleBooks(); track item.id) {
+          <article class="ss__card ss__body"><h3>{{ item.title }}</h3><p>{{ item.author }} · {{ item.reference }}</p><span class="ss__chip">{{ item.available }} / {{ item.copies }} disponible(s)</span></article>
+        } @empty { <p class="ss__state">Aucun livre disponible dans le catalogue.</p> }</div>
+        <h2>Prêts et retours</h2><div class="life__list">@for (item of data().loans; track item.id) {
+          <article class="ss__card ss__body"><h3>{{ item.title }} · {{ item.studentName }}</h3><p>Emprunté le {{ item.borrowedOn | date:'dd/MM/yyyy' }} · Retour prévu le {{ item.dueOn | date:'dd/MM/yyyy' }}</p>
+            @if (item.returnedOn) { <span class="ss__chip">Retourné le {{ item.returnedOn | date:'dd/MM/yyyy' }}</span> }
+            @else { <span class="ss__chip" [class.ss__chip--red]="overdue(item)">{{ overdue(item) ? 'En retard' : 'En prêt' }}</span>
+              @if (owner()) { <button type="button" class="ss__btn" (click)="returnBook(item)" [disabled]="saving()">Enregistrer le retour</button> } }
+          </article>
+        } @empty { <p class="ss__state">Aucun prêt enregistré.</p> }</div>
+      }
+      @case ('suivi-devoirs') {
+        <p class="ss__muted">Le statut est renseigné par l’enseignant ou l’établissement lors de la remise et de la correction en classe.</p>
+        @if (teacher()) { <a routerLink="/enseignant/devoirs">Publier un devoir ou consulter ses pièces jointes</a> }
+        @if (owner()) { <a routerLink="/proprietaire/portail-parents">Publier un devoir</a> }
+        @if (!owner() && !teacher() && authRole === 'parent') { <a routerLink="/parent/devoirs" [queryParams]="{studentId: contextId()}">Consulter les pièces jointes des devoirs</a> }
+        <div class="life__list">@for (item of data().homeworks; track key(item)) {
+          <article class="ss__card ss__body"><h2>{{ item.title }} · {{ item.studentName }}</h2><p>À remettre le {{ item.dueOn | date:'dd/MM/yyyy' }}</p>
+            <p class="life__text">{{ item.content }}</p><span class="ss__chip">{{ labels[item.status] }}</span>
+            @if (item.feedback) { <p class="life__text">Retour : {{ item.feedback }}</p> }
+            @if (item.editable) {
+              <label class="ss__field">Statut<select [name]="'status-' + key(item)" [(ngModel)]="statuses[key(item)]"><option value="TO_DO">À faire</option><option value="SUBMITTED">Remis</option><option value="CORRECTED">Corrigé</option></select></label>
+              <label class="ss__field">Retour de correction<textarea [name]="'feedback-' + key(item)" [(ngModel)]="feedback[key(item)]" maxlength="2000" rows="2"></textarea></label>
+              <button type="button" class="ss__btn" (click)="homework(item)" [disabled]="saving()">Enregistrer le suivi</button>
+            }
+          </article>
+        } @empty { <p class="ss__state">Aucun devoir pour les élèves inscrits dans cette classe.</p> }</div>
+      }
+    }
+  }
+</div>

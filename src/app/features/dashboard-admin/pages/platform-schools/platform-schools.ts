@@ -7,6 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, catchError, debounceTime, merge, of, startWith, switchMap, timer } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
+import { AppointmentCounter } from '../../../../shared/appointments/appointment-counter';
 
 interface SchoolRow {
   id: number; name: string; type: string; status: string; ownerId: number;
@@ -17,11 +18,12 @@ interface SchoolRow {
 interface SchoolPage { items: SchoolRow[]; total: number; page: number; size: number; }
 
 @Component({
-  selector: 'app-platform-schools', standalone: true, imports: [FormsModule, DatePipe],
+  selector: 'app-platform-schools', standalone: true, imports: [FormsModule, DatePipe, AppointmentCounter],
   template: `
     <section class="platform">
       <header><div class="eyebrow">ADMINISTRATION DE LA PLATEFORME</div><h1>Établissements</h1>
         <p>Gérez les accès des établissements et contactez leurs propriétaires.</p></header>
+      <app-appointment-counter profile="personal" pageLink="/admin/mes-rendez-vous" />
       <div class="toolbar">
         <label class="search">Rechercher
           <input type="search" [(ngModel)]="search" (ngModelChange)="searchChanged()" maxlength="200"

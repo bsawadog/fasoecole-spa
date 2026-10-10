@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { AuthService, SchoolAccessRequest, SchoolAccessService } from '../../../../core/auth';
 import { Approvals } from './approvals';
@@ -12,9 +12,9 @@ const request = (id: number, status: SchoolAccessRequest['status']): SchoolAcces
 });
 
 describe('Approvals', () => {
-  function setup() {
+  function setup(empty = false) {
     const access = {
-      pending: vi.fn(() => of([request(1, 'PENDING'), request(2, 'AUTO_APPROVED')])),
+      pending: vi.fn(() => of(empty ? [] : [request(1, 'PENDING'), request(2, 'AUTO_APPROVED')])),
       approve: vi.fn(() => of({})),
       reject: vi.fn(() => of({})),
       confirm: vi.fn(() => of({})),
@@ -27,18 +27,28 @@ describe('Approvals', () => {
       approvePendingUser: vi.fn(() => of({})),
       resendUserInvitation: vi.fn(() => of({ emailSent: false })),
     };
+    const management = {
+      getClasses: vi.fn(() => throwError(() => new Error('Classes indisponibles'))),
+      getAcademicYears: vi.fn(() => throwError(() => new Error('Années indisponibles'))),
+    };
     TestBed.configureTestingModule({
       imports: [Approvals],
       providers: [{ provide: SchoolAccessService, useValue: access }, { provide: AuthService, useValue: auth },
-        { provide: OwnerManagementService, useValue: {
-          getClasses: () => of([{ id: 11, schoolId: 2, name: 'CP1', academicYearId: 9 }]),
-          getAcademicYears: () => of([{ id: 9, label: '2026-2027' }]),
-        } }],
+        { provide: OwnerManagementService, useValue: management }],
     });
     const fixture = TestBed.createComponent(Approvals);
     fixture.detectChanges();
-    return { fixture, page: fixture.componentInstance, access, auth };
+    return { fixture, page: fixture.componentInstance, access, auth, management };
   }
+
+  it('shows the empty state without loading unrelated classes or academic years', () => {
+    const { fixture, page, management } = setup(true);
+    expect(page.loading()).toBe(false);
+    expect(page.errorMessage()).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Aucune demande en attente');
+    expect(management.getClasses).not.toHaveBeenCalled();
+    expect(management.getAcademicYears).not.toHaveBeenCalled();
+  });
 
   it('lists system-approved parent access separately with a revoke button', () => {
     const { fixture, page, access } = setup();

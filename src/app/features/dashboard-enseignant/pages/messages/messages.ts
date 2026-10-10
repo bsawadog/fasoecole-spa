@@ -7,7 +7,7 @@ import { RouterLink } from '@angular/router';
 import { ConversationFiles, MessageAttachments } from '../../../../shared/self-space/message-attachments';
 import { catchError, exhaustMap, forkJoin, of, timer } from 'rxjs';
 import {
-  apiError, ConversationRecipient, ConversationSummary, ConversationThread, RosterStudent, SelfSpaceService, TeacherClass,
+  apiError, TeacherMessageRecipient, ConversationSummary, ConversationThread, SelfSpaceService, TeacherClass,
 } from '../../../../shared/self-space/self-space.service';
 
 @Component({
@@ -22,21 +22,21 @@ export class TeacherMessages implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly classes = signal<TeacherClass[]>([]);
-  readonly students = signal<RosterStudent[]>([]);
-  readonly recipients = signal<ConversationRecipient[]>([]);
+  readonly recipients = signal<TeacherMessageRecipient[]>([]);
   readonly conversations = signal<ConversationSummary[]>([]);
   readonly thread = signal<ConversationThread | null>(null);
   readonly selectedRecipientIds = signal<number[]>([]);
   readonly loading = signal(true);
   readonly composing = signal(false);
   readonly sending = signal(false);
-  readonly recipientSchool = signal(false);
+  readonly loadingRecipients = signal(false);
+  recipientFilter: 'ALL' | 'ELEVE' | 'PARENT' | 'PROPRIETAIRE' = 'ALL';
+  recipientSearch = '';
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
   readonly emojis = ['😀', '😊', '😂', '👍', '❤️', '🙏', '🎉'];
 
   classId: number | null = null;
-  studentId: number | null = null;
   subject = '';
   message = '';
   reply = '';
@@ -69,27 +69,52 @@ export class TeacherMessages implements OnInit {
 
   selectClass(value: number | null): void {
     this.classId = value;
-    this.studentId = null;
-    this.students.set([]);
     this.recipients.set([]);
     this.selectedRecipientIds.set([]);
-    if (value === null) return;
-    this.api.classStudents(value).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (items) => this.students.set(items),
-      error: (err) => this.error.set(apiError(err, 'Impossible de charger les élèves de cette classe.')),
-    });
+    this.recipientFilter = 'ALL';
+    this.recipientSearch = '';
+    const selectedClass = this.classes().find(item => item.classId === value);
+    this.loadingRecipients.set(!!selectedClass);
+    if (!selectedClass) return;
+    this.api.teacherMessageRecipients(selectedClass.schoolId, selectedClass.classId)
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: items => {
+          if (this.classId !== value) return;
+          this.recipients.set(items);
+          this.loadingRecipients.set(false);
+        },
+        error: err => {
+          if (this.classId !== value) return;
+          this.loadingRecipients.set(false);
+          this.error.set(apiError(err, 'Impossible de charger les destinataires.'));
+        },
+      });
   }
 
-  selectStudent(value: number | null): void {
-    this.studentId = value;
-    this.selectedRecipientIds.set([]);
-    const schoolId = this.classes().find((item) => item.classId === this.classId)?.schoolId;
-    if (schoolId && value) {
-      this.api.conversationRecipients(schoolId, value).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: (items) => this.recipients.set(items),
-        error: (err) => this.error.set(apiError(err, 'Impossible de charger les parents de cet élève.')),
-      });
-    }
+  visibleRecipients(): TeacherMessageRecipient[] {
+    const search = this.recipientSearch.trim().toLocaleLowerCase();
+    return this.recipients().filter(item => (this.recipientFilter === 'ALL' || item.role === this.recipientFilter)
+      && (!search || item.fullName.toLocaleLowerCase().includes(search)));
+  }
+
+  selectGroup(role: TeacherMessageRecipient['role']): void {
+    this.selectedRecipientIds.set(this.recipients().filter(item => item.role === role).map(item => item.userId));
+    this.recipientFilter = role;
+    this.recipientSearch = '';
+  }
+
+  groupCount(role: TeacherMessageRecipient['role']): number {
+    return this.recipients().filter(item => item.role === role).length;
+  }
+
+  isGroupSelected(role: TeacherMessageRecipient['role']): boolean {
+    const group = this.recipients().filter(item => item.role === role);
+    const selected = new Set(this.selectedRecipientIds());
+    return group.length > 0 && selected.size === group.length && group.every(item => selected.has(item.userId));
+  }
+
+  roleLabel(role: TeacherMessageRecipient['role']): string {
+    return role === 'ELEVE' ? 'Élève' : role === 'PARENT' ? 'Parent' : 'Propriétaire';
   }
 
   toggleRecipient(userId: number, checked: boolean): void {
@@ -99,22 +124,22 @@ export class TeacherMessages implements OnInit {
   startConversation(): void {
     if (this.sending()) return;
     const selectedClass = this.classes().find((item) => item.classId === this.classId);
-    if (!selectedClass || this.studentId === null || (!this.recipientSchool() && !this.selectedRecipientIds().length)
+    if (!selectedClass || this.loadingRecipients() || !this.selectedRecipientIds().length
       || !this.subject.trim() || (!this.message.trim() && !this.messageFiles.length)) return;
     this.sending.set(true);
     this.error.set(null);
-    this.api.startConversation({ schoolId: selectedClass.schoolId, studentId: this.studentId, subject: this.subject.trim(),
-      content: this.message.trim(), recipientUserIds: this.selectedRecipientIds(), recipientSchool: this.recipientSchool() }, this.messageFiles)
+    this.api.sendTeacherMessage({ schoolId: selectedClass.schoolId, classId: selectedClass.classId, subject: this.subject.trim(),
+      content: this.message.trim(), recipientUserIds: this.selectedRecipientIds() }, this.messageFiles)
       .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: (thread) => {
-          this.thread.set(thread);
-          this.conversations.update((items) => [thread.conversation, ...items]);
+        next: (conversations) => {
+          this.thread.set(null);
+          this.conversations.update((items) => [...conversations, ...items]);
           this.subject = '';
           this.message = '';
           this.messageFiles = [];
           this.selectedRecipientIds.set([]);
           this.composing.set(false);
-          this.success.set('Votre message a été envoyé.');
+          this.success.set(`Votre message a été envoyé à ${conversations.length} destinataire(s). Les réponses sont privées.`);
           this.sending.set(false);
         },
         error: (err) => {

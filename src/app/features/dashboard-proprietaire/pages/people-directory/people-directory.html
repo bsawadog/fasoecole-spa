@@ -1,0 +1,32 @@
+<section class="class-roster">
+  <header class="class-roster__header">
+    <div><a routerLink="/proprietaire">Retour à l’accueil</a><h1>{{ title() }}</h1><p>{{ parentsMode ? 'Coordonnées des parents et accès aux fiches de leurs enfants inscrits dans les classes.' : 'Tous les élèves de l’établissement, avec ou sans classe. Ouvrez une fiche pour consulter les détails.' }}</p></div>
+    @if (schools().length > 1) {
+      <label>Établissement<select class="class-roster__select" [ngModel]="schoolId()" (ngModelChange)="selectSchool(+$event)">
+        @for (school of schools(); track school.id) { <option [ngValue]="school.id">{{ school.name }}</option> }
+      </select></label>
+    }
+  </header>
+  @if (error()) { <p class="class-roster__alert class-roster__alert--error" role="alert">{{ error() }}</p>@if (schoolId()) { <button type="button" (click)="selectSchool(schoolId()!)">Réessayer</button> } }
+  @if (loading()) { <p class="class-roster__state" role="status">Chargement…</p> }
+  @else if (!error()) {
+    <section class="class-roster__card">
+      <div class="class-roster__card-head"><h2>Liste des {{ title().toLowerCase() }}</h2><span role="status">{{ parentsMode ? filteredParents().length : filteredStudents().length }} / {{ parentsMode ? parents().length : students().length }}</span></div>
+      <div class="class-roster__search"><label for="people-search">Rechercher</label><input id="people-search" class="class-roster__select" type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Nom, prénom, matricule ou coordonnées" /></div>
+      <div class="class-roster__table-wrap"><table class="class-roster__table">
+        <thead><tr><th>Nom et prénom</th><th>Contact</th><th>{{ parentsMode ? 'Enfants' : 'Matricule' }}</th>@if (!parentsMode) { <th>Fiche</th> }</tr></thead>
+        <tbody>
+          @if (parentsMode) {
+            @for (parent of filteredParents(); track parent.parentId) {
+              <tr><td><strong>{{ parent.lastName }} {{ parent.firstName }}</strong></td><td>@if (parent.email) { <a [href]="'mailto:' + parent.email">{{ parent.email }}</a> }@if (parent.phone) { <div><a [href]="'tel:' + parent.phone">{{ parent.phone }}</a></div> }</td><td>@for (child of parent.children; track child.id) { <div><a [routerLink]="['/proprietaire/eleves', child.id]">{{ child.lastName }} {{ child.firstName }} — {{ child.registrationNumber }}</a></div> }</td></tr>
+            } @empty { <tr><td colspan="3">Aucun parent à afficher.</td></tr> }
+          } @else {
+            @for (student of filteredStudents(); track student.id) {
+              <tr><td><a [routerLink]="['/proprietaire/eleves', student.id]"><strong>{{ student.lastName }} {{ student.firstName }}</strong></a></td><td>{{ student.email || '—' }}@if (student.phone) { <div>{{ student.phone }}</div> }</td><td>{{ student.registrationNumber }}</td><td><a class="class-roster__action class-roster__action--primary" [routerLink]="['/proprietaire/eleves', student.id]">Voir la fiche</a></td></tr>
+            } @empty { <tr><td colspan="4">Aucun élève à afficher.</td></tr> }
+          }
+        </tbody>
+      </table></div>
+    </section>
+  }
+</section>

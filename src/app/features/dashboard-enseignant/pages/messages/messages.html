@@ -1,7 +1,7 @@
 <div class="ss">
   <a class="ss__back" routerLink="/enseignant">← Retour à l’espace enseignant</a>
   <header class="ss__header">
-    <div><h1>Messages</h1><p>Échangez avec les parents de vos élèves et avec l’établissement.</p></div>
+    <div><h1>Messages</h1><p>Échangez avec vos élèves, leurs parents et le propriétaire de l’établissement.</p></div>
     <button class="ss__btn" type="button" (click)="composing.set(!composing())">Nouvelle conversation</button>
   </header>
   @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
@@ -27,24 +27,34 @@
         <form class="ss__body" (ngSubmit)="startConversation()">
           <h2>Nouvelle conversation</h2>
           <label class="ss__field">Classe
-            <select name="classId" [ngModel]="classId" (ngModelChange)="selectClass($event)" required>
+            <select name="classId" [ngModel]="classId" (ngModelChange)="selectClass($event)" [disabled]="sending()" required>
               <option [ngValue]="null">Sélectionner une classe</option>
               @for (item of classes(); track item.classId) { <option [ngValue]="item.classId">{{ item.className }} · {{ item.schoolName }}</option> }
             </select>
           </label>
-          <label class="ss__field">Élève
-            <select name="studentId" [ngModel]="studentId" (ngModelChange)="selectStudent($event)" required>
-              <option [ngValue]="null">Sélectionner un élève</option>
-              @for (student of students(); track student.studentId) { <option [ngValue]="student.studentId">{{ student.fullName }}</option> }
-            </select>
-          </label>
-          <label><input type="checkbox" [checked]="recipientSchool()" (change)="recipientSchool.set($any($event.target).checked)" /> Établissement</label>
-          @if (recipients().length) {
+          <p class="ss__muted">Chaque destinataire reçoit une conversation séparée. Les réponses restent privées.</p>
+          @if (loadingRecipients()) { <p role="status">Chargement des destinataires…</p> }
+          @else if (classId !== null) {
+            <div class="ss__emoji-picker" aria-label="Choisir un groupe de destinataires">
+              <button type="button" (click)="selectGroup('ELEVE')" [class.ss__group--selected]="isGroupSelected('ELEVE')" [attr.aria-pressed]="isGroupSelected('ELEVE')" [disabled]="sending() || !groupCount('ELEVE')">Toute la classe ({{ groupCount('ELEVE') }})</button>
+              <button type="button" (click)="selectGroup('PARENT')" [class.ss__group--selected]="isGroupSelected('PARENT')" [attr.aria-pressed]="isGroupSelected('PARENT')" [disabled]="sending() || !groupCount('PARENT')">Tous les parents ({{ groupCount('PARENT') }})</button>
+              <button type="button" (click)="selectGroup('PROPRIETAIRE')" [class.ss__group--selected]="isGroupSelected('PROPRIETAIRE')" [attr.aria-pressed]="isGroupSelected('PROPRIETAIRE')" [disabled]="sending() || !groupCount('PROPRIETAIRE')">Propriétaire</button>
+              <button type="button" (click)="selectedRecipientIds.set([])" [disabled]="sending()">Tout désélectionner</button>
+            </div>
+            <label class="ss__field">Type de destinataire
+              <select name="recipientFilter" [(ngModel)]="recipientFilter">
+                <option value="ALL">Tous</option><option value="ELEVE">Élèves</option>
+                <option value="PARENT">Parents</option><option value="PROPRIETAIRE">Propriétaire</option>
+              </select>
+            </label>
+            <label class="ss__field">Rechercher une personne<input name="recipientSearch" [(ngModel)]="recipientSearch" /></label>
+            <p>{{ selectedRecipientIds().length }} destinataire(s) sélectionné(s)</p>
             <div class="ss__recipient-list">
-              @for (recipient of recipients(); track recipient.userId) {
+              @for (recipient of visibleRecipients(); track recipient.userId) {
                 <label><input type="checkbox" [checked]="selectedRecipientIds().includes(recipient.userId)"
-                              (change)="toggleRecipient(recipient.userId, $any($event.target).checked)" /> {{ recipient.fullName }}</label>
-              }
+                              [disabled]="sending()"
+                              (change)="toggleRecipient(recipient.userId, $any($event.target).checked)" /> {{ recipient.fullName }} · {{ roleLabel(recipient.role) }}</label>
+              } @empty { <p>Aucun destinataire disponible.</p> }
             </div>
           }
           <label class="ss__field">Objet<input name="subject" [(ngModel)]="subject" maxlength="160" required /></label>
@@ -53,7 +63,7 @@
           <div class="ss__emoji-picker" aria-label="Ajouter un emoji">
             @for (emoji of emojis; track emoji) { <button type="button" (click)="addEmoji(emoji, 'message')" [attr.aria-label]="'Ajouter ' + emoji">{{ emoji }}</button> }
           </div>
-          <button class="ss__btn" type="submit" [disabled]="sending()">{{ sending() ? 'Envoi…' : 'Créer la conversation' }}</button>
+          <button class="ss__btn" type="submit" [disabled]="sending() || loadingRecipients() || !selectedRecipientIds().length">{{ sending() ? 'Envoi…' : 'Envoyer' }}</button>
         </form>
       } @else if (thread(); as current) {
         <h2>{{ current.conversation.subject }}</h2>

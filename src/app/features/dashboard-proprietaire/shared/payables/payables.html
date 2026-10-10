@@ -1,0 +1,102 @@
+<section class="payables">
+  <div class="toolbar">
+    <div><h2>{{ salariesOnly() ? 'Salaires à payer' : 'Dépenses à payer' }}</h2>
+      <p>Charges du mois et impayés antérieurs. Les paiements alimentent le bilan de l’école.</p></div>
+    <label>Mois<input type="month" [(ngModel)]="month" (change)="load(true)" [disabled]="busy() || loading()"></label>
+    <button type="button" (click)="load(true)" [disabled]="busy() || loading()">Actualiser les charges</button>
+    @if (!salariesOnly()) {
+      <button type="button" class="primary" (click)="openForm('manual')" [disabled]="busy() || loading()">Ajouter une dépense</button>
+      <button type="button" (click)="openForm('fixed')" [disabled]="busy() || loading()">Ajouter une charge fixe</button>
+    }
+  </div>
+  @if (error()) { <p class="alert error" role="alert">{{ error() }}</p> }
+  @if (success()) { <p class="alert success" role="status">{{ success() }}</p> }
+  @if (loading()) { <p role="status" class="empty">Chargement des échéances…</p> }
+  @if (data(); as d) {
+    <div class="metrics">
+      <article><span>Montant prévu</span><strong>{{ d.total | number:'1.0-2' }} <small>FCFA</small></strong></article>
+      <article><span>Déjà payé</span><strong>{{ d.paid | number:'1.0-2' }} <small>FCFA</small></strong></article>
+      <article class="outstanding"><span>Reste à payer</span><strong>{{ d.remaining | number:'1.0-2' }} <small>FCFA</small></strong></article>
+      <article class="late"><span>Dont en retard</span><strong>{{ d.overdue | number:'1.0-2' }} <small>FCFA</small></strong></article>
+    </div>
+    @if (formKind) {
+      <section class="panel">
+        <h3>{{ formKind === 'fixed' ? 'Nouvelle charge mensuelle' : 'Nouvelle dépense à payer' }}</h3>
+        <form (ngSubmit)="save()" #expenseForm="ngForm">
+          <label>Libellé<input name="label" [(ngModel)]="form.label" maxlength="150" required placeholder="Loyer, achat de matériel…"></label>
+          <label>Catégorie<select name="category" [(ngModel)]="form.categoryId" required>
+            @for (c of manualCategories(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
+          </select></label>
+          <label>Bénéficiaire<input name="supplier" [(ngModel)]="form.supplier" maxlength="150" placeholder="Fournisseur ou bénéficiaire"></label>
+          <label>Montant total (FCFA)<input name="amount" type="number" min="0.01" max="9999999999.99" step="0.01" [(ngModel)]="form.amount" required></label>
+          @if (formKind === 'fixed') {
+            <label>Jour d’échéance<input name="dueDay" type="number" min="1" max="31" step="1" [(ngModel)]="form.dueDay" required></label>
+            <p>À partir de {{ month }}, une échéance sera préparée chaque mois. Les jours 29 à 31 sont ramenés au dernier jour des mois plus courts.</p>
+          } @else {
+            <label>Échéance<input name="dueDate" type="date" [(ngModel)]="form.dueDate" required></label>
+            <label>Notes<input name="notes" [(ngModel)]="form.notes" maxlength="500"></label>
+          }
+          <div class="actions"><button class="primary" type="submit" [disabled]="busy() || expenseForm.invalid">Enregistrer</button>
+            <button type="button" (click)="formKind = null" [disabled]="busy()">Fermer</button></div>
+        </form>
+      </section>
+    }
+    <div class="filters">
+      <label>Statut<select [(ngModel)]="filter"><option value="OPEN">À payer et paiements partiels</option><option value="OVERDUE">En retard</option>
+        <option value="PAID">Soldées</option><option value="CANCELLED">Annulées</option><option value="NOT_DUE">Sans montant dû</option><option value="ALL">Toutes les dépenses</option></select></label>
+      <label>Rechercher<input type="search" [(ngModel)]="search" placeholder="Libellé, bénéficiaire, catégorie…"></label>
+      <span>{{ rows().length }} dépense(s)</span>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Dépense</th><th>Échéance</th><th>Montant</th><th>Payé</th><th>Reste à payer</th><th>Statut</th><th>Actions</th></tr></thead>
+      <tbody>
+        @for (r of rows(); track r.id) {
+          <tr [class.overdue]="r.overdue">
+            <td><strong>{{ r.label }}</strong><small>{{ sources[r.source] }} · {{ r.categoryName }}</small>@if (r.supplier) { <small>{{ r.supplier }}</small> }</td>
+            <td>{{ r.dueDate | date:'dd/MM/yyyy' }}@if (r.period !== month) { <small>Report de {{ r.period }}</small> }</td>
+            <td>{{ r.amount | number:'1.0-2' }}</td><td>{{ r.paid | number:'1.0-2' }}</td><td class="remaining">{{ r.remaining | number:'1.0-2' }}</td>
+            <td><span class="badge" [attr.data-status]="r.status">{{ status[r.status] }}</span>@if (r.overdue) { <small class="danger">En retard</small> }</td>
+            <td><div class="row-actions"><button type="button" (click)="openDetail(r)" [disabled]="busy()">{{ r.remaining > 0 && r.status !== 'CANCELLED' ? 'Payer / détails' : 'Détails' }}</button>
+              @if (canCancel(r)) { <button type="button" class="danger" (click)="cancel(r)" [disabled]="busy()">Annuler</button> }</div></td>
+          </tr>
+        } @empty { <tr><td colspan="7" class="empty">Aucune dépense pour ce filtre. Choisissez « Toutes les dépenses » pour consulter les échéances soldées ou annulées.</td></tr> }
+      </tbody>
+    </table></div>
+    @if (selected(); as r) {
+      <section class="panel" aria-label="Détails de la dépense">
+        <div class="toolbar"><h3>{{ r.label }}</h3><button type="button" (click)="closeDetail()" [disabled]="busy()">Fermer</button></div>
+        <p>Échéance : {{ r.dueDate | date:'dd/MM/yyyy' }} · {{ status[r.status] }} · Reste à payer : <strong>{{ r.remaining | number:'1.0-2' }} FCFA</strong></p>
+        @if (r.notes) { <p>{{ r.notes }}</p> }
+        @if (r.remaining > 0 && r.status !== 'CANCELLED') {
+          <form (ngSubmit)="recordPayment()" #paymentForm="ngForm">
+            <label>Versement (FCFA)<input name="payAmount" type="number" min="0.01" [max]="r.remaining" step="0.01" [(ngModel)]="pay.amount" required></label>
+            <label>Date du paiement<input name="payDate" type="date" [max]="today" [(ngModel)]="pay.date" required></label>
+            <label>Mode<select name="method" [(ngModel)]="pay.method">@for (m of methods; track m) { <option [value]="m">{{ methodLabels[m] }}</option> }</select></label>
+            <label>Référence<input name="reference" [(ngModel)]="pay.reference" maxlength="100" placeholder="N° de transaction ou pièce"></label>
+            <div class="actions"><button class="primary" type="submit" [disabled]="busy() || paymentForm.invalid">Enregistrer le versement</button></div>
+          </form>
+        }
+        <h4>Historique des versements</h4>
+        @if (historyLoading()) { <p role="status">Chargement des versements…</p> }
+        @else if (historyError()) { <p class="error" role="alert">{{ historyError() }}</p> }
+        @else {
+          <div class="table-wrap"><table><thead><tr><th>Date</th><th>Montant (FCFA)</th><th>Mode</th><th>Référence</th></tr></thead>
+            <tbody>@for (p of history(); track p.id) { <tr><td>{{ p.date | date:'dd/MM/yyyy' }}</td><td>{{ p.amount | number:'1.0-2' }}</td><td>{{ p.method ? methodLabels[p.method] : 'Fiche enseignant' }}</td><td>{{ p.reference || '—' }}</td></tr> }
+              @empty { <tr><td colspan="4">Aucun versement enregistré.</td></tr> }</tbody></table></div>
+        }
+      </section>
+    }
+    @if (!salariesOnly()) {
+      <section class="panel">
+        <h3>Charges fixes mensuelles</h3><p>Arrêter une charge empêche la préparation de nouvelles échéances. Les dépenses déjà préparées restent à régler ou peuvent être annulées si elles n’ont aucun versement.</p>
+        <div class="fixed-list">
+          @for (f of d.fixedCharges; track f.id) {
+            <article [class.inactive]="!f.active"><div><strong>{{ f.label }}</strong><small>{{ f.supplier || 'Charge mensuelle' }} · Échéance le {{ f.dueDay }} · Depuis {{ f.startMonth }}</small></div>
+              <strong>{{ f.amount | number:'1.0-2' }} FCFA</strong><span class="badge">{{ f.active ? 'Active' : 'Arrêtée' }}</span>
+              <button type="button" (click)="toggleFixed(f.id,!f.active)" [disabled]="busy()">{{ f.active ? 'Arrêter' : 'Réactiver' }}</button></article>
+          } @empty { <p>Aucune charge fixe configurée. Ajoutez le loyer, l’eau, l’électricité ou vos autres charges mensuelles.</p> }
+        </div>
+      </section>
+    }
+  }
+</section>

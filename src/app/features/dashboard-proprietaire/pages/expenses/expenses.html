@@ -4,7 +4,7 @@
       <span class="dep__header-icon" aria-hidden="true">⇄</span>
       <div>
         <h1>Dépenses &amp; budget</h1>
-        <p>Charges de l’établissement, budget annuel par catégorie et bilan recettes / dépenses.</p>
+        <p>Salaires, charges fixes, dépenses à payer, versements et bilan de l’établissement.</p>
       </div>
     </div>
     @if (schools().length > 1) {
@@ -47,6 +47,7 @@
     }
 
     @switch (tab()) {
+      @case ('payables') { @if (schoolId(); as id) { <app-payables [schoolId]="id" /> } }
       @case ('summary') {
         @if (summary(); as s) {
           <div class="dep__kpis">
@@ -134,14 +135,14 @@
             </label>
             <label>Rechercher<input type="search" [(ngModel)]="search" placeholder="Libellé, bénéficiaire, référence"></label>
             <div class="dep__actions">
-              <button type="button" class="dep__btn" (click)="openExpense()" [disabled]="!manualCategories().length">+ Nouvelle dépense</button>
+              <button type="button" class="dep__btn" (click)="openExpense()" [disabled]="!manualCategories().length">+ Dépense déjà payée</button>
               <button type="button" class="dep__btn dep__btn--ghost" (click)="exportCsv()">Exporter (CSV)</button>
             </div>
           </div>
 
           @if (formOpen()) {
             <form class="dep__panel" (ngSubmit)="saveExpense()">
-              <h3>{{ editingId ? 'Modifier la dépense' : 'Nouvelle dépense' }}</h3>
+              <h3>{{ editingId ? 'Modifier la dépense' : 'Enregistrer une dépense déjà payée' }}</h3>
               <div class="dep__form">
                 <label>Catégorie
                   <select name="category" [(ngModel)]="form.categoryId" required>
@@ -182,7 +183,7 @@
                         <button type="button" class="dep__mini" (click)="openExpense(e)" [disabled]="busy()">Modifier</button>
                         <button type="button" class="dep__mini dep__mini--danger" (click)="deleteExpense(e)" [disabled]="busy()">Supprimer</button>
                       </div>
-                    } @else { <span class="dep__badge" title="Enregistré depuis la paie de l’enseignant">Paie</span> }</td></tr>
+                    } @else { <span class="dep__badge" title="Paiement suivi dans les dépenses à payer">{{ e.source === 'PAYABLE' ? 'Versement' : 'Paie' }}</span> }</td></tr>
               } @empty { <tr><td colspan="7" class="dep__muted">Aucune dépense sur cette période.</td></tr> }
             </tbody>
           </table></div>

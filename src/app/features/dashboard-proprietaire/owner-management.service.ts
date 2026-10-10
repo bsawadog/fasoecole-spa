@@ -63,6 +63,10 @@ export interface FeeTypeRecord {
 }
 
 export interface StudentRecord {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string | null;
   id: number;
   userId: number;
   schoolId: number;

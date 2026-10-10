@@ -8,9 +8,10 @@ import { METHOD_LABELS, PaymentMethod } from '../../finance.service';
 import {
   CategoryLine, ExpenseCategory, ExpenseRow, ExpensesService, ExpenseSummary,
 } from '../../expenses.service';
+import { Payables } from '../../shared/payables/payables';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 
-type Tab = 'summary' | 'expenses' | 'budget' | 'categories';
+type Tab = 'summary' | 'expenses' | 'budget' | 'categories' | 'payables';
 
 const isoDate = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -20,7 +21,7 @@ const monthStart = () => today().slice(0, 8) + '01';
 @Component({
   selector: 'app-expenses',
   standalone: true,
-  imports: [FormValidationDirective, FormsModule, DecimalPipe],
+  imports: [FormValidationDirective, FormsModule, DecimalPipe, Payables],
   templateUrl: './expenses.html',
   styleUrl: './expenses.scss',
 })
@@ -34,15 +35,16 @@ export class ExpensesPage implements OnInit, OnDestroy {
   readonly todayIso = today();
   readonly methods = Object.keys(METHOD_LABELS) as PaymentMethod[];
   readonly tabs: { id: Tab; label: string }[] = [
+    { id: 'payables', label: 'À payer' },
     { id: 'summary', label: 'Bilan' },
-    { id: 'expenses', label: 'Dépenses' },
+    { id: 'expenses', label: 'Paiements enregistrés' },
     { id: 'budget', label: 'Budget annuel' },
     { id: 'categories', label: 'Catégories' },
   ];
 
   readonly schools = signal<RegistrationSchool[]>([]);
   readonly schoolId = signal<number | null>(null);
-  readonly tab = signal<Tab>('summary');
+  readonly tab = signal<Tab>('payables');
   readonly summary = signal<ExpenseSummary | null>(null);
   readonly categories = signal<ExpenseCategory[]>([]);
   readonly expenses = signal<ExpenseRow[]>([]);
@@ -266,6 +268,7 @@ export class ExpensesPage implements OnInit, OnDestroy {
 
   loadTab(): void {
     switch (this.tab()) {
+      case 'payables': this.loading.set(false); break;
       case 'summary':
       case 'budget':
         this.loadSummary();

@@ -59,18 +59,7 @@
           </div>
           <button class="ss__btn" type="submit" [disabled]="saving()">{{ saving() ? 'Envoi…' : 'Envoyer la demande' }}</button>
         </form>
-        <section class="ss__card ss__body"><h2>Mes demandes</h2>
-          @if (!appointments().length) { <p class="ss__state">Aucun rendez-vous demandé.</p> }
-          @for (appointment of appointments(); track appointment.id) {
-            <article class="portal-appointment"><strong>{{ appointment.proposedAt | date:'dd/MM/yyyy HH:mm' }} · {{ appointment.teacherName }}</strong>
-              <span class="ss__chip">{{ appointmentLabels[appointment.status] }}</span><p>{{ appointment.reason }}</p>
-              @if (appointment.response) { <p>Réponse : {{ appointment.response }}</p> }
-              @if (appointment.status === 'PENDING' || appointment.status === 'ACCEPTED') {
-                <button type="button" class="ss__mini" [disabled]="saving()" (click)="cancel(appointment)">Annuler la demande</button>
-              }
-            </article>
-          }
-        </section>
+        <app-appointments [showHeading]="false" [legacyRequests]="appointments()" legacyKind="parent" (changed)="load(true)" />
       }
     }
     @if (receipt(); as payment) {
@@ -87,3 +76,5 @@
     }
   }
 </div>
+
+@if (module() === 'rendez-vous' && !loadingChildren() && !selected()) { <app-appointments [showHeading]="false" /> }

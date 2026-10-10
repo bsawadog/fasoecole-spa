@@ -285,6 +285,16 @@ export class SelfSpaceService {
     return this.http.get<ConversationRecipient[]>(`${this.apiConversations}/recipients`, { params });
   }
 
+  teacherMessageRecipients(schoolId: number, classId: number): Observable<TeacherMessageRecipient[]> {
+    return this.http.get<TeacherMessageRecipient[]>(`${this.apiConversations}/teacher/recipients`, {
+      params: { schoolId: String(schoolId), classId: String(classId) },
+    });
+  }
+
+  sendTeacherMessage(payload: { schoolId: number; classId: number; subject: string; content: string; recipientUserIds: number[] }, files: File[] = []): Observable<ConversationSummary[]> {
+    return this.http.post<ConversationSummary[]>(`${this.apiConversations}/teacher/messages`, conversationBody(payload, files));
+  }
+
   unreadConversationCount(): Observable<number> {
     return this.http.get<number>(`${this.apiConversations}/unread-count`);
   }
@@ -426,4 +436,8 @@ export class SelfSpaceService {
 export function apiError(error: unknown, fallback: string): string {
   const message = (error as { error?: { message?: unknown } } | null)?.error?.message;
   return typeof message === 'string' && message ? message : fallback;
+}
+
+export interface TeacherMessageRecipient {
+  userId: number; fullName: string; email?: string | null; role: 'ELEVE' | 'PARENT' | 'PROPRIETAIRE';
 }

@@ -65,7 +65,7 @@ export interface TeacherMonth {
 
 export interface TeacherDetail {
   teacher: TeacherCard;
-  rateType: 'HOURLY' | 'MONTHLY' | null;
+  rateType: 'HOURLY' | 'MONTHLY' | 'FIXED_MONTHLY' | null;
   rate: number | null;
   schedule: TeacherSlot[];
   month: TeacherMonth;
@@ -95,7 +95,7 @@ export class TeacherWorkService {
 
   createTeacher(classId: number, payload: {
     firstName: string; lastName: string; email: string; password?: string; phone: string | null;
-    employeeNumber?: string | null; specialty: string | null; hireDate: string | null; subjectId: number;
+    employeeNumber?: string | null; specialty: string | null; hireDate: string | null; monthlySalary?: number | null; subjectId: number;
   }): Observable<TeacherCard> {
     return this.http.post<TeacherCard>(`${this.url}/classes/${classId}/teachers`, payload);
   }
@@ -112,7 +112,7 @@ export class TeacherWorkService {
     return this.http.post<void>(`${this.url}/teachers/${teacherId}/send-summary`, {}, { params: { month } });
   }
 
-  setRate(teacherId: number, payload: { type: 'HOURLY' | 'MONTHLY'; amount: number; effectiveFrom: string }): Observable<void> {
+  setRate(teacherId: number, payload: { type: 'HOURLY' | 'MONTHLY' | 'FIXED_MONTHLY'; amount: number; effectiveFrom: string }): Observable<void> {
     return this.http.post<void>(`${this.url}/teachers/${teacherId}/rates`, payload);
   }
 

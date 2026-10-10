@@ -1,0 +1,49 @@
+name: Deploy frontend dev
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: fasoecole-dev-frontend
+  cancel-in-progress: false
+env:
+  AWS_REGION: eu-west-3
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test -- --watch=false
+      - run: npm run build:dev
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Publish assets then entry point
+        run: |
+          set -euo pipefail
+          BUCKET=$(aws cloudformation describe-stacks --stack-name fasoecole-dev-platform --query "Stacks[0].Outputs[?OutputKey=='Bucket'].OutputValue | [0]" --output text)
+          DISTRIBUTION=$(aws cloudformation describe-stacks --stack-name fasoecole-dev-platform --query "Stacks[0].Outputs[?OutputKey=='Distribution'].OutputValue | [0]" --output text)
+          OUTPUT=dist/fasoecole-front/browser
+          test -f "$OUTPUT/index.html"
+          # Keep previous hashed assets to allow existing browser sessions to finish.
+          aws s3 sync "$OUTPUT/" "s3://$BUCKET/" --exclude index.html --cache-control 'public,max-age=86400'
+          aws s3 cp "$OUTPUT/index.html" "s3://$BUCKET/index.html" --cache-control 'no-cache,max-age=0,must-revalidate' --content-type 'text/html'
+          INVALIDATION=$(aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION" --paths '/*' --query 'Invalidation.Id' --output text)
+          aws cloudfront wait invalidation-completed --distribution-id "$DISTRIBUTION" --id "$INVALIDATION"
+      - name: Verify frontend and deep link
+        run: |
+          set -euo pipefail
+          URL=$(aws cloudformation describe-stacks --stack-name fasoecole-dev-platform --query "Stacks[0].Outputs[?OutputKey=='FrontendUrl'].OutputValue | [0]" --output text)
+          curl --fail --silent --show-error --max-time 30 "$URL/" | grep -qi '<app-root'
+          curl --fail --silent --show-error --max-time 30 "$URL/connexion" | grep -qi '<app-root'

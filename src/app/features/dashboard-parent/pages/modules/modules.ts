@@ -10,13 +10,14 @@ import { ParentChildDetail } from '../child-detail/child-detail';
 import { apiError, ConversationRecipient, SelfSpaceService, StudentOverview } from '../../../../shared/self-space/self-space.service';
 import { APPOINTMENT_LABELS, ParentAppointment, ParentEvaluation, ParentPayment, ParentPortalService, PortalPost, PostKind } from '../../../../shared/self-space/parent-portal.service';
 import { PortalPosts } from '../../../../shared/self-space/portal-posts';
+import { Appointments } from '../../../../shared/appointments/appointments';
 
 type Module = 'notes' | 'absences' | 'frais' | 'emploi' | 'devoirs' | 'annonces' | 'documents' | 'rendez-vous';
-const TITLES: Record<Module, string> = { notes: 'Notes et bulletins', absences: 'Présences et retards', frais: 'Frais et paiements', emploi: 'Emploi du temps', devoirs: 'Devoirs et évaluations', annonces: 'Annonces de l’établissement', documents: 'Documents', 'rendez-vous': 'Rendez-vous' };
+const TITLES: Record<Module, string> = { notes: 'Notes et bulletins', absences: 'Présences et retards', frais: 'Recouvrement', emploi: 'Emploi du temps', devoirs: 'Devoirs et évaluations', annonces: 'Annonces de l’établissement', documents: 'Documents', 'rendez-vous': 'Rendez-vous' };
 
 @Component({
   selector: 'app-parent-module', standalone: true,
-  imports: [FormValidationDirective, DatePipe, DecimalPipe, FormsModule, ParentChildDetail, PortalPosts],
+  imports: [FormValidationDirective, DatePipe, DecimalPipe, FormsModule, ParentChildDetail, PortalPosts, Appointments],
   templateUrl: './modules.html', styleUrls: ['../../../../shared/self-space/self-space.scss', './modules.scss'],
 })
 export class ParentModule implements OnInit {

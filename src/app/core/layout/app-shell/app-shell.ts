@@ -1,4 +1,5 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -50,6 +51,11 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Utilisateurs', icon: 'users', routerLink: '/admin/utilisateurs' },
   ],
   proprietaire: [
+    { label: 'Calendrier scolaire', icon: 'calendar', routerLink: '/proprietaire/calendrier', module: 'STUDENTS' },
+    { label: 'Discipline et vie scolaire', icon: 'shield', routerLink: '/proprietaire/discipline', module: 'STUDENTS' },
+    { label: 'Bibliothèque', icon: 'book', routerLink: '/proprietaire/bibliotheque', module: 'STUDENTS' },
+    { label: 'Suivi des devoirs', icon: 'notes', routerLink: '/proprietaire/suivi-devoirs', module: 'STUDENTS' },
+    { label: 'Demandes administratives', icon: 'notes', routerLink: '/proprietaire/demandes-administratives', module: 'STUDENTS' },
     { label: 'Incidents', icon: 'shield', routerLink: '/proprietaire/incidents', module: null },
     { label: 'Accueil', icon: 'home', routerLink: '/proprietaire', module: 'DASHBOARD' },
     { label: 'Créer une école', icon: 'building', routerLink: '/proprietaire/creer-ecole', module: null },
@@ -62,7 +68,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Messages', icon: 'message', routerLink: '/proprietaire/messages', module: 'STUDENTS' },
     { label: 'Portail parents', icon: 'book', routerLink: '/proprietaire/portail-parents', module: 'STUDENTS' },
     { label: 'Gestion de l’école', icon: 'book', routerLink: '/proprietaire/gestion', module: 'MANAGEMENT' },
-    { label: 'Frais & paiements', icon: 'wallet', routerLink: '/proprietaire/frais', module: 'FINANCE' },
+    { label: 'Recouvrement', icon: 'wallet', routerLink: '/proprietaire/frais', module: 'FINANCE' },
     { label: 'Dépenses & budget', icon: 'chart', routerLink: '/proprietaire/depenses', module: 'EXPENSES' },
     { label: 'Notes & bulletins', icon: 'notes', routerLink: '/proprietaire/notes', module: 'GRADES' },
     { label: 'Personnel & accès', icon: 'shield', routerLink: '/proprietaire/personnel', module: null },
@@ -70,6 +76,10 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Aide', icon: 'book', routerLink: '/proprietaire/aide', module: null },
   ],
   enseignant: [
+    { label: 'Calendrier scolaire', icon: 'calendar', routerLink: '/enseignant/calendrier' },
+    { label: 'Discipline et vie scolaire', icon: 'shield', routerLink: '/enseignant/discipline' },
+    { label: 'Bibliothèque', icon: 'book', routerLink: '/enseignant/bibliotheque' },
+    { label: 'Suivi des devoirs', icon: 'notes', routerLink: '/enseignant/suivi-devoirs' },
     { label: 'Accueil', icon: 'home', routerLink: '/enseignant' },
     { label: 'Mes classes', icon: 'users', routerLink: '/enseignant/classes' },
     { label: 'Messages', icon: 'message', routerLink: '/enseignant/messages' },
@@ -83,17 +93,27 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Rendez-vous parents', icon: 'calendar', routerLink: '/enseignant/rendez-vous' },
   ],
   etudiant: [
+    { label: 'Calendrier scolaire', icon: 'calendar', routerLink: '/etudiant/calendrier' },
+    { label: 'Discipline et vie scolaire', icon: 'shield', routerLink: '/etudiant/discipline' },
+    { label: 'Bibliothèque', icon: 'book', routerLink: '/etudiant/bibliotheque' },
+    { label: 'Suivi des devoirs', icon: 'notes', routerLink: '/etudiant/suivi-devoirs' },
+    { label: 'Demandes administratives', icon: 'notes', routerLink: '/etudiant/demandes-administratives' },
     { label: 'Accueil', icon: 'home', routerLink: '/etudiant' },
     { label: 'Messages', icon: 'message', routerLink: '/etudiant/messages' },
     { label: 'Mes notes', icon: 'star', routerLink: '/etudiant/notes' },
     { label: 'Emploi du temps', icon: 'calendar', routerLink: '/etudiant/emploi-du-temps' },
   ],
   parent: [
+    { label: 'Calendrier scolaire', icon: 'calendar', routerLink: '/parent/calendrier' },
+    { label: 'Discipline et vie scolaire', icon: 'shield', routerLink: '/parent/discipline' },
+    { label: 'Bibliothèque', icon: 'book', routerLink: '/parent/bibliotheque' },
+    { label: 'Suivi des devoirs', icon: 'notes', routerLink: '/parent/suivi-devoirs' },
+    { label: 'Demandes administratives', icon: 'notes', routerLink: '/parent/demandes-administratives' },
     { label: 'Accueil', icon: 'home', routerLink: '/parent' },
     { label: 'Mes enfants', icon: 'users', routerLink: '/parent/enfants' },
     { label: 'Notes et bulletins', icon: 'notes', routerLink: '/parent/notes' },
     { label: 'Présences et retards', icon: 'users', routerLink: '/parent/absences' },
-    { label: 'Frais et paiements', icon: 'wallet', routerLink: '/parent/frais' },
+    { label: 'Recouvrement', icon: 'wallet', routerLink: '/parent/frais' },
     { label: 'Emploi du temps', icon: 'calendar', routerLink: '/parent/emploi' },
     { label: 'Devoirs et évaluations', icon: 'book', routerLink: '/parent/devoirs' },
     { label: 'Annonces', icon: 'building', routerLink: '/parent/annonces' },
@@ -107,6 +127,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
   selector: 'app-shell',
   standalone: true,
   imports: [
+    NgTemplateOutlet,
     RouterOutlet,
     AcademicContextPicker,
     RouterLink,
@@ -177,7 +198,7 @@ export class AppShell implements OnInit {
     ];
     if (this.user()?.rawRoles.includes('SUPER_ADMIN')) return [
       { label: 'Incidents', icon: 'shield', routerLink: '/admin/incidents' },
-      { label: 'Établissements', icon: 'building', routerLink: '/admin' },
+      { label: 'Accueil', icon: 'home', routerLink: '/admin' },
     ];
     if (role !== 'proprietaire') {
       return MENU_BY_ROLE[role].map((item) => item.routerLink.endsWith('/messages')
@@ -193,10 +214,59 @@ export class AppShell implements OnInit {
         ? { ...item, badge: this.familyMessages.unreadCount() } : item);
   });
   readonly menuItems = computed(() => this.accessibleNavigation().filter(item => item.icon !== 'message')
+    .sort((a, b) => Number(b.icon === 'home') - Number(a.icon === 'home'))
     .map(item => item.routerLink.endsWith('/incidents') ? { ...item, badge: this.incidentsAttention() } : item)
     .map(item => item.label === 'Élèves par classe' && this.auth.selectedSchoolType() === 'UNIVERSITE'
       ? { ...item, label: 'Étudiants par classe' } : item));
   readonly messageNavigation = computed(() => this.accessibleNavigation().find(item => item.icon === 'message'));
+  readonly navigationSections = computed(() => {
+    const items = this.menuItems();
+    const role = items.some(item => item.routerLink.startsWith('/proprietaire')) ? 'proprietaire' : this.auth.role();
+    if (!role) return [{ title: '', items, active: false }];
+    const groupsByRole: Record<Role, { title: string; routes: string[] }[]> = {
+      proprietaire: [
+      { title: 'Scolarité', routes: ['inscriptions', 'classes', 'enseignants', 'notes', 'suivi-devoirs'] },
+      { title: 'Vie scolaire et familles', routes: ['calendrier', 'discipline', 'bibliotheque', 'portail-parents', 'demandes-administratives'] },
+      { title: 'Finances', routes: ['frais', 'depenses'] },
+      { title: 'Administration', routes: ['gestion', 'creer-ecole', 'employes', 'demandes', 'personnel', 'cloture', 'export'] },
+      { title: 'Assistance', routes: ['incidents', 'aide'] },
+      ],
+      enseignant: [
+        { title: 'Enseignement', routes: ['classes', 'notes', 'devoirs', 'suivi-devoirs', 'documents'] },
+        { title: 'Vie scolaire', routes: ['emploi', 'calendrier', 'presences', 'discipline', 'bibliotheque'] },
+        { title: 'Relations avec les familles', routes: ['annonces', 'rendez-vous', 'signalements'] },
+      ],
+      parent: [
+        { title: 'Suivi de mes enfants', routes: ['enfants', 'notes', 'devoirs', 'suivi-devoirs', 'absences', 'discipline'] },
+        { title: 'Vie scolaire', routes: ['emploi', 'calendrier', 'bibliotheque'] },
+        { title: 'Relations avec l’école', routes: ['annonces', 'documents', 'rendez-vous', 'demandes-administratives'] },
+        { title: 'Finances', routes: ['frais'] },
+      ],
+      etudiant: [
+        { title: 'Mes études', routes: ['notes', 'suivi-devoirs'] },
+        { title: 'Vie scolaire', routes: ['emploi-du-temps', 'calendrier', 'discipline', 'bibliotheque'] },
+        { title: 'Démarches', routes: ['demandes-administratives'] },
+      ],
+      admin: [
+        { title: 'Établissements', routes: ['ecoles', 'creer-ecole'] },
+        { title: 'Scolarité', routes: ['inscriptions', 'classes', 'enseignants', 'cloture'] },
+        { title: 'Utilisateurs et personnel', routes: ['utilisateurs', 'employes'] },
+        { title: 'Assistance', routes: ['incidents'] },
+      ],
+    };
+    const groups = groupsByRole[role];
+    const prefix = `/${role}`;
+    const route = this.routeUrl().split('?')[0];
+    const groupedRoutes = new Set(groups.flatMap(group => group.routes.map(slug => `${prefix}/${slug}`)));
+    return [
+      { title: '', items: items.filter(item => !groupedRoutes.has(item.routerLink)), active: false },
+      ...groups.map(group => ({
+        title: group.title,
+        items: group.routes.flatMap(slug => items.filter(item => item.routerLink === `${prefix}/${slug}`)),
+        active: group.routes.some(slug => route === `${prefix}/${slug}` || route.startsWith(`${prefix}/${slug}/`)),
+      })).filter(group => group.items.length > 0),
+    ];
+  });
   /** Libellé affiché sous le nom : fonction du membre du personnel, sinon le rôle. */
   readonly roleLabel = computed(() => {
     const user = this.user();

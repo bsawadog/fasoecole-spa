@@ -46,17 +46,7 @@
             </tbody></table></div></section>
         }
         @case ('rendez-vous') {
-          @for (appointment of appointments(); track appointment.id) {
-            <article class="ss__card ss__body"><h2>{{ appointment.studentName }} · {{ appointment.parentName }}</h2>
-              <p>{{ appointment.proposedAt | date:'dd/MM/yyyy HH:mm' }}</p><span class="ss__chip">{{ appointmentLabels[appointment.status] }}</span><p>{{ appointment.reason }}</p>
-              @if (appointment.response) { <p>Réponse : {{ appointment.response }}</p> }
-              @if (appointment.status === 'PENDING') {
-                <label class="ss__field">Réponse<textarea [(ngModel)]="responses[appointment.id]" rows="2" maxlength="1000" placeholder="Lieu de rencontre ou motif du refus"></textarea></label>
-                <div class="ss__actions"><button type="button" class="ss__btn" [disabled]="saving()" (click)="decide(appointment,'ACCEPTED')">Confirmer</button>
-                  <button type="button" class="ss__mini" [disabled]="saving()" (click)="decide(appointment,'REJECTED')">Refuser</button></div>
-              }
-            </article>
-          } @empty { <p class="ss__state">Aucune demande de rendez-vous ne vous est destinée pour cette classe.</p> }
+          <app-appointments [showHeading]="false" [legacyRequests]="appointments()" legacyKind="teacher" [teacherClassId]="classId()" (changed)="reload(true)" />
         }
       }
       @if (kind(); as postKind) {
@@ -76,3 +66,5 @@
     }
   }
 </div>
+
+@if (module() === 'rendez-vous' && !loadingClasses() && !selected()) { <app-appointments [showHeading]="false" /> }

@@ -4,8 +4,19 @@
       <img src="assets/images/fasoecole-logo-alt.svg" alt="FasoEcole" />
     </div>
 
-    <nav class="shell__nav">
-      @for (item of menuItems(); track item.routerLink) {
+    <nav class="shell__nav" aria-label="Navigation principale">
+      @for (section of navigationSections(); track section.title) {
+        @if (section.title) {
+          <details class="shell__nav-section" [open]="section.active">
+            <summary class="shell__nav-heading">{{ section.title }}</summary>
+            <ng-container *ngTemplateOutlet="navigationLinks; context: { $implicit: section.items }" />
+          </details>
+        } @else {
+          <ng-container *ngTemplateOutlet="navigationLinks; context: { $implicit: section.items }" />
+        }
+      }
+      <ng-template #navigationLinks let-items>
+      @for (item of items; track item.routerLink) {
         <a [routerLink]="item.routerLink" class="shell__nav-link" routerLinkActive="shell__nav-link--active"
            [routerLinkActiveOptions]="{ exact: item.icon === 'home' }">
           @switch (item.icon) {
@@ -31,6 +42,7 @@
           }
         </a>
       }
+      </ng-template>
     </nav>
   </aside>
 
@@ -39,6 +51,7 @@
       <p role="status">Intervention SUPER_ADMIN · {{ selectedContextSchool()?.schoolName }}. Les actions sont effectuées avec votre identité d’administrateur.</p>
     }
     <header class="shell__topbar">
+      <div class="shell__academic-context">
       @if (!schoolPreview()) { <app-academic-context /> }
       @else {
         <label>Établissement
@@ -47,6 +60,7 @@
           </select>
         </label>
       }
+      </div>
       <a routerLink="/profil" class="shell__profile-link" routerLinkActive="shell__profile-link--active"
          title="Voir mon profil">
         <span class="shell__avatar" aria-hidden="true">{{ initials() }}</span>
@@ -64,11 +78,11 @@
           }
         </a>
       }
-      <a routerLink="/profil" class="shell__action" routerLinkActive="shell__action--active">
+      <a routerLink="/profil" class="shell__action" routerLinkActive="shell__action--active" title="Mon profil" aria-label="Mon profil">
         <svg lucideUserRound [size]="18" aria-hidden="true"></svg>
         <span>Mon profil</span>
       </a>
-      <button class="shell__action shell__action--logout" type="button" (click)="logout()">
+      <button class="shell__action shell__action--logout" type="button" (click)="logout()" title="Se déconnecter" aria-label="Se déconnecter">
         <svg lucideLogOut [size]="18" aria-hidden="true"></svg>
         <span>Se déconnecter</span>
       </button>

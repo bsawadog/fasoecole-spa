@@ -1,6 +1,11 @@
 import { Routes } from '@angular/router';
 
 export const PARENT_ROUTES: Routes = [
+  ...["calendrier","discipline","demandes-administratives","bibliotheque","suivi-devoirs"].map(lifeModule => ({
+    path: lifeModule, data: { lifeModule, lifeScope: 'students' },
+
+    loadComponent: () => import('../../shared/school-life/school-life').then(m => m.SchoolLifePage),
+  })),
   ...['notes', 'absences', 'frais', 'emploi', 'devoirs', 'annonces', 'documents', 'rendez-vous'].map(module => ({
     path: module,
     data: { module },

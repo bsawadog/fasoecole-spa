@@ -36,7 +36,7 @@ export class TeacherDetailPage implements OnInit, OnDestroy {
   readonly success = signal<string | null>(null);
   readonly weekdays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
-  rateForm = { type: 'HOURLY' as 'HOURLY' | 'MONTHLY', amount: 0, effectiveFrom: this.localDate().slice(0, 7) + '-01' };
+  rateForm = { type: 'HOURLY' as 'HOURLY' | 'MONTHLY' | 'FIXED_MONTHLY', amount: 0, effectiveFrom: this.localDate().slice(0, 7) + '-01' };
   slotForm = { classId: 0, dayOfWeek: 1, startTime: '08:00', endTime: '09:00', effectiveFrom: this.localDate() };
   extraForm = { classId: 0, date: this.localDate(), hours: 1, description: '' };
   paymentForm = { date: this.localDate(), amount: 0, reference: '' };
