@@ -11,8 +11,6 @@ on:
         options:
           - dev
           - prod
-  push:
-    branches: [develop]
 permissions:
   contents: read
   id-token: write
