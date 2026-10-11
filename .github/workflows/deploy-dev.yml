@@ -1,23 +1,50 @@
-name: Deploy frontend dev
+name: Deploy frontend
+run-name: Deploy frontend ${{ inputs.environment || 'dev' }} from ${{ github.ref_name }}
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: Environnement cible
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - prod
   push:
     branches: [develop]
 permissions:
   contents: read
   id-token: write
 concurrency:
-  group: fasoecole-dev-frontend
+  group: fasoecole-${{ inputs.environment || 'dev' }}-frontend
   cancel-in-progress: false
 env:
   AWS_REGION: eu-west-3
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
-    environment: dev
+    environment: ${{ inputs.environment || 'dev' }}
+    env:
+      TARGET_ENVIRONMENT: ${{ inputs.environment || 'dev' }}
+      PLATFORM_STACK: fasoecole-${{ inputs.environment || 'dev' }}-platform
+      DEPLOY_BRANCH: ${{ vars.DEPLOY_BRANCH || (inputs.environment == 'prod' && 'main' || 'develop') }}
     steps:
       - uses: actions/checkout@v4
+      - name: Validate target and environment configuration
+        env:
+          AWS_ROLE: ${{ vars.AWS_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          case "$TARGET_ENVIRONMENT" in dev|prod) ;; *) exit 1 ;; esac
+          if [ "$GITHUB_REF" != "refs/heads/$DEPLOY_BRANCH" ]; then
+            echo "::error::Deploy $TARGET_ENVIRONMENT from branch $DEPLOY_BRANCH."
+            exit 1
+          fi
+          if [[ ! "$AWS_ROLE" =~ ^arn:aws:iam::[0-9]{12}:role/[A-Za-z0-9+=,.@_/-]+$ ]]; then
+            echo "::error::Configure a full AWS_ROLE_ARN in GitHub environment $TARGET_ENVIRONMENT."
+            exit 1
+          fi
       - name: Diagnose AWS OIDC identity
         uses: actions/github-script@v7
         env:
@@ -41,16 +68,19 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test -- --watch=false
-      - run: npm run build:dev
+      - name: Build frontend for target environment
+        run: npm run "build:$TARGET_ENVIRONMENT"
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+      - name: Check target platform exists
+        run: aws cloudformation describe-stacks --stack-name "$PLATFORM_STACK" --query 'Stacks[0].StackStatus' --output text
       - name: Publish assets then entry point
         run: |
           set -euo pipefail
-          BUCKET=$(aws cloudformation describe-stacks --stack-name fasoecole-dev-platform --query "Stacks[0].Outputs[?OutputKey=='Bucket'].OutputValue | [0]" --output text)
-          DISTRIBUTION=$(aws cloudformation describe-stacks --stack-name fasoecole-dev-platform --query "Stacks[0].Outputs[?OutputKey=='Distribution'].OutputValue | [0]" --output text)
+          BUCKET=$(aws cloudformation describe-stacks --stack-name "$PLATFORM_STACK" --query "Stacks[0].Outputs[?OutputKey=='Bucket'].OutputValue | [0]" --output text)
+          DISTRIBUTION=$(aws cloudformation describe-stacks --stack-name "$PLATFORM_STACK" --query "Stacks[0].Outputs[?OutputKey=='Distribution'].OutputValue | [0]" --output text)
           OUTPUT=dist/fasoecole-front/browser
           test -f "$OUTPUT/index.html"
           # Keep previous hashed assets to allow existing browser sessions to finish.
@@ -61,6 +91,6 @@ jobs:
       - name: Verify frontend and deep link
         run: |
           set -euo pipefail
-          URL=$(aws cloudformation describe-stacks --stack-name fasoecole-dev-platform --query "Stacks[0].Outputs[?OutputKey=='FrontendUrl'].OutputValue | [0]" --output text)
+          URL=$(aws cloudformation describe-stacks --stack-name "$PLATFORM_STACK" --query "Stacks[0].Outputs[?OutputKey=='FrontendUrl'].OutputValue | [0]" --output text)
           curl --fail --silent --show-error --max-time 30 "$URL/" | grep -qi '<app-root'
           curl --fail --silent --show-error --max-time 30 "$URL/connexion" | grep -qi '<app-root'
