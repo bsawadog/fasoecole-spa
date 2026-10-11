@@ -1,0 +1,48 @@
+<section class="appointments" aria-label="Rendez-vous">
+  <div class="appointments__toolbar">
+    <div>@if (showHeading()) { <h2>Rendez-vous</h2> }<p class="appointments__pending"><span>{{ pendingCount() }}</span> demande(s) en attente non expirée(s)</p></div>
+    <div class="appointments__actions"><button type="button" class="appointments__button" [disabled]="loading() || busy()" (click)="refresh()">Actualiser</button>
+      @if (owner()) { <button type="button" class="appointments__button appointments__button--primary" [disabled]="loading() || busy()" [attr.aria-expanded]="showForm" aria-controls="appointment-form" (click)="showForm = !showForm">{{ showForm ? 'Fermer le formulaire' : '+ Prendre un rendez-vous' }}</button> }</div>
+  </div>
+  @if (error()) { <p class="appointments__notice appointments__notice--error" role="alert">{{ error() }}</p> }
+  @if (success()) { <p class="appointments__notice" role="status">{{ success() }}</p> }
+  @if (loading()) { <p class="appointments__empty" role="status">Chargement des rendez-vous…</p> }
+  @else {
+    @if (owner() && showForm) {
+      <form id="appointment-form" class="appointments__form" (ngSubmit)="create()"><p class="appointments__eyebrow">Nouvelle demande</p><h3>Organiser une rencontre</h3>
+        <div class="appointments__form-grid">
+          <label>Destinataire<select name="appointmentRecipient" [(ngModel)]="recipientUserId" required [disabled]="busy()"><option [ngValue]="null">Choisir un parent ou un enseignant</option>@for (recipient of recipients(); track recipient.userId) { <option [ngValue]="recipient.userId">{{ recipient.fullName }} · {{ recipient.role === 'PARENT' ? 'Parent' : 'Enseignant' }}</option> }</select></label>
+          <label>Date et heure<input type="datetime-local" name="appointmentDate" [(ngModel)]="proposedAt" required [disabled]="busy()" /></label>
+          <label class="appointments__wide">Motif et lieu proposé<textarea name="appointmentReason" [(ngModel)]="reason" maxlength="1000" required rows="3" [disabled]="busy()" placeholder="Sujet de la rencontre et lieu proposé"></textarea></label>
+        </div><button type="submit" class="appointments__button appointments__button--primary" [disabled]="busy() || !recipients().length">Envoyer la demande</button>
+        @if (!recipients().length) { <p>Aucun parent ou enseignant accessible dans cet établissement.</p> }
+      </form>
+    }
+    <div class="appointments__summary" aria-label="Résumé des rendez-vous">
+      @for (group of groups(); track group.id) { <div [class]="'appointments__summary-item appointments__summary-item--' + group.id"><span>{{ group.title }}</span><strong>{{ group.entries.length }}</strong></div> }
+    </div>
+    @for (group of groups(); track group.id) {
+      <section [id]="'appointments-' + group.id" [class]="'appointments__group appointments__group--' + group.id" [attr.aria-labelledby]="'appointments-title-' + group.id">
+        <div class="appointments__section-heading"><div><h3 [id]="'appointments-title-' + group.id">{{ group.title }} <span>{{ group.entries.length }}</span></h3><p>{{ group.description }}</p></div><small>Date la plus proche en premier</small></div>
+        <div class="appointments__list">
+          @for (entry of group.entries; track entry.key) {
+            <article class="appointments__card">
+              <div class="appointments__date"><strong>{{ entry.appointment.proposedAt | date:'dd' }}</strong><span>{{ entry.appointment.proposedAt | date:'MMM yyyy' }}</span><b>{{ entry.appointment.proposedAt | date:'HH:mm' }}</b></div>
+              <div class="appointments__content">
+                <div class="appointments__card-heading"><div><p class="appointments__eyebrow">{{ entry.sent ? 'Rendez-vous que j’ai pris' : 'Demande reçue' }}</p><h4>{{ entry.name }}</h4><p class="appointments__context">{{ entry.context }}</p></div><span [class]="'appointments__status appointments__status--' + entry.appointment.status.toLowerCase()">{{ group.id === 'expired' && entry.appointment.status === 'PENDING' ? 'Demande expirée' : labels[entry.appointment.status] || entry.appointment.status }}</span></div>
+                <p class="appointments__reason">{{ entry.appointment.reason }}</p>
+                @if (entry.studentId) { <a class="appointments__link" [routerLink]="['/proprietaire/eleves', entry.studentId]">Consulter la fiche de l’élève →</a> }
+                @if (entry.appointment.response) { <div class="appointments__response"><strong>Réponse</strong><p>{{ entry.appointment.response }}</p></div> }
+                @if (group.id === 'active' && entry.appointment.status === 'PENDING' && !entry.sent) {
+                  <label class="appointments__reply">Réponse<textarea [(ngModel)]="responses[entry.key]" maxlength="1000" rows="2" [disabled]="busy()" placeholder="Lieu de rencontre ou motif du refus"></textarea></label>
+                  <div class="appointments__actions"><button type="button" class="appointments__button appointments__button--primary" [disabled]="busy()" (click)="respond(entry, 'ACCEPTED')">Accepter</button><button type="button" class="appointments__button appointments__button--danger" [disabled]="busy()" (click)="respond(entry, 'REJECTED')">Refuser</button></div>
+                }
+                @if (group.id === 'active' && entry.sent) { <button type="button" class="appointments__button" [disabled]="busy()" (click)="cancelEntry(entry)">Annuler le rendez-vous</button> }
+              </div>
+            </article>
+          } @empty { @if (!error()) { <p class="appointments__empty">Aucun rendez-vous {{ group.id === 'active' ? 'en cours' : group.id === 'expired' ? 'expiré' : group.id === 'rejected' ? 'refusé' : 'annulé' }}.</p> } }
+        </div>
+      </section>
+    }
+  }
+</section>

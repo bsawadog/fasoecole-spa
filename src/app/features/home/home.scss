@@ -197,6 +197,12 @@
   padding: clamp(1.4rem, 3vw, 3rem);
 }
 
+.home__hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
 .home__eyebrow {
   margin: 0 0 0.8rem;
   color: #b47d22;
@@ -561,6 +567,10 @@
   .home__hero-content {
     width: 100%;
     padding: 1.5rem 1.1rem;
+  }
+
+  .home__hero-actions {
+    flex-direction: column;
   }
 
   .home__section-heading {

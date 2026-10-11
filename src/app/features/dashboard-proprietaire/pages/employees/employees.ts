@@ -25,6 +25,8 @@ import { environment } from '../../../../../environments/environment';
         <label>Numéro d’employé<input name="employeeNumber" [(ngModel)]="form.employeeNumber" maxlength="50" placeholder="Généré si vide"></label>
         <label>Spécialité<input name="specialty" [(ngModel)]="form.specialty" maxlength="150"></label>
         <label>Date d’embauche<input name="hireDate" type="date" [(ngModel)]="form.hireDate"></label>
+        <label>Salaire mensuel fixe (FCFA)<input name="monthlySalary" type="number" min="0" max="9999999999.99" step="0.01" [(ngModel)]="form.monthlySalary" required></label>
+        <p>Le salaire fixe est dû chaque mois. Les taux horaires ou au prorata restent configurables dans la fiche enseignant.</p>
         <p>Un lien permet à l’enseignant de choisir son mot de passe. Affectez-le ensuite depuis Enseignants par classe.</p>
         <button type="submit" [disabled]="busy()">Créer l’enseignant</button>
       </form>
@@ -43,7 +45,7 @@ export class EmployeesPage {
   readonly success = signal('');
   category = 'teacher';
   schoolId: number | null = null;
-  form = { firstName: '', lastName: '', email: '', phone: '', employeeNumber: '', specialty: '', hireDate: '' };
+  form = { firstName: '', lastName: '', email: '', phone: '', employeeNumber: '', specialty: '', hireDate: '', monthlySalary: null as number | null };
   constructor() {
     const id = this.auth.user()?.id;
     if (id) this.auth.getOwnedSchools(id, 'TEACHERS').subscribe({next: schools => {
@@ -57,7 +59,7 @@ export class EmployeesPage {
     this.auth.selectSchoolContext(this.schoolId);
     this.http.post<{employeeNumber: string; invitationDeliveryStatus?: string}>(`${environment.apiUrl}/teacher-work/schools/${this.schoolId}/teachers`,
       { ...this.form, hireDate: this.form.hireDate || null }).subscribe({
-      next: teacher => { this.busy.set(false); this.success.set(`Enseignant créé : ${teacher.employeeNumber}. Invitation : ${teacher.invitationDeliveryStatus === 'SENT' ? 'envoyée' : 'consultez son état dans la fiche enseignant'}.`); this.form = {firstName:'',lastName:'',email:'',phone:'',employeeNumber:'',specialty:'',hireDate:''}; },
+      next: teacher => { this.busy.set(false); this.success.set(`Enseignant créé : ${teacher.employeeNumber}. Invitation : ${teacher.invitationDeliveryStatus === 'SENT' ? 'envoyée' : 'consultez son état dans la fiche enseignant'}.`); this.form = {firstName:'',lastName:'',email:'',phone:'',employeeNumber:'',specialty:'',hireDate:'',monthlySalary:null}; },
       error: err => { this.busy.set(false); this.error.set(err?.error?.message ?? 'Impossible de créer cet enseignant.'); },
     });
   }

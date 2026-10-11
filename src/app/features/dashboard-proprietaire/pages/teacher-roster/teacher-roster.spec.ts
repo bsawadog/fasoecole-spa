@@ -32,9 +32,9 @@ describe('TeacherRoster', () => {
     fixture.detectChanges();
     const page = fixture.componentInstance;
     page.newTeacher = { firstName: ' Awa ', lastName: ' Diallo ', email: 'awa@test.bf', phone: '',
-      employeeNumber: ' EMP-001 ', specialty: '', hireDate: '', subjectId: 9 };
+      employeeNumber: ' EMP-001 ', specialty: '', hireDate: '', monthlySalary: 80000, subjectId: 9 };
     page.saveTeacher();
-    expect(createTeacher).toHaveBeenCalledWith(1, expect.objectContaining({ firstName: 'Awa', employeeNumber: 'EMP-001', subjectId: 9 }));
+    expect(createTeacher).toHaveBeenCalledWith(1, expect.objectContaining({ firstName: 'Awa', employeeNumber: 'EMP-001', monthlySalary: 80000, subjectId: 9 }));
     expect(createTeacher.mock.calls[0][1]).not.toHaveProperty('password');
     expect(page.success()).toContain('EMP-001');
     expect(page.success()).toContain(invitationDeliveryStatus === 'SENT' ? 'Invitation envoyée' : 'invitation a échoué');

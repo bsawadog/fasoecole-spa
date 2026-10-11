@@ -1,0 +1,6 @@
+.life__list { display: grid; gap: 1rem; margin-block: 1rem; }
+.life__form { display: grid; gap: .75rem; margin-block: 1rem; }
+.life__forms { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 1rem; }
+.life__text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.life .ss__field { min-width: 0; }
+.life .ss__actions { flex-wrap: wrap; }

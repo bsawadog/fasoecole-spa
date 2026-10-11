@@ -131,10 +131,10 @@ const QUESTIONS: HelpQuestion[] = [
   { id: 'fees', category: 'Finances', question: 'Comment préparer les frais scolaires et suivre les paiements ?', steps: [
     'Configurez les types de frais et les tarifs depuis « Gestion de l’école ».',
     'Lors d’une inscription, sélectionnez les frais applicables à l’élève ou étudiant.',
-    'Ouvrez « Frais & paiements » pour consulter les factures et les soldes.',
+    'Ouvrez « Recouvrement » pour consulter les factures et les soldes.',
     'Enregistrez les paiements avec leur date, leur montant et leur mode de règlement.',
     'Vérifiez le solde après chaque enregistrement.',
-  ], route: '/proprietaire/frais', linkLabel: 'Consulter les frais et paiements' },
+  ], route: '/proprietaire/frais', linkLabel: 'Consulter le recouvrement' },
   { id: 'message', category: 'Communication', question: 'Comment envoyer un message à plusieurs destinataires ?', steps: [
     'Ouvrez la messagerie depuis l’icône près de votre profil.',
     'Créez un nouveau message pour l’établissement concerné.',

@@ -1,0 +1,12 @@
+:host { display: block; }
+.cash-reference { display: block; color: #64748b; }
+.cash-opening { background: #f0fdf4; font-weight: 600; }
+.cash-print-only { display: none; }
+@media print {
+  .cash-controls, .dep__table-wrap:not(.cash-history) { display: none !important; }
+  .cash-print-only { display: block; }
+  .dep { padding: 0; background: #fff; }
+  .dep__card { overflow: visible; box-shadow: none; }
+  tr { break-inside: avoid; }
+  thead { display: table-header-group; }
+}

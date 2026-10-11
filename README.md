@@ -4,6 +4,14 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 
 ## Environment URLs
 
+Le workflow GitHub Actions **Deploy frontend** propose `dev` ou `prod` au
+lancement manuel. Sélectionner `develop` pour dev et `main` pour prod
+(modifiable avec la variable `DEPLOY_BRANCH` de l'environnement GitHub).
+Les pushes sur `develop` déploient automatiquement dev.
+Chaque environnement doit définir `AWS_ROLE_ARN` pour son rôle frontend
+et disposer de sa stack `fasoecole-dev-platform` ou `fasoecole-prod-platform`.
+Le workflow lance respectivement `build:dev` ou `build:prod`.
+
 | Build | Frontend URL | API URL |
 |---|---|---|
 | Local (`npm start`) | `http://localhost:4200` | `http://localhost:8080/api` |

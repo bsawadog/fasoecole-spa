@@ -48,12 +48,13 @@
         <div><span>Déjà versé</span><strong>{{ data.month.paid | number: '1.0-0' }} FCFA</strong></div>
         <div><span>Reste à payer</span><strong>{{ data.month.remaining | number: '1.0-0' }} FCFA</strong></div>
       </div>
-      <p>Mode : <strong>{{ data.rateType === 'HOURLY' ? 'Horaire' : data.rateType === 'MONTHLY' ? 'Mensuel' : 'Non défini' }}</strong>
+      <p>Mode : <strong>{{ data.rateType === 'HOURLY' ? 'Horaire' : data.rateType === 'FIXED_MONTHLY' ? 'Mensuel fixe' : data.rateType === 'MONTHLY' ? 'Mensuel au prorata' : 'Non défini' }}</strong>
         · Taux : <strong>{{ data.rate == null ? 'Non défini' : (data.rate | number: '1.0-0') + ' FCFA' }}</strong></p>
       <form (ngSubmit)="setRate()">
         <h3>Définir le taux</h3>
         <label>Type de rémunération
           <select name="rateType" [(ngModel)]="rateForm.type">
+            <option value="FIXED_MONTHLY">Salaire mensuel fixe</option>
             <option value="HOURLY">Taux horaire</option>
             <option value="MONTHLY">Salaire mensuel (au prorata des heures pointées)</option>
           </select>

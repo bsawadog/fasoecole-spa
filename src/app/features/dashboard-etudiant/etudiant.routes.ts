@@ -1,6 +1,12 @@
 import { Routes } from '@angular/router';
 
 export const ETUDIANT_ROUTES: Routes = [
+  { path: 'rendez-vous', loadComponent: () => import('../../shared/appointments/personal-appointments-page').then(m => m.PersonalAppointmentsPage) },
+  ...["calendrier","discipline","demandes-administratives","bibliotheque","suivi-devoirs"].map(lifeModule => ({
+    path: lifeModule, data: { lifeModule, lifeScope: 'students' },
+
+    loadComponent: () => import('../../shared/school-life/school-life').then(m => m.SchoolLifePage),
+  })),
   { path: 'messages', loadComponent: () => import('./pages/messages/messages').then(m => m.StudentMessages) },
   {
     path: 'notes',

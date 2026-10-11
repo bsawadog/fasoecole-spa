@@ -52,7 +52,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
   readonly success = signal<string | null>(null);
 
   newTeacher = { firstName: '', lastName: '', email: '', phone: '',
-    employeeNumber: '', specialty: '', hireDate: '', subjectId: 0 };
+    employeeNumber: '', specialty: '', hireDate: '', monthlySalary: null as number | null, subjectId: 0 };
   assignment = { teacherId: 0, subjectId: 0 };
 
   ngOnInit(): void {
@@ -114,7 +114,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
     this.assigningTeacher.set(false);
     this.addingTeacher.set(true);
     this.newTeacher = { firstName: '', lastName: '', email: '', phone: '',
-      employeeNumber: '', specialty: '', hireDate: '', subjectId: this.subjects()[0]?.id ?? 0 };
+      employeeNumber: '', specialty: '', hireDate: '', monthlySalary: null as number | null, subjectId: this.subjects()[0]?.id ?? 0 };
     this.error.set(null);
   }
 
@@ -209,7 +209,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
       email: form.email.trim(),
       employeeNumber: form.employeeNumber.trim() || null,
       phone: form.phone.trim() || null, specialty: form.specialty.trim() || null,
-      hireDate: form.hireDate || null, subjectId: form.subjectId,
+      hireDate: form.hireDate || null, monthlySalary: form.monthlySalary, subjectId: form.subjectId,
     }).subscribe({
       next: teacher => {
         this.saving.set(false);

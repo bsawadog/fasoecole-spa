@@ -2,7 +2,7 @@ import { FormValidationDirective } from '../../../../shared/form-validation.dire
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin, Observable, Subscription } from 'rxjs';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
@@ -47,6 +47,7 @@ interface AcademicForm {
   styleUrl: './management.scss',
 })
 export class OwnerManagement implements OnDestroy, OnInit {
+  private readonly route = inject(ActivatedRoute);
   readonly initialSection = input<Section>('school');
   readonly scopeSchoolId = input<number | null>(null);
   private readonly auth = inject(AuthService);
@@ -93,6 +94,10 @@ export class OwnerManagement implements OnDestroy, OnInit {
 
   ngOnInit(): void {
     this.section.set(this.initialSection());
+    const params = this.route.snapshot.queryParamMap;
+    if (params.get('section') === 'academic') this.section.set('academic');
+    const kind = params.get('kind');
+    if (kind === 'levels' || kind === 'classes' || kind === 'years' || kind === 'subjects') this.academicKind.set(kind);
     const ownerId = this.auth.user()?.id;
     if (!ownerId) {
       this.loading.set(false);

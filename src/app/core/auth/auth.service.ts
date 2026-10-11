@@ -63,7 +63,7 @@ export const OWNER_MODULES: { code: OwnerModule; label: string; route: string }[
   { code: 'MANAGEMENT', label: 'Gestion de l’école', route: '/proprietaire/gestion' },
   { code: 'STUDENTS', label: 'Élèves & dossiers', route: '/proprietaire/classes' },
   { code: 'TEACHERS', label: 'Enseignants & paie', route: '/proprietaire/enseignants' },
-  { code: 'FINANCE', label: 'Frais & paiements', route: '/proprietaire/frais' },
+  { code: 'FINANCE', label: 'Recouvrement', route: '/proprietaire/frais' },
   { code: 'EXPENSES', label: 'Dépenses & budget', route: '/proprietaire/depenses' },
   { code: 'GRADES', label: 'Notes & bulletins', route: '/proprietaire/notes' },
   { code: 'ENROLLMENT', label: 'Inscriptions', route: '/proprietaire/inscriptions' },

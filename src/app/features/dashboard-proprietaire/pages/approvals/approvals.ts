@@ -2,7 +2,6 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService, ApprovalRole, RegistrationSchool, SchoolAccessRequest, SchoolAccessService } from '../../../../core/auth';
 import { UserDto } from '../../../../core/models';
-import { OwnerManagementService, ClassRecord } from '../../owner-management.service';
 
 interface ApprovalSelection {
   schoolId: number;
@@ -19,9 +18,6 @@ interface ApprovalSelection {
 export class Approvals implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly schoolAccess = inject(SchoolAccessService);
-  private readonly management = inject(OwnerManagementService);
-  readonly classesBySchool = signal<Record<number, ClassRecord[]>>({});
-  readonly yearLabels = signal<Record<number, string>>({});
   readonly accessClasses = signal<Record<number, number | null>>({});
   readonly resendingId = signal<number | null>(null);
 
@@ -48,16 +44,6 @@ export class Approvals implements OnInit {
     this.auth.getOwnedSchools(ownerId).subscribe({
       next: (schools) => {
         this.schools.set(schools);
-        for (const school of schools) {
-          this.management.getAcademicYears(school.id).subscribe({
-            next: years => this.yearLabels.update(current => ({ ...current, ...Object.fromEntries(years.map(year => [year.id, year.label])) })),
-            error: () => this.errorMessage.set('Impossible de charger les années scolaires pour les approbations.'),
-          });
-          this.management.getClasses(school.id).subscribe({
-            next: classes => this.classesBySchool.update(current => ({ ...current, [school.id]: classes })),
-            error: () => this.errorMessage.set('Impossible de charger les classes pour les approbations.'),
-          });
-        }
         this.loadRequests(schools);
       },
       error: () => {

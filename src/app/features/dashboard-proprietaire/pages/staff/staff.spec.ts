@@ -47,7 +47,7 @@ describe('StaffPage', () => {
     expect(api.list).toHaveBeenCalledWith(5);
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('Ouédraogo Awa');
-    expect(text).toContain('Frais & paiements');
+    expect(text).toContain('Recouvrement');
     expect(text).toContain('Dépenses & budget');
     expect(text).toContain('Actif');
   });
@@ -60,10 +60,11 @@ describe('StaffPage', () => {
     page.form.lastName = 'Sawadogo';
     page.form.email = 'ali@ecole.bf';
     page.form.jobTitle = 'Surveillant';
+    page.form.monthlySalary = 75000;
     page.applyPreset(page.presets[3]);
     page.save();
     expect(api.create).toHaveBeenCalledWith(5, expect.objectContaining({
-      email: 'ali@ecole.bf', jobTitle: 'Surveillant général', modules: ['STUDENTS'],
+      email: 'ali@ecole.bf', jobTitle: 'Surveillant général', monthlySalary: 75000, modules: ['STUDENTS'],
     }));
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('L’envoi du courriel a échoué');

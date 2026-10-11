@@ -5,6 +5,7 @@ import { AuthService } from '../../../../core/auth';
 import { ExpenseSummary, ExpensesService } from '../../expenses.service';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import { ExpensesPage } from './expenses';
+import { PayablesService } from '../../payables.service';
 
 const summary: ExpenseSummary = {
   schoolName: 'École', from: '2026-09-01', to: '2027-06-30',
@@ -44,6 +45,10 @@ describe('ExpensesPage', () => {
           selectSchoolContext: vi.fn(), selectedSchoolType: () => 'PRIMAIRE', getOwnedSchools: () => of([{ id: 5, name: 'École', type: 'SECONDAIRE' }]),
         } },
         { provide: ExpensesService, useValue: api },
+        { provide: PayablesService, useValue: {
+          prepare: () => of(null), categories: () => of([]),
+          overview: () => of({rows:[],fixedCharges:[],total:0,paid:0,remaining:0,overdue:0}),
+        } },
       ],
     });
     const fixture = TestBed.createComponent(ExpensesPage);
@@ -53,6 +58,8 @@ describe('ExpensesPage', () => {
 
   it('shows income, expenses, balance and budget overruns', () => {
     const { fixture, api } = setup();
+    fixture.componentInstance.setTab('summary');
+    fixture.detectChanges();
     expect(api.summary).toHaveBeenCalledWith(5, null);
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('Recettes encaissées');

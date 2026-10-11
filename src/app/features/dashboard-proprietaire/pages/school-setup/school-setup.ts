@@ -36,7 +36,7 @@ export class SchoolSetup implements OnInit {
     { name: 'Employés et accès', description: 'Enseignants, comptables, secrétaires et autres employés, avec leurs droits d’accès.' },
     { name: 'Présences et signalements', description: 'Absences, retards, signalements des parents et suivi quotidien.' },
     { name: 'Notes et bulletins', description: 'Évaluations, résultats, moyennes et bulletins.' },
-    { name: 'Frais et paiements', description: 'Tarifs, factures, paiements et soldes des élèves.' },
+    { name: 'Recouvrement', description: 'Tarifs, factures, paiements et soldes des élèves.' },
     { name: 'Dépenses et budget', description: 'Dépenses, comptes et suivi financier.' },
     { name: 'Communication', description: 'Messages individuels ou groupés, documents et échanges avec les familles.' },
     { name: 'Clôture annuelle', description: 'Passages, redoublements et report des soldes vers la nouvelle année, sans recopier les notes.' },

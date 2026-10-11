@@ -1,6 +1,6 @@
 import { Component, computed, DestroyRef, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subscription } from 'rxjs';
+import { forkJoin, Subscription, timer } from 'rxjs';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import {
@@ -24,6 +24,9 @@ import { AuthService, OwnerDashboard, RegistrationSchool } from '../../../../cor
 import { SchoolDataSyncService } from '../../../../shared/school-data-sync.service';
 import { OwnerFamilyMessagesService } from '../../family-messages.service';
 import { apiError } from '../../../../shared/self-space/self-space.service';
+import { AppointmentsService } from '../../../../shared/appointments/appointments.service';
+import { ParentPortalService } from '../../../../shared/self-space/parent-portal.service';
+import { DatedAppointment, pendingAppointmentCount } from '../../../../shared/appointments/appointment-state';
 
 @Component({
   selector: 'app-proprietaire-home',
@@ -52,6 +55,16 @@ import { apiError } from '../../../../shared/self-space/self-space.service';
   styleUrl: './home.scss',
 })
 export class ProprietaireHome implements OnDestroy, OnInit {
+  private readonly appointmentsApi = inject(AppointmentsService);
+  private readonly parentPortal = inject(ParentPortalService);
+  private appointmentRequest?: Subscription;
+  private readonly appointmentData = signal<DatedAppointment[] | null>(null);
+  private readonly appointmentNow = signal(Date.now());
+  readonly appointmentCount = computed(() => {
+    const data = this.appointmentData();
+    return data === null ? null : pendingAppointmentCount(data, this.appointmentNow());
+  });
+  readonly appointmentError = signal(false);
   private readonly auth = inject(AuthService);
   readonly schoolStatus = computed(() => this.auth.ownerAccess()?.find(a => a.schoolId === this.selectedSchoolId())?.status);
   readonly canCreateSchool = this.auth.isSchoolOwner;
@@ -76,11 +89,13 @@ export class ProprietaireHome implements OnDestroy, OnInit {
   readonly errorMessage = signal<string | null>(null);
 
   ngOnDestroy(): void {
+    this.appointmentRequest?.unsubscribe();
     this.dashboardRequest?.unsubscribe();
     this.syncSubscription?.unsubscribe();
   }
 
   ngOnInit(): void {
+    timer(0, 30_000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.appointmentNow.set(Date.now()));
     const ownerId = this.user()?.id;
     if (!ownerId) {
       this.loading.set(false);
@@ -130,6 +145,9 @@ export class ProprietaireHome implements OnDestroy, OnInit {
   }
 
   private selectSchool(schoolId: number): void {
+    this.appointmentRequest?.unsubscribe();
+    this.appointmentData.set(null);
+    this.appointmentError.set(false);
     this.dashboardRequest?.unsubscribe();
     this.syncSubscription?.unsubscribe();
     this.selectedSchoolId.set(schoolId);
@@ -146,6 +164,7 @@ export class ProprietaireHome implements OnDestroy, OnInit {
   }
 
   refreshDashboard(schoolId: number): void {
+    this.refreshAppointmentCount(schoolId);
     this.auth.loadOwnerAccess(true).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ error: () => {} });
     this.dashboardRequest?.unsubscribe();
     this.dashboardRequest = this.auth.getOwnerDashboard(schoolId).subscribe({
@@ -162,6 +181,27 @@ export class ProprietaireHome implements OnDestroy, OnInit {
         this.syncError.set(true);
         this.loading.set(false);
         if (!this.dashboard()) this.errorMessage.set('Impossible de charger les indicateurs de cet établissement.');
+      },
+    });
+  }
+
+  private refreshAppointmentCount(schoolId: number): void {
+    if (!this.canRecordReport()) return;
+    this.appointmentRequest?.unsubscribe();
+    this.appointmentRequest = forkJoin({
+      incoming: this.appointmentsApi.received(),
+      sent: this.appointmentsApi.sent(schoolId),
+      parents: this.parentPortal.schoolAppointments(schoolId),
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: data => {
+        if (schoolId !== this.selectedSchoolId()) return;
+        this.appointmentData.set([...data.incoming.filter(a => a.schoolId === schoolId), ...data.sent, ...data.parents]);
+        this.appointmentNow.set(Date.now());
+        this.appointmentError.set(false);
+      }, error: () => {
+        if (schoolId !== this.selectedSchoolId()) return;
+        this.appointmentData.set(null);
+        this.appointmentError.set(true);
       },
     });
   }

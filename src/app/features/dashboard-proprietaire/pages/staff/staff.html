@@ -61,9 +61,11 @@
                 @for (p of presets; track p.title) { <option [value]="p.title"></option> }
               </datalist>
             </label>
+            <label>Salaire mensuel (FCFA)<input name="monthlySalary" type="number" min="0" step="0.01" max="9999999999.99" [(ngModel)]="form.monthlySalary" [required]="!editing" placeholder="À renseigner" /></label>
           </div>
+          <p class="stf__muted">Le salaire mensuel alimente les dépenses à payer. Une modification s’applique aux mois préparés ensuite ; les échéances déjà préparées conservent leur montant.</p>
           @if (editing && !editing.managedAccount) {
-            <p class="stf__muted">Ce compte est aussi utilisé ailleurs sur la plateforme : seuls la fonction et les accès sont modifiables ici.</p>
+            <p class="stf__muted">Ce compte est aussi utilisé ailleurs sur la plateforme : seuls la fonction, le salaire et les accès sont modifiables ici.</p>
           }
           <fieldset class="stf__modules">
             <legend>Modules autorisés (aucun pour un employé sans accès à la gestion)</legend>
@@ -89,7 +91,7 @@
         <div class="stf__table-wrap">
           <table class="stf__table">
             <thead>
-              <tr><th>Membre</th><th>Fonction</th><th>Modules</th><th>Statut</th><th>Actions</th></tr>
+              <tr><th>Membre</th><th>Fonction</th><th>Salaire mensuel</th><th>Modules</th><th>Statut</th><th>Actions</th></tr>
             </thead>
             <tbody>
               @for (s of staff(); track s.id) {
@@ -101,7 +103,7 @@
                       <small>{{ s.invitationDeliveryStatus === 'FAILED' ? 'Envoi du lien échoué' : 'Courriel à confirmer' }}</small>
                     }
                   </td>
-                  <td>{{ s.jobTitle }}</td>
+                  <td>{{ s.jobTitle }}</td><td>{{ s.monthlySalary == null ? "Non renseigné" : (s.monthlySalary | number:'1.0-2') + " FCFA" }}</td>
                   <td>
                     <div class="stf__tags">
                       @for (m of s.modules; track m) { <span class="stf__tag">{{ moduleLabel(m) }}</span> }
