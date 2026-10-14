@@ -5,7 +5,7 @@
   </header>
   @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
   @if (success()) { <p class="ss__alert ss__alert--success" role="status">{{ success() }}</p> }
-  @if (contexts().length) {
+  @if (contexts().length && !owner()) {
     <label class="ss__field">{{ owner() ? 'Établissement' : teacher() ? 'Classe' : 'Élève' }}
       <select name="context" [ngModel]="contextId()" (ngModelChange)="choose($event)" [disabled]="saving()">
         @for (context of contexts(); track context.id) { <option [ngValue]="context.id">{{ context.name }}</option> }

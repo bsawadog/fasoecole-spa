@@ -185,6 +185,13 @@ export class TeacherDetailPage implements OnInit, OnDestroy {
     this.error.set(null);
     this.request = this.api.detail(this.teacherId, this.month()).subscribe({
       next: detail => {
+        const schoolId = Number(localStorage.getItem('fasoecole_owner_school'));
+        if (schoolId && detail.teacher.schoolId !== schoolId) {
+          this.detail.set(null);
+          this.loading.set(false);
+          this.error.set('Cet enseignant appartient à un autre établissement. Ouvrez sa fiche depuis la liste de l’établissement sélectionné.');
+          return;
+        }
         this.detail.set(detail);
         this.loading.set(false);
         if (detail.rateType && detail.rate != null) {

@@ -52,7 +52,10 @@ export class Approvals implements OnInit {
       },
     });
     this.schoolAccess.pending().subscribe({
-      next: (requests) => this.accessRequests.set(requests),
+      next: (requests) => {
+        const schoolId = this.auth.schoolContextId();
+        this.accessRequests.set(requests.filter(request => schoolId === null || request.schoolId === schoolId));
+      },
       error: () => this.errorMessage.set('Impossible de charger les demandes d’accès à vos établissements.'),
     });
   }
@@ -181,6 +184,8 @@ export class Approvals implements OnInit {
   private loadRequests(schools: RegistrationSchool[]): void {
     this.auth.getPendingApprovals().subscribe({
       next: (requests) => {
+        const schoolId = this.auth.schoolContextId();
+        requests = requests.filter(request => schoolId === null || request.requestedSchoolId === schoolId);
         this.pending.set(requests);
         const defaultSchoolId = schools[0]?.id ?? 0;
         this.selections.set(

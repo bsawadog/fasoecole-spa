@@ -1,3 +1,4 @@
+import { Component, input } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -5,7 +6,14 @@ import { AuthService } from '../../../../core/auth';
 import { ExpenseSummary, ExpensesService } from '../../expenses.service';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import { ExpensesPage } from './expenses';
-import { PayablesService } from '../../payables.service';
+import { Payables } from '../../shared/payables/payables';
+
+// Payables has its own tests; these tests exercise the expense page's summary and forms.
+@Component({ selector: 'app-payables', standalone: true, template: '' })
+class PayablesStub {
+  readonly schoolId = input.required<number>();
+  readonly salariesOnly = input(false);
+}
 
 const summary: ExpenseSummary = {
   schoolName: 'École', from: '2026-09-01', to: '2027-06-30',
@@ -45,11 +53,10 @@ describe('ExpensesPage', () => {
           selectSchoolContext: vi.fn(), selectedSchoolType: () => 'PRIMAIRE', getOwnedSchools: () => of([{ id: 5, name: 'École', type: 'SECONDAIRE' }]),
         } },
         { provide: ExpensesService, useValue: api },
-        { provide: PayablesService, useValue: {
-          prepare: () => of(null), categories: () => of([]),
-          overview: () => of({rows:[],fixedCharges:[],total:0,paid:0,remaining:0,overdue:0}),
-        } },
       ],
+    });
+    TestBed.overrideComponent(ExpensesPage, {
+      remove: { imports: [Payables] }, add: { imports: [PayablesStub] },
     });
     const fixture = TestBed.createComponent(ExpensesPage);
     fixture.detectChanges();

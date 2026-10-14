@@ -105,7 +105,7 @@ export class ClassRoster implements OnInit, OnDestroy {
       return;
     }
 
-    this.auth.getOwnedSchools(ownerId, 'STUDENTS').subscribe({
+    this.auth.getOwnedSchools(ownerId, 'STUDENTS', this.scopeSchoolId()).subscribe({
       next: (schools) => {
         if (this.scopeSchoolId() !== null) schools = schools.filter(school => school.id === this.scopeSchoolId());
         this.schools.set(schools);
@@ -170,7 +170,7 @@ export class ClassRoster implements OnInit, OnDestroy {
     this.studentForm = {
       firstName: row.firstName,
       lastName: row.lastName,
-      email: row.email,
+      email: row.email ?? '',
       phone: row.phone ?? '',
       registrationNumber: row.registrationNumber,
       birthDate: row.birthDate ?? '',
@@ -271,8 +271,7 @@ export class ClassRoster implements OnInit, OnDestroy {
 
   submitNewStudent(): void {
     const classId = this.selectedClassId();
-    if (!classId || !this.newStudentForm.firstName.trim() || !this.newStudentForm.lastName.trim() ||
-      !this.newStudentForm.email.trim()) {
+    if (!classId || !this.newStudentForm.firstName.trim() || !this.newStudentForm.lastName.trim()) {
       this.errorMessage.set('Veuillez remplir tous les champs obligatoires.');
       return;
     }
@@ -300,7 +299,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   saveStudent(studentId: number): void {
     const classId = this.selectedClassId();
     if (!classId || !this.studentForm.firstName.trim() || !this.studentForm.lastName.trim() ||
-      !this.studentForm.email.trim() || !this.studentForm.registrationNumber.trim()) {
+      !this.studentForm.registrationNumber.trim()) {
       return;
     }
     this.saving.set(true);
@@ -424,7 +423,7 @@ export class ClassRoster implements OnInit, OnDestroy {
     })).subscribe(rows => this.rows.set(rows));
     this.request?.unsubscribe();
     this.selectedSchoolId.set(schoolId);
-    this.auth.selectSchoolContext(schoolId);
+
     this.loading.set(true);
     this.errorMessage.set(null);
     this.successMessage.set(null);

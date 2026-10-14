@@ -64,6 +64,9 @@ describe('ProfilePage', () => {
   it('displays personal details and saves editable fields', async () => {
     const { fixture, auth } = setup();
     const page = fixture.componentInstance;
+    const profileType = fixture.nativeElement.querySelector('#profile-type') as HTMLInputElement;
+    expect(profileType.value).toBe('Enseignant');
+    expect(profileType.readOnly).toBe(true);
     const email = fixture.nativeElement.querySelector('#profile-email') as HTMLInputElement;
     expect(email.value).toBe('awa@ecole.bf');
     expect(email.readOnly).toBe(true);

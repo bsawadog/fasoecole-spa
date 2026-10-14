@@ -155,6 +155,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
   styleUrl: './app-shell.scss',
 })
 export class AppShell implements OnInit {
+  readonly modulesOpen = signal(false);
   private readonly auth = inject(AuthService);
   private readonly supportHttp = inject(HttpClient);
   readonly incidentsAttention = signal(0);
@@ -164,7 +165,12 @@ export class AppShell implements OnInit {
   private readonly router = inject(Router);
   private readonly routeUrl = toSignal(this.router.events.pipe(filter(event => event instanceof NavigationEnd), map(() => this.router.url)), { initialValue: this.router.url });
   readonly contextSchools = computed(() => this.auth.ownerAccess() ?? []);
-  readonly selectedContextSchool = computed(() => this.contextSchools().find(school => school.schoolId === this.auth.schoolContextId()) ?? this.contextSchools()[0]);
+  readonly selectedContextSchool = computed(() => {
+    const id = this.auth.schoolContextId();
+    const schools = this.contextSchools();
+    if (id !== null) return schools.find(school => school.schoolId === id);
+    return schools.find(school => school.status === 'ACTIVE') ?? schools[0];
+  });
   readonly schoolPreview = computed(() => {
     if (this.auth.role() !== 'proprietaire' || this.user()?.rawRoles.includes('SUPER_ADMIN')) return null;
     const school = this.selectedContextSchool();
@@ -177,19 +183,10 @@ export class AppShell implements OnInit {
     const route = this.routeUrl().split('?')[0].split('/').pop() ?? '';
     return ({ gestion: 'Années scolaires, niveaux, classes, matières et organisation de votre établissement.', classes: 'Listes par classe, matricules, responsables et import Excel / CSV des élèves ou étudiants.', enseignants: 'Enseignants, matières, affectations, emplois du temps et import de fichiers.', inscriptions: 'Inscription des élèves et étudiants avec leurs parents et leurs frais scolaires.', employes: 'Création des enseignants, comptables, secrétaires et autres employés.', frais: 'Tarifs, factures, paiements et soldes des élèves.', depenses: 'Dépenses, budgets et suivi des comptes.', notes: 'Évaluations, moyennes, notes et bulletins.', cloture: 'Passages, redoublements et report des soldes vers une nouvelle année.', messages: 'Messages individuels ou groupés et partage de documents.', demandes: 'Approbation des comptes et rattachement des parents à leurs enfants.', personnel: 'Gestion du personnel et des accès aux modules.', export: 'Export Excel des données et téléchargement des documents.', 'portail-parents': 'Suivi des familles, rendez-vous et signalements.', proprietaire: 'Synthèse des effectifs, présences, signalements et finances.' } as Record<string, string>)[route] ?? 'Découvrez les fonctionnalités dans le menu. Vous renseignerez les données après approbation.';
   });
-  selectPreviewSchool(event: Event): void {
-    const id = Number((event.target as HTMLSelectElement).value);
-    if (this.contextSchools().some(school => school.schoolId === id)) this.auth.selectSchoolContext(id);
-  }
-
   readonly user = this.auth.user;
   readonly platformIntervention = computed(() => this.user()?.rawRoles.includes('SUPER_ADMIN') && this.routeUrl().startsWith('/proprietaire'));
   readonly accountStatusError = signal(false);
   readonly unreadMessages = signal(0);
-  readonly initials = computed(() => {
-    const user = this.user();
-    return `${user?.firstName?.charAt(0) ?? ''}${user?.lastName?.charAt(0) ?? ''}`.toUpperCase();
-  });
   private readonly accessibleNavigation = computed<NavigationItem[]>(() => {
     const role = this.auth.role();
     if (!role || this.user()?.approved !== true || this.user()?.emailVerified !== true || this.user()?.mustChangePassword) {
@@ -227,10 +224,9 @@ export class AppShell implements OnInit {
     if (!role) return [{ title: '', items, active: false }];
     const groupsByRole: Record<Role, { title: string; routes: string[] }[]> = {
       proprietaire: [
-      { title: 'Scolarité', routes: ['inscriptions', 'classes', 'enseignants', 'notes', 'suivi-devoirs'] },
+      { title: 'Administration', routes: ['creer-ecole', 'gestion', 'classes', 'enseignants', 'inscriptions', 'employes', 'personnel', 'notes', 'suivi-devoirs', 'demandes', 'cloture', 'export'] },
       { title: 'Vie scolaire et familles', routes: ['calendrier', 'discipline', 'bibliotheque', 'portail-parents', 'demandes-administratives'] },
       { title: 'Finances', routes: ['frais', 'depenses', 'caisse', 'etats-financiers'] },
-      { title: 'Administration', routes: ['gestion', 'creer-ecole', 'employes', 'demandes', 'personnel', 'cloture', 'export'] },
       { title: 'Assistance', routes: ['incidents', 'aide'] },
       ],
       enseignant: [
@@ -250,8 +246,8 @@ export class AppShell implements OnInit {
         { title: 'Démarches', routes: ['demandes-administratives'] },
       ],
       admin: [
+        { title: 'Administration', routes: ['inscriptions', 'classes', 'enseignants', 'cloture'] },
         { title: 'Établissements', routes: ['ecoles', 'creer-ecole'] },
-        { title: 'Scolarité', routes: ['inscriptions', 'classes', 'enseignants', 'cloture'] },
         { title: 'Utilisateurs et personnel', routes: ['utilisateurs', 'employes'] },
         { title: 'Assistance', routes: ['incidents'] },
       ],
@@ -269,22 +265,9 @@ export class AppShell implements OnInit {
       })).filter(group => group.items.length > 0),
     ];
   });
-  /** Libellé affiché sous le nom : fonction du membre du personnel, sinon le rôle. */
-  readonly roleLabel = computed(() => {
-    const user = this.user();
-    if (!user) {
-      return '';
-    }
-    if (user.role === 'proprietaire' && !this.auth.isSchoolOwner()) {
-      const titles = [...new Set((this.auth.ownerAccess() ?? []).map((a) => a.jobTitle))];
-      return titles.length ? titles.join(' · ') : 'Personnel';
-    }
-    return user.role;
-  });
-
   schoolTypeLabel(type: string): string {
     const labels: Record<string, string> = {
-      PRESCOLAIRE: 'préscolaire',
+      PRESCOLAIRE: 'maternelle',
       PRIMAIRE: 'primaire',
       SECONDAIRE: 'secondaire',
       MIXTE: 'établissement mixte',

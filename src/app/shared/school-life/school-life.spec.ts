@@ -10,14 +10,15 @@ const data: LifeOverview = { students: [{ id: 4, name: 'Awa', classId: 2, classN
   events: [], observations: [], requests: [], books: [], loans: [], homeworks: [] };
 
 describe('School life modules', () => {
-  function setup(scope = 'schools', module = 'calendrier') {
+  afterEach(() => localStorage.removeItem('fasoecole_owner_school'));
+  function setup(scope = 'schools', module = 'calendrier', schools = [{ id: 1, name: 'School' }]) {
     const route = { data: of({ lifeScope: scope, lifeModule: module }) };
     const api = { overview: vi.fn(() => of(data)), create: vi.fn(() => of(undefined)), update: vi.fn(() => of(undefined)) };
     const self = { teacherClasses: vi.fn(() => of([])), myStudents: vi.fn(() => of([{ studentId: 4, fullName: 'Awa', schoolName: 'School' }])) };
     TestBed.configureTestingModule({ imports: [SchoolLifePage], providers: [provideRouter([]),
       { provide: ActivatedRoute, useValue: route }, { provide: SchoolLifeService, useValue: api },
       { provide: SelfSpaceService, useValue: self },
-      { provide: AuthService, useValue: { user: () => ({ id: 7, role: 'parent' }), getOwnedSchools: () => of([{ id: 1, name: 'School' }]) } },
+      { provide: AuthService, useValue: { user: () => ({ id: 7, role: 'parent' }), getOwnedSchools: () => of(schools) } },
     ] });
     const fixture = TestBed.createComponent(SchoolLifePage); fixture.detectChanges();
     return { fixture, page: fixture.componentInstance, api };
@@ -27,6 +28,13 @@ describe('School life modules', () => {
     const { fixture, api } = setup();
     expect(api.overview).toHaveBeenCalledWith('schools', 1, 'calendrier');
     expect(fixture.nativeElement.textContent).toContain('Ajouter un événement');
+  });
+
+  it('uses the school selected in the shared header without a duplicate school selector', () => {
+    localStorage.setItem('fasoecole_owner_school', '2');
+    const { fixture, api } = setup('schools', 'calendrier', [{ id: 1, name: 'A' }, { id: 2, name: 'B' }]);
+    expect(api.overview).toHaveBeenCalledWith('schools', 2, 'calendrier');
+    expect(fixture.nativeElement.querySelector('select[name="context"]')).toBeNull();
   });
   it('lets families request documents without exposing school decision controls', () => {
     const { fixture, page, api } = setup('students', 'demandes-administratives');

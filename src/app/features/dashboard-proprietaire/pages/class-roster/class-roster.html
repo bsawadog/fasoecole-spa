@@ -7,15 +7,7 @@
         <p>Consultez les {{ learner().plural }} d’une classe, leurs parents et leurs enseignants.</p>
       </div>
     </div>
-    @if (schools().length > 1) {
-      <label class="class-roster__school-picker">Choisir un établissement
-        <select class="class-roster__select" [ngModel]="selectedSchoolId()" (change)="onSchoolChange($event)">
-          @for (school of schools(); track school.id) {
-            <option [value]="school.id">{{ school.name }}</option>
-          }
-        </select>
-      </label>
-    }
+
   </header>
   @if (selectedSchoolId() && !loading()) {
     <app-roster-import [schoolId]="selectedSchoolId()!" kind="students" [classes]="classes()" (completed)="importCompleted()" />
@@ -65,8 +57,8 @@
         <div class="class-roster__edit-grid">
           <label>Prénom <input name="nFirstName" [(ngModel)]="newStudentForm.firstName" required /></label>
           <label>Nom <input name="nLastName" [(ngModel)]="newStudentForm.lastName" required /></label>
-          <label>Courriel <input type="email" email name="nEmail" [(ngModel)]="newStudentForm.email" required /></label>
-          <p>Un lien d’activation sera envoyé par courriel pour choisir le mot de passe.</p>
+          <label>Courriel (facultatif) <input type="email" email name="nEmail" [(ngModel)]="newStudentForm.email" /></label>
+          <p>Si un courriel est renseigné, un lien d’activation sera envoyé pour choisir le mot de passe.</p>
           <label>Téléphone <input name="nPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="newStudentForm.phone" /></label>
           <label>Matricule <input type="text" autocomplete="off" [name]="'matricule_' + selectedSchoolId() + '_nouveau'" maxlength="50" [(ngModel)]="newStudentForm.registrationNumber" placeholder="Généré automatiquement" /></label>
           <label>Naissance <input type="date" name="nBirthDate" [(ngModel)]="newStudentForm.birthDate" /></label>
@@ -128,7 +120,7 @@
                       <div class="class-roster__edit-grid">
                         <label>Prénom <input name="firstName" [(ngModel)]="studentForm.firstName" required /></label>
                         <label>Nom <input name="lastName" [(ngModel)]="studentForm.lastName" required /></label>
-                        <label>Courriel <input type="email" email name="email" [(ngModel)]="studentForm.email" required /></label>
+                        <label>Courriel (facultatif) <input type="email" email name="email" [(ngModel)]="studentForm.email" /></label>
                         <label>Téléphone <input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="studentForm.phone" /></label>
                         <label>Matricule <input type="text" autocomplete="off" [name]="'matricule_' + selectedSchoolId() + '_' + row.studentId" maxlength="50" [(ngModel)]="studentForm.registrationNumber" required /></label>
                         <label>Naissance <input type="date" name="birthDate" [(ngModel)]="studentForm.birthDate" /></label>

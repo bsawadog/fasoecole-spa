@@ -441,6 +441,13 @@
     p { margin: 0.45rem auto 0; max-width: 32rem; line-height: 1.5; }
   }
 
+  &__message--pending {
+    background: #b91c1c;
+    color: #fff;
+    border-color: #991b1b;
+    font-weight: 600;
+  }
+
   &__message {
     margin: 0 0 1rem;
     padding: 0.8rem 1rem;

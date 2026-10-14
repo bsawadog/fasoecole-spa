@@ -66,7 +66,7 @@ export class StaffPage implements OnInit {
       this.error.set('Impossible d’identifier votre compte propriétaire.');
       return;
     }
-    this.auth.getOwnedSchools(ownerId, 'MANAGEMENT').subscribe({
+    this.auth.getOwnedSchools(ownerId, 'MANAGEMENT', this.scopeSchoolId()).subscribe({
       next: (schools) => {
         if (this.scopeSchoolId() !== null) schools = schools.filter(school => school.id === this.scopeSchoolId());
         this.schools.set(schools);
@@ -109,7 +109,7 @@ export class StaffPage implements OnInit {
     this.form = {
       firstName: member.firstName,
       lastName: member.lastName,
-      email: member.email,
+      email: member.email ?? '',
       phone: member.phone ?? '',
       jobTitle: member.jobTitle,
       monthlySalary: member.monthlySalary ?? null,
@@ -144,7 +144,7 @@ export class StaffPage implements OnInit {
       this.error.set('Le prénom, le nom et la fonction sont obligatoires.');
       return;
     }
-    if (!this.editing && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) {
+    if (!this.editing && f.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) {
       this.error.set('Saisissez une adresse e-mail valide : elle servira d’identifiant de connexion.');
       return;
     }
@@ -175,7 +175,7 @@ export class StaffPage implements OnInit {
         this.staff.update((list) => [created.staff, ...list]);
         const name = `${created.staff.firstName} ${created.staff.lastName}`;
         this.done(`${created.existingAccount ? 'Accès ajouté' : 'Compte créé'} pour ${name}. `
-          + (created.emailSent ? 'Le titulaire a reçu un courriel avec les instructions.'
+          + (!payload.email ? 'Aucune invitation envoyée : aucun courriel renseigné.' : created.emailSent ? 'Le titulaire a reçu un courriel avec les instructions.'
             : 'L’envoi du courriel a échoué : utilisez Envoyer un lien pour réessayer.'));
       },
       error: (err) => this.fail(err, 'Impossible de créer ce membre du personnel.'),
@@ -242,7 +242,7 @@ export class StaffPage implements OnInit {
 
   private selectSchool(id: number): void {
     this.schoolId.set(id);
-    this.auth.selectSchoolContext(id);
+
     this.closeForm();
     this.loading.set(true);
     this.api.list(id).subscribe({

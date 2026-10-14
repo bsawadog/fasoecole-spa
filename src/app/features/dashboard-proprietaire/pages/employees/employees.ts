@@ -15,19 +15,17 @@ import { environment } from '../../../../../environments/environment';
     @if (category === 'staff') { <app-staff /> } @else {
       <h2>Nouvel enseignant</h2>
       <form (ngSubmit)="save()" #teacherForm="ngForm">
-        <label>Établissement<select name="school" [(ngModel)]="schoolId" required>
-          @for (school of schools(); track school.id) { <option [ngValue]="school.id">{{ school.name }}</option> }
-        </select></label>
+
         <label>Prénom<input name="firstName" [(ngModel)]="form.firstName" maxlength="100" required></label>
         <label>Nom<input name="lastName" [(ngModel)]="form.lastName" maxlength="100" required></label>
-        <label>Courriel<input name="email" type="email" email [(ngModel)]="form.email" maxlength="150" required></label>
-        <label>Téléphone<input name="phone" type="tel" [(ngModel)]="form.phone" maxlength="30"></label>
+        <label>Courriel (facultatif)<input name="email" type="email" email [(ngModel)]="form.email" maxlength="150"></label>
+        <label>Téléphone (facultatif)<input name="phone" type="tel" [(ngModel)]="form.phone" maxlength="30"></label>
         <label>Numéro d’employé<input name="employeeNumber" [(ngModel)]="form.employeeNumber" maxlength="50" placeholder="Généré si vide"></label>
         <label>Spécialité<input name="specialty" [(ngModel)]="form.specialty" maxlength="150"></label>
         <label>Date d’embauche<input name="hireDate" type="date" [(ngModel)]="form.hireDate"></label>
         <label>Salaire mensuel fixe (FCFA)<input name="monthlySalary" type="number" min="0" max="9999999999.99" step="0.01" [(ngModel)]="form.monthlySalary" required></label>
         <p>Le salaire fixe est dû chaque mois. Les taux horaires ou au prorata restent configurables dans la fiche enseignant.</p>
-        <p>Un lien permet à l’enseignant de choisir son mot de passe. Affectez-le ensuite depuis Enseignants par classe.</p>
+        <p>Si un courriel est renseigné, un lien permet à l’enseignant de choisir son mot de passe. Affectez-le ensuite depuis Enseignants par classe.</p>
         <button type="submit" [disabled]="busy()">Créer l’enseignant</button>
       </form>
       @if (error()) { <p role="alert">{{ error() }}</p> }
@@ -56,10 +54,10 @@ export class EmployeesPage {
   save(): void {
     if (!this.schoolId || this.busy()) return;
     this.busy.set(true); this.error.set(''); this.success.set('');
-    this.auth.selectSchoolContext(this.schoolId);
+
     this.http.post<{employeeNumber: string; invitationDeliveryStatus?: string}>(`${environment.apiUrl}/teacher-work/schools/${this.schoolId}/teachers`,
-      { ...this.form, hireDate: this.form.hireDate || null }).subscribe({
-      next: teacher => { this.busy.set(false); this.success.set(`Enseignant créé : ${teacher.employeeNumber}. Invitation : ${teacher.invitationDeliveryStatus === 'SENT' ? 'envoyée' : 'consultez son état dans la fiche enseignant'}.`); this.form = {firstName:'',lastName:'',email:'',phone:'',employeeNumber:'',specialty:'',hireDate:'',monthlySalary:null}; },
+      { ...this.form, email: this.form.email.trim() || null, phone: this.form.phone.trim() || null, hireDate: this.form.hireDate || null }).subscribe({
+      next: teacher => { this.busy.set(false); this.success.set(`Enseignant créé : ${teacher.employeeNumber}. ${this.form.email.trim() ? `Invitation : ${teacher.invitationDeliveryStatus === 'SENT' ? 'envoyée' : 'consultez son état dans la fiche enseignant'}.` : 'Aucune invitation envoyée : aucun courriel renseigné.'}`); this.form = {firstName:'',lastName:'',email:'',phone:'',employeeNumber:'',specialty:'',hireDate:'',monthlySalary:null}; },
       error: err => { this.busy.set(false); this.error.set(err?.error?.message ?? 'Impossible de créer cet enseignant.'); },
     });
   }

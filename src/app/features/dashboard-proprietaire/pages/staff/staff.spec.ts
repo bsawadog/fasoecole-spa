@@ -75,9 +75,11 @@ describe('StaffPage', () => {
     const { fixture, api } = setup();
     const page = fixture.componentInstance;
     page.openCreate();
-    Object.assign(page.form, { firstName: 'Ali', lastName: 'Sawadogo', email: 'ali@ecole.bf', jobTitle: 'Gardien' });
+    Object.assign(page.form, { firstName: 'Ali', lastName: 'Sawadogo', email: '', phone: '', jobTitle: 'Gardien' });
     page.save();
-    expect(api.create).toHaveBeenCalledWith(5, expect.objectContaining({ jobTitle: 'Gardien', modules: [] }));
+    expect(api.create).toHaveBeenCalledWith(5, expect.objectContaining({ jobTitle: 'Gardien', email: '', phone: null, modules: [] }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Aucune invitation envoyée');
   });
 
   it('suspends a member after confirmation', async () => {

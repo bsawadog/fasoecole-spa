@@ -49,6 +49,20 @@ export class ProfilePage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly user = this.auth.user;
+  readonly profileType = computed(() => {
+    const user = this.user();
+    if (!user) return '';
+    const labels: Record<string, string> = {
+      SUPER_ADMIN: 'Super administrateur', SCHOOL_ADMIN: 'Propriétaire', ADMIN: 'Administrateur',
+      STAFF: 'Personnel', TEACHER: 'Enseignant', PARENT: 'Parent', STUDENT: 'Élève / étudiant',
+    };
+    const profiles = [...new Set(user.rawRoles.map(role => labels[role]).filter(Boolean))];
+    const fallback: Record<string, string> = {
+      admin: 'Administrateur', proprietaire: 'Propriétaire', enseignant: 'Enseignant',
+      parent: 'Parent', etudiant: 'Élève / étudiant',
+    };
+    return profiles.join(', ') || fallback[user.role] || 'Utilisateur';
+  });
   readonly roleLabels = ROLE_LABELS;
   readonly requestableRoles = REQUESTABLE_ROLES;
 

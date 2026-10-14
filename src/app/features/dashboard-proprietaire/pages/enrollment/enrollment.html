@@ -7,13 +7,7 @@
         <p>{{ closure ? "Préparez la nouvelle année, validez les décisions puis confirmez la clôture. Les notes restent dans leur année d’origine." : "Inscrivez un élève et associez ses parents à son dossier." }}</p>
       </div>
     </div>
-    @if (schools().length > 1) {
-      <label class="enr__school-picker">Choisir un établissement
-        <select class="enr__select" [ngModel]="schoolId()" (change)="changeSchool($event)">
-          @for (school of schools(); track school.id) { <option [value]="school.id">{{ school.name }}</option> }
-        </select>
-      </label>
-    }
+
   </header>
 
   @if (error()) { <div class="enr__alert enr__alert--error" role="alert">{{ error() }}</div> }
@@ -75,10 +69,10 @@
             }
             <label>Prénom<input name="nsFirstName" [(ngModel)]="newStudentForm.firstName" maxlength="100" required></label>
             <label>Nom<input name="nsLastName" [(ngModel)]="newStudentForm.lastName" maxlength="100" required></label>
-            <label>Courriel<input name="nsEmail" type="email" email [(ngModel)]="newStudentForm.email" maxlength="150" required></label>
+            <label>Courriel (facultatif)<input name="nsEmail" type="email" email [(ngModel)]="newStudentForm.email" maxlength="150"></label>
             <p>Un lien d’activation sera envoyé par courriel pour choisir le mot de passe.</p>
             <label>Matricule<input name="nsRegistration" value="Généré automatiquement" disabled title="Format MAT-AAAA-NNN, attribué à l’enregistrement"></label>
-            <label>Téléphone<input name="nsPhone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="newStudentForm.phone" maxlength="30"></label>
+            <label>Téléphone (facultatif)<input name="nsPhone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="newStudentForm.phone" maxlength="30"></label>
             <label>Date de naissance<input name="nsBirthDate" type="date" [(ngModel)]="newStudentForm.birthDate"></label>
             <label>Genre
               <select name="nsGender" [(ngModel)]="newStudentForm.gender">
@@ -258,7 +252,7 @@
                 <li><b>{{ y.completedStudents }}</b> clôturé(s)</li>
               </ul>
               @if (y.pendingDecisions) { <p class="enr__warn">{{ y.pendingDecisions }} élève(s) sans décision de fin d’année</p> }
-              
+
             </article>
           }
         </div>

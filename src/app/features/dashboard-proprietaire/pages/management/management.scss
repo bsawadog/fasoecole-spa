@@ -40,6 +40,14 @@
 
 .owner-management button { font: inherit; cursor: pointer; }
 .owner-management button:disabled { cursor: not-allowed; opacity: .65; }
+.owner-management__step-navigation { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #d5e3d8; }
+.owner-management__step-navigation span { flex: 1; min-width: 12rem; font-weight: 600; }
+.owner-management__step-navigation button { min-height: 2.75rem; padding: .75rem 1rem; border-radius: .55rem; }
+.owner-management__previous { border: 1px solid #b8cbbd; background: #fff; color: #18342c; }
+@media (max-width: 650px) {
+  .owner-management__step-navigation span { order: -1; flex-basis: 100%; }
+  .owner-management__step-navigation button { flex: 1 1 12rem; }
+}
 .owner-management button:focus-visible,
 .owner-management a:focus-visible,
 .owner-management input:focus-visible,

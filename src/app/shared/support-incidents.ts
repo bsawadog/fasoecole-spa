@@ -17,7 +17,6 @@ interface Incident { id:number; school_id:number; school_name:string; title:stri
  @if(error()){<p class="error" role="alert">{{error()}}</p>} @if(notice()){<p role="status">{{notice()}}</p>}
  @if(!admin){<section><button (click)="creating=!creating">{{creating?'Annuler':'Ouvrir un incident'}}</button>
  @if(creating){<form (ngSubmit)="create()" #form="ngForm">
- <label>Établissement<select name="school" [(ngModel)]="schoolId" required><option [ngValue]="null">Choisir</option>@for(s of schools();track s.id){<option [ngValue]="s.id">{{s.name}}</option>}</select></label>
  <label>Titre de l’incident<input name="title" [(ngModel)]="title" required maxlength="160"></label>
  <label>Page concernée<input name="page" [(ngModel)]="pageTitle" required maxlength="200" placeholder="Ex. Élèves par classe"></label>
  <label>Description et étapes pour reproduire<textarea name="description" [(ngModel)]="description" required maxlength="8000"></textarea></label>
@@ -47,13 +46,14 @@ export class SupportIncidents {
  rows=signal<Incident[]>([]);selected=signal<Incident|null>(null);schools=signal<RegistrationSchool[]>([]);error=signal('');notice=signal('');busy=signal(false);imageUrl=signal('');
  search='';page=0;creating=false;closing=false;schoolId:number|null=this.auth.schoolContextId();title='';pageTitle='';description='';note='';image:File|null=null;private generation=0;private detailGeneration=0;
  constructor(){
-  if(!this.admin&&this.auth.user())this.auth.getOwnedSchools(this.auth.user()!.id).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:s=>this.schools.set(s),error:()=>this.error.set('Établissements indisponibles.')});
-  timer(0,10000).pipe(exhaustMap(()=>{const generation=this.generation;return this.http.get<Incident[]>(`${this.endpoint}/incidents`,{params:{page:this.page,search:this.search}}).pipe(catchError(()=>{this.error.set('Impossible de synchroniser les incidents.');return EMPTY;}),map(rows=>({rows,generation})));}),takeUntilDestroyed(this.destroy)).subscribe(({rows,generation})=>{if(generation!==this.generation)return;this.rows.set(rows);if(this.selected()&&!this.busy())this.refreshDetail(this.selected()!.id);});
+  if(!this.admin&&this.auth.user())this.auth.getOwnedSchools(this.auth.user()!.id).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:s=>{this.schools.set(s);this.schoolId=s[0]?.id??null;},error:()=>this.error.set('Établissements indisponibles.')});
+  timer(0,10000).pipe(exhaustMap(()=>{const generation=this.generation;return this.http.get<Incident[]>(`${this.endpoint}/incidents`,{params:this.listParams()}).pipe(catchError(()=>{this.error.set('Impossible de synchroniser les incidents.');return EMPTY;}),map(rows=>({rows,generation})));}),takeUntilDestroyed(this.destroy)).subscribe(({rows,generation})=>{if(generation!==this.generation)return;this.rows.set(rows);if(this.selected()&&!this.busy())this.refreshDetail(this.selected()!.id);});
   this.destroy.onDestroy(()=>this.clearImage());
  }
  label(s:string){return ({OPEN:'Ouvert',IN_PROGRESS:'Pris en charge',RETEST_REQUESTED:'À retester',CLOSED:'Fermé'} as Record<string,string>)[s]??s;}
+ private listParams():Record<string,string|number>{const schoolId=this.auth.schoolContextId();return {page:this.page,search:this.search,...((!this.admin||this.router.url.startsWith('/proprietaire'))&&schoolId?{schoolId}:{})};}
  actionLabel(s:string){return ({OPEN:'Déclaration',CLAIM:'Prise en charge',RETEST:'Nouveau test demandé',CLOSE:'Clôture',REOPEN:'Réouverture',COMMENT:'Commentaire'} as Record<string,string>)[s]??s;}
- refresh(){const g=++this.generation;this.http.get<Incident[]>(`${this.endpoint}/incidents`,{params:{page:this.page,search:this.search}}).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:r=>{if(g===this.generation)this.rows.set(r);},error:e=>this.fail(e)});}
+ refresh(){const g=++this.generation;this.http.get<Incident[]>(`${this.endpoint}/incidents`,{params:this.listParams()}).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:r=>{if(g===this.generation)this.rows.set(r);},error:e=>this.fail(e)});}
  select(id:number){this.note='';this.closing=false;this.clearImage();this.selected.set(null);this.refreshDetail(id);}
  private refreshDetail(id:number){const g=++this.detailGeneration;this.http.get<Incident>(`${this.endpoint}/incidents/${id}`).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:r=>{if(g===this.detailGeneration)this.selected.set(r);},error:e=>this.fail(e)});}
  fileChanged(e:globalThis.Event){const file=(e.target as HTMLInputElement).files?.[0]??null;if(file&&(file.size>2097152||!['image/png','image/jpeg'].includes(file.type))){this.image=null;(e.target as HTMLInputElement).value='';this.error.set('Choisissez une image PNG/JPEG de 2 Mo maximum.');return;}this.image=file;this.error.set('');}

@@ -22,6 +22,13 @@ function setup() {
   const fixture = TestBed.createComponent(FinancialStatements);fixture.detectChanges();return {fixture, api};
 }
 describe('FinancialStatements', () => {
+  afterEach(() => { localStorage.removeItem('fasoecole_year_5'); localStorage.removeItem('fasoecole_year_6'); });
+  it('restores the reporting year chosen in the shared module header', () => {
+    localStorage.setItem('fasoecole_year_5', '1');
+    const { fixture, api } = setup();
+    expect(api.summary).toHaveBeenCalledWith(5, 1);
+    expect(fixture.nativeElement.querySelectorAll('select').length).toBe(0);
+  });
   it('shows recorded movements and explains that opening balances are excluded', () => {
     const {fixture, api} = setup();
     expect(api.summary).toHaveBeenCalledWith(5, null);

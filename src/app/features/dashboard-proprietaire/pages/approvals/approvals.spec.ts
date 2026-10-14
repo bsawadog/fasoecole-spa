@@ -14,7 +14,7 @@ const request = (id: number, status: SchoolAccessRequest['status']): SchoolAcces
 describe('Approvals', () => {
   function setup(empty = false) {
     const access = {
-      pending: vi.fn(() => of(empty ? [] : [request(1, 'PENDING'), request(2, 'AUTO_APPROVED')])),
+      pending: vi.fn(() => of(empty ? [] : [request(1, 'PENDING'), request(2, 'AUTO_APPROVED'), { ...request(3, 'PENDING'), schoolId: 1, schoolName: 'École A' }])),
       approve: vi.fn(() => of({})),
       reject: vi.fn(() => of({})),
       confirm: vi.fn(() => of({})),
@@ -22,6 +22,7 @@ describe('Approvals', () => {
     };
     const auth = {
       user: () => ({ id: 10 }),
+      schoolContextId: () => 2,
       getOwnedSchools: vi.fn(() => of([{ id: 2, name: 'École B' }])),
       getPendingApprovals: vi.fn(() => of([])),
       approvePendingUser: vi.fn(() => of({})),

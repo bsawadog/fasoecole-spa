@@ -11,16 +11,7 @@
         <p class="owner-dashboard__subtitle">Vue d’ensemble de vos établissements FasoÉcole.</p>
       }
     </div>
-    @if (schools().length > 1) {
-      <label class="owner-dashboard__school-picker">
-        <span>Choisir un établissement</span>
-        <select [value]="selectedSchoolId()" (change)="onSchoolChange($event)">
-          @for (school of schools(); track school.id) {
-            <option [value]="school.id">{{ school.name }}</option>
-          }
-        </select>
-      </label>
-    } @else if (schools().length === 1) {
+    @if (schools().length === 1) {
       <div class="owner-dashboard__school-badge">
         <svg lucideBuilding2 [size]="18" aria-hidden="true"></svg>
         {{ schools()[0].name }}
@@ -30,7 +21,7 @@
   </header>
 
   @if (schoolStatus() === 'PENDING_APPROVAL') {
-    <p class="owner-dashboard__message" role="status">Votre établissement est en attente de validation et d’activation par le SUPER_ADMIN.</p>
+    <p class="owner-dashboard__message owner-dashboard__message--pending" role="status">Votre établissement est en attente de validation et d’activation par le SUPER_ADMIN.</p>
   } @else if (schoolStatus() === 'DRAFT') {
     <p class="owner-dashboard__message" role="status">Votre établissement est en préparation. <a routerLink="/proprietaire/creer-ecole" [queryParams]="{schoolId:selectedSchoolId()}">Terminer et soumettre pour validation</a>.</p>
   }

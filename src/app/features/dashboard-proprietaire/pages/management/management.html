@@ -5,16 +5,7 @@
       <h1>Gestion de l’établissement</h1>
       <p>Configurez l’école, organisez l’année scolaire et suivez vos effectifs et tarifs.</p>
     </div>
-    @if (schools().length > 1) {
-      <label class="owner-management__school-picker">
-        <span>Choisir un établissement</span>
-        <select [value]="selectedSchoolId()" (change)="onSchoolChange($event)">
-          @for (item of schools(); track item.id) {
-            <option [value]="item.id">{{ item.name }}</option>
-          }
-        </select>
-      </label>
-    } @else if (school(); as currentSchool) {
+    @if (school(); as currentSchool) {
       <div class="owner-management__school-badge">{{ currentSchool.name }} <span>{{ typeLabel(currentSchool.type) }}</span></div>
     }
   </header>
@@ -52,7 +43,7 @@
             <label>Nom de l’école<input name="schoolName" [(ngModel)]="schoolForm.name" required maxlength="150"></label>
             <label>Type
               <select name="schoolType" [(ngModel)]="schoolForm.type" required>
-                <option value="PRESCOLAIRE">Établissement préscolaire</option>
+                <option value="PRESCOLAIRE">École maternelle</option>
                 <option value="PRIMAIRE">École primaire</option>
                 <option value="SECONDAIRE">Établissement secondaire</option>
                 <option value="MIXTE">Établissement mixte (plusieurs cycles)</option>
@@ -138,12 +129,6 @@
             }
             @if (academicKind() === 'classes') {
               <label>Nom de la classe<input name="className" [(ngModel)]="academicForm.name" placeholder="2nde C" required maxlength="100"></label>
-              <label>Année scolaire
-                <select name="classYear" [(ngModel)]="academicForm.academicYearId" required>
-                  <option [ngValue]="null" disabled>Sélectionner</option>
-                  @for (year of years(); track year.id) { <option [ngValue]="year.id">{{ year.label }}</option> }
-                </select>
-              </label>
               <label>Niveau
                 <select name="classLevel" [(ngModel)]="academicForm.levelId" required>
                   <option [ngValue]="null" disabled>Sélectionner</option>
@@ -290,5 +275,15 @@
         </div>
       </section>
     }
+    <nav class="owner-management__step-navigation" aria-label="Navigation des étapes de configuration">
+      @if (stepIndex() > 0) {
+        <button type="button" class="owner-management__previous" [disabled]="stepNavigationDisabled()" (click)="changeStep(-1)">Précédent</button>
+      }
+      <span role="status">Étape {{ stepIndex() + 1 }} sur {{ steps.length }} · {{ steps[stepIndex()].label }}</span>
+      @if (stepIndex() < steps.length - 1) {
+        <button type="button" class="owner-management__primary owner-management__next" [disabled]="stepNavigationDisabled()" (click)="changeStep(1)">Suivant : {{ steps[stepIndex() + 1].label }}</button>
+      }
+    </nav>
+    @if (editorOpen()) { <p class="owner-management__hint">Enregistrez ou annulez la saisie pour passer à l’étape suivante.</p> }
   }
 </main>

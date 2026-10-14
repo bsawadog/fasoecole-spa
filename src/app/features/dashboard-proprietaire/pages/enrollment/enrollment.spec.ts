@@ -145,10 +145,10 @@ describe('EnrollmentPage', () => {
 
     page.registerStudent();
     expect(api.registerStudent).not.toHaveBeenCalled();
-    expect(page.error()).toContain('courriel');
+    expect(page.error()).toContain('prénom');
 
     Object.assign(page.newStudentForm, {
-      firstName: ' Sali ', lastName: 'Ouédraogo', email: 'sali@ecole.bf',
+      firstName: ' Sali ', lastName: 'Ouédraogo', email: '',
     });
     page.registerStudent();
     expect(api.registerStudent).not.toHaveBeenCalled();
@@ -172,7 +172,7 @@ describe('EnrollmentPage', () => {
     const print = vi.spyOn(page, 'printEnrollmentReceipt').mockImplementation(() => undefined);
     page.registerStudent();
     expect(api.registerStudent).toHaveBeenCalledWith(5, expect.objectContaining({
-      classId: 12, firstName: 'Sali', registrationNumber: null, phone: null,
+      classId: 12, firstName: 'Sali', registrationNumber: null, email: '', phone: null,
       fees: [{ feeTypeId: 31, amountPaid: 10000 }, { feeTypeId: 32, amountPaid: 20000 }],
       paymentMethod: 'CASH',
       guardians: [{ parentId: null, firstName: 'Issa', lastName: 'Ouédraogo', email: null, phone: '70112233', relationship: 'Père' }],

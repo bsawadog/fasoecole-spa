@@ -62,7 +62,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
       this.error.set('Impossible d’identifier votre compte propriétaire.');
       return;
     }
-    this.auth.getOwnedSchools(ownerId, 'TEACHERS').subscribe({
+    this.auth.getOwnedSchools(ownerId, 'TEACHERS', this.scopeSchoolId()).subscribe({
       next: schools => {
         // Preserve the owner's other schools when this wizard is scoped to a new school.
         this.candidateSchoolIds = new Set(schools.map(school => school.id));
@@ -197,9 +197,8 @@ export class TeacherRoster implements OnInit, OnDestroy {
     const classId = this.selectedClassId();
     const form = this.newTeacher;
     if (!classId || !form.firstName.trim() || !form.lastName.trim() ||
-        !form.email.trim() ||
         !this.subjects().some(subject => subject.id === form.subjectId)) {
-      this.error.set('Renseignez le prénom, le nom, un courriel et une matière.');
+      this.error.set('Renseignez le prénom, le nom et une matière.');
       return;
     }
     this.saving.set(true);
@@ -288,7 +287,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
     this.classRequest?.unsubscribe();
     this.candidatesRequest?.unsubscribe();
     this.selectedSchoolId.set(schoolId);
-    this.auth.selectSchoolContext(schoolId);
+
     this.classes.set([]);
     this.subjects.set([]);
     this.teachers.set([]);

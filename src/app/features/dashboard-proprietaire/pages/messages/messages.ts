@@ -94,19 +94,7 @@ export class OwnerMessages implements OnInit {
       this.error.set('Impossible d’identifier votre compte propriétaire.');
       return;
     }
-    if (!this.auth.isSchoolOwner()) {
-      this.auth.loadOwnerAccess().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: (access) => this.initializeSchools(access.filter((school) => school.modules.includes('STUDENTS')).map((school) => ({
-          id: school.schoolId, name: school.schoolName, type: school.schoolType,
-        }))),
-        error: () => {
-          this.loading.set(false);
-          this.error.set('Impossible de charger les établissements accessibles.');
-        },
-      });
-      return;
-    }
-    this.auth.getOwnedSchools(ownerId, 'DASHBOARD').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.auth.getOwnedSchools(ownerId, 'STUDENTS').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (schools) => this.initializeSchools(schools),
       error: () => {
         this.loading.set(false);
@@ -266,7 +254,7 @@ export class OwnerMessages implements OnInit {
 
   private selectSchool(schoolId: number): void {
     this.schoolId.set(schoolId);
-    this.auth.selectSchoolContext(schoolId);
+
     this.loading.set(true);
     this.error.set(null);
     this.thread.set(null);

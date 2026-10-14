@@ -331,11 +331,11 @@ export class ExpensesPage implements OnInit, OnDestroy {
     this.requests.unsubscribe();
     this.requests = new Subscription();
     this.schoolId.set(schoolId);
-    this.auth.selectSchoolContext(schoolId);
+
     this.loading.set(true);
     this.summary.set(null);
     this.expenses.set([]);
-    this.yearId = null;
+    this.yearId = Number(localStorage.getItem(`fasoecole_year_${schoolId}`)) || null;
     this.categoryFilter = null;
     this.formOpen.set(false);
     if (this.tab() !== 'expenses' && this.tab() !== 'categories') this.loadCategories();

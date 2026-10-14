@@ -38,6 +38,9 @@
     @if (success()) { <p class="profile__success" role="status">Profil mis à jour.</p> }
 
     <form #profileForm="ngForm" (ngSubmit)="save(profileForm)">
+      <label for="profile-type">Type de profil</label>
+      <input id="profile-type" type="text" [value]="profileType()" readonly />
+
       <label for="profile-first-name">Prénom</label>
       <input id="profile-first-name" name="firstName" [(ngModel)]="form.firstName" required maxlength="100" />
 

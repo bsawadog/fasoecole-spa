@@ -88,6 +88,13 @@ export class StudentDetailPage implements OnInit {
     this.api.getStudentDetail(this.studentId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (detail) => {
         if (version !== this.detailVersion) return;
+        const schoolId = Number(localStorage.getItem('fasoecole_owner_school'));
+        if (schoolId && detail.schoolId !== schoolId) {
+          this.detail.set(null);
+          this.loading.set(false);
+          this.errorMessage.set('Cet élève appartient à un autre établissement. Ouvrez sa fiche depuis la liste de l’établissement sélectionné.');
+          return;
+        }
         this.detail.set(detail);
         this.errorMessage.set(null);
         this.loading.set(false);

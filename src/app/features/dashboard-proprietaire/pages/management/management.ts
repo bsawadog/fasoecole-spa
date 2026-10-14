@@ -1,6 +1,6 @@
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin, Observable, Subscription } from 'rxjs';
@@ -61,6 +61,18 @@ export class OwnerManagement implements OnDestroy, OnInit {
     { id: 'fees', label: 'Frais scolaires' },
     { id: 'people', label: 'Effectifs' },
   ];
+  readonly steps: { section: Section; kind?: AcademicKind; label: string }[] = [
+    { section: 'school', label: 'Établissement' },
+    { section: 'academic', kind: 'years', label: 'Années scolaires' },
+    { section: 'academic', kind: 'levels', label: 'Cycles et niveaux' },
+    { section: 'academic', kind: 'classes', label: 'Classes' },
+    { section: 'academic', kind: 'subjects', label: 'Matières' },
+    { section: 'fees', label: 'Frais scolaires' },
+    { section: 'people', label: 'Effectifs' },
+  ];
+  readonly stepIndex = computed(() => this.steps.findIndex(step =>
+    step.section === this.section() && (!step.kind || step.kind === this.academicKind())));
+  readonly stepNavigationDisabled = computed(() => this.loading() || this.saving() || this.activatingLevel() || this.editorOpen());
   readonly schools = signal<RegistrationSchool[]>([]);
   readonly selectedSchoolId = signal<number | null>(null);
   readonly section = signal<Section>('school');
@@ -105,7 +117,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
       return;
     }
 
-    this.auth.getOwnedSchools(ownerId, 'MANAGEMENT').subscribe({
+    this.auth.getOwnedSchools(ownerId, 'MANAGEMENT', this.scopeSchoolId()).subscribe({
       next: (schools) => {
         if (this.scopeSchoolId() !== null) schools = schools.filter(school => school.id === this.scopeSchoolId());
         this.schools.set(schools);
@@ -136,6 +148,14 @@ export class OwnerManagement implements OnDestroy, OnInit {
   selectSection(section: Section): void {
     this.section.set(section);
     this.cancelEdit();
+  }
+
+  changeStep(offset: number): void {
+    if (this.stepNavigationDisabled()) return;
+    const step = this.steps[this.stepIndex() + offset];
+    if (!step) return;
+    this.selectSection(step.section);
+    if (step.kind) this.setAcademicKind(step.kind);
   }
 
   setAcademicKind(kind: AcademicKind): void {
@@ -452,7 +472,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
   typeLabel(type: string): string {
     const labels: Record<string, string> = {
       PRIMAIRE: 'École primaire',
-      PRESCOLAIRE: 'Établissement préscolaire',
+      PRESCOLAIRE: 'École maternelle',
       SECONDAIRE: 'Établissement secondaire',
       MIXTE: 'Établissement mixte',
       UNIVERSITE: 'Université',
@@ -464,7 +484,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
   private selectSchool(schoolId: number): void {
     this.dataRequest?.unsubscribe();
     this.selectedSchoolId.set(schoolId);
-    this.auth.selectSchoolContext(schoolId);
+
     this.loading.set(true);
     this.errorMessage.set(null);
     this.successMessage.set(null);
@@ -530,6 +550,8 @@ export class OwnerManagement implements OnDestroy, OnInit {
   }
 
   private emptyAcademicForm(): AcademicForm {
+    const saved = Number(localStorage.getItem(`fasoecole_year_${this.selectedSchoolId()}`));
+    const year = this.years().find(year => year.id === saved) ?? this.years().find(year => year.isCurrent);
     return {
       id: null,
       label: '',
@@ -539,7 +561,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
       isCurrent: false,
       cycle: '',
       orderIndex: 1,
-      academicYearId: null,
+      academicYearId: year?.id ?? null,
       levelId: null,
       capacity: 30,
       code: '',

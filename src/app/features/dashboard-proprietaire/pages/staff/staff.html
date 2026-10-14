@@ -7,13 +7,7 @@
         <p>Ouvrez des comptes à votre équipe (directeur, comptable, secrétaire…) et choisissez les modules auxquels chacun a accès.</p>
       </div>
     </div>
-    @if (schools().length > 1) {
-      <label class="stf__school-picker">Choisir un établissement
-        <select class="stf__select" [ngModel]="schoolId()" (change)="changeSchool($event)">
-          @for (school of schools(); track school.id) { <option [value]="school.id">{{ school.name }}</option> }
-        </select>
-      </label>
-    }
+
   </header>
 
   @if (error()) { <div class="stf__alert stf__alert--error" role="alert">{{ error() }}</div> }
@@ -49,10 +43,10 @@
             <label>Nom
               <input name="lastName" [(ngModel)]="form.lastName" [disabled]="!!editing && !editing.managedAccount" required />
             </label>
-            <label>E-mail (identifiant)
-              <input name="email" type="email" email [(ngModel)]="form.email" [disabled]="!!editing" required />
+            <label>Courriel (facultatif)
+              <input name="email" type="email" email [(ngModel)]="form.email" [disabled]="!!editing" />
             </label>
-            <label>Téléphone
+            <label>Téléphone (facultatif)
               <input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="form.phone" [disabled]="!!editing && !editing.managedAccount" />
             </label>
             <label>Fonction

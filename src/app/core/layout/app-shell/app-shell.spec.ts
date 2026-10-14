@@ -1,8 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import { AuthService } from '../../auth';
+import { AuthService, SchoolAccess } from '../../auth';
 import { OwnerFamilyMessagesService } from '../../../features/dashboard-proprietaire/family-messages.service';
 import { SelfSpaceService } from '../../../shared/self-space/self-space.service';
 import { AcademicContextPicker } from '../../../shared/academic-context';
@@ -10,22 +10,27 @@ import { AppShell } from './app-shell';
 
 // These tests exercise shell account gates; academic context has its own API lifecycle.
 @Component({ selector: 'app-academic-context', standalone: true, template: '' })
-class AcademicContextStub {}
+class AcademicContextStub {
+  readonly showSchool = input(true);
+  readonly showYear = input(true);
+}
 
 describe('AppShell account readiness', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
   function setup(role: 'parent' | 'proprietaire') {
+    const ownerAccess = signal<SchoolAccess[]>([]);
+    const schoolContextId = signal<number | null>(null);
     const user = signal({ id: 7, firstName: 'Awa', lastName: 'Diallo', email: 'awa@test.bf', role,
       rawRoles: role === 'proprietaire' ? ['SCHOOL_ADMIN'] : ['PARENT'],
       approved: false, emailVerified: false, requestedSchoolName: 'École', requestedSchoolType: 'PRIMAIRE' });
     const auth = {
       user, role: () => role, isSchoolOwner: () => role === 'proprietaire', selectedSchoolType: () => 'PRIMAIRE',
-      ownerModules: () => new Set(), ownerAccess: () => [], logout: vi.fn(),
+      ownerModules: () => new Set(), ownerAccess, schoolContextId, logout: vi.fn(),
       refreshCurrentUser: vi.fn(() => of(user())),
       getOwnedSchools: vi.fn(() => of([{ id: 2, name: 'École', type: 'PRIMAIRE' }])),
-      loadOwnerAccess: vi.fn(() => of([])),
+      loadOwnerAccess: vi.fn(() => of(ownerAccess())),
     };
     const self = { unreadConversationCount: vi.fn(() => of(5)) };
     const messages = { unreadCount: () => 0, refreshUnreadCount: vi.fn(() => of(0)) };
@@ -58,6 +63,41 @@ describe('AppShell account readiness', () => {
     expect(auth.getOwnedSchools).toHaveBeenCalledWith(7, 'DASHBOARD');
     expect(messages.refreshUnreadCount).toHaveBeenCalledWith([2]);
     vi.advanceTimersByTime(20_000); expect(auth.getOwnedSchools).toHaveBeenCalledOnce();
+    fixture.destroy();
+  });
+
+  const pendingSchool: SchoolAccess = { schoolId: 3, schoolName: 'BOUBACAR SAWADOGO', schoolType: 'PRIMAIRE',
+    status: 'PENDING_APPROVAL', owner: true, jobTitle: 'Propriétaire', modules: ['MANAGEMENT'] };
+  const approvedSchool: SchoolAccess = { ...pendingSchool, schoolId: 2, schoolName: 'École primaire la réussite', status: 'ACTIVE' };
+
+  it('only shows an approval preview for the school selected in the global header', () => {
+    const { fixture, auth } = setup('proprietaire');
+    auth.ownerAccess.set([pendingSchool, approvedSchool]);
+    auth.schoolContextId.set(2);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selectedContextSchool()?.schoolName).toBe('École primaire la réussite');
+    expect(fixture.componentInstance.schoolPreview()).toBeNull();
+    auth.schoolContextId.set(3);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.schoolPreview()?.schoolName).toBe('BOUBACAR SAWADOGO');
+    auth.schoolContextId.set(2);
+    auth.ownerAccess.set([{ ...pendingSchool }, { ...approvedSchool }]);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.schoolPreview()).toBeNull();
+    fixture.destroy();
+  });
+
+  it('never substitutes a different pending school when the selected school is missing from access data', () => {
+    const { fixture, auth } = setup('proprietaire');
+    auth.schoolContextId.set(2);
+    auth.ownerAccess.set([pendingSchool]);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selectedContextSchool()).toBeUndefined();
+    expect(fixture.componentInstance.schoolPreview()).toBeNull();
+    auth.schoolContextId.set(null);
+    auth.ownerAccess.set([pendingSchool, approvedSchool]);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selectedContextSchool()?.schoolId).toBe(2);
     fixture.destroy();
   });
 });

@@ -17,6 +17,5 @@ export function selectAcademicYear<T extends SelectableAcademicYear>(
   if (explicit && saved) return saved;
   const dated = years.filter(year => !year.closed && year.startDate <= today && today <= year.endDate)
     .sort((a, b) => Number(b.isCurrent) - Number(a.isCurrent) || b.startDate.localeCompare(a.startDate) || a.id - b.id)[0];
-  // Pendant les vacances ou avant la création de la prochaine année, conserver le choix existant.
-  return dated ?? years.find(year => year.isCurrent && !year.closed) ?? saved;
+  return years.find(year => year.isCurrent && !year.closed) ?? dated ?? saved;
 }

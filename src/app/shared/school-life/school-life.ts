@@ -93,7 +93,9 @@ export class SchoolLifePage implements OnInit {
   }
   private initialize(contexts: { id: number; name: string }[]): void {
     this.contexts.set(contexts);
-    if (contexts[0]) this.choose(contexts[0].id); else this.loading.set(false);
+    const savedSchool = this.owner() ? Number(localStorage.getItem('fasoecole_owner_school')) : null;
+    const selected = contexts.find(context => context.id === savedSchool) ?? contexts[0];
+    if (selected) this.choose(selected.id); else this.loading.set(false);
   }
   choose(id: number): void {
     if (this.saving() || !this.contexts().some(c => c.id === id)) return;

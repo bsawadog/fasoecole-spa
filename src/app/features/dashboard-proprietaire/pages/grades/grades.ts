@@ -407,7 +407,8 @@ export class GradesPage implements OnInit, OnDestroy {
   }
 
   private pickDefaultPeriod(): void {
-    const current = this.years().find(y => y.isCurrent)?.id;
+    const saved = Number(localStorage.getItem(`fasoecole_year_${this.schoolId()}`));
+    const current = this.years().find(y => y.id === saved)?.id ?? this.years().find(y => y.isCurrent)?.id;
     const periods = this.periods();
     const today = new Date().toISOString().slice(0, 10);
     const period = periods.find(p => p.academicYearId === current && p.startDate <= today && p.endDate >= today)
@@ -423,7 +424,7 @@ export class GradesPage implements OnInit, OnDestroy {
     this.requests.unsubscribe();
     this.requests = new Subscription();
     this.schoolId.set(schoolId);
-    this.auth.selectSchoolContext(schoolId);
+
     this.loading.set(true);
     this.summary.set(null);
     this.resetEvaluation();
@@ -438,7 +439,8 @@ export class GradesPage implements OnInit, OnDestroy {
         this.levels.set(levels);
         this.classes.set(classes);
         this.periods.set(periods);
-        const currentYear = years.find(y => y.isCurrent)?.id ?? years[0]?.id ?? 0;
+        const saved = Number(localStorage.getItem(`fasoecole_year_${schoolId}`));
+        const currentYear = years.find(y => y.id === saved)?.id ?? years.find(y => y.isCurrent)?.id ?? years[0]?.id ?? 0;
         this.defaults.academicYearId = currentYear;
         this.periodForm.academicYearId = currentYear;
         this.classId.set(null);
@@ -478,7 +480,8 @@ export class GradesPage implements OnInit, OnDestroy {
   }
 
   private emptyPeriod() {
-    return { academicYearId: this.years().find(y => y.isCurrent)?.id ?? 0, code: '', name: '', startDate: '',
+    const saved = Number(localStorage.getItem(`fasoecole_year_${this.schoolId()}`));
+    return { academicYearId: this.years().find(y => y.id === saved)?.id ?? this.years().find(y => y.isCurrent)?.id ?? 0, code: '', name: '', startDate: '',
       endDate: '', passMark: 10 as number | null };
   }
 

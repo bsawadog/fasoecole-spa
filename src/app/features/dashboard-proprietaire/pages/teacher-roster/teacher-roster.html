@@ -7,15 +7,7 @@
         <p>Sélectionnez une classe pour consulter ses enseignants et accéder à leur fiche.</p>
       </div>
     </div>
-    @if (schools().length > 1) {
-      <label class="teacher-roster__school-picker">Choisir un établissement
-        <select class="teacher-roster__select" [ngModel]="selectedSchoolId()" (change)="changeSchool($event)">
-          @for (school of schools(); track school.id) {
-            <option [value]="school.id">{{ school.name }}</option>
-          }
-        </select>
-      </label>
-    }
+
   </header>
   @if (selectedSchoolId() && !loading()) {
     <app-roster-import [schoolId]="selectedSchoolId()!" kind="teachers" [classes]="classes()" [subjects]="subjects()" (completed)="importCompleted()" />
@@ -65,7 +57,7 @@
         <div class="teacher-roster__edit-grid">
           <label>Prénom<input name="firstName" [(ngModel)]="newTeacher.firstName" required maxlength="100"></label>
           <label>Nom<input name="lastName" [(ngModel)]="newTeacher.lastName" required maxlength="100"></label>
-          <label>Courriel<input name="email" type="email" email [(ngModel)]="newTeacher.email" required maxlength="150"></label>
+          <label>Courriel (facultatif)<input name="email" type="email" email [(ngModel)]="newTeacher.email" maxlength="150"></label>
           <p>Un lien d’activation sera envoyé par courriel pour choisir le mot de passe.</p>
           <label>Téléphone<input name="phone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="newTeacher.phone" maxlength="30"></label>
           <label>Numéro d’employé<input type="text" name="employeeNumber" [(ngModel)]="newTeacher.employeeNumber" maxlength="50" placeholder="Attribué automatiquement si vide"></label>

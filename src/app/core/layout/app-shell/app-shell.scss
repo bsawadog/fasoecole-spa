@@ -1,10 +1,13 @@
 .shell {
+  --shell-gutter: clamp(1rem, 2.5vw, 2rem);
   display: flex;
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
 
   &__sidebar {
+    box-sizing: border-box;
+    &[hidden] { display: none; }
     width: 260px;
     flex: 0 0 auto;
     display: flex;
@@ -25,12 +28,32 @@
 
     img {
       display: block;
-      width: 100%;
+      flex: 1;
+      min-width: 0;
+      width: 0;
       max-width: 13rem;
       height: 3.25rem;
       object-fit: contain;
       object-position: left center;
     }
+  }
+
+  &__menu-close {
+    display: inline-flex;
+    flex: 0 0 2.75rem;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 1px solid #4b5563;
+    border-radius: 8px;
+    background: transparent;
+    color: #f9fafb;
+    cursor: pointer;
+
+    &:hover { background: #374151; }
+    &:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
   }
 
   &__nav {
@@ -113,80 +136,29 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 0.5rem;
-    padding: 0.65rem 2rem;
+    padding: 0.65rem var(--shell-gutter);
     border-bottom: 1px solid #e5e7eb;
     background: #fff;
   }
 
-  &__academic-context {
-    flex: 1 1 18rem;
+  &__school-context {
+    flex: 1 1 28rem;
     min-width: 0;
-
-    > label {
-      display: flex;
-      flex-direction: column;
-      gap: 0.2rem;
-      font-size: 0.75rem;
-    }
-
-    select { width: 100%; min-width: 0; max-width: 100%; padding: 0.45rem; }
-  }
-
-  &__profile-link {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    min-width: 0;
+    max-width: 46rem;
     margin-right: auto;
-    padding: 0.25rem 0.5rem 0.25rem 0.25rem;
-    border-radius: 999px;
-    color: #111827;
-    text-decoration: none;
 
-    &:hover,
-    &--active {
-      background: #eff6ff;
-    }
-
-    &:focus-visible {
-      outline: 2px solid #2563eb;
-      outline-offset: 2px;
-    }
+    label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.8rem; }
+    select { box-sizing: border-box; width: 100%; min-width: 0; padding: 0.45rem; }
   }
 
-  &__avatar {
-    display: grid;
-    flex: 0 0 2.25rem;
-    width: 2.25rem;
-    height: 2.25rem;
-    place-items: center;
-    border-radius: 50%;
-    color: #fff;
-    background: #2563eb;
-    font-size: 0.8rem;
-    font-weight: 700;
-  }
 
-  &__user-info {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    font-size: 0.85rem;
 
-    strong,
-    small {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
 
-    small {
-      color: #6b7280;
-      text-transform: capitalize;
-    }
-  }
+
+
+
 
   &__action {
     display: inline-flex;
@@ -226,6 +198,14 @@
         background: #fef2f2;
       }
     }
+  }
+
+  &__modules-toggle {
+    box-sizing: border-box;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    justify-content: center;
   }
 
   &__messages {
@@ -274,7 +254,12 @@
 
   &__page {
     flex: 1;
-    padding: 2rem;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 86rem;
+    margin-inline: auto;
+    padding: var(--shell-gutter);
   }
 
   &__status {
@@ -302,6 +287,15 @@
       color: #806b47;
     }
 
+    &--pending {
+      border-color: #991b1b;
+      color: #fff;
+      background: #b91c1c;
+
+      small, a { color: #fff; }
+      a { text-decoration: underline; }
+    }
+
     &--error {
       display: block;
       border-color: #f1b9b2;
@@ -312,12 +306,10 @@
 }
 
 @media (max-width: 1100px) {
-  .shell__academic-context { flex-basis: 100%; }
-  .shell__topbar { padding-inline: 0.75rem; }
-  .shell__profile-link { flex: 1 1 0; }
 }
 
 @media (max-width: 700px) {
+  .shell__school-context { flex-basis: calc(100% - 3.5rem); max-width: none; }
   .shell {
     flex-direction: column;
     height: auto;
@@ -343,19 +335,14 @@
     }
 
     &__topbar {
-      padding: 0.5rem 0.75rem;
+      padding: 0.5rem var(--shell-gutter);
       gap: 0.5rem;
     }
 
     &__action { min-width: 2.75rem; min-height: 2.75rem; justify-content: center; padding: 0.5rem; box-sizing: border-box; }
 
-    &__user-info {
-      font-size: 0.8rem;
-    }
 
-    &__page {
-      padding: 1.25rem;
-    }
+
   }
 }
 

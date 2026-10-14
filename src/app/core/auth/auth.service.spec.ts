@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
-import { AuthService } from './auth.service';
+import { AuthService, OWNER_MODULES, SchoolAccess } from './auth.service';
 
 describe('AuthService account flow', () => {
   let auth: AuthService;
@@ -15,11 +15,61 @@ describe('AuthService account flow', () => {
 
   beforeEach(() => {
     localStorage.removeItem('fasoecole_auth');
+    localStorage.removeItem('fasoecole_owner_school');
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])] });
     auth = TestBed.inject(AuthService);
     http = TestBed.inject(HttpTestingController);
   });
-  afterEach(() => { http.verify(); localStorage.removeItem('fasoecole_auth'); });
+  afterEach(() => { http.verify(); localStorage.removeItem('fasoecole_auth'); localStorage.removeItem('fasoecole_owner_school'); });
+
+  const access: SchoolAccess[] = [
+    { schoolId: 1, schoolName: 'École A', schoolType: 'PRIMAIRE', status: 'ACTIVE', owner: true, jobTitle: 'Propriétaire', modules: OWNER_MODULES.map(module => module.code) },
+    { schoolId: 2, schoolName: 'École B', schoolType: 'PRIMAIRE', status: 'ACTIVE', owner: true, jobTitle: 'Propriétaire', modules: OWNER_MODULES.map(module => module.code) },
+  ];
+
+  it.each(OWNER_MODULES.map(module => [module.code]))('limits the %s module to the globally selected school', module => {
+    auth.selectSchoolContext(2);
+    let schools: { id: number }[] = [];
+    auth.getOwnedSchools(7, module).subscribe(value => schools = value);
+    http.expectOne(`${environment.apiUrl}/owner/staff/my-access`).flush(access);
+    expect(schools.map(school => school.id)).toEqual([2]);
+    expect(auth.schoolContextId()).toBe(2);
+  });
+
+  it('does not switch to another school when the selected school lacks a module', () => {
+    auth.selectSchoolContext(2);
+    let schools: { id: number }[] = [];
+    auth.getOwnedSchools(7, 'MANAGEMENT').subscribe(value => schools = value);
+    http.expectOne(`${environment.apiUrl}/owner/staff/my-access`).flush([access[0], { ...access[1], owner: false, modules: ['FINANCE'] }]);
+    expect(schools).toEqual([]);
+    expect(auth.schoolContextId()).toBe(2);
+    expect(auth.ownerModules().has('MANAGEMENT')).toBe(false);
+    expect(auth.ownerModules().has('FINANCE')).toBe(true);
+  });
+
+  it('keeps explicit administrator inspection separate from the global school choice', () => {
+    auth.selectSchoolContext(2);
+    let schools: { id: number }[] = [];
+    auth.getOwnedSchools(7, 'MANAGEMENT', 1).subscribe(value => schools = value);
+    http.expectOne(`${environment.apiUrl}/owner/staff/my-access`).flush(access);
+    expect(schools.map(school => school.id)).toEqual([1]);
+    expect(auth.schoolContextId()).toBe(2);
+  });
+
+  it('initializes the shared context with an active school ahead of a new pending request', () => {
+    auth.loadOwnerAccess().subscribe();
+    http.expectOne(`${environment.apiUrl}/owner/staff/my-access`).flush([{ ...access[0], status: 'PENDING_APPROVAL' }, access[1]]);
+    expect(auth.schoolContextId()).toBe(2);
+    expect(localStorage.getItem('fasoecole_owner_school')).toBe('2');
+  });
+
+  it('limits owner-wide school lists to the selected school too', () => {
+    auth.selectSchoolContext(2);
+    let schools: { id: number }[] = [];
+    auth.getOwnedSchools(7).subscribe(value => schools = value);
+    http.expectOne(`${environment.apiUrl}/schools/by-owner/7`).flush([{ id: 1, name: 'École A' }, { id: 2, name: 'École B' }]);
+    expect(schools.map(school => school.id)).toEqual([2]);
+  });
 
   function login(changes: Record<string, unknown> = {}) {
     auth.login('awa@test.bf', 'MotDePasseSecret').subscribe();

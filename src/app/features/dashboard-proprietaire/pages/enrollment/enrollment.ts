@@ -431,8 +431,8 @@ export class EnrollmentPage implements OnInit {
     const schoolId = this.schoolId();
     const f = this.newStudentForm;
     if (!schoolId) return;
-    if (!f.classId || !f.firstName.trim() || !f.lastName.trim() || !f.email.trim()) {
-      this.error.set('Renseignez la classe, le prénom, le nom et le courriel.');
+    if (!f.classId || !f.firstName.trim() || !f.lastName.trim()) {
+      this.error.set('Renseignez la classe, le prénom et le nom.');
       return;
     }
     if (this.guardians.some((g) => g.mode === 'existing' && !g.selected)) {
@@ -779,7 +779,7 @@ export class EnrollmentPage implements OnInit {
       this.refreshCounts();
     });
     this.schoolId.set(id);
-    this.auth.selectSchoolContext(id);
+
     this.yearFormOpen.set(false);
     this.plan.set(null);
     this.fromYearId.set(null);
@@ -799,8 +799,10 @@ export class EnrollmentPage implements OnInit {
         const ids = new Set(overview.years.map((y) => y.id));
         const current = overview.years.find((y) => y.current);
         const keepFrom = this.fromYearId();
+        const saved = Number(localStorage.getItem(`fasoecole_year_${schoolId}`));
         this.fromYearId.set(fromId && ids.has(fromId) ? fromId
           : keepFrom && ids.has(keepFrom) ? keepFrom
+          : saved && ids.has(saved) ? saved
           : (current?.id ?? overview.years[overview.years.length - 1]?.id ?? null));
         const candidates = this.nextYearCandidates();
         const keepTo = this.toYearId();

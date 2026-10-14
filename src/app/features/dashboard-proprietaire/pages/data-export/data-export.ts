@@ -17,9 +17,7 @@ interface SchoolChoice { id:number;name:string;status:string; }
         <p>Ce téléchargement est réservé au propriétaire de l’établissement.</p></section> }
       @else {
         <section class="card">
-          <label>Établissement<select [(ngModel)]="schoolId" [disabled]="busy()">
-            @for (school of schools();track school.id) { <option [ngValue]="school.id">{{ school.name }}{{ school.status === 'SUSPENDED' ? ' · désactivé' : school.status === 'ARCHIVED' ? ' · archivé' : '' }}</option> }
-          </select></label>
+
           <div class="scope"><strong>Toutes les années scolaires</strong><p>L’année en cours et les archives sont incluses, quelle que soit l’année sélectionnée ailleurs dans l’application.</p></div>
           <h2>Un classeur organisé pour continuer votre activité</h2>
           <div class="categories">
@@ -61,7 +59,7 @@ export class SchoolDataExport {
   schoolId:number|null=null;
   constructor() {
     this.http.get<SchoolChoice[]>(`${this.endpoint}/schools`).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next:schools=>{ this.schools.set(schools);const stored=Number(localStorage.getItem('fasoecole_owner_school'));this.schoolId=schools.find(s=>s.id===stored)?.id??schools[0]?.id??null;this.loading.set(false); },
+      next:schools=>{ const stored=Number(localStorage.getItem('fasoecole_owner_school'));const selected=stored?schools.filter(s=>s.id===stored):schools;this.schools.set(selected);this.schoolId=selected[0]?.id??null;this.loading.set(false); },
       error:()=>{ this.loading.set(false);this.error.set('Impossible de charger vos établissements.'); },
     });
   }

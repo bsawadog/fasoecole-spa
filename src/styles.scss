@@ -4,3 +4,28 @@ body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+
+// Routed components share the shell's gutter; cards keep their own inner spacing.
+.shell__page > router-outlet + * {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.shell__page > router-outlet + * > :is(
+  .owner-dashboard, .owner-management, .class-roster, .teacher-roster,
+  .enr, .dep, .fin, .gr, .stf, .ss
+) {
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.shell__page input,
+.shell__page select,
+.shell__page textarea {
+  box-sizing: border-box;
+  max-width: 100%;
+}

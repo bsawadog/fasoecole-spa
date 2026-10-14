@@ -7,15 +7,7 @@
         <p>Périodes, évaluations, saisie tracée, moyennes pondérées, classements et bulletins imprimables.</p>
       </div>
     </div>
-    @if (schools().length > 1) {
-      <label class="gr__picker">Choisir un établissement
-        <select class="gr__select" [ngModel]="schoolId()" (change)="changeSchool($event)">
-          @for (school of schools(); track school.id) {
-            <option [value]="school.id">{{ school.name }}</option>
-          }
-        </select>
-      </label>
-    }
+
   </header>
 
   @if (!loading() && schools().length) {
@@ -101,10 +93,6 @@
           <div class="gr__card">
             <div class="gr__card-head"><h2>{{ editingPeriodId ? 'Modifier la période' : 'Nouvelle période' }}</h2></div>
             <div class="gr__body gr__form">
-              <label>Année scolaire
-                <select [(ngModel)]="periodForm.academicYearId" [disabled]="!!editingPeriodId">
-                  @for (y of years(); track y.id) { <option [ngValue]="y.id">{{ y.label }}{{ y.isCurrent ? ' (en cours)' : '' }}</option> }
-                </select></label>
               <label>Code<input [(ngModel)]="periodForm.code" maxlength="20" placeholder="TERM1"></label>
               <label>Libellé<input [(ngModel)]="periodForm.name" maxlength="80" placeholder="1er trimestre"></label>
               <label>Début<input type="date" [(ngModel)]="periodForm.startDate"></label>
@@ -119,10 +107,6 @@
           <div class="gr__card">
             <div class="gr__card-head"><h2>Découpage automatique</h2></div>
             <div class="gr__body gr__form">
-              <label>Année scolaire
-                <select [(ngModel)]="defaults.academicYearId">
-                  @for (y of years(); track y.id) { <option [ngValue]="y.id">{{ y.label }}</option> }
-                </select></label>
               <label>Découpage
                 <select [(ngModel)]="defaults.scheme">
                   <option value="TRIMESTRE">3 trimestres</option>

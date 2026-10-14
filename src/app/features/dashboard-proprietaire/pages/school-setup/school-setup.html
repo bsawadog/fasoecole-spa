@@ -1,7 +1,7 @@
 <main class="setup">
   <header><h1>Demander un nouvel établissement</h1><p>Présentez votre établissement en quelques informations. Vous organiserez les classes et ajouterez les personnes après approbation.</p></header>
   @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
-  @if (success()) { <p class="success" role="status">{{ success() }}</p> }
+  @if (success()) { <p class="success" [class.success--pending]="finalized() && !active()" role="status">{{ success() }}</p> }
   @if (loading()) { <p>Chargement de la demande…</p> }
   @else {
     @if (!finalized()) {
@@ -9,7 +9,7 @@
         <h2>Identité et effectifs prévus</h2>
         <label>Nom de l’établissement<input name="name" [(ngModel)]="form.name" required maxlength="200" [readonly]="saving()" /></label>
         <label>Type<select name="type" [(ngModel)]="form.type" required [disabled]="saving()">
-          <option value="PRESCOLAIRE">Préscolaire</option><option value="PRIMAIRE">Primaire</option><option value="SECONDAIRE">Secondaire</option><option value="MIXTE">Mixte</option><option value="UNIVERSITE">Université</option><option value="FORMATION">Centre de formation</option>
+          <option value="PRESCOLAIRE">Maternelle</option><option value="PRIMAIRE">Primaire</option><option value="SECONDAIRE">Secondaire</option><option value="MIXTE">Mixte</option><option value="UNIVERSITE">Université</option><option value="FORMATION">Centre de formation</option>
         </select></label>
         <label>Adresse<input name="address" [(ngModel)]="form.address" required maxlength="255" [readonly]="saving()" /></label>
         <label>Téléphone (facultatif)<input name="phone" type="tel" inputmode="tel" [(ngModel)]="form.phone" maxlength="30" [readonly]="saving()" /></label>
@@ -28,15 +28,5 @@
       } @else { <button type="button" (click)="refresh()" [disabled]="saving()">Vérifier l’approbation</button> }
       <button type="button" (click)="startAnother()" [disabled]="saving()">Demander un autre établissement</button>
     }
-    <section aria-label="Aperçu des fonctionnalités">
-      <h2>Découvrez les modules</h2>
-      <nav aria-label="Modules disponibles après approbation">
-        @for (item of modules; track item.name) { <button type="button" [class.active]="module() === item.name" (click)="module.set(item.name)">{{ item.name }}</button> }
-      </nav>
-      @for (item of modules; track item.name) { @if (module() === item.name) {
-        <h3>{{ item.name }}</h3><p>{{ item.description }}</p>
-        @if (!active()) { <p class="hint" role="status">Les informations de ce module seront visibles et pourront être renseignées lorsque la demande de création d’établissement sera approuvée par le SUPER_ADMIN.</p> }
-      } }
-    </section>
   }
 </main>

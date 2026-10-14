@@ -37,8 +37,9 @@ export class FinancialStatements implements OnInit, OnDestroy {
   }
   selectSchool(id: number): void {
     if (!this.schools().some(s => s.id === id)) return;
-    this.schoolId.set(id); this.auth.selectSchoolContext(id);
-    this.yearId = null; this.summary.set(null); this.load();
+    this.schoolId.set(id);
+    this.yearId = Number(localStorage.getItem(`fasoecole_year_${id}`)) || null;
+    this.summary.set(null); this.load();
   }
   load(): void {
     const id = this.schoolId();

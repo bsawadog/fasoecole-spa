@@ -181,7 +181,10 @@ export class AuthService {
     if (this.isSchoolOwner()) {
       return new Set(OWNER_MODULES.map((m) => m.code));
     }
-    return new Set((this._ownerAccess() ?? []).flatMap((a) => a.modules));
+    const schoolId = this.schoolContextId();
+    return new Set((this._ownerAccess() ?? [])
+      .filter(access => schoolId === null || access.schoolId === schoolId)
+      .flatMap(access => access.modules));
   });
 
   /**
@@ -243,22 +246,30 @@ export class AuthService {
    * Établissements accessibles dans l'espace propriétaire. Avec un module, la liste inclut aussi
    * les établissements où ce module a été délégué à l'utilisateur (personnel administratif).
    */
-  getOwnedSchools(ownerId: number, module?: OwnerModule): Observable<RegistrationSchool[]> {
+  getOwnedSchools(ownerId: number, module?: OwnerModule, scopeSchoolId?: number | null): Observable<RegistrationSchool[]> {
     if (!module && this.user()?.rawRoles.includes('SUPER_ADMIN')) {
-      return this.loadOwnerAccess(true).pipe(map(access => access.map(a => ({id:a.schoolId,name:a.schoolName,type:a.schoolType,status:a.status}))));
+      return this.loadOwnerAccess(true).pipe(map(access => this.schoolsForContext(access.map(a => ({id:a.schoolId,name:a.schoolName,type:a.schoolType,status:a.status})), scopeSchoolId)));
     }
     if (!module) {
       return this.http.get<RegistrationSchool[]>(`${this.apiUrl}/schools/by-owner/${ownerId}`).pipe(
         tap(schools => { if (this.user()?.id === ownerId) this.ownedSchools.set(schools); }),
+        map(schools => this.schoolsForContext(schools, scopeSchoolId)),
       );
     }
     return this.loadOwnerAccess(true).pipe(
       map((access) =>
-        access
+        this.schoolsForContext(access
           .filter((a) => a.modules.includes(module))
-          .map((a) => ({ id: a.schoolId, name: a.schoolName, type: a.schoolType, status: a.status }))
+          .map((a) => ({ id: a.schoolId, name: a.schoolName, type: a.schoolType, status: a.status })), scopeSchoolId)
       )
     );
+  }
+
+  private schoolsForContext(schools: RegistrationSchool[], scopeSchoolId?: number | null): RegistrationSchool[] {
+    const schoolId = scopeSchoolId ?? this.schoolContextId();
+    if (schoolId !== null) return schools.filter(school => school.id === schoolId);
+    const initial = schools.find(school => school.status === 'ACTIVE') ?? schools[0];
+    return initial ? [initial] : [];
   }
 
   /** Charge (une fois par session) les établissements et modules accessibles à l'utilisateur. */
@@ -270,7 +281,14 @@ export class AuthService {
     }
     return this.http
       .get<SchoolAccess[]>(`${this.apiUrl}/owner/staff/my-access`)
-      .pipe(tap((access) => { if (this._token() === sessionToken) this._ownerAccess.set(access); }));
+      .pipe(tap((access) => {
+        if (this._token() !== sessionToken) return;
+        this._ownerAccess.set(access);
+        if (this.schoolContextId() === null) {
+          const initial = access.find(school => school.status === 'ACTIVE') ?? access[0];
+          if (initial) this.selectSchoolContext(initial.schoolId);
+        }
+      }));
   }
 
   getOwnerDashboard(schoolId: number): Observable<OwnerDashboard> {
