@@ -1,15 +1,9 @@
 <section class="dep">
   <header class="dep__header"><div><h1>États financiers</h1><p>Encaissements, décaissements et suivi financier de l’établissement.</p></div></header>
   <div class="dep__toolbar report-controls">
-    <label>Établissement<select [ngModel]="schoolId()" (ngModelChange)="selectSchool($event)">
-      @for (school of schools(); track school.id) { <option [ngValue]="school.id">{{ school.name }}</option> }
-    </select></label>
+
     @if (summary(); as s) {
-      @if (s.years.length) {
-        <label>Année scolaire<select [(ngModel)]="yearId" (ngModelChange)="load()" [disabled]="loading()">
-          @for (year of s.years; track year.id) { <option [ngValue]="year.id">{{ year.label }}</option> }
-        </select></label>
-      }
+
       <button type="button" class="dep__btn" (click)="exportCsv()" [disabled]="loading()">Exporter CSV</button>
       <button type="button" class="dep__btn" (click)="print()" [disabled]="loading()">Imprimer / PDF</button>
     }

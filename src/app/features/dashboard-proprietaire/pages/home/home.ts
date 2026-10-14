@@ -134,7 +134,7 @@ export class ProprietaireHome implements OnDestroy, OnInit {
 
   schoolTypeLabel(type: string): string {
     const labels: Record<string, string> = {
-      PRESCOLAIRE: 'Établissement préscolaire',
+      PRESCOLAIRE: 'École maternelle',
       PRIMAIRE: 'École primaire',
       SECONDAIRE: 'Établissement secondaire',
       MIXTE: 'Établissement mixte',
@@ -151,7 +151,7 @@ export class ProprietaireHome implements OnDestroy, OnInit {
     this.dashboardRequest?.unsubscribe();
     this.syncSubscription?.unsubscribe();
     this.selectedSchoolId.set(schoolId);
-    this.auth.selectSchoolContext(schoolId);
+
     this.loading.set(true);
     this.dashboard.set(null);
     this.lastUpdated.set(null);

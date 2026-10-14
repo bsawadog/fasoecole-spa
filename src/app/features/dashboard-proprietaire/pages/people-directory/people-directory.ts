@@ -50,7 +50,7 @@ export class PeopleDirectory implements OnInit {
   selectSchool(id: number): void {
     if (!this.schools().some(s => s.id === id)) return;
     this.request?.unsubscribe();
-    this.schoolId.set(id); this.auth.selectSchoolContext(id);
+    this.schoolId.set(id);
     this.students.set([]); this.parents.set([]); this.search.set(''); this.error.set(null); this.loading.set(true);
     this.request = forkJoin({
       students: this.api.getStudents(id),

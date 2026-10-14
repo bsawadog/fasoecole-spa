@@ -12,11 +12,7 @@ import { Appointments } from '../../../../shared/appointments/appointments';
   template: `
     <main class="ss">
       <header class="ss__header"><div><a [routerLink]="home">Retour à l’accueil</a><h1>Rendez-vous</h1><p>Consultez les demandes reçues et les rendez-vous que vous avez pris.</p></div>
-        @if (schools().length > 1) {
-          <label class="ss__picker">Établissement<select [ngModel]="schoolId()" (ngModelChange)="selectSchool($event)">
-            @for (school of schools(); track school.id) { <option [ngValue]="school.id">{{ school.name }}</option> }
-          </select></label>
-        }
+
       </header>
       @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
       @if (loading()) { <p class="ss__state">Chargement…</p> }
@@ -47,6 +43,6 @@ export class OwnerAppointmentsPage implements OnInit {
   selectSchool(id: number): void {
     if (!this.schools().some(s => s.id === id)) return;
     this.schoolId.set(id);
-    this.auth.selectSchoolContext(id);
+
   }
 }

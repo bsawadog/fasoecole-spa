@@ -69,7 +69,7 @@ export class CashBookPage implements OnInit, OnDestroy {
   }
   selectSchool(id: number): void {
     if(this.busy() || !this.schools().some(s=>s.id===id)) return;
-    this.schoolId.set(id); this.auth.selectSchoolContext(id); this.data.set(null); this.month=this.currentMonth;
+    this.schoolId.set(id); this.data.set(null); this.month=this.currentMonth;
     this.success.set(''); this.resetEntry(); this.load();
   }
   load(): void {

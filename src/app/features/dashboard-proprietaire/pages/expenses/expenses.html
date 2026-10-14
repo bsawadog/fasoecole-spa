@@ -7,13 +7,7 @@
         <p>Salaires, charges fixes, dépenses à payer, versements et bilan de l’établissement.</p>
       </div>
     </div>
-    @if (schools().length > 1) {
-      <label class="dep__school-picker">Choisir un établissement
-        <select class="dep__select" [ngModel]="schoolId()" (change)="changeSchool($event)">
-          @for (school of schools(); track school.id) { <option [value]="school.id">{{ school.name }}</option> }
-        </select>
-      </label>
-    }
+
   </header>
 
   <nav class="dep__tabs" aria-label="Sections dépenses">
@@ -33,13 +27,7 @@
   } @else {
     @if ((tab() === 'summary' || tab() === 'budget') && summary(); as s) {
       <div class="dep__toolbar dep__toolbar--bare">
-        @if (s.years.length) {
-          <label>Année scolaire
-            <select [(ngModel)]="yearId" (change)="changeYear()">
-              @for (y of s.years; track y.id) { <option [ngValue]="y.id">{{ y.label }}{{ y.current ? ' (en cours)' : '' }}</option> }
-            </select>
-          </label>
-        } @else {
+        @if (!s.years.length) {
           <p class="dep__muted">Aucune année scolaire : le bilan porte sur l’année civile. Créez une année scolaire pour définir un budget.</p>
         }
         <span class="dep__muted">Période du {{ s.from }} au {{ s.to }}</span>

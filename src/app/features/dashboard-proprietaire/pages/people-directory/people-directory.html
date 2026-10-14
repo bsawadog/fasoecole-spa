@@ -1,11 +1,7 @@
 <section class="class-roster">
   <header class="class-roster__header">
     <div><a routerLink="/proprietaire">Retour à l’accueil</a><h1>{{ title() }}</h1><p>{{ parentsMode ? 'Coordonnées des parents et accès aux fiches de leurs enfants inscrits dans les classes.' : 'Tous les élèves de l’établissement, avec ou sans classe. Ouvrez une fiche pour consulter les détails.' }}</p></div>
-    @if (schools().length > 1) {
-      <label>Établissement<select class="class-roster__select" [ngModel]="schoolId()" (ngModelChange)="selectSchool(+$event)">
-        @for (school of schools(); track school.id) { <option [ngValue]="school.id">{{ school.name }}</option> }
-      </select></label>
-    }
+
   </header>
   @if (error()) { <p class="class-roster__alert class-roster__alert--error" role="alert">{{ error() }}</p>@if (schoolId()) { <button type="button" (click)="selectSchool(schoolId()!)">Réessayer</button> } }
   @if (loading()) { <p class="class-roster__state" role="status">Chargement…</p> }

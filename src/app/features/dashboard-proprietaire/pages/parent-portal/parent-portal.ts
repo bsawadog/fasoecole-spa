@@ -60,7 +60,7 @@ export class OwnerParentPortal implements OnInit {
   selectSchool(id: number): void {
     if (!this.schools().some(school => school.id === id)) return;
     this.syncSubscription?.unsubscribe();
-    this.schoolId.set(id); this.auth.selectSchoolContext(id);
+    this.schoolId.set(id);
     this.classId = null; this.studentId = null; this.students.set([]); this.loadingStudents.set(false);
     this.title = ''; this.content = ''; this.dueDate = ''; this.files = [];
     this.classes.set([]); this.posts.set([]); this.appointments.set([]); this.reload();

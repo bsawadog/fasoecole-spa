@@ -7,15 +7,7 @@
         <p>Frais scolaires, encaissements, impayés et reçus.</p>
       </div>
     </div>
-    @if (schools().length > 1) {
-      <label class="fin__school-picker">Choisir un établissement
-        <select class="fin__select" [ngModel]="schoolId()" (change)="changeSchool($event)">
-          @for (school of schools(); track school.id) {
-            <option [value]="school.id">{{ school.name }}</option>
-          }
-        </select>
-      </label>
-    }
+
   </header>
 
   @if (balanceError()) { <p role="alert">{{ balanceError() }}</p> }

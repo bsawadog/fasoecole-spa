@@ -401,7 +401,7 @@ export class FinancePage implements OnInit, OnDestroy {
     this.schoolId.set(schoolId);
     this.balances.set(null);
     this.syncSubscription = this.sync.watch(schoolId).subscribe(() => { if (!this.loading()) { this.loadTab(); this.loadBalances(); } });
-    this.auth.selectSchoolContext(schoolId);
+
     this.loading.set(true);
     this.panel.set(null);
     this.overview.set(null);

@@ -122,7 +122,7 @@ export class PlatformSchools {
   changePage(delta:number): void { this.page+=delta; this.reload.next(); }
   pageCount(): number { return Math.max(1,Math.ceil(this.total()/this.size)); }
   statusLabel(status:string): string { return ({PENDING_APPROVAL:'En attente de validation',ACTIVE:'Actif',SUSPENDED:'Désactivé',DRAFT:'En création',ARCHIVED:'Archivé'} as Record<string,string>)[status] ?? status; }
-  typeLabel(type:string): string { return ({PRESCOLAIRE:'Préscolaire',PRIMAIRE:'Primaire',SECONDAIRE:'Secondaire',MIXTE:'Établissement mixte',UNIVERSITE:'Université',FORMATION:'Centre de formation'} as Record<string,string>)[type] ?? type; }
+  typeLabel(type:string): string { return ({PRESCOLAIRE:'Maternelle',PRIMAIRE:'Primaire',SECONDAIRE:'Secondaire',MIXTE:'Établissement mixte',UNIVERSITE:'Université',FORMATION:'Centre de formation'} as Record<string,string>)[type] ?? type; }
   saveStatus(school:SchoolRow): void {
     if (this.saving()) return;
     this.saving.set(true); this.actionError.set('');

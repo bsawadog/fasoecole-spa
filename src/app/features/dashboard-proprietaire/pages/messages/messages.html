@@ -5,15 +5,7 @@
       <p>Échangez avec les enseignants, les élèves et les parents de votre établissement.</p>
     </div>
     <button class="ss__btn" type="button" (click)="toggleComposer()">Nouvelle conversation</button>
-    @if (schools().length > 1) {
-      <label class="ss__picker">Établissement
-        <select [value]="schoolId() ?? ''" (change)="changeSchool($any($event.target).value)">
-          @for (school of schools(); track school.id) {
-            <option [value]="school.id">{{ school.name }}</option>
-          }
-        </select>
-      </label>
-    } @else if (schools().length === 1) {
+    @if (schools().length === 1) {
       <span class="ss__chip">{{ schools()[0].name }}</span>
     }
   </header>

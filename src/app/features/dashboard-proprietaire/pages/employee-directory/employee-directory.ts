@@ -12,9 +12,7 @@ interface Employee { key: string; name: string; job: string; email: string; phon
   template: `
     <h1>Tous les employés de l’école</h1>
     <p>Enseignants et personnel : consultez leur fiche.</p>
-    <label>Établissement <select [ngModel]="schoolId()" (ngModelChange)="selectSchool($event)">
-      @for (school of schools(); track school.id) { <option [ngValue]="school.id">{{ school.name }}</option> }
-    </select></label>
+
     <label>Rechercher <input [(ngModel)]="search" placeholder="Nom, fonction ou courriel"></label>
     @if (error()) { <p role="alert">{{ error() }}</p> }
     @if (loading()) { <p>Chargement…</p> } @else {
@@ -56,7 +54,7 @@ export class EmployeeDirectory implements OnInit, OnDestroy {
   selectSchool(id: number): void {
     if (!this.schools().some(s => s.id === id)) return;
     this.schoolRequest?.unsubscribe();
-    this.schoolId.set(id); this.auth.selectSchoolContext(id);
+    this.schoolId.set(id);
     this.employees.set([]); this.loading.set(true); this.error.set('');
     this.schoolRequest = forkJoin({staff: this.staff.list(id), teachers: this.teachers.teachersBySchool(id)}).subscribe({
       next: data => {

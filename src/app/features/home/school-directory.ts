@@ -3,7 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService, RegistrationSchool } from '../../core/auth';
 
 const SCHOOL_TYPES: Record<string, string> = {
-  PRESCOLAIRE: 'Préscolaire',
+  PRESCOLAIRE: 'Maternelle',
   PRIMAIRE: 'Primaire',
   SECONDAIRE: 'Secondaire',
   MIXTE: 'Établissement mixte',

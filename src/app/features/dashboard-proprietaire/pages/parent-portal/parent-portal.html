@@ -1,9 +1,7 @@
 <div class="ss">
   <header class="ss__header"><div><h1>Portail parents</h1><p>Publiez les informations et traitez les demandes de rendez-vous.</p></div>
     @if (schools().length) {
-      <label class="ss__picker">Établissement<select [value]="schoolId()" [disabled]="saving()" (change)="selectSchool(+$any($event.target).value)">
-        @for (school of schools(); track school.id) { <option [value]="school.id">{{ school.name }}</option> }
-      </select></label>
+
       <button type="button" class="ss__mini" [disabled]="loading() || saving()" (click)="reload()">Actualiser</button>
     }
   </header>

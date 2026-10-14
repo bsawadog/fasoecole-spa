@@ -1,9 +1,7 @@
 <section class="dep">
   <header class="dep__header"><div><h1>Brouillard de caisse</h1><p>Espèces, dépôts, paiements et report mensuel du solde.</p></div></header>
   <div class="dep__toolbar cash-controls">
-    <label>Établissement<select [ngModel]="schoolId()" (ngModelChange)="selectSchool($event)" [disabled]="busy()">
-      @for (school of schools(); track school.id) {<option [ngValue]="school.id">{{ school.name }}</option>}
-    </select></label>
+
     <label>Mois<input type="month" [(ngModel)]="month" (ngModelChange)="load()" [min]="data()?.book?.openedOn?.slice(0,7)" [max]="data()?.book?.closedOn?.slice(0,7) ?? currentMonth" [disabled]="busy()"></label>
     <button type="button" class="dep__btn" (click)="load()" [disabled]="busy() || loading()">Actualiser</button>
     @if (data()?.book) {
