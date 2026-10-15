@@ -14,6 +14,31 @@ body {
   .shell__topbar {
     flex-shrink: 0;
     height: auto;
+    background: #112e25;
+    color: #f1f5f3;
+    border-bottom-color: #315347;
+
+    .shell__school-context label { color: #d4e4dc; }
+    .shell__school-context small { color: #fef3c7; }
+
+    :is(.shell__action, .account-trigger) {
+      color: #f1f5f3;
+      background: #1c4033;
+      border-color: #456858;
+      box-shadow: none;
+
+      &:hover,
+      &[aria-expanded='true'],
+      &.shell__action--active {
+        color: #fff;
+        background: #2a5643;
+        border-color: #8bd2ac;
+      }
+
+      &:focus-visible { outline: 2px solid #a7d9c5; outline-offset: 3px; }
+    }
+
+    .account-panel { color: #24392f; }
   }
 
   .shell__breadcrumbs {
@@ -21,13 +46,39 @@ body {
     width: 100%;
     margin-top: .35rem;
     padding-block: .65rem .25rem;
-    border-top: 1px solid var(--ui-border, #e0e8e4);
+    border-top: 1px solid #315347;
     line-height: 1.6;
+    color: #abc6b8;
+
+    a { color: #c8dfd2; }
+    a:hover { color: #fff; }
+    a:focus-visible { outline-color: #a7d9c5; }
+    [aria-current] { color: #f1f5f3; }
   }
 
   .shell__page {
     flex-shrink: 0;
     padding-top: clamp(1.25rem, 2.5vw, 1.75rem);
+  }
+}
+
+// Match the highlighted class picker for both school and academic year.
+.shell__topbar .shell__school-context :is(.p-select, select) {
+  --p-select-hover-border-color: #f59e0b;
+  --p-select-focus-border-color: #f59e0b;
+  border: 2px solid #f59e0b;
+  background: #fef3c7;
+  color: #78350f;
+  font-weight: 700;
+  box-shadow: 0 0 0 3px rgb(245 158 11 / 15%);
+
+  .p-select-label,
+  .p-select-dropdown { color: #78350f; }
+
+  &:focus-visible,
+  &.p-focus {
+    outline: 2px solid #b45309;
+    outline-offset: 3px;
   }
 }
 
@@ -54,10 +105,6 @@ body {
 .shell__page textarea {
   box-sizing: border-box;
   max-width: 100%;
-}
-
-.p-license-host {
-  display: none;
 }
 
 .p-tooltip {
@@ -202,4 +249,9 @@ body {
     background: var(--action-hover);
     border-color: var(--action-color);
   }
+}
+
+
+#p-license-host {
+  display: none!important;
 }

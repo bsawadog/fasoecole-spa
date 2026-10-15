@@ -30,7 +30,7 @@
 }
 <div class="account-control">
   <button type="button" class="account-trigger" aria-controls="account-profile" [attr.aria-expanded]="opened() === 'profile'" (click)="toggle('profile')">
-    <svg lucideUserRound [size]="19" aria-hidden="true"></svg><span>Mon profil</span>
+    <svg lucideUserRound [size]="19" aria-hidden="true"></svg><span>{{ auth.user()?.lastName }} {{ auth.user()?.firstName }}</span>
   </button>
   @if (opened() === 'profile') {
     <section id="account-profile" class="account-panel" aria-label="Mon compte">
