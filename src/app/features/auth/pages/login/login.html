@@ -1,30 +1,14 @@
-<main class="auth-page">
+<main class="auth-page auth-page--background">
   <a class="auth-page__brand" routerLink="/" aria-label="Retour à l’accueil Faso École">
     <img class="auth-page__brand-logo" src="assets/images/fasoecole-logo-alt.svg" alt="FasoEcole" />
   </a>
 
-    <aside class="auth-card__visual" [class.auth-card__visual--paused]="imagePaused()">
+    <aside class="auth-card__visual auth-card__visual--illustration">
       <img
-        src="assets/images/01-hero-faso-ecole.jpg"
-        alt="Des élèves réunis autour d’un ordinateur à Ouagadougou"
+        src="assets/images/login_image.PNG"
+        alt="Faso École, la plateforme qui simplifie la gestion et le suivi scolaire. Une enseignante accompagne des élèves en classe."
         class="auth-card__image"
       />
-      <div class="auth-card__image-shade"></div>
-      <button
-        class="auth-card__animation-toggle"
-        type="button"
-        [attr.aria-pressed]="imagePaused()"
-        [attr.aria-label]="imagePaused() ? 'Reprendre le défilement de l’image' : 'Mettre le défilement de l’image en pause'"
-        (click)="imagePaused.set(!imagePaused())"
-      >
-        {{ imagePaused() ? 'Animer l’image' : 'Pause' }}
-      </button>
-      <div class="auth-card__visual-copy">
-        <span class="auth-card__visual-label">FasoÉcole</span>
-        <h1>Chaque parcours mérite les bons outils.</h1>
-        <p>Un espace simple pour apprendre, enseigner et accompagner la réussite.</p>
-        <div class="auth-card__image-dots" aria-hidden="true"><span></span><span></span><span></span></div>
-      </div>
     </aside>
 
   <section class="auth-card" aria-label="Authentification FasoÉcole">

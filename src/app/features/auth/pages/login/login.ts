@@ -48,7 +48,6 @@ export class Login implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly showPassword = signal(false);
-  readonly imagePaused = signal(false);
   readonly resetToken = this.route.snapshot.queryParamMap.get('token');
   readonly activationToken = this.route.snapshot.queryParamMap.get('activate');
   private readonly verificationToken = this.route.snapshot.queryParamMap.get('verify');

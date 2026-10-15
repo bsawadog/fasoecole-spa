@@ -120,6 +120,93 @@ body {
   }
 }
 
+// Full-page login artwork with a centered, readable form on every screen size.
+.auth-page.auth-page--background {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 6rem 1.25rem;
+  background: #e7eef5;
+
+  .auth-card__visual--illustration {
+    display: block;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    z-index: -1;
+    background: #e7eef5;
+
+    &::after { content: ''; position: absolute; inset: 0; background: rgb(15 23 42 / 15%); }
+
+    .auth-card__image {
+      object-fit: cover;
+      object-position: center;
+      animation: none;
+    }
+  }
+
+  .auth-page__brand {
+    top: 1.25rem;
+    left: 1.25rem;
+    padding: .35rem .75rem;
+    border-radius: .75rem;
+    background: rgb(255 255 255 / 95%);
+  }
+
+  .auth-card {
+    grid-column: 1;
+    width: min(100%, 28rem);
+    min-height: 0;
+    --ink: #f5faf7;
+    --muted: #d0ddd6;
+    --green: #a7f3d0;
+    color: var(--ink);
+    border: 1px solid rgb(255 255 255 / 25%);
+    border-radius: 1rem;
+    background: rgb(11 29 23 / 65%);
+    backdrop-filter: blur(4px);
+    box-shadow: 0 1rem 3rem rgb(15 23 42 / 30%);
+    color-scheme: dark;
+  }
+
+  .auth-card__field label,
+  .auth-card__heading h2 { color: #f5faf7; }
+
+  .auth-card__heading p,
+  .auth-card__switch,
+  .auth-card__footer { color: #d0ddd6; }
+
+  .auth-card__eyebrow,
+  .auth-card__text-button { color: #a7f3d0; }
+
+  .auth-card :is(.p-inputtext, .p-select, .p-textarea) {
+    color: #f5faf7;
+    background: rgb(255 255 255 / 10%);
+    border-color: rgb(255 255 255 / 35%);
+
+    &::placeholder { color: #c1cfc7; }
+    &:enabled:focus { border-color: #a7f3d0; }
+  }
+
+  .auth-card :is(.p-select-label, .p-select-dropdown, .auth-card__password-toggle) {
+    color: #d0ddd6;
+  }
+
+  .auth-card :focus-visible { outline-color: #a7f3d0; }
+
+  .auth-card .form-validation-error {
+    color: #fecaca;
+  }
+
+  .auth-card__form-panel {
+    padding: clamp(1.25rem, 4vw, 2rem);
+  }
+}
+
 // Compact table actions retain a comfortable target and a visible keyboard focus.
 .shell__page :is(td, .p-datatable-tbody > tr > td) :is(.ui-row-action, .owner-management__icon-action) {
   display: inline-flex;
