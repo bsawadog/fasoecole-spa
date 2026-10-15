@@ -1,3 +1,4 @@
+@layer legacy {
 :host {
   display: block;
   min-height: 100vh;
@@ -481,4 +482,6 @@
     flex-direction: column;
     gap: 0;
   }
+}
+
 }

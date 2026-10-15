@@ -1,3 +1,9 @@
+import { DateField } from '../../../../shared/ui/date-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe } from '@angular/common';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
@@ -22,7 +28,7 @@ import {
 @Component({
   selector: 'app-enseignant-classes',
   standalone: true,
-  imports: [FormValidationDirective, DatePipe, FormsModule, RouterLink, ScheduleView],
+  imports: [DateField, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, RouterLink, ScheduleView],
   templateUrl: './classes.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

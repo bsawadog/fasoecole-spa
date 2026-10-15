@@ -1,3 +1,4 @@
+@layer legacy {
 .profile {
   display: grid;
   gap: 1.5rem;
@@ -147,4 +148,6 @@
 @media (max-width: 560px) {
   .profile__card { padding: 1.25rem; }
   .profile__inline-form { grid-template-columns: 1fr; }
+}
+
 }

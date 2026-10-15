@@ -1,3 +1,7 @@
+import { LoadingState } from '../../../shared/ui/loading-state';
+import { NavigationActivity } from '../../../shared/ui/navigation-activity';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -128,7 +132,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [
+  imports: [NavigationActivity, LoadingState, ButtonModule, MessageModule,
     NgTemplateOutlet,
     RouterOutlet,
     AcademicContextPicker,

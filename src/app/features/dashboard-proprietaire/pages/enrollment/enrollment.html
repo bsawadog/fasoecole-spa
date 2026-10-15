@@ -10,14 +10,14 @@
 
   </header>
 
-  @if (error()) { <div class="enr__alert enr__alert--error" role="alert">{{ error() }}</div> }
+  @if (error()) { <p-message severity="error" class="enr__alert enr__alert--error" role="alert">{{ error() }}</p-message> }
   @if (success()) {
     <div class="enr__alert enr__alert--success" role="status">
       {{ success() }}
       @if (lastRegistration(); as r) {
         <a class="enr__link" [routerLink]="['/proprietaire/eleves', r.student.studentId]">Voir la fiche de {{ r.student.firstName }} {{ r.student.lastName }}</a>
         @if (hasPayments(r)) {
-          <button type="button" class="enr__mini" (click)="printEnrollmentReceipt(r)">🖨️ Imprimer le reçu</button>
+          <button pButton severity="secondary" variant="outlined" type="button" class="enr__mini" (click)="printEnrollmentReceipt(r)">🖨️ Imprimer le reçu</button>
         }
       }
     </div>
@@ -32,7 +32,7 @@
   }
 
   @if (loading()) {
-    <p class="enr__state">Chargement…</p>
+    <app-loading-state message="Chargement…" />
   } @else if (!schools().length) {
     <p class="enr__state">Aucun établissement associé à votre compte.</p>
   } @else {
@@ -42,7 +42,7 @@
       <div class="enr__card-head">
         <h2>Inscrire un nouvel élève</h2>
         @if (!newStudentOpen()) {
-          <button type="button" class="enr__btn enr__btn--green" (click)="openNewStudent()" [disabled]="busy() || !years().length">+ Nouvel élève</button>
+          <button pButton type="button" class="enr__btn enr__btn--green" (click)="openNewStudent()" [disabled]="busy() || !years().length">+ Nouvel élève</button>
         }
       </div>
       @if (!years().length) {
@@ -51,35 +51,33 @@
         <form class="enr__panel" (ngSubmit)="registerStudent()">
           <div class="enr__form">
             <label>Classe d’accueil
-              <select name="nsClass" [(ngModel)]="newStudentForm.classId" [disabled]="newStudentClassesLoading() || !newStudentClasses().length" required>
-                <option [ngValue]="null">{{ newStudentClassesLoading() ? 'Chargement des classes…' : 'Choisir une classe' }}</option>
+              <app-select-field name="nsClass" [(ngModel)]="newStudentForm.classId" [disabled]="newStudentClassesLoading() || !newStudentClasses().length" required [ariaLabel]="(&quot;Classe d’accueil &quot;).trim()">
+                <app-select-option [value]="null" [label]="((&quot;&quot; + ((newStudentClassesLoading() ? 'Chargement des classes…' : 'Choisir une classe')) + &quot;&quot;)).trim()" />
                 @for (g of newStudentClassGroups(); track g.yearId) {
-                  <optgroup [label]="'Année ' + g.label">
+                  <ng-container>
                     @for (c of g.classes; track c.id) {
-                      <option [ngValue]="c.id" [disabled]="isFull(c)">
-                        {{ c.levelName }} · {{ c.name }} — {{ c.enrolled }}@if (c.capacity) {/{{ c.capacity }}} élève(s)@if (isFull(c)) { (complète)}
-                      </option>
+                      <app-select-option [value]="c.id" [label]="c.levelName + ' · ' + c.name + ' — ' + c.enrolled + (c.capacity ? '/' + c.capacity : '') + ' élève(s)' + (isFull(c) ? ' (complète)' : '')" [disabled]="isFull(c)" [group]="'Année ' + g.label" />
                     }
-                  </optgroup>
+                  </ng-container>
                 }
-              </select>
+              </app-select-field>
             </label>
             @if (selectedHostClass(); as hc) {
-              <label>Année scolaire<input name="nsYear" [value]="hc.yearLabel + (hc.currentYear ? ' (en cours)' : '')" disabled></label>
+              <label>Année scolaire<input pInputText name="nsYear" [value]="hc.yearLabel + (hc.currentYear ? ' (en cours)' : '')" disabled></label>
             }
-            <label>Prénom<input name="nsFirstName" [(ngModel)]="newStudentForm.firstName" maxlength="100" required></label>
-            <label>Nom<input name="nsLastName" [(ngModel)]="newStudentForm.lastName" maxlength="100" required></label>
-            <label>Courriel (facultatif)<input name="nsEmail" type="email" email [(ngModel)]="newStudentForm.email" maxlength="150"></label>
+            <label>Prénom<input pInputText name="nsFirstName" [(ngModel)]="newStudentForm.firstName" maxlength="100" required></label>
+            <label>Nom<input pInputText name="nsLastName" [(ngModel)]="newStudentForm.lastName" maxlength="100" required></label>
+            <label>Courriel (facultatif)<input pInputText name="nsEmail" type="email" email [(ngModel)]="newStudentForm.email" maxlength="150"></label>
             <p>Un lien d’activation sera envoyé par courriel pour choisir le mot de passe.</p>
-            <label>Matricule<input name="nsRegistration" value="Généré automatiquement" disabled title="Format MAT-AAAA-NNN, attribué à l’enregistrement"></label>
-            <label>Téléphone (facultatif)<input name="nsPhone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="newStudentForm.phone" maxlength="30"></label>
-            <label>Date de naissance<input name="nsBirthDate" type="date" [(ngModel)]="newStudentForm.birthDate"></label>
+            <label>Matricule<input pInputText name="nsRegistration" value="Généré automatiquement" disabled title="Format MAT-AAAA-NNN, attribué à l’enregistrement"></label>
+            <label>Téléphone (facultatif)<input pInputText name="nsPhone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="newStudentForm.phone" maxlength="30"></label>
+            <label>Date de naissance<app-date-field mode="date" name="nsBirthDate" [(ngModel)]="newStudentForm.birthDate" [ariaLabel]="(&quot;Date de naissance&quot;).trim()" /></label>
             <label>Genre
-              <select name="nsGender" [(ngModel)]="newStudentForm.gender">
-                <option value="">—</option>
-                <option value="M">Masculin</option>
-                <option value="F">Féminin</option>
-              </select>
+              <app-select-field name="nsGender" [(ngModel)]="newStudentForm.gender" [ariaLabel]="(&quot;Genre &quot;).trim()">
+                <app-select-option [value]="&quot;&quot;" [label]="(&quot;—&quot;).trim()" />
+                <app-select-option [value]="&quot;M&quot;" [label]="(&quot;Masculin&quot;).trim()" />
+                <app-select-option [value]="&quot;F&quot;" [label]="(&quot;Féminin&quot;).trim()" />
+              </app-select-field>
             </label>
           </div>
           @if (!newStudentClassesLoading() && !newStudentClasses().length) {
@@ -102,18 +100,18 @@
                         <strong>{{ s.firstName }} {{ s.lastName }}</strong>
                         <span class="enr__muted">{{ s.phone || 'Sans téléphone' }} · {{ s.email || 'Sans courriel' }}</span>
                         @if (s.children.length) { <span class="enr__muted">Parent de : {{ s.children.join(', ') }}</span> }
-                        <button type="button" class="enr__link" (click)="setGuardianMode(i, 'existing')">Changer</button>
+                        <button pButton severity="secondary" variant="text" type="button" class="enr__link" (click)="setGuardianMode(i, 'existing')">Changer</button>
                       </div>
                     } @else {
                       <label class="enr__guardian-search">Rechercher un parent
-                        <input type="search" [name]="'gSearch' + i" [(ngModel)]="g.query" (ngModelChange)="searchGuardian(i, $event)"
+                        <input pInputText type="search" [name]="'gSearch' + i" [(ngModel)]="g.query" (ngModelChange)="searchGuardian(i, $event)"
                                placeholder="Nom, prénom, téléphone ou courriel (2 caractères min.)" autocomplete="off">
                         @if (guardianSearching() === i) { <span class="enr__muted">Recherche…</span> }
                         @if (guardianResults()[i]?.length) {
                           <ul class="enr__guardian-results" role="listbox">
                             @for (o of guardianResults()[i]; track o.parentId) {
                               <li>
-                                <button type="button" (click)="selectGuardian(i, o)">
+                                <button pButton type="button" (click)="selectGuardian(i, o)">
                                   <strong>{{ o.lastName }} {{ o.firstName }}</strong>
                                   <span>{{ o.phone || o.email || '' }}@if (o.children.length) { · parent de {{ o.children.join(', ') }}}</span>
                                 </button>
@@ -126,24 +124,24 @@
                       </label>
                     }
                   } @else {
-                    <label>Prénom du {{ i === 0 ? 'parent' : 'second parent' }}<input [name]="'gFirst' + i" [(ngModel)]="g.firstName" maxlength="100" required></label>
-                    <label>Nom<input [name]="'gLast' + i" [(ngModel)]="g.lastName" maxlength="100" required></label>
-                    <label>Téléphone (facultatif)<input [name]="'gPhone' + i" type="tel" [(ngModel)]="g.phone" maxlength="30"></label>
-                    <label>Courriel (facultatif)<input [name]="'gEmail' + i" type="email" email [(ngModel)]="g.email" maxlength="150"></label>
+                    <label>Prénom du {{ i === 0 ? 'parent' : 'second parent' }}<input pInputText [name]="'gFirst' + i" [(ngModel)]="g.firstName" maxlength="100" required></label>
+                    <label>Nom<input pInputText [name]="'gLast' + i" [(ngModel)]="g.lastName" maxlength="100" required></label>
+                    <label>Téléphone (facultatif)<input pInputText [name]="'gPhone' + i" type="tel" [(ngModel)]="g.phone" maxlength="30"></label>
+                    <label>Courriel (facultatif)<input pInputText [name]="'gEmail' + i" type="email" email [(ngModel)]="g.email" maxlength="150"></label>
                   }
                   <label>Lien
-                    <select [name]="'gRel' + i" [(ngModel)]="g.relationship">
-                      @for (r of relationships; track r) { <option [value]="r">{{ r }}</option> }
-                    </select>
+                    <app-select-field [name]="'gRel' + i" [(ngModel)]="g.relationship" [ariaLabel]="(&quot;Lien &quot;).trim()">
+                      @for (r of relationships; track r) { <app-select-option [value]="r" [label]="((&quot;&quot; + ((r)) + &quot;&quot;)).trim()" /> }
+                    </app-select-field>
                   </label>
                   @if (i > 0) {
-                    <button type="button" class="enr__link" (click)="removeGuardian(i)">Retirer ce parent</button>
+                    <button pButton severity="secondary" variant="text" type="button" class="enr__link" (click)="removeGuardian(i)">Retirer ce parent</button>
                   }
                 </div>
               </div>
             }
             @if (guardians.length < 2) {
-              <button type="button" class="enr__link" (click)="addGuardian()">+ Ajouter un second parent / tuteur</button>
+              <button pButton severity="secondary" variant="text" type="button" class="enr__link" (click)="addGuardian()">+ Ajouter un second parent / tuteur</button>
             }
           </fieldset>
 
@@ -152,45 +150,46 @@
             @if (!availableFees().length) {
               <p class="enr__muted">Aucun frais actif pour cette classe. Créez-les dans « Recouvrement » pour pouvoir encaisser à l’inscription.</p>
             } @else {
-              <table class="enr__table">
-                <thead><tr><th></th><th>Frais</th><th>Montant dû</th><th>Montant versé</th><th>Reste</th></tr></thead>
-                <tbody>
-                  @for (fee of availableFees(); track fee.id) {
-                    <tr [class.enr__selected]="feeChoices[fee.id]?.selected">
-                      <td><input type="checkbox" [attr.aria-label]="'Facturer ' + fee.name" [checked]="feeChoices[fee.id]?.selected" (change)="toggleFee(fee, $any($event.target).checked)"></td>
-                      <td>{{ fee.name }}</td>
-                      <td>{{ formatAmount(fee.amount) }}</td>
-                      <td>
-                        @if (feeChoices[fee.id]?.selected) {
-                          <input class="enr__amount" type="number" min="0" [max]="fee.amount" step="1" [name]="'paid' + fee.id"
-                                 [(ngModel)]="feeChoices[fee.id].amountPaid" [attr.aria-label]="'Montant versé pour ' + fee.name">
-                        } @else { <span class="enr__muted">—</span> }
-                      </td>
-                      <td>@if (feeChoices[fee.id]?.selected) { {{ formatAmount(remaining(fee)) }} }</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-              @if (selectedFees().length) {
+              <p-message severity="info" variant="simple">Tous les frais sont dus dès l’inscription. Cochez les frais pour saisir un paiement. Le montant reçu commence à zéro.</p-message>
+              <div class="enr__billing-summary" aria-live="polite" aria-atomic="true">
+                <div><span>Total des frais</span><strong>{{ formatAmount(totalDue()) }}</strong></div>
+                <div class="enr__billing-summary--paid"><span>Montant reçu</span><strong>{{ formatAmount(totalPaid()) }}</strong></div>
+                <div class="enr__billing-summary--balance"><span>Reste à payer</span><strong>{{ formatAmount(totalDue() - totalPaid()) }}</strong></div>
+              </div>
+              <p-table class="ui-data-table enr__fee-table" [value]="availableFees()" dataKey="id" [rowHover]="true">
+                <ng-template #header><tr><th>Encaisser</th><th>Frais</th><th>Montant dû</th><th>Montant reçu</th><th>Reste</th><th>État du paiement</th></tr></ng-template>
+                <ng-template #body [appTableRow]="availableFees()" let-fee>
+                  <tr [class.enr__selected]="feeChoices[fee.id]?.selected">
+                    <td><p-checkbox [binary]="true" [ngModel]="feeChoices[fee.id]?.selected" [ngModelOptions]="{standalone: true}" (onChange)="toggleFee(fee, $event.checked)" [ariaLabel]="'Saisir un paiement pour ' + fee.name" /></td>
+                    <td><strong>{{ fee.name }}</strong></td>
+                    <td class="ui-money">{{ formatAmount(fee.amount) }}</td>
+                    <td>
+                      @if (feeChoices[fee.id]?.selected) {
+                        <p-inputnumber [min]="0" [max]="fee.amount" [maxFractionDigits]="0" [name]="'paid' + fee.id"
+                          [(ngModel)]="feeChoices[fee.id].amountPaid" locale="fr-FR" suffix=" FCFA"
+                          [inputId]="'fee-payment-' + fee.id" [ariaLabel]="'Montant reçu pour ' + fee.name" />
+                      } @else { <span class="enr__muted">0 FCFA</span> }
+                    </td>
+                    <td class="ui-money">{{ formatAmount(remaining(fee)) }}</td>
+                    <td><p-tag [severity]="remaining(fee) <= 0 ? 'success' : (feeChoices[fee.id]?.amountPaid || 0) > 0 ? 'warn' : 'secondary'"
+                      [value]="remaining(fee) <= 0 ? 'Soldé' : (feeChoices[fee.id]?.amountPaid || 0) > 0 ? 'Paiement partiel' : 'Non payé'" /></td>
+                  </tr>
+                </ng-template>
+              </p-table>
+              @if (availableFees().length) {
                 <div class="enr__form">
                   <label>Mode de paiement
-                    <select name="nsMethod" [(ngModel)]="newStudentForm.paymentMethod">
-                      @for (m of paymentMethods; track m.code) { <option [ngValue]="m.code">{{ m.label }}</option> }
-                    </select>
+                    <p-select name="nsMethod" [(ngModel)]="newStudentForm.paymentMethod" [options]="paymentMethods" optionLabel="label" optionValue="code" appendTo="body" ariaLabel="Mode de paiement" />
                   </label>
-                  <label>Date du paiement<input name="nsPayDate" type="date" [(ngModel)]="newStudentForm.paymentDate"></label>
+                  <label>Date du paiement<app-date-field mode="date" name="nsPayDate" [(ngModel)]="newStudentForm.paymentDate" [ariaLabel]="(&quot;Date du paiement&quot;).trim()" /></label>
                 </div>
-                <p class="enr__fee-total">
-                  Total dû : <b>{{ formatAmount(totalDue()) }}</b> · Versé maintenant : <b>{{ formatAmount(totalPaid()) }}</b>
-                  · Reste : <b>{{ formatAmount(totalDue() - totalPaid()) }}</b>
-                </p>
                 <p class="enr__muted">Un reçu est généré automatiquement dès qu’un montant est versé.</p>
               }
             }
           </fieldset>
           <div class="enr__actions">
-            <button type="submit" class="enr__btn" [disabled]="busy() || !newStudentForm.classId">Inscrire l’élève</button>
-            <button type="button" class="enr__btn enr__btn--ghost" (click)="closeNewStudent()">Fermer</button>
+            <button pButton type="submit" class="enr__btn" [disabled]="busy() || !newStudentForm.classId">Inscrire l’élève</button>
+            <button pButton severity="secondary" variant="outlined" type="button" class="enr__btn enr__btn--ghost" (click)="closeNewStudent()">Fermer</button>
           </div>
         </form>
       }
@@ -202,21 +201,21 @@
     <div class="enr__card">
       <div class="enr__card-head">
         <h2>1. Années scolaires</h2>
-        <button type="button" class="enr__btn enr__btn--green" (click)="openYearForm()" [disabled]="busy()">+ Préparer une nouvelle année</button>
+        <button pButton type="button" class="enr__btn enr__btn--green" (click)="openYearForm()" [disabled]="busy()">+ Préparer une nouvelle année</button>
       </div>
 
       @if (yearFormOpen()) {
         <form class="enr__panel" (ngSubmit)="createYear()">
           <h3>Nouvelle année scolaire</h3>
           <div class="enr__form">
-            <label>Nom de l’année<input name="label" [(ngModel)]="yearForm.label" placeholder="2026-2027" maxlength="20" required></label>
-            <label>Date de début<input name="start" type="date" [(ngModel)]="yearForm.startDate" required></label>
-            <label>Date de fin<input name="end" type="date" [(ngModel)]="yearForm.endDate" required></label>
+            <label>Nom de l’année<input pInputText name="label" [(ngModel)]="yearForm.label" placeholder="2026-2027" maxlength="20" required></label>
+            <label>Date de début<app-date-field mode="date" name="start" [(ngModel)]="yearForm.startDate" required [ariaLabel]="(&quot;Date de début&quot;).trim()" /></label>
+            <label>Date de fin<app-date-field mode="date" name="end" [(ngModel)]="yearForm.endDate" required [ariaLabel]="(&quot;Date de fin&quot;).trim()" /></label>
             <label>Reprendre l’organisation de
-              <select name="source" [(ngModel)]="yearForm.sourceYearId">
-                <option [ngValue]="null">Aucune (année vide)</option>
-                @for (y of years(); track y.id) { <option [ngValue]="y.id">{{ y.label }}</option> }
-              </select>
+              <app-select-field name="source" [(ngModel)]="yearForm.sourceYearId" [ariaLabel]="(&quot;Reprendre l’organisation de &quot;).trim()">
+                <app-select-option [value]="null" [label]="(&quot;Aucune (année vide)&quot;).trim()" />
+                @for (y of years(); track y.id) { <app-select-option [value]="y.id" [label]="((&quot;&quot; + ((y.label)) + &quot;&quot;)).trim()" /> }
+              </app-select-field>
             </label>
           </div>
           @if (yearForm.sourceYearId) {
@@ -228,8 +227,8 @@
           }
           <p>La nouvelle année devient l’année en cours lors de la clôture finale.</p>
           <div class="enr__actions">
-            <button type="submit" class="enr__btn" [disabled]="busy()">Créer l’année</button>
-            <button type="button" class="enr__btn enr__btn--ghost" (click)="yearFormOpen.set(false)">Annuler</button>
+            <button pButton type="submit" class="enr__btn" [disabled]="busy()">Créer l’année</button>
+            <button pButton severity="secondary" variant="outlined" type="button" class="enr__btn enr__btn--ghost" (click)="yearFormOpen.set(false)">Annuler</button>
           </div>
         </form>
       }
@@ -266,23 +265,23 @@
       </div>
       <div class="enr__toolbar">
         <label>Année qui se termine
-          <select [ngModel]="fromYearId()" (ngModelChange)="changeFromYear($event)">
-            @for (y of years(); track y.id) { <option [ngValue]="y.id" [disabled]="!y.current">{{ y.label }}</option> }
-          </select>
+          <app-select-field [ngModel]="fromYearId()" (ngModelChange)="changeFromYear($event)" [ariaLabel]="(&quot;Année qui se termine &quot;).trim()">
+            @for (y of years(); track y.id) { <app-select-option [value]="y.id" [label]="((&quot;&quot; + ((y.label)) + &quot;&quot;)).trim()" [disabled]="!y.current" /> }
+          </app-select-field>
         </label>
         <span class="enr__arrow" aria-hidden="true">→</span>
         <label>Année de réinscription
-          <select [ngModel]="toYearId()" (ngModelChange)="changeToYear($event)">
-            <option [ngValue]="null">—</option>
-            @for (y of nextYearCandidates(); track y.id) { <option [ngValue]="y.id">{{ y.label }}</option> }
-          </select>
+          <app-select-field [ngModel]="toYearId()" (ngModelChange)="changeToYear($event)" [ariaLabel]="(&quot;Année de réinscription &quot;).trim()">
+            <app-select-option [value]="null" [label]="(&quot;—&quot;).trim()" />
+            @for (y of nextYearCandidates(); track y.id) { <app-select-option [value]="y.id" [label]="((&quot;&quot; + ((y.label)) + &quot;&quot;)).trim()" /> }
+          </app-select-field>
         </label>
         @if (plan(); as p) {
           <label>Classe
-            <select [ngModel]="classFilter()" (ngModelChange)="changeClassFilter($event)">
-              <option [ngValue]="'all'">Toutes les classes</option>
-              @for (c of p.classes; track c.classId) { <option [ngValue]="c.classId">{{ c.className }}</option> }
-            </select>
+            <app-select-field [ngModel]="classFilter()" (ngModelChange)="changeClassFilter($event)" [ariaLabel]="(&quot;Classe &quot;).trim()">
+              <app-select-option [value]="'all'" [label]="(&quot;Toutes les classes&quot;).trim()" />
+              @for (c of p.classes; track c.classId) { <app-select-option [value]="c.classId" [label]="((&quot;&quot; + ((c.className)) + &quot;&quot;)).trim()" /> }
+            </app-select-field>
           </label>
           <span class="enr__count">{{ p.decided }} traité(s) · {{ p.pending }} à traiter</span>
         }
@@ -313,7 +312,7 @@
               <h3>{{ cls.className }} <small>{{ cls.levelName }}@if (cls.lastLevel) { · dernier niveau}</small></h3>
               <span class="enr__muted">{{ cls.students.length - pendingOf(cls).length }}/{{ cls.students.length }} traité(s)</span>
               @if (pendingOf(cls).length) {
-                <button type="button" class="enr__mini" (click)="resetSuggestions(cls)">Appliquer les propositions</button>
+                <button pButton severity="secondary" variant="outlined" type="button" class="enr__mini" (click)="resetSuggestions(cls)">Appliquer les propositions</button>
               }
             </div>
             @if (!cls.students.length) {
@@ -340,7 +339,7 @@
                           <td>{{ row.annualAverage ?? '—' }}</td>
                           <td><span [class]="'enr__badge enr__badge--' + row.decision">{{ label(row.decision) }}</span></td>
                           <td>{{ row.targetClassName ?? '—' }}</td>
-                          <td><button type="button" class="enr__mini enr__mini--danger" (click)="undo(row)" [disabled]="busy() || sourceClosed()">Annuler</button></td>
+                          <td><button pButton severity="danger" variant="outlined" type="button" class="enr__mini enr__mini--danger" (click)="undo(row)" [disabled]="busy() || sourceClosed()">Annuler</button></td>
                         </tr>
                       } @else if (draft(row); as d) {
                         <tr [class.enr__selected]="d.selected">
@@ -350,18 +349,18 @@
                             {{ row.annualAverage ?? 'Pas de notes' }}
                           </td>
                           <td>
-                            <select [ngModel]="d.decision" (ngModelChange)="setDecision(row, cls, $event)" [attr.aria-label]="'Décision pour ' + row.firstName">
-                              <option [ngValue]="null">Décision à valider</option>
-                              @for (opt of decisions; track opt.code) { <option [ngValue]="opt.code">{{ opt.label }}</option> }
-                            </select>
+                            <app-select-field [ngModel]="d.decision" (ngModelChange)="setDecision(row, cls, $event)" [ariaLabel]="'Décision pour ' + row.firstName">
+                              <app-select-option [value]="null" [label]="(&quot;Décision à valider&quot;).trim()" />
+                              @for (opt of decisions; track opt.code) { <app-select-option [value]="opt.code" [label]="((&quot;&quot; + ((opt.label)) + &quot;&quot;)).trim()" /> }
+                            </app-select-field>
                             @if (d.decision !== row.suggestedDecision) { <small class="enr__muted"> (proposé : {{ label(row.suggestedDecision) }})</small> }
                           </td>
                           <td>
                             @if (continues(d.decision)) {
-                              <select [ngModel]="d.targetClassId" (ngModelChange)="setTarget(row, $event)" [class.enr__invalid]="missingTarget(row)" [attr.aria-label]="'Classe pour ' + row.firstName">
-                                <option [ngValue]="null">Choisir une classe</option>
-                                @for (t of targetsFor(cls, d.decision); track t.id) { <option [ngValue]="t.id">{{ t.name }}</option> }
-                              </select>
+                              <app-select-field [ngModel]="d.targetClassId" (ngModelChange)="setTarget(row, $event)" [class.enr__invalid]="missingTarget(row)" [ariaLabel]="'Classe pour ' + row.firstName">
+                                <app-select-option [value]="null" [label]="(&quot;Choisir une classe&quot;).trim()" />
+                                @for (t of targetsFor(cls, d.decision); track t.id) { <app-select-option [value]="t.id" [label]="((&quot;&quot; + ((t.name)) + &quot;&quot;)).trim()" /> }
+                              </app-select-field>
                             } @else {
                               <span class="enr__muted">Sortie de l’établissement</span>
                             }
@@ -380,7 +379,7 @@
         @if (p.pending) {
           <div class="enr__footer">
             <span>{{ selectedCount() }} élève(s) sélectionné(s)</span>
-            <button type="button" class="enr__btn enr__btn--green" (click)="applySelected()" [disabled]="busy() || sourceClosed() || !selectedCount()">Enregistrer les décisions et réinscrire</button>
+            <button pButton type="button" class="enr__btn enr__btn--green" (click)="applySelected()" [disabled]="busy() || sourceClosed() || !selectedCount()">Enregistrer les décisions et réinscrire</button>
           </div>
         }
       }
@@ -389,10 +388,10 @@
       <h2>3. Finaliser la clôture</h2>
       <p>Validez toutes les décisions avant de clôturer. Vérifiez les soldes réels à reporter (FCFA).</p>
       <div class="enr__form">
-        <label>Solde de caisse<input type="number" min="0" step="0.01" [(ngModel)]="cashBalance" required></label>
-        <label>Solde de banque<input type="number" step="0.01" [(ngModel)]="bankBalance" required></label>
+        <label>Solde de caisse<app-number-field min="0" step="0.01" [(ngModel)]="cashBalance" required [ariaLabel]="(&quot;Solde de caisse&quot;).trim()" /></label>
+        <label>Solde de banque<app-number-field step="0.01" [(ngModel)]="bankBalance" required [ariaLabel]="(&quot;Solde de banque&quot;).trim()" /></label>
       </div>
-      <button type="button" class="enr__btn enr__btn--green" (click)="finalizeYear()"
+      <button pButton type="button" class="enr__btn enr__btn--green" (click)="finalizeYear()"
         [disabled]="busy() || !plan() || !!plan()?.pending || sourceClosed() || cashBalance === null || bankBalance === null">Finaliser la clôture</button>
       @if (sourceClosed()) { <p>Cette année est clôturée. Ses données restent consultables.</p> }
     </div>

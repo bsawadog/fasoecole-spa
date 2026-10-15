@@ -1,13 +1,15 @@
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ParentPortalService, PortalFile, PortalPost, POST_LABELS } from './parent-portal.service';
 
 @Component({
-  selector: 'app-portal-posts', standalone: true, imports: [DatePipe],
+  selector: 'app-portal-posts', standalone: true, imports: [ButtonModule, MessageModule, DatePipe],
   template: `
     @if (!posts().length) { <p class="ss__state">Aucune publication disponible.</p> }
-    @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
+    @if (error()) { <p-message severity="error" class="ss__alert ss__alert--error" role="alert">{{ error() }}</p-message> }
     @for (post of posts(); track post.id) {
       <article class="ss__card ss__body">
         <small class="ss__muted">{{ labels[post.kind] }} · {{ post.createdAt | date:'dd/MM/yyyy' }} · {{ post.className || 'Tout l’établissement' }}</small>
@@ -16,12 +18,12 @@ import { ParentPortalService, PortalFile, PortalPost, POST_LABELS } from './pare
         <p class="portal-content">{{ post.content }}</p>
         @if (post.dueDate) { <p><strong>Échéance : {{ post.dueDate | date:'dd/MM/yyyy' }}</strong></p> }
         @for (file of post.files; track file.id) {
-          <button type="button" class="ss__mini" [disabled]="downloading()" (click)="download(post.id, file)">Télécharger {{ file.filename }}</button>
+          <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" [disabled]="downloading()" (click)="download(post.id, file)">Télécharger {{ file.filename }}</button>
         }
       </article>
     }
   `,
-  styleUrl: './self-space.scss', styles: [`.portal-content { white-space: pre-wrap; overflow-wrap: anywhere; } :host { display: grid; gap: 1rem; }`],
+  styleUrl: './self-space.scss', styles: [`@layer legacy { .portal-content { white-space: pre-wrap; overflow-wrap: anywhere; } :host { display: grid; gap: 1rem; } }`],
 })
 export class PortalPosts {
   private readonly api = inject(ParentPortalService);

@@ -1,3 +1,12 @@
+import { DateField } from '../ui/date-field';
+import { NumberField } from '../ui/number-field';
+import { SelectField } from '../ui/select-field';
+import { SelectOption } from '../ui/select-field';
+import { LoadingState } from '../ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { DatePipe } from '@angular/common';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -15,7 +24,7 @@ const empty = (): LifeOverview => ({ students: [], events: [], observations: [],
 
 @Component({
   selector: 'app-school-life', standalone: true,
-  imports: [DatePipe, FormsModule, RouterLink, FormValidationDirective],
+  imports: [DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, DatePipe, FormsModule, RouterLink, FormValidationDirective],
   templateUrl: './school-life.html', styleUrls: ['../self-space/self-space.scss', './school-life.scss'],
 })
 export class SchoolLifePage implements OnInit {

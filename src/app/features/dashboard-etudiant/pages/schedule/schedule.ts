@@ -1,3 +1,6 @@
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
 import { Component, DestroyRef, effect, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -8,7 +11,7 @@ import { apiError, ScheduleEntry, SelfSpaceService } from '../../../../shared/se
 @Component({
   selector: 'app-etudiant-schedule',
   standalone: true,
-  imports: [FormsModule, ScheduleView],
+  imports: [SelectField, SelectOption, LoadingState, FormsModule, ScheduleView],
   providers: [MyStudentsState],
   template: `
     <div class="ss">
@@ -19,16 +22,16 @@ import { apiError, ScheduleEntry, SelfSpaceService } from '../../../../shared/se
         </div>
         @if (state.students().length > 1) {
           <label class="ss__picker">Établissement
-            <select [ngModel]="state.selectedId()" (ngModelChange)="state.selectedId.set(+$event)">
+            <app-select-field [ngModel]="state.selectedId()" (ngModelChange)="state.selectedId.set(+$event)" [ariaLabel]="(&quot;Établissement &quot;).trim()">
               @for (s of state.students(); track s.studentId) {
-                <option [ngValue]="s.studentId">{{ s.schoolName }}</option>
+                <app-select-option [value]="s.studentId" [label]="((&quot;&quot; + ((s.schoolName)) + &quot;&quot;)).trim()" />
               }
-            </select>
+            </app-select-field>
           </label>
         }
       </header>
       @if (state.loading() || loading()) {
-        <p class="ss__state">Chargement…</p>
+        <app-loading-state message="Chargement…" />
       } @else if (state.error() || error()) {
         <p class="ss__alert ss__alert--error" role="alert">{{ state.error() || error() }}</p>
       } @else if (state.selectedId()) {

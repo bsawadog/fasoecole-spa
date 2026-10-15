@@ -71,6 +71,67 @@ describe('AuthService account flow', () => {
     expect(schools.map(school => school.id)).toEqual([2]);
   });
 
+  it('reuses loaded access between modules and applies the current school at each call', () => {
+    auth.getOwnedSchools(7, 'STUDENTS').subscribe();
+    http.expectOne(`${environment.apiUrl}/owner/staff/my-access`).flush(access);
+    auth.selectSchoolContext(2);
+    let schools: { id: number }[] = [];
+    auth.getOwnedSchools(7, 'TEACHERS').subscribe(value => schools = value);
+    http.expectNone(`${environment.apiUrl}/owner/staff/my-access`);
+    expect(schools.map(school => school.id)).toEqual([2]);
+  });
+
+  it('shares concurrent access requests and still supports a fresh forced refresh', () => {
+    const results: SchoolAccess[][] = [];
+    auth.loadOwnerAccess().subscribe(value => results.push(value));
+    auth.loadOwnerAccess().subscribe(value => results.push(value));
+    http.expectOne(`${environment.apiUrl}/owner/staff/my-access`).flush(access);
+    expect(results).toEqual([access, access]);
+    auth.loadOwnerAccess(true).subscribe();
+    http.expectOne(`${environment.apiUrl}/owner/staff/my-access`).flush([{ ...access[0], modules: ['FINANCE'] }]);
+    expect(auth.ownerModules().has('STUDENTS')).toBe(false);
+    expect(auth.ownerModules().has('FINANCE')).toBe(true);
+  });
+
+  it('retries after a failed access request instead of caching the error', () => {
+    auth.loadOwnerAccess().subscribe({ error: () => undefined });
+    http.expectOne(`${environment.apiUrl}/owner/staff/my-access`).flush({}, { status: 503, statusText: 'Unavailable' });
+    auth.loadOwnerAccess().subscribe();
+    http.expectOne(`${environment.apiUrl}/owner/staff/my-access`).flush(access);
+    expect(auth.ownerAccess()).toEqual(access);
+  });
+
+  it('forces a new request after a mutation even when an older refresh is pending', () => {
+    auth.loadOwnerAccess().subscribe();
+    const older = http.expectOne(`${environment.apiUrl}/owner/staff/my-access`);
+    auth.loadOwnerAccess(true).subscribe();
+    http.expectOne(`${environment.apiUrl}/owner/staff/my-access`).flush([access[1]]);
+    older.flush([access[0]]);
+    expect(auth.ownerAccess()).toEqual([access[1]]);
+  });
+
+  it('clears cached access when a different session is opened', () => {
+    auth.loadOwnerAccess().subscribe();
+    http.expectOne(`${environment.apiUrl}/owner/staff/my-access`).flush(access);
+    login({ id: 8 });
+    expect(auth.ownerAccess()).toBeNull();
+    auth.loadOwnerAccess().subscribe();
+    http.expectOne(`${environment.apiUrl}/owner/staff/my-access`).flush([access[1]]);
+    expect(auth.ownerAccess()).toEqual([access[1]]);
+  });
+
+  it('does not reuse or restore access from a request started before logout', () => {
+    vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    auth.loadOwnerAccess().subscribe();
+    const previous = http.expectOne(`${environment.apiUrl}/owner/staff/my-access`);
+    auth.logout();
+    auth.loadOwnerAccess().subscribe();
+    const current = http.expectOne(`${environment.apiUrl}/owner/staff/my-access`);
+    current.flush([access[1]]);
+    previous.flush([access[0]]);
+    expect(auth.ownerAccess()).toEqual([access[1]]);
+  });
+
   function login(changes: Record<string, unknown> = {}) {
     auth.login('awa@test.bf', 'MotDePasseSecret').subscribe();
     http.expectOne(`${environment.apiUrl}/auth/login`).flush({ token: 'jwt', userId: 7, email: profile.email, roles: ['PARENT'] });

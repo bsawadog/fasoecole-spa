@@ -1,3 +1,4 @@
+@layer legacy {
 .owner-dashboard {
   max-width: 82rem;
   margin: 0 auto;
@@ -475,3 +476,5 @@
 }
 
 .owner-dashboard__school-picker, .owner-dashboard__school-picker select { font-weight: 700; }
+
+}

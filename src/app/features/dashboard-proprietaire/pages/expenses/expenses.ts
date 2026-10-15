@@ -1,3 +1,11 @@
+import { DateField } from '../../../../shared/ui/date-field';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
@@ -21,7 +29,7 @@ const monthStart = () => today().slice(0, 8) + '01';
 @Component({
   selector: 'app-expenses',
   standalone: true,
-  imports: [FormValidationDirective, FormsModule, DecimalPipe, Payables],
+  imports: [DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DecimalPipe, Payables],
   templateUrl: './expenses.html',
   styleUrl: './expenses.scss',
 })

@@ -25,7 +25,8 @@ export class FormValidationDirective {
         event.preventDefault();
         event.stopImmediatePropagation();
         this.showSummary(control?.pending ? 'Validation en cours. Réessayez dans un instant.' : 'Corrigez les champs indiqués avant d’enregistrer.');
-        invalid[0]?.focus();
+        const customField = this.form.querySelector<HTMLElement>('app-date-field.ng-invalid input, app-select-field.ng-invalid [role="combobox"], app-number-field.ng-invalid input');
+        (invalid[0] ?? customField)?.focus();
       } else this.summary?.remove();
     };
     const update = (event: Event) => {
@@ -52,7 +53,8 @@ export class FormValidationDirective {
 
   private fields(): Field[] {
     return Array.from(this.form.querySelectorAll<Field>('input, select, textarea'))
-      .filter(field => !field.disabled && !['submit', 'button', 'hidden', 'reset'].includes(field.type));
+      .filter(field => !field.closest('app-date-field, app-select-field, app-number-field')
+        && !field.disabled && !['submit', 'button', 'hidden', 'reset'].includes(field.type));
   }
 
   private error(field: Field): string | null {

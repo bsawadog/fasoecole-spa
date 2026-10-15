@@ -1,7 +1,7 @@
 @if (loading()) {
-  <p class="ss__state">Chargement des notes…</p>
+  <app-loading-state message="Chargement des notes…" />
 } @else if (error()) {
-  <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p>
+  <p-message severity="error" class="ss__alert ss__alert--error" role="alert">{{ error() }}</p-message>
 } @else if (data(); as d) {
   @if (!d.className) {
     <p class="ss__state">Aucune inscription en cours : les notes s’afficheront dès l’inscription dans une classe.</p>
@@ -25,7 +25,7 @@
         </header>
         <div class="ss__body">
           @if (p.bulletin; as b) {
-            <button type="button" class="ss__btn ss__no-print" (click)="printBulletin()">Imprimer / enregistrer le bulletin en PDF</button>
+            <button pButton type="button" class="ss__btn ss__no-print" (click)="printBulletin()">Imprimer / enregistrer le bulletin en PDF</button>
             <p><strong>{{ d.fullName }}</strong> · {{ d.academicYearLabel }}</p>
             <div class="ss__summary">
               <div><span>Moyenne générale</span><strong>{{ b.average === null ? '—' : (b.average | number: '1.2-2') }}</strong></div>

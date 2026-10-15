@@ -54,7 +54,7 @@ describe('Global school selection through AuthService and OwnerManagement', () =
     changeSelection.mockClear();
     fixture = TestBed.createComponent(OwnerManagement);
     fixture.detectChanges();
-    http.expectOne(environment.apiUrl + '/owner/staff/my-access').flush(access);
+    http.expectNone(environment.apiUrl + '/owner/staff/my-access');
     fixture.detectChanges();
     expect(fixture.componentInstance.school()?.name).toBe('École A');
     for (const method of Object.values(api)) expect(method).toHaveBeenLastCalledWith(1);

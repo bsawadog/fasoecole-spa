@@ -5,6 +5,8 @@ import { ConfirmationService } from '../../../../shared/confirmation/confirmatio
 import { OwnerManagementService } from '../../owner-management.service';
 import { TeacherDetail, TeacherWorkService } from '../../teacher-work.service';
 import { TeacherDetailPage } from './teacher-detail';
+import { By } from '@angular/platform-browser';
+import { DateField } from '../../../../shared/ui/date-field';
 
 describe('TeacherDetailPage', () => {
   const month = {
@@ -37,9 +39,8 @@ describe('TeacherDetailPage', () => {
     const fixture = TestBed.createComponent(TeacherDetailPage);
     fixture.detectChanges();
     const component = fixture.componentInstance;
-    const monthInput = fixture.nativeElement.querySelector('input[type="month"]') as HTMLInputElement;
-    monthInput.value = '2026-09';
-    monthInput.dispatchEvent(new Event('change'));
+    const monthInput = fixture.debugElement.query(By.directive(DateField)).componentInstance as DateField;
+    monthInput.selectDate(new Date(2026, 8, 1));
     fixture.detectChanges();
 
     expect(detail).toHaveBeenCalledWith(3, '2026-09');

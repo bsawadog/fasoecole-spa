@@ -1,3 +1,8 @@
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -19,7 +24,7 @@ function initialMode(params: { has(name: string): boolean }): AuthMode {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormValidationDirective,
+  imports: [SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormValidationDirective,
     ReactiveFormsModule,
     RouterLink,
     LucideArrowLeft,

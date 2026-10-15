@@ -1,3 +1,11 @@
+import { DateField } from '../../../../shared/ui/date-field';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { TagModule } from 'primeng/tag';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -39,7 +47,7 @@ interface PaymentForm {
 @Component({
   selector: 'app-student-detail',
   standalone: true,
-  imports: [FormValidationDirective, DecimalPipe, FormsModule, NgClass],
+  imports: [DateField, NumberField, SelectField, SelectOption, TagModule, LoadingState, InputTextModule, ButtonModule, FormValidationDirective, DecimalPipe, FormsModule, NgClass],
   templateUrl: './student-detail.html',
   styleUrl: './student-detail.scss',
 })

@@ -1,3 +1,11 @@
+import { DateField } from '../ui/date-field';
+import { SelectField } from '../ui/select-field';
+import { SelectOption } from '../ui/select-field';
+import { LoadingState } from '../ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -22,7 +30,7 @@ interface AppointmentEntry {
 }
 
 @Component({
-  selector: 'app-appointments', standalone: true, imports: [DatePipe, FormsModule, RouterLink],
+  selector: 'app-appointments', standalone: true, imports: [DateField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, DatePipe, FormsModule, RouterLink],
   templateUrl: './appointments.html', styleUrl: './appointments.scss',
 })
 export class Appointments {

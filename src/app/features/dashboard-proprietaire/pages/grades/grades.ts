@@ -1,3 +1,13 @@
+import { DateField } from '../../../../shared/ui/date-field';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { TableRow } from '../../../../shared/ui/table-row';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
+import { TableModule } from 'primeng/table';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +26,7 @@ type SheetValue = number | string | null;
 @Component({
   selector: 'app-grades',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, DatePipe],
+  imports: [DateField, NumberField, SelectField, SelectOption, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, TableModule, FormsModule, DecimalPipe, DatePipe],
   templateUrl: './grades.html',
   styleUrl: './grades.scss',
 })

@@ -1,3 +1,9 @@
+import { SelectField } from '../../shared/ui/select-field';
+import { SelectOption } from '../../shared/ui/select-field';
+import { LoadingState } from '../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../shared/form-validation.directive';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -39,7 +45,7 @@ function apiMessage(error: unknown, fallback: string): string {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [FormValidationDirective, FormsModule],
+  imports: [SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })

@@ -1,3 +1,17 @@
+import { DateField } from '../../../../shared/ui/date-field';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { TableModule } from 'primeng/table';
+import { CheckboxModule } from 'primeng/checkbox';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
+import { TableRow } from '../../../../shared/ui/table-row';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -56,7 +70,7 @@ interface Draft {
 @Component({
   selector: 'app-enrollment',
   standalone: true,
-  imports: [FormValidationDirective, FormsModule, RouterLink],
+  imports: [DateField, NumberField, SelectField, SelectOption, TableRow, TableModule, CheckboxModule, InputNumberModule, SelectModule, TagModule, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink],
   templateUrl: './enrollment.html',
   styleUrl: './enrollment.scss',
 })
@@ -349,7 +363,7 @@ export class EnrollmentPage implements OnInit {
   }
 
   toggleFee(fee: EnrollmentFee, selected: boolean): void {
-    this.feeChoices[fee.id] = { selected, amountPaid: selected ? fee.amount : null };
+    this.feeChoices[fee.id] = { selected, amountPaid: selected ? 0 : null };
   }
 
   selectedFees(): EnrollmentFee[] {
@@ -357,7 +371,7 @@ export class EnrollmentPage implements OnInit {
   }
 
   totalDue(): number {
-    return this.selectedFees().reduce((sum, f) => sum + Number(f.amount), 0);
+    return this.availableFees().reduce((sum, f) => sum + Number(f.amount), 0);
   }
 
   totalPaid(): number {

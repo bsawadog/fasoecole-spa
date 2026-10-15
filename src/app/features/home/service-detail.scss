@@ -1,3 +1,4 @@
+@layer legacy {
 :host { display: block; min-height: 100vh; }
 
 .service-detail {
@@ -59,4 +60,6 @@
   text-decoration: none;
   transition: transform 160ms ease, background 160ms ease;
   &:hover, &:focus-visible { transform: translateY(-2px); background: #1c5b3f; }
+}
+
 }

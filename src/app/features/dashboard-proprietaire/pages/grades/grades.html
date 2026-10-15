@@ -13,21 +13,21 @@
   @if (!loading() && schools().length) {
     <div class="gr__filters gr__no-print">
       <label>Choisir une période
-        <select class="gr__select gr__select--strong" [ngModel]="periodId()" (change)="changePeriod($event)">
-          @if (!periods().length) { <option [value]="null">Aucune période</option> }
+        <app-select-field class="gr__select gr__select--strong" [ngModel]="periodId()" (change)="changePeriod($event)" [ariaLabel]="(&quot;Choisir une période &quot;).trim()">
+          @if (!periods().length) { <app-select-option [value]="null" [label]="(&quot;Aucune période&quot;).trim()" /> }
           @for (p of periods(); track p.id) {
-            <option [value]="p.id">{{ periodLabel(p) }} — {{ statusLabels[p.status] }}</option>
+            <app-select-option [value]="p.id" [label]="((&quot;&quot; + ((periodLabel(p))) + &quot; — &quot; + ((statusLabels[p.status])) + &quot;&quot;)).trim()" />
           }
-        </select>
+        </app-select-field>
       </label>
       @if (currentTab().needsClass) {
         <label>Choisir une classe
-          <select class="gr__select gr__select--strong" [ngModel]="classId()" (change)="changeClass($event)">
-            @if (!periodClasses().length) { <option [value]="null">Aucune classe</option> }
+          <app-select-field class="gr__select gr__select--strong" [ngModel]="classId()" (change)="changeClass($event)" [ariaLabel]="(&quot;Choisir une classe &quot;).trim()">
+            @if (!periodClasses().length) { <app-select-option [value]="null" [label]="(&quot;Aucune classe&quot;).trim()" /> }
             @for (c of periodClasses(); track c.id) {
-              <option [value]="c.id">{{ classLabel(c) }}</option>
+              <app-select-option [value]="c.id" [label]="((&quot;&quot; + ((classLabel(c))) + &quot;&quot;)).trim()" />
             }
-          </select>
+          </app-select-field>
         </label>
       }
       @if (period(); as p) {
@@ -44,11 +44,11 @@
     }
   </nav>
 
-  @if (error()) { <div class="gr__alert gr__alert--error gr__no-print" role="alert">{{ error() }}</div> }
-  @if (success()) { <div class="gr__alert gr__alert--success gr__no-print" role="status">{{ success() }}</div> }
+  @if (error()) { <p-message severity="error" class="gr__alert gr__alert--error gr__no-print" role="alert">{{ error() }}</p-message> }
+  @if (success()) { <p-message severity="success" class="gr__alert gr__alert--success gr__no-print" role="status">{{ success() }}</p-message> }
 
   @if (loading()) {
-    <p class="gr__state">Chargement…</p>
+    <app-loading-state message="Chargement…" />
   } @else if (!schools().length) {
     <p class="gr__state">Aucun établissement associé à votre compte.</p>
   } @else if (tab() !== 'periods' && !period()) {
@@ -69,21 +69,20 @@
           </div>
           <div class="gr__card">
             <div class="gr__card-head"><h2>Résultats par classe</h2></div>
-            <div class="gr__table-wrap"><table class="gr__table">
-              <thead><tr><th>Classe</th><th>Élèves</th><th>Classés</th><th>Moyenne</th><th>Réussite</th><th>Bulletins</th><th></th></tr></thead>
-              <tbody>
-                @for (c of s.classes; track c.classId) {
+            <div class="gr__table-wrap"><p-table class="gr__table ui-data-table" [value]="s.classes" dataKey="classId" [rowHover]="true" [paginator]="(s.classes).length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
+      <ng-template #header><tr><th>Classe</th><th>Élèves</th><th>Classés</th><th>Moyenne</th><th>Réussite</th><th>Bulletins</th><th></th></tr></ng-template>
+      <ng-template #body [appTableRow]="s.classes" let-c>
                   <tr>
                     <td><strong>{{ c.levelName ? c.levelName + ' · ' : '' }}{{ c.className }}</strong></td>
                     <td>{{ c.studentCount }}</td><td>{{ c.rankedCount }}</td>
                     <td>{{ c.average != null ? (c.average | number:'1.2-2') : '—' }}</td>
                     <td>@if (c.passRate != null) { <div class="gr__bar"><span [style.width.%]="c.passRate"></span></div> {{ c.passRate | number:'1.0-1' }} % } @else { — }</td>
                     <td>{{ c.reportCards }}</td>
-                    <td><button type="button" class="gr__mini" (click)="openClass(c.classId)">Voir les résultats</button></td>
+                    <td><button pButton severity="secondary" variant="outlined" type="button" class="gr__mini" (click)="openClass(c.classId)">Voir les résultats</button></td>
                   </tr>
-                } @empty { <tr><td colspan="7" class="gr__muted">Aucune classe pour cette année.</td></tr> }
-              </tbody>
-            </table></div>
+                </ng-template>
+      <ng-template #emptymessage><tr><td colspan="7" class="gr__muted">Aucune classe pour cette année.</td></tr></ng-template>
+    </p-table></div>
           </div>
         }
       }
@@ -93,14 +92,14 @@
           <div class="gr__card">
             <div class="gr__card-head"><h2>{{ editingPeriodId ? 'Modifier la période' : 'Nouvelle période' }}</h2></div>
             <div class="gr__body gr__form">
-              <label>Code<input [(ngModel)]="periodForm.code" maxlength="20" placeholder="TERM1"></label>
-              <label>Libellé<input [(ngModel)]="periodForm.name" maxlength="80" placeholder="1er trimestre"></label>
-              <label>Début<input type="date" [(ngModel)]="periodForm.startDate"></label>
-              <label>Fin<input type="date" [(ngModel)]="periodForm.endDate"></label>
-              <label>Seuil de réussite (/20)<input type="number" min="0" max="20" step="0.5" [(ngModel)]="periodForm.passMark"></label>
+              <label>Code<input pInputText [(ngModel)]="periodForm.code" maxlength="20" placeholder="TERM1"></label>
+              <label>Libellé<input pInputText [(ngModel)]="periodForm.name" maxlength="80" placeholder="1er trimestre"></label>
+              <label>Début<app-date-field mode="date" [(ngModel)]="periodForm.startDate" [ariaLabel]="(&quot;Début&quot;).trim()" /></label>
+              <label>Fin<app-date-field mode="date" [(ngModel)]="periodForm.endDate" [ariaLabel]="(&quot;Fin&quot;).trim()" /></label>
+              <label>Seuil de réussite (/20)<app-number-field min="0" max="20" step="0.5" [(ngModel)]="periodForm.passMark" [ariaLabel]="(&quot;Seuil de réussite (/20)&quot;).trim()" /></label>
               <div class="gr__actions">
-                <button type="button" class="gr__btn" [disabled]="busy()" (click)="savePeriod()">{{ editingPeriodId ? 'Enregistrer' : 'Créer' }}</button>
-                @if (editingPeriodId) { <button type="button" class="gr__btn gr__btn--ghost" (click)="resetPeriod()">Annuler</button> }
+                <button pButton type="button" class="gr__btn" [disabled]="busy()" (click)="savePeriod()">{{ editingPeriodId ? 'Enregistrer' : 'Créer' }}</button>
+                @if (editingPeriodId) { <button pButton severity="secondary" variant="outlined" type="button" class="gr__btn gr__btn--ghost" (click)="resetPeriod()">Annuler</button> }
               </div>
             </div>
           </div>
@@ -108,21 +107,20 @@
             <div class="gr__card-head"><h2>Découpage automatique</h2></div>
             <div class="gr__body gr__form">
               <label>Découpage
-                <select [(ngModel)]="defaults.scheme">
-                  <option value="TRIMESTRE">3 trimestres</option>
-                  <option value="SEMESTRE">2 semestres</option>
-                </select></label>
+                <app-select-field [(ngModel)]="defaults.scheme" [ariaLabel]="(&quot;Découpage &quot;).trim()">
+                  <app-select-option [value]="&quot;TRIMESTRE&quot;" [label]="(&quot;3 trimestres&quot;).trim()" />
+                  <app-select-option [value]="&quot;SEMESTRE&quot;" [label]="(&quot;2 semestres&quot;).trim()" />
+                </app-select-field></label>
               <p class="gr__muted gr__wide">Les dates de l’année sont réparties à parts égales ; ajustez-les ensuite si besoin.</p>
-              <div class="gr__actions"><button type="button" class="gr__btn gr__btn--green" [disabled]="busy()" (click)="createDefaults()">Générer les périodes</button></div>
+              <div class="gr__actions"><button pButton type="button" class="gr__btn gr__btn--green" [disabled]="busy()" (click)="createDefaults()">Générer les périodes</button></div>
             </div>
           </div>
         </div>
         <div class="gr__card">
           <div class="gr__card-head"><h2>Périodes d’évaluation</h2><span class="gr__count">{{ periods().length }}</span></div>
-          <div class="gr__table-wrap"><table class="gr__table">
-            <thead><tr><th>Période</th><th>Année</th><th>Dates</th><th>Seuil</th><th>Évaluations</th><th>Statut</th><th>Actions</th></tr></thead>
-            <tbody>
-              @for (p of periods(); track p.id) {
+          <div class="gr__table-wrap"><p-table class="gr__table ui-data-table" [value]="periods()" dataKey="id" [rowHover]="true" [paginator]="(periods()).length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
+      <ng-template #header><tr><th>Période</th><th>Année</th><th>Dates</th><th>Seuil</th><th>Évaluations</th><th>Statut</th><th>Actions</th></tr></ng-template>
+      <ng-template #body [appTableRow]="periods()" let-p>
                 <tr>
                   <td><strong>{{ p.name }}</strong> <span class="gr__muted">{{ p.code }}</span></td>
                   <td>{{ p.academicYearLabel }}</td>
@@ -133,24 +131,24 @@
                     @if (p.publishedAt) { <div class="gr__muted">le {{ p.publishedAt | date:'dd/MM/yyyy HH:mm' }}</div> }</td>
                   <td><div class="gr__row-actions">
                     @if (p.status === 'OPEN') {
-                      <button type="button" class="gr__mini" (click)="editPeriod(p)">Modifier</button>
-                      <button type="button" class="gr__mini" [disabled]="busy()" (click)="setStatus(p, 'LOCKED')">Verrouiller</button>
+                      <button pButton severity="secondary" variant="outlined" type="button" class="gr__mini" (click)="editPeriod(p)">Modifier</button>
+                      <button pButton severity="secondary" variant="outlined" type="button" class="gr__mini" [disabled]="busy()" (click)="setStatus(p, 'LOCKED')">Verrouiller</button>
                     } @else {
-                      <button type="button" class="gr__mini" [disabled]="busy()" (click)="setStatus(p, 'OPEN')">Rouvrir</button>
+                      <button pButton severity="secondary" variant="outlined" type="button" class="gr__mini" [disabled]="busy()" (click)="setStatus(p, 'OPEN')">Rouvrir</button>
                     }
                     @if (p.status !== 'PUBLISHED') {
-                      <button type="button" class="gr__mini gr__mini--ok" [disabled]="busy()" (click)="setStatus(p, 'PUBLISHED')">Publier</button>
+                      <button pButton severity="secondary" variant="outlined" type="button" class="gr__mini gr__mini--ok" [disabled]="busy()" (click)="setStatus(p, 'PUBLISHED')">Publier</button>
                     } @else {
-                      <button type="button" class="gr__mini" [disabled]="busy()" (click)="setStatus(p, 'LOCKED')">Dépublier</button>
+                      <button pButton severity="secondary" variant="outlined" type="button" class="gr__mini" [disabled]="busy()" (click)="setStatus(p, 'LOCKED')">Dépublier</button>
                     }
                     @if (p.status === 'OPEN' && !p.evaluationCount) {
-                      <button type="button" class="gr__mini gr__mini--danger" [disabled]="busy()" (click)="deletePeriod(p)">Supprimer</button>
+                      <button pButton severity="danger" variant="outlined" type="button" class="gr__mini gr__mini--danger" [disabled]="busy()" (click)="deletePeriod(p)">Supprimer</button>
                     }
                   </div></td>
                 </tr>
-              } @empty { <tr><td colspan="7" class="gr__muted">Aucune période : générez les trimestres ou semestres ci-dessus.</td></tr> }
-            </tbody>
-          </table></div>
+              </ng-template>
+      <ng-template #emptymessage><tr><td colspan="7" class="gr__muted">Aucune période : générez les trimestres ou semestres ci-dessus.</td></tr></ng-template>
+    </p-table></div>
         </div>
       }
 
@@ -163,21 +161,21 @@
             <div class="gr__card-head"><h2>{{ editingEvalId ? 'Modifier l’évaluation' : 'Nouvelle évaluation' }}</h2></div>
             <div class="gr__body gr__form">
               <label class="gr__wide">Matière — enseignant
-                <select [(ngModel)]="evalForm.classSubjectTeacherId" [disabled]="!editable()">
-                  <option [ngValue]="0">Choisir…</option>
-                  @for (a of activeAssignments(); track a.id) { <option [ngValue]="a.id">{{ a.label }}</option> }
-                </select></label>
-              <label class="gr__wide">Intitulé<input [(ngModel)]="evalForm.title" maxlength="120" placeholder="Devoir n°1" [disabled]="!editable()"></label>
+                <app-select-field [(ngModel)]="evalForm.classSubjectTeacherId" [disabled]="!editable()" [ariaLabel]="(&quot;Matière — enseignant &quot;).trim()">
+                  <app-select-option [value]="0" [label]="(&quot;Choisir…&quot;).trim()" />
+                  @for (a of activeAssignments(); track a.id) { <app-select-option [value]="a.id" [label]="((&quot;&quot; + (a.label) + &quot;&quot;)).trim()" /> }
+                </app-select-field></label>
+              <label class="gr__wide">Intitulé<input pInputText [(ngModel)]="evalForm.title" maxlength="120" placeholder="Devoir n°1" [disabled]="!editable()"></label>
               <label>Type
-                <select [(ngModel)]="evalForm.type" [disabled]="!editable()">
-                  @for (t of typeKeys; track t) { <option [value]="t">{{ evaluationTypes[t] }}</option> }
-                </select></label>
-              <label>Date<input type="date" [(ngModel)]="evalForm.evalDate" [min]="period()!.startDate" [max]="period()!.endDate" [disabled]="!editable()"></label>
-              <label>Barème (noté sur)<input type="number" min="1" max="100" [(ngModel)]="evalForm.maxValue" [disabled]="!editable()"></label>
-              <label>Poids dans la matière<input type="number" min="0.25" max="10" step="0.25" [(ngModel)]="evalForm.weight" [disabled]="!editable()"></label>
+                <app-select-field [(ngModel)]="evalForm.type" [disabled]="!editable()" [ariaLabel]="(&quot;Type &quot;).trim()">
+                  @for (t of typeKeys; track t) { <app-select-option [value]="t" [label]="((&quot;&quot; + (evaluationTypes[t]) + &quot;&quot;)).trim()" /> }
+                </app-select-field></label>
+              <label>Date<app-date-field mode="date" [(ngModel)]="evalForm.evalDate" [min]="period()!.startDate" [max]="period()!.endDate" [disabled]="!editable()" [ariaLabel]="(&quot;Date&quot;).trim()" /></label>
+              <label>Barème (noté sur)<app-number-field min="1" max="100" [(ngModel)]="evalForm.maxValue" [disabled]="!editable()" [ariaLabel]="(&quot;Barème (noté sur)&quot;).trim()" /></label>
+              <label>Poids dans la matière<app-number-field min="0.25" max="10" step="0.25" [(ngModel)]="evalForm.weight" [disabled]="!editable()" [ariaLabel]="(&quot;Poids dans la matière&quot;).trim()" /></label>
               <div class="gr__actions">
-                <button type="button" class="gr__btn" [disabled]="busy() || !editable()" (click)="saveEvaluation()">{{ editingEvalId ? 'Enregistrer' : 'Créer' }}</button>
-                @if (editingEvalId) { <button type="button" class="gr__btn gr__btn--ghost" (click)="resetEvaluation()">Annuler</button> }
+                <button pButton type="button" class="gr__btn" [disabled]="busy() || !editable()" (click)="saveEvaluation()">{{ editingEvalId ? 'Enregistrer' : 'Créer' }}</button>
+                @if (editingEvalId) { <button pButton severity="secondary" variant="outlined" type="button" class="gr__btn gr__btn--ghost" (click)="resetEvaluation()">Annuler</button> }
               </div>
             </div>
           </div>
@@ -191,10 +189,10 @@
                     <td><strong>{{ s.subjectName }}</strong></td>
                     <td>@for (a of s.assignments; track a.classSubjectTeacherId) { <div [class.gr__muted]="!a.active">{{ a.teacherName }}{{ a.active ? '' : ' (désactivé)' }}</div> }</td>
                     <td><div class="gr__inline">
-                      <input type="number" min="0.25" max="20" step="0.25" class="gr__num" [(ngModel)]="coefficients[s.subjectId]" [attr.aria-label]="'Coefficient ' + s.subjectName">
-                      <button type="button" class="gr__mini" [disabled]="busy() || coefficients[s.subjectId] == s.coefficient" (click)="saveCoefficient(s)">OK</button>
+                      <app-number-field min="0.25" max="20" step="0.25" class="gr__num" [(ngModel)]="coefficients[s.subjectId]" [ariaLabel]="'Coefficient ' + s.subjectName" />
+                      <button pButton severity="secondary" variant="outlined" type="button" class="gr__mini" [disabled]="busy() || coefficients[s.subjectId] == s.coefficient" (click)="saveCoefficient(s)">OK</button>
                       @if (s.overridden) {
-                        <button type="button" class="gr__mini" [disabled]="busy()" (click)="resetCoefficient(s)" [title]="'Revenir au coefficient de la matière (' + s.defaultCoefficient + ')'">Par défaut</button>
+                        <button pButton severity="secondary" variant="outlined" type="button" class="gr__mini" [disabled]="busy()" (click)="resetCoefficient(s)" [title]="'Revenir au coefficient de la matière (' + s.defaultCoefficient + ')'">Par défaut</button>
                       }
                     </div>
                     <div class="gr__muted">{{ s.overridden ? 'Ajusté pour la classe · matière : ' + (s.defaultCoefficient | number:'1.0-2') : 'Coefficient de la matière' }}</div></td>
@@ -207,10 +205,9 @@
 
         <div class="gr__card">
           <div class="gr__card-head"><h2>Évaluations de la période</h2><span class="gr__count">{{ evaluations().length }}</span></div>
-          <div class="gr__table-wrap"><table class="gr__table">
-            <thead><tr><th>Matière</th><th>Évaluation</th><th>Date</th><th>Barème</th><th>Poids</th><th>Saisie</th><th>Moyenne /20</th><th>Actions</th></tr></thead>
-            <tbody>
-              @for (e of evaluations(); track e.id) {
+          <div class="gr__table-wrap"><p-table class="gr__table ui-data-table" [value]="evaluations()" dataKey="id" [rowHover]="true" [paginator]="(evaluations()).length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
+      <ng-template #header><tr><th>Matière</th><th>Évaluation</th><th>Date</th><th>Barème</th><th>Poids</th><th>Saisie</th><th>Moyenne /20</th><th>Actions</th></tr></ng-template>
+      <ng-template #body [appTableRow]="evaluations()" let-e>
                 <tr [class.gr__selected]="sheet()?.evaluation?.id === e.id">
                   <td><strong>{{ e.subjectName }}</strong><div class="gr__muted">{{ e.teacherName }}</div></td>
                   <td>{{ e.title }}<div class="gr__muted">{{ evaluationTypes[e.type] ?? e.type }}</div></td>
@@ -220,41 +217,40 @@
                   <td>{{ e.gradedCount }}/{{ e.studentCount }}</td>
                   <td>{{ e.averageOn20 != null ? (e.averageOn20 | number:'1.2-2') : '—' }}</td>
                   <td><div class="gr__row-actions">
-                    <button type="button" class="gr__mini gr__mini--ok" (click)="openSheet(e)">{{ editable() ? 'Saisir les notes' : 'Voir les notes' }}</button>
+                    <button pButton severity="secondary" variant="outlined" type="button" class="gr__mini gr__mini--ok" (click)="openSheet(e)">{{ editable() ? 'Saisir les notes' : 'Voir les notes' }}</button>
                     @if (editable()) {
-                      <button type="button" class="gr__mini" (click)="editEvaluation(e)">Modifier</button>
-                      <button type="button" class="gr__mini gr__mini--danger" [disabled]="busy()" (click)="deleteEvaluation(e)">Supprimer</button>
+                      <button pButton severity="secondary" variant="outlined" type="button" class="gr__mini" (click)="editEvaluation(e)">Modifier</button>
+                      <button pButton severity="danger" variant="outlined" type="button" class="gr__mini gr__mini--danger" [disabled]="busy()" (click)="deleteEvaluation(e)">Supprimer</button>
                     }
                   </div></td>
                 </tr>
-              } @empty { <tr><td colspan="8" class="gr__muted">Aucune évaluation pour cette classe et cette période.</td></tr> }
-            </tbody>
-          </table></div>
+              </ng-template>
+      <ng-template #emptymessage><tr><td colspan="8" class="gr__muted">Aucune évaluation pour cette classe et cette période.</td></tr></ng-template>
+    </p-table></div>
 
           @if (sheet(); as sh) {
             <div class="gr__panel">
               <h3>{{ sh.evaluation.subjectName }} — {{ sh.evaluation.title }} · noté sur {{ sh.evaluation.maxValue | number:'1.0-2' }}</h3>
-              <div class="gr__table-wrap"><table class="gr__table gr__table--sheet">
-                <thead><tr><th>Élève</th><th>Matricule</th><th>Note</th></tr></thead>
-                <tbody>
-                  @for (r of sh.rows; track r.studentId) {
+              <div class="gr__table-wrap"><p-table class="gr__table gr__table--sheet ui-data-table" [value]="sh.rows" dataKey="studentId" [rowHover]="true" [paginator]="(sh.rows).length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
+      <ng-template #header><tr><th>Élève</th><th>Matricule</th><th>Note</th></tr></ng-template>
+      <ng-template #body [appTableRow]="sh.rows" let-r>
                     <tr>
                       <td><strong>{{ r.fullName }}</strong></td>
                       <td class="gr__muted">{{ r.registrationNumber }}</td>
-                      <td><input type="number" class="gr__num" min="0" [max]="sh.evaluation.maxValue" step="0.25"
-                                 [(ngModel)]="sheetValues[r.studentId]" [disabled]="!editable()" [attr.aria-label]="'Note de ' + r.fullName">
+                      <td><app-number-field class="gr__num" min="0" [max]="sh.evaluation.maxValue" step="0.25"
+                                 [(ngModel)]="sheetValues[r.studentId]" [disabled]="!editable()" [ariaLabel]="'Note de ' + r.fullName" />
                         @if (r.value != null) { <span class="gr__muted"> (actuelle : {{ r.value | number:'1.0-2' }})</span> }</td>
                     </tr>
-                  } @empty { <tr><td colspan="3" class="gr__muted">Aucun élève inscrit dans la classe.</td></tr> }
-                </tbody>
-              </table></div>
+                  </ng-template>
+      <ng-template #emptymessage><tr><td colspan="3" class="gr__muted">Aucun élève inscrit dans la classe.</td></tr></ng-template>
+    </p-table></div>
               @if (editable()) {
                 <label class="gr__reason">Motif de modification {{ changedExisting() ? '(obligatoire : ' + changedExisting() + ' note(s) existante(s) modifiée(s))' : '(si vous corrigez une note déjà saisie)' }}
-                  <input [(ngModel)]="sheetReason" maxlength="255" placeholder="Ex. erreur de report, copie re-corrigée…"></label>
+                  <input pInputText [(ngModel)]="sheetReason" maxlength="255" placeholder="Ex. erreur de report, copie re-corrigée…"></label>
                 <p class="gr__muted">Laissez une case vide pour effacer la note. Chaque modification est tracée dans l’historique.</p>
                 <div class="gr__actions">
-                  <button type="button" class="gr__btn gr__btn--green" [disabled]="busy()" (click)="saveSheet()">Enregistrer les notes</button>
-                  <button type="button" class="gr__btn gr__btn--ghost" (click)="sheet.set(null)">Fermer</button>
+                  <button pButton type="button" class="gr__btn gr__btn--green" [disabled]="busy()" (click)="saveSheet()">Enregistrer les notes</button>
+                  <button pButton severity="secondary" variant="outlined" type="button" class="gr__btn gr__btn--ghost" (click)="sheet.set(null)">Fermer</button>
                 </div>
               }
             </div>
@@ -276,7 +272,7 @@
           <div class="gr__card">
             <div class="gr__card-head">
               <h2>Classement — {{ r.levelName ? r.levelName + ' · ' : '' }}{{ r.className }}</h2>
-              <button type="button" class="gr__btn gr__btn--green" [disabled]="busy() || r.period.status === 'PUBLISHED'" (click)="generateReportCards()">Générer les bulletins</button>
+              <button pButton type="button" class="gr__btn gr__btn--green" [disabled]="busy() || r.period.status === 'PUBLISHED'" (click)="generateReportCards()">Générer les bulletins</button>
             </div>
             <div class="gr__table-wrap"><table class="gr__table">
               <thead><tr><th>Rang</th><th>Élève</th>
@@ -294,8 +290,8 @@
                     <td><strong>{{ st.average != null ? (st.average | number:'1.2-2') : '—' }}</strong></td>
                     <td>{{ st.mention ?? '—' }}</td>
                     <td><div class="gr__inline">
-                      <input [(ngModel)]="comments[st.studentId]" maxlength="255" [disabled]="r.period.status === 'PUBLISHED'" [attr.aria-label]="'Appréciation de ' + st.fullName">
-                      <button type="button" class="gr__mini" [disabled]="busy() || r.period.status === 'PUBLISHED' || (comments[st.studentId] ?? '') === (st.comment ?? '')" (click)="saveComment(st.studentId)">OK</button>
+                      <input pInputText [(ngModel)]="comments[st.studentId]" maxlength="255" [disabled]="r.period.status === 'PUBLISHED'" [attr.aria-label]="'Appréciation de ' + st.fullName">
+                      <button pButton severity="secondary" variant="outlined" type="button" class="gr__mini" [disabled]="busy() || r.period.status === 'PUBLISHED' || (comments[st.studentId] ?? '') === (st.comment ?? '')" (click)="saveComment(st.studentId)">OK</button>
                     </div></td>
                   </tr>
                 } @empty { <tr><td [attr.colspan]="r.subjects.length + 5" class="gr__muted">Aucun élève inscrit.</td></tr> }
@@ -327,14 +323,14 @@
           <div class="gr__card gr__no-print">
             <div class="gr__card-head">
               <h2>Bulletins — {{ b.className }} · {{ b.periodName }}</h2>
-              <button type="button" class="gr__btn" [disabled]="!b.bulletins.length" (click)="print('all')">Imprimer / PDF toute la classe</button>
+              <button pButton type="button" class="gr__btn" [disabled]="!b.bulletins.length" (click)="print('all')">Imprimer / PDF toute la classe</button>
             </div>
             <div class="gr__body">
               <p class="gr__muted">{{ b.published ? 'Résultats publiés : bulletins définitifs.' : 'Aperçu provisoire — publiez la période pour figer les bulletins.' }}
                 Pour un PDF, choisissez « Enregistrer au format PDF » dans la fenêtre d’impression.</p>
               <div class="gr__row-actions">
                 @for (bl of b.bulletins; track bl.studentId) {
-                  <button type="button" class="gr__mini" (click)="print(bl.studentId)">🖨 {{ bl.fullName }}</button>
+                  <button pButton severity="secondary" variant="outlined" type="button" class="gr__mini" (click)="print(bl.studentId)">🖨 {{ bl.fullName }}</button>
                 }
               </div>
             </div>
@@ -386,10 +382,9 @@
       @case ('history') {
         <div class="gr__card">
           <div class="gr__card-head"><h2>Historique des modifications de notes</h2><span class="gr__count">{{ history().length }}</span></div>
-          <div class="gr__table-wrap"><table class="gr__table">
-            <thead><tr><th>Date</th><th>Auteur</th><th>Action</th><th>Élève</th><th>Évaluation</th><th>Ancienne</th><th>Nouvelle</th><th>Motif</th></tr></thead>
-            <tbody>
-              @for (h of history(); track h.id) {
+          <div class="gr__table-wrap"><p-table class="gr__table ui-data-table" [value]="history()" dataKey="id" [rowHover]="true" [paginator]="(history()).length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
+      <ng-template #header><tr><th>Date</th><th>Auteur</th><th>Action</th><th>Élève</th><th>Évaluation</th><th>Ancienne</th><th>Nouvelle</th><th>Motif</th></tr></ng-template>
+      <ng-template #body [appTableRow]="history()" let-h>
                 <tr>
                   <td>{{ h.changedAt | date:'dd/MM/yyyy HH:mm' }}</td>
                   <td>{{ h.changedByName }}</td>
@@ -400,9 +395,9 @@
                   <td>{{ h.newValue != null ? (h.newValue | number:'1.0-2') : '—' }}</td>
                   <td>{{ h.reason ?? '' }}</td>
                 </tr>
-              } @empty { <tr><td colspan="8" class="gr__muted">Aucune note saisie ou modifiée pour cette classe et cette période.</td></tr> }
-            </tbody>
-          </table></div>
+              </ng-template>
+      <ng-template #emptymessage><tr><td colspan="8" class="gr__muted">Aucune note saisie ou modifiée pour cette classe et cette période.</td></tr></ng-template>
+    </p-table></div>
         </div>
       }
     }

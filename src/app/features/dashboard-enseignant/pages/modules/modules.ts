@@ -1,3 +1,13 @@
+import { DateField } from '../../../../shared/ui/date-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { TableRow } from '../../../../shared/ui/table-row';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
+import { TableModule } from 'primeng/table';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, computed, DestroyRef, effect, inject, OnInit, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -20,7 +30,7 @@ const today = () => new Date(Date.now()-new Date().getTimezoneOffset()*60_000).t
 
 @Component({
   selector: 'app-teacher-module', standalone: true,
-  imports: [FormValidationDirective, FormsModule, ConversationFiles, PortalPosts, ScheduleView, Appointments],
+  imports: [DateField, SelectField, SelectOption, TableRow, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, TableModule, FormValidationDirective, FormsModule, ConversationFiles, PortalPosts, ScheduleView, Appointments],
   templateUrl: './modules.html', styleUrl: '../../../../shared/self-space/self-space.scss',
 })
 export class TeacherModule implements OnInit {

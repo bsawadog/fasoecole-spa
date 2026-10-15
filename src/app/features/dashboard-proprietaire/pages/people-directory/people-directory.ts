@@ -1,4 +1,10 @@
-import { Component, DestroyRef, computed, inject, OnInit, signal } from '@angular/core';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
+import { Component, DestroyRef, computed, inject, OnInit, signal, viewChild } from '@angular/core';
+import { Table, TableModule } from 'primeng/table';
+import { TableRow } from '../../../../shared/ui/table-row';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -10,11 +16,16 @@ interface ParentRow extends RosterParent { children: StudentRecord[]; }
 
 @Component({
   selector: 'app-people-directory', standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [TableModule, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, FormsModule, RouterLink],
   templateUrl: './people-directory.html',
   styleUrl: '../class-roster/class-roster.scss',
 })
 export class PeopleDirectory implements OnInit {
+  private readonly table = viewChild(Table);
+  searchPeople(value: string): void {
+    this.search.set(value);
+    this.table()?.reset();
+  }
   private readonly auth = inject(AuthService);
   private readonly api = inject(OwnerManagementService);
   private readonly destroyRef = inject(DestroyRef);

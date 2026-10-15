@@ -1,3 +1,4 @@
+@layer legacy {
 .shell {
   --shell-gutter: clamp(1rem, 2.5vw, 2rem);
   display: flex;
@@ -378,4 +379,6 @@
   .shell__page {
     padding: 0;
   }
+}
+
 }

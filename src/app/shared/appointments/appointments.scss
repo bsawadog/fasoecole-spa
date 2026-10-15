@@ -1,3 +1,4 @@
+@layer legacy {
 :host { display: block; }
 .appointments {
   color: #18342c;
@@ -68,4 +69,6 @@
     &__section-heading small { display: none; }
     &__summary-item { padding: .8rem; }
   }
+}
+
 }

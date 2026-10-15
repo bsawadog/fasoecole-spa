@@ -1,3 +1,7 @@
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService, ApprovalRole, RegistrationSchool, SchoolAccessRequest, SchoolAccessService } from '../../../../core/auth';
@@ -10,6 +14,7 @@ interface ApprovalSelection {
 }
 
 @Component({
+  imports: [SelectField, SelectOption, ButtonModule, MessageModule],
   selector: 'app-approvals',
   standalone: true,
   templateUrl: './approvals.html',

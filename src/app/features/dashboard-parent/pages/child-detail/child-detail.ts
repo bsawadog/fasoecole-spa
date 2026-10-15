@@ -1,3 +1,11 @@
+import { DateField } from '../../../../shared/ui/date-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -34,7 +42,7 @@ const INVOICE_LABELS: Record<string, string> = {
 @Component({
   selector: 'app-parent-child-detail',
   standalone: true,
-  imports: [FormValidationDirective, DatePipe, DecimalPipe, FormsModule, RouterLink, ScheduleView, StudentGradesView],
+  imports: [DateField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, DecimalPipe, FormsModule, RouterLink, ScheduleView, StudentGradesView],
   templateUrl: './child-detail.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, defer, map, of, switchMap, tap } from 'rxjs';
+import { Observable, defer, finalize, map, of, shareReplay, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, LoginResponse, ROLE_HOME_ROUTE, User, UserDto, resolveRole } from '../models';
 
@@ -155,6 +155,7 @@ export class AuthService {
   readonly role = computed(() => this._user()?.role ?? null);
 
   private readonly _ownerAccess = signal<SchoolAccess[] | null>(null);
+  private ownerAccessRequest?: { token: string | null; response: Observable<SchoolAccess[]> };
   readonly ownerAccess = this._ownerAccess.asReadonly();
   private readonly selectedSchoolId = signal(Number(localStorage.getItem('fasoecole_owner_school')) || null);
   readonly schoolContextId = this.selectedSchoolId.asReadonly();
@@ -248,7 +249,7 @@ export class AuthService {
    */
   getOwnedSchools(ownerId: number, module?: OwnerModule, scopeSchoolId?: number | null): Observable<RegistrationSchool[]> {
     if (!module && this.user()?.rawRoles.includes('SUPER_ADMIN')) {
-      return this.loadOwnerAccess(true).pipe(map(access => this.schoolsForContext(access.map(a => ({id:a.schoolId,name:a.schoolName,type:a.schoolType,status:a.status})), scopeSchoolId)));
+      return this.loadOwnerAccess().pipe(map(access => this.schoolsForContext(access.map(a => ({id:a.schoolId,name:a.schoolName,type:a.schoolType,status:a.status})), scopeSchoolId)));
     }
     if (!module) {
       return this.http.get<RegistrationSchool[]>(`${this.apiUrl}/schools/by-owner/${ownerId}`).pipe(
@@ -256,7 +257,7 @@ export class AuthService {
         map(schools => this.schoolsForContext(schools, scopeSchoolId)),
       );
     }
-    return this.loadOwnerAccess(true).pipe(
+    return this.loadOwnerAccess().pipe(
       map((access) =>
         this.schoolsForContext(access
           .filter((a) => a.modules.includes(module))
@@ -275,20 +276,28 @@ export class AuthService {
   /** Charge (une fois par session) les établissements et modules accessibles à l'utilisateur. */
   loadOwnerAccess(force = false): Observable<SchoolAccess[]> {
     const sessionToken = this._token();
+    // Ordinary page loads share requests. Explicit refreshes always fetch fresh access.
+    const ongoing = this.ownerAccessRequest;
+    if (!force && ongoing?.token === sessionToken) return ongoing.response;
     const cached = this._ownerAccess();
     if (cached && !force) {
       return of(cached);
     }
-    return this.http
+    const request = { token: sessionToken, response: undefined as unknown as Observable<SchoolAccess[]> };
+    request.response = this.http
       .get<SchoolAccess[]>(`${this.apiUrl}/owner/staff/my-access`)
       .pipe(tap((access) => {
-        if (this._token() !== sessionToken) return;
+        if (this._token() !== sessionToken || this.ownerAccessRequest !== request) return;
         this._ownerAccess.set(access);
         if (this.schoolContextId() === null) {
           const initial = access.find(school => school.status === 'ACTIVE') ?? access[0];
           if (initial) this.selectSchoolContext(initial.schoolId);
         }
-      }));
+      }), finalize(() => {
+        if (this.ownerAccessRequest === request) this.ownerAccessRequest = undefined;
+      }), shareReplay({ bufferSize: 1, refCount: true }));
+    this.ownerAccessRequest = request;
+    return request.response;
   }
 
   getOwnerDashboard(schoolId: number): Observable<OwnerDashboard> {
@@ -366,6 +375,7 @@ export class AuthService {
   }
 
   private clearSession(): void {
+    this.ownerAccessRequest = undefined;
     this._user.set(null);
     this._token.set(null);
     this._ownerAccess.set(null);
@@ -433,6 +443,11 @@ export class AuthService {
   }
 
   private setSession(token: string, user: User): void {
+    if (this._token() !== token || this._user()?.id !== user.id) {
+      this.ownerAccessRequest = undefined;
+      this._ownerAccess.set(null);
+      this.ownedSchools.set([]);
+    }
     this._token.set(token);
     this._user.set(user);
     const payload: StoredSession = { token, user };

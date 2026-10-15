@@ -4,6 +4,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { environment } from '../../../../../environments/environment';
 import { TeacherMessages } from './messages';
+import { By } from '@angular/platform-browser';
+import { SelectField } from '../../../../shared/ui/select-field';
 
 /** Component template + Angular forms + real SelfSpaceService; only the HTTP transport is simulated. */
 describe('Teacher messaging integration', () => {
@@ -32,8 +34,8 @@ describe('Teacher messaging integration', () => {
     const start = Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>)
       .find(button => button.textContent?.includes('Nouvelle conversation'))!;
     start.click(); fixture.detectChanges(); await fixture.whenStable();
-    const select = fixture.nativeElement.querySelector('select[name="classId"]') as HTMLSelectElement;
-    select.value = select.options[1].value; select.dispatchEvent(new Event('change'));
+    const select = fixture.debugElement.query(By.directive(SelectField)).componentInstance as SelectField;
+    select.update(2003);
     fixture.detectChanges();
     const recipients = http.expectOne(`${root}/conversations/teacher/recipients?schoolId=2001&classId=2003`);
     expect(recipients.request.method).toBe('GET');

@@ -1,3 +1,12 @@
+import { DateField } from '../../../../shared/ui/date-field';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectorRef, Component, computed, HostListener, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -13,7 +22,7 @@ const today = () => {
 };
 @Component({
   selector: 'app-cash-book', standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, FormValidationDirective],
+  imports: [DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormsModule, DatePipe, DecimalPipe, FormValidationDirective],
   templateUrl: './cash-book.html', styleUrls: ['../expenses/expenses.scss', './cash-book.scss'],
 })
 export class CashBookPage implements OnInit, OnDestroy {

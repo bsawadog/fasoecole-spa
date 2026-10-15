@@ -1,3 +1,4 @@
+@layer legacy {
 .confirmation {
   width: min(420px, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem);
@@ -30,3 +31,5 @@
 .confirmation__confirm { border: 1px solid #2563eb; background: #2563eb; color: #fff; }
 .confirmation__confirm--danger { border-color: #b91c1c; background: #b91c1c; }
 .confirmation__actions button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+
+}

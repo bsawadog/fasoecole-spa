@@ -1,3 +1,11 @@
+import { DateField } from '../../../../shared/ui/date-field';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -14,7 +22,7 @@ export const PAYABLE_SOURCE = { MANUAL: 'Dépense ponctuelle', FIXED: 'Charge fi
 
 @Component({
   selector: 'app-payables', standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, FormValidationDirective],
+  imports: [DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormsModule, DatePipe, DecimalPipe, FormValidationDirective],
   templateUrl: './payables.html', styleUrl: './payables.scss',
 })
 export class Payables implements OnDestroy {

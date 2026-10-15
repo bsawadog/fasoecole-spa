@@ -1,3 +1,4 @@
+@layer legacy {
 :host { display: block; min-height: 100vh; }
 .school-directory { min-height: 100vh; padding: 1.25rem clamp(1.25rem, 5vw, 4.5rem) 4rem; box-sizing: border-box; color: #18342c; background: radial-gradient(ellipse at 15% 10%, #e4f0e3, transparent 32rem), #f8faf7; }
 .school-directory__header { display: flex; align-items: center; justify-content: space-between; max-width: 75rem; margin: 0 auto; img { display: block; width: 12rem; height: 3.5rem; object-fit: contain; object-position: left center; } }
@@ -19,3 +20,5 @@
 .school-profile__features article { display: grid; gap: 0.6rem; padding: 1.2rem; border: 1px solid #e2e9e1; border-radius: 0.9rem; background: #fff; }
 .school-profile__features article span { color: #617169; font-size: 0.92rem; line-height: 1.55; }
 .school-profile__cta { display: inline-block; margin: 0 1rem 1rem 0; padding: 0.85rem 1.2rem; border-radius: 0.7rem; color: #fff; background: #26704f; font-weight: 750; text-decoration: none; }
+
+}

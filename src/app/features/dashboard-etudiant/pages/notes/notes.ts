@@ -1,3 +1,6 @@
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MyStudentsState } from '../../../../shared/self-space/my-students.state';
@@ -6,7 +9,7 @@ import { StudentGradesView } from '../../../../shared/self-space/student-grades-
 @Component({
   selector: 'app-etudiant-notes',
   standalone: true,
-  imports: [FormsModule, StudentGradesView],
+  imports: [SelectField, SelectOption, LoadingState, FormsModule, StudentGradesView],
   providers: [MyStudentsState],
   template: `
     <div class="ss">
@@ -17,16 +20,16 @@ import { StudentGradesView } from '../../../../shared/self-space/student-grades-
         </div>
         @if (state.students().length > 1) {
           <label class="ss__picker">Établissement
-            <select [ngModel]="state.selectedId()" (ngModelChange)="state.selectedId.set(+$event)">
+            <app-select-field [ngModel]="state.selectedId()" (ngModelChange)="state.selectedId.set(+$event)" [ariaLabel]="(&quot;Établissement &quot;).trim()">
               @for (s of state.students(); track s.studentId) {
-                <option [ngValue]="s.studentId">{{ s.schoolName }}</option>
+                <app-select-option [value]="s.studentId" [label]="((&quot;&quot; + ((s.schoolName)) + &quot;&quot;)).trim()" />
               }
-            </select>
+            </app-select-field>
           </label>
         }
       </header>
       @if (state.loading()) {
-        <p class="ss__state">Chargement…</p>
+        <app-loading-state message="Chargement…" />
       } @else if (state.error()) {
         <p class="ss__alert ss__alert--error" role="alert">{{ state.error() }}</p>
       } @else if (state.selectedId(); as id) {

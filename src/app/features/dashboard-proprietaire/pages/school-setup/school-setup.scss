@@ -1,3 +1,4 @@
+@layer legacy {
 :host { display: block; }
 .setup { padding: 1.5rem; background: #f8fafc; color: #0f172a; }
 header, form { background: #fff; padding: 1.25rem; border: 1px solid #e2e8f0; border-radius: .75rem; }
@@ -17,3 +18,5 @@ header label { display: inline-grid; margin-right: .75rem; }
 .success.success--pending { background: #b91c1c; color: #fff; font-weight: 600; }
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #86efac; outline-offset: 2px; }
 @media (max-width: 650px) { .setup { padding: .75rem; } nav button { flex: 1 1 45%; } }
+
+}

@@ -17,11 +17,11 @@
     }
   </nav>
 
-  @if (error()) { <div class="dep__alert dep__alert--error" role="alert">{{ error() }}</div> }
-  @if (success()) { <div class="dep__alert dep__alert--success" role="status">{{ success() }}</div> }
+  @if (error()) { <p-message severity="error" class="dep__alert dep__alert--error" role="alert">{{ error() }}</p-message> }
+  @if (success()) { <p-message severity="success" class="dep__alert dep__alert--success" role="status">{{ success() }}</p-message> }
 
   @if (loading()) {
-    <p class="dep__state">Chargement…</p>
+    <app-loading-state message="Chargement…" />
   } @else if (!schools().length) {
     <p class="dep__state">Aucun établissement associé à votre compte.</p>
   } @else {
@@ -76,7 +76,7 @@
           <div class="dep__grid">
             <div class="dep__card">
               <div class="dep__card-head"><h2>Budget par catégorie</h2>
-                <button type="button" class="dep__link" (click)="setTab('budget')">Modifier le budget →</button></div>
+                <button pButton severity="secondary" variant="text" type="button" class="dep__link" (click)="setTab('budget')">Modifier le budget →</button></div>
               <div class="dep__table-wrap"><table class="dep__table">
                 <thead><tr><th>Catégorie</th><th>Prévu</th><th>Dépensé</th><th>Reste</th><th>Consommation</th></tr></thead>
                 <tbody>
@@ -95,7 +95,7 @@
             </div>
             <div class="dep__card">
               <div class="dep__card-head"><h2>Dernières dépenses</h2>
-                <button type="button" class="dep__link" (click)="setTab('expenses')">Voir tout →</button></div>
+                <button pButton severity="secondary" variant="text" type="button" class="dep__link" (click)="setTab('expenses')">Voir tout →</button></div>
               <div class="dep__table-wrap"><table class="dep__table">
                 <thead><tr><th>Date</th><th>Libellé</th><th>Catégorie</th><th>Montant</th></tr></thead>
                 <tbody>
@@ -107,25 +107,25 @@
               </table></div>
             </div>
           </div>
-        } @else { <p class="dep__state">Chargement du bilan…</p> }
+        } @else { <app-loading-state message="Chargement du bilan…" /> }
       }
 
       @case ('expenses') {
         <div class="dep__card">
           <div class="dep__card-head"><h2>Dépenses</h2><span class="dep__count">{{ filteredExpenses().length }} · {{ expensesTotal() | number:'1.0-0' }} FCFA</span></div>
           <div class="dep__toolbar">
-            <label>Du<input type="date" [(ngModel)]="from" (change)="loadExpenses()"></label>
-            <label>Au<input type="date" [(ngModel)]="to" (change)="loadExpenses()"></label>
+            <label>Du<app-date-field mode="date" [(ngModel)]="from" (change)="loadExpenses()" [ariaLabel]="(&quot;Du&quot;).trim()" /></label>
+            <label>Au<app-date-field mode="date" [(ngModel)]="to" (change)="loadExpenses()" [ariaLabel]="(&quot;Au&quot;).trim()" /></label>
             <label>Catégorie
-              <select [(ngModel)]="categoryFilter" (change)="loadExpenses()">
-                <option [ngValue]="null">Toutes les catégories</option>
-                @for (c of categories(); track c.id) { <option [ngValue]="c.id">{{ c.name }}{{ c.active ? '' : ' (archivée)' }}</option> }
-              </select>
+              <app-select-field [(ngModel)]="categoryFilter" (change)="loadExpenses()" [ariaLabel]="(&quot;Catégorie &quot;).trim()">
+                <app-select-option [value]="null" [label]="(&quot;Toutes les catégories&quot;).trim()" />
+                @for (c of categories(); track c.id) { <app-select-option [value]="c.id" [label]="((&quot;&quot; + (c.name) + &quot;&quot; + (c.active ? '' : ' (archivée)') + &quot;&quot;)).trim()" /> }
+              </app-select-field>
             </label>
-            <label>Rechercher<input type="search" [(ngModel)]="search" placeholder="Libellé, bénéficiaire, référence"></label>
+            <label>Rechercher<input pInputText type="search" [(ngModel)]="search" placeholder="Libellé, bénéficiaire, référence"></label>
             <div class="dep__actions">
-              <button type="button" class="dep__btn" (click)="openExpense()" [disabled]="!manualCategories().length">+ Dépense déjà payée</button>
-              <button type="button" class="dep__btn dep__btn--ghost" (click)="exportCsv()">Exporter (CSV)</button>
+              <button pButton type="button" class="dep__btn" (click)="openExpense()" [disabled]="!manualCategories().length">+ Dépense déjà payée</button>
+              <button pButton severity="secondary" variant="outlined" type="button" class="dep__btn dep__btn--ghost" (click)="exportCsv()">Exporter (CSV)</button>
             </div>
           </div>
 
@@ -134,26 +134,26 @@
               <h3>{{ editingId ? 'Modifier la dépense' : 'Enregistrer une dépense déjà payée' }}</h3>
               <div class="dep__form">
                 <label>Catégorie
-                  <select name="category" [(ngModel)]="form.categoryId" required>
-                    @for (c of manualCategories(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
-                  </select>
+                  <app-select-field name="category" [(ngModel)]="form.categoryId" required [ariaLabel]="(&quot;Catégorie &quot;).trim()">
+                    @for (c of manualCategories(); track c.id) { <app-select-option [value]="c.id" [label]="((&quot;&quot; + (c.name) + &quot;&quot;)).trim()" /> }
+                  </app-select-field>
                 </label>
-                <label>Date<input type="date" name="date" [(ngModel)]="form.expenseDate" [max]="todayIso" required></label>
-                <label>Montant (FCFA)<input type="number" name="amount" min="1" step="1" [(ngModel)]="form.amount" required></label>
+                <label>Date<app-date-field mode="date" name="date" [(ngModel)]="form.expenseDate" [max]="todayIso" required [ariaLabel]="(&quot;Date&quot;).trim()" /></label>
+                <label>Montant (FCFA)<app-number-field name="amount" min="1" step="1" [(ngModel)]="form.amount" required [ariaLabel]="(&quot;Montant (FCFA)&quot;).trim()" /></label>
                 <label>Mode de paiement
-                  <select name="method" [(ngModel)]="form.method">
-                    @for (m of methods; track m) { <option [value]="m">{{ methodLabels[m] }}</option> }
-                  </select>
+                  <app-select-field name="method" [(ngModel)]="form.method" [ariaLabel]="(&quot;Mode de paiement &quot;).trim()">
+                    @for (m of methods; track m) { <app-select-option [value]="m" [label]="((&quot;&quot; + (methodLabels[m]) + &quot;&quot;)).trim()" /> }
+                  </app-select-field>
                 </label>
-                <label class="dep__wide">Libellé<input name="label" [(ngModel)]="form.label" maxlength="150" placeholder="Loyer d’octobre" required></label>
-                <label>Bénéficiaire / fournisseur<input name="supplier" [(ngModel)]="form.supplier" maxlength="150"></label>
-                <label>Référence (facture, reçu)<input name="reference" [(ngModel)]="form.reference" maxlength="100"></label>
-                <label class="dep__wide">Note<input name="notes" [(ngModel)]="form.notes" maxlength="500"></label>
+                <label class="dep__wide">Libellé<input pInputText name="label" [(ngModel)]="form.label" maxlength="150" placeholder="Loyer d’octobre" required></label>
+                <label>Bénéficiaire / fournisseur<input pInputText name="supplier" [(ngModel)]="form.supplier" maxlength="150"></label>
+                <label>Référence (facture, reçu)<input pInputText name="reference" [(ngModel)]="form.reference" maxlength="100"></label>
+                <label class="dep__wide">Note<input pInputText name="notes" [(ngModel)]="form.notes" maxlength="500"></label>
               </div>
               <p class="dep__muted">Les salaires des enseignants sont ajoutés automatiquement depuis leur paie : inutile de les saisir ici.</p>
               <div class="dep__actions">
-                <button type="submit" class="dep__btn dep__btn--green" [disabled]="busy()">Enregistrer</button>
-                <button type="button" class="dep__btn dep__btn--ghost" (click)="formOpen.set(false)">Annuler</button>
+                <button pButton type="submit" class="dep__btn dep__btn--green" [disabled]="busy()">Enregistrer</button>
+                <button pButton severity="secondary" variant="outlined" type="button" class="dep__btn dep__btn--ghost" (click)="formOpen.set(false)">Annuler</button>
               </div>
             </form>
           }
@@ -169,8 +169,8 @@
                   <td><strong>{{ e.amount | number:'1.0-0' }}</strong></td>
                   <td>@if (e.source === 'MANUAL') {
                       <div class="dep__row-actions">
-                        <button type="button" class="dep__mini" (click)="openExpense(e)" [disabled]="busy()">Modifier</button>
-                        <button type="button" class="dep__mini dep__mini--danger" (click)="deleteExpense(e)" [disabled]="busy()">Supprimer</button>
+                        <button pButton severity="secondary" variant="outlined" type="button" class="dep__mini" (click)="openExpense(e)" [disabled]="busy()">Modifier</button>
+                        <button pButton severity="danger" variant="outlined" type="button" class="dep__mini dep__mini--danger" (click)="deleteExpense(e)" [disabled]="busy()">Supprimer</button>
                       </div>
                     } @else { <span class="dep__badge" title="Paiement suivi dans les dépenses à payer">{{ e.source === 'PAYABLE' ? 'Versement' : 'Paie' }}</span> }</td></tr>
               } @empty { <tr><td colspan="7" class="dep__muted">Aucune dépense sur cette période.</td></tr> }
@@ -192,17 +192,17 @@
                 <tbody>
                   @for (c of s.categories; track c.categoryId) {
                     <tr><td><strong>{{ c.name }}</strong>@if (!c.active) { <span class="dep__muted"> (archivée)</span> }</td>
-                      <td><input type="number" min="0" step="1000" class="dep__num" [(ngModel)]="budget[c.categoryId]" [attr.aria-label]="'Budget ' + c.name"></td>
+                      <td><app-number-field min="0" step="1000" class="dep__num" [(ngModel)]="budget[c.categoryId]" [ariaLabel]="'Budget ' + c.name" /></td>
                       <td>{{ c.spent | number:'1.0-0' }}</td>
                       <td>@if (c.usedRate !== null) { {{ c.usedRate | number:'1.0-1' }} % } @else { <span class="dep__muted">—</span> }</td></tr>
                   }
                 </tbody>
                 <tfoot><tr><td>Total</td><td>{{ budgetTotal() | number:'1.0-0' }}</td><td>{{ s.expenses | number:'1.0-0' }}</td><td></td></tr></tfoot>
               </table></div>
-              <div class="dep__actions dep__pad"><button type="button" class="dep__btn dep__btn--green" (click)="saveBudget()" [disabled]="busy()">Enregistrer le budget</button></div>
+              <div class="dep__actions dep__pad"><button pButton type="button" class="dep__btn dep__btn--green" (click)="saveBudget()" [disabled]="busy()">Enregistrer le budget</button></div>
             }
           </div>
-        } @else { <p class="dep__state">Chargement du budget…</p> }
+        } @else { <app-loading-state message="Chargement du budget…" /> }
       }
 
       @case ('categories') {
@@ -210,11 +210,11 @@
           <div class="dep__card">
             <div class="dep__card-head"><h2>{{ editingCategoryId ? 'Modifier la catégorie' : 'Nouvelle catégorie' }}</h2></div>
             <form class="dep__body" (ngSubmit)="saveCategory()">
-              <label>Nom<input name="catName" [(ngModel)]="categoryForm.name" maxlength="100" required placeholder="Cantine"></label>
-              <label>Description<input name="catDesc" [(ngModel)]="categoryForm.description" maxlength="255"></label>
+              <label>Nom<input pInputText name="catName" [(ngModel)]="categoryForm.name" maxlength="100" required placeholder="Cantine"></label>
+              <label>Description<input pInputText name="catDesc" [(ngModel)]="categoryForm.description" maxlength="255"></label>
               <div class="dep__actions">
-                <button type="submit" class="dep__btn" [disabled]="busy()">{{ editingCategoryId ? 'Enregistrer' : 'Ajouter' }}</button>
-                @if (editingCategoryId) { <button type="button" class="dep__btn dep__btn--ghost" (click)="editCategory()">Annuler</button> }
+                <button pButton type="submit" class="dep__btn" [disabled]="busy()">{{ editingCategoryId ? 'Enregistrer' : 'Ajouter' }}</button>
+                @if (editingCategoryId) { <button pButton severity="secondary" variant="outlined" type="button" class="dep__btn dep__btn--ghost" (click)="editCategory()">Annuler</button> }
               </div>
             </form>
           </div>
@@ -229,10 +229,10 @@
                     <td>{{ c.systemCode === 'PAYROLL' ? 'Automatique' : c.expenseCount }}</td>
                     <td><span class="dep__badge" [class.dep__badge--on]="c.active">{{ c.active ? 'Active' : 'Archivée' }}</span></td>
                     <td><div class="dep__row-actions">
-                      <button type="button" class="dep__mini" (click)="editCategory(c)" [disabled]="busy()">Modifier</button>
+                      <button pButton severity="secondary" variant="outlined" type="button" class="dep__mini" (click)="editCategory(c)" [disabled]="busy()">Modifier</button>
                       @if (c.systemCode !== 'PAYROLL') {
-                        <button type="button" class="dep__mini" (click)="toggleCategory(c)" [disabled]="busy()">{{ c.active ? 'Archiver' : 'Réactiver' }}</button>
-                        <button type="button" class="dep__mini dep__mini--danger" (click)="deleteCategory(c)" [disabled]="busy()">Supprimer</button>
+                        <button pButton severity="secondary" variant="outlined" type="button" class="dep__mini" (click)="toggleCategory(c)" [disabled]="busy()">{{ c.active ? 'Archiver' : 'Réactiver' }}</button>
+                        <button pButton severity="danger" variant="outlined" type="button" class="dep__mini dep__mini--danger" (click)="deleteCategory(c)" [disabled]="busy()">Supprimer</button>
                       }
                     </div></td></tr>
                 }

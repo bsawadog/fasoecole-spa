@@ -1,7 +1,9 @@
+import { ButtonModule } from 'primeng/button';
 import { Component, ElementRef, effect, inject, viewChild } from '@angular/core';
 import { ConfirmationService } from './confirmation.service';
 
 @Component({
+  imports: [ButtonModule],
   selector: 'app-confirmation-dialog',
   templateUrl: './confirmation-dialog.html',
   styleUrl: './confirmation-dialog.scss',

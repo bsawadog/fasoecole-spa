@@ -1,3 +1,9 @@
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, inject, input, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -26,7 +32,7 @@ const MODULE_HINTS: Record<OwnerModule, string> = {
 @Component({
   selector: 'app-staff',
   standalone: true,
-  imports: [FormValidationDirective, FormsModule, DecimalPipe],
+  imports: [NumberField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DecimalPipe],
   templateUrl: './staff.html',
   styleUrl: './staff.scss',
 })

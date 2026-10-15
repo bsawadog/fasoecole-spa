@@ -1,3 +1,4 @@
+@layer legacy {
 :host { display: block; }
 .help { max-width: 1000px; margin: auto; color: #213c30; }
 header { margin-bottom: 24px; }
@@ -26,3 +27,5 @@ a { color: #19764f; font-weight: 600; text-underline-offset: 4px; }
 .help__empty { padding: 24px; text-align: center; color: #64756e; }
 button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid #23815c; outline-offset: 3px; }
 @media (max-width: 600px) { .help__filters { flex-direction: column; align-items: stretch; } label:first-child { min-width: 0; } .help__question { padding: 16px; } .help__answer { padding: 0 16px 20px; } }
+
+}

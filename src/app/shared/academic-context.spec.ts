@@ -56,14 +56,14 @@ describe('AcademicContextPicker shared module selection', () => {
     const { fixture, reload } = setup();
     expect(fixture.componentInstance.schoolId()).toBe(5);
     expect(fixture.componentInstance.yearId()).toBe(2);
-    expect(fixture.nativeElement.querySelectorAll('select').length).toBe(2);
+    expect(fixture.nativeElement.querySelectorAll('app-select-field').length).toBe(2);
     expect(reload).not.toHaveBeenCalled();
   });
 
   it('shows only the global school selector without requesting years', () => {
     const { fixture, reload } = setup(EMPTY, true, false);
-    expect(fixture.nativeElement.querySelectorAll('select').length).toBe(1);
-    expect(fixture.nativeElement.querySelector('select[aria-label="Établissement consulté"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('app-select-field').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('[role="combobox"][aria-label="Établissement consulté"]')).not.toBeNull();
     http.expectNone(environment.apiUrl + '/academic-years?schoolId=5');
     fixture.componentInstance.chooseSchool(6);
     expect(localStorage.getItem('fasoecole_owner_school')).toBe('6');
@@ -72,9 +72,9 @@ describe('AcademicContextPicker shared module selection', () => {
 
   it('shows only the year selector in the module header', () => {
     const { fixture } = setup(EMPTY, false, true);
-    expect(fixture.nativeElement.querySelectorAll('select').length).toBe(1);
-    expect(fixture.nativeElement.querySelector('select[aria-label="Établissement consulté"]')).toBeNull();
-    expect(fixture.nativeElement.querySelector('select[aria-label="Année scolaire consultée"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('app-select-field').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('[role="combobox"][aria-label="Établissement consulté"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[role="combobox"][aria-label="Année scolaire consultée"]')).not.toBeNull();
   });
 
   it.each(['eleves', 'enseignants'])('leaves an old %s detail when choosing a different school', async resource => {

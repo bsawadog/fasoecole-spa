@@ -1,3 +1,4 @@
+@layer legacy {
 .class-roster { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; background: #f8fafc; }
 .class-roster__search { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; padding: .8rem 1rem; }
 .class-roster__search label { font-size: .85rem; color: #334155; }
@@ -94,3 +95,5 @@
 .class-roster__class-picker .class-roster__select:focus { outline: none; border-color: #d97706; box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.3); }
 
 .class-roster__school-picker, .class-roster__school-picker .class-roster__select { font-weight: 700; }
+
+}

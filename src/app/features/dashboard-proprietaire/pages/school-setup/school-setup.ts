@@ -1,3 +1,10 @@
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -11,7 +18,7 @@ import { apiError } from '../../../../shared/self-space/self-space.service';
 
 @Component({
   selector: 'app-school-setup', standalone: true,
-  imports: [FormValidationDirective, FormsModule, RouterLink],
+  imports: [NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink],
   templateUrl: './school-setup.html', styleUrl: './school-setup.scss',
 })
 export class SchoolSetup implements OnInit {

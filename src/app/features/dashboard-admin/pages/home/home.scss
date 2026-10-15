@@ -1,3 +1,4 @@
+@layer legacy {
 .dashboard-home {
   &__subtitle {
     color: #6b7280;
@@ -30,4 +31,6 @@
       line-height: 1.6;
     }
   }
+}
+
 }

@@ -1,3 +1,11 @@
+import { DateField } from '../../../../shared/ui/date-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
@@ -15,7 +23,7 @@ import { ClassRecord, ClassRosterRow, OwnerManagementService } from '../../owner
 
 @Component({
   selector: 'app-owner-parent-portal', standalone: true,
-  imports: [FormValidationDirective, DatePipe, FormsModule, ConversationFiles, PortalPosts],
+  imports: [DateField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, ConversationFiles, PortalPosts],
   templateUrl: './parent-portal.html', styleUrl: '../../../../shared/self-space/self-space.scss',
 })
 export class OwnerParentPortal implements OnInit {

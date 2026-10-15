@@ -22,7 +22,7 @@
   }
 
   @if (loading()) {
-    <p class="class-roster__state">Chargement…</p>
+    <app-loading-state message="Chargement…" />
   } @else if (classes().length === 0) {
     <p class="class-roster__state">Aucune classe n’a encore été créée pour cet établissement.</p>
   } @else {
@@ -30,18 +30,18 @@
       <div class="class-roster__card-head"><h2>Classe sélectionnée</h2></div>
       <div class="class-roster__toolbar">
         <label class="class-roster__class-picker" for="class-select">Choisir une classe
-          <select id="class-select" class="class-roster__select" [ngModel]="selectedClassId()" (change)="onClassChange($event)">
+          <app-select-field inputId="class-select" class="class-roster__select" [ngModel]="selectedClassId()" (change)="onClassChange($event)" [ariaLabel]="(&quot;Choisir une classe &quot;).trim()">
             @for (schoolClass of classes(); track schoolClass.id) {
-              <option [value]="schoolClass.id">{{ className(schoolClass) }}</option>
+              <app-select-option [value]="schoolClass.id" [label]="((&quot;&quot; + ((className(schoolClass))) + &quot;&quot;)).trim()" />
             }
-          </select>
+          </app-select-field>
         </label>
         <div class="class-roster__toolbar-actions">
           @if (selectedClassId() && !addingStudent()) {
-            <button type="button" class="class-roster__add-btn" (click)="openAddStudent()">+ Ajouter un {{ learner().singular }}</button>
+            <button pButton type="button" class="class-roster__add-btn" (click)="openAddStudent()">+ Ajouter un {{ learner().singular }}</button>
           }
           @if (selectedClassId() && rows().length > 0) {
-            <button type="button" class="class-roster__print-btn" (click)="printRoster()">🖨️ Imprimer / Enregistrer en PDF</button>
+            <button pButton type="button" class="class-roster__print-btn" (click)="printRoster()">🖨️ Imprimer / Enregistrer en PDF</button>
           }
         </div>
       </div>
@@ -55,30 +55,30 @@
       <form class="class-roster__new-form class-roster__card class-roster__no-print" (ngSubmit)="submitNewStudent()">
         <div class="class-roster__card-head"><h2>Ajouter un {{ learner().singular }} à cette classe</h2></div>
         <div class="class-roster__edit-grid">
-          <label>Prénom <input name="nFirstName" [(ngModel)]="newStudentForm.firstName" required /></label>
-          <label>Nom <input name="nLastName" [(ngModel)]="newStudentForm.lastName" required /></label>
-          <label>Courriel (facultatif) <input type="email" email name="nEmail" [(ngModel)]="newStudentForm.email" /></label>
+          <label>Prénom <input pInputText name="nFirstName" [(ngModel)]="newStudentForm.firstName" required /></label>
+          <label>Nom <input pInputText name="nLastName" [(ngModel)]="newStudentForm.lastName" required /></label>
+          <label>Courriel (facultatif) <input pInputText type="email" email name="nEmail" [(ngModel)]="newStudentForm.email" /></label>
           <p>Si un courriel est renseigné, un lien d’activation sera envoyé pour choisir le mot de passe.</p>
-          <label>Téléphone <input name="nPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="newStudentForm.phone" /></label>
-          <label>Matricule <input type="text" autocomplete="off" [name]="'matricule_' + selectedSchoolId() + '_nouveau'" maxlength="50" [(ngModel)]="newStudentForm.registrationNumber" placeholder="Généré automatiquement" /></label>
-          <label>Naissance <input type="date" name="nBirthDate" [(ngModel)]="newStudentForm.birthDate" /></label>
+          <label>Téléphone <input pInputText name="nPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="newStudentForm.phone" /></label>
+          <label>Matricule <input pInputText type="text" autocomplete="off" [name]="'matricule_' + selectedSchoolId() + '_nouveau'" maxlength="50" [(ngModel)]="newStudentForm.registrationNumber" placeholder="Généré automatiquement" /></label>
+          <label>Naissance <app-date-field mode="date" name="nBirthDate" [(ngModel)]="newStudentForm.birthDate" [ariaLabel]="(&quot;Naissance &quot;).trim()" /></label>
           <label>Genre
-            <select name="nGender" [(ngModel)]="newStudentForm.gender">
-              <option value="">—</option>
-              <option value="M">Masculin</option>
-              <option value="F">Féminin</option>
-            </select>
+            <app-select-field name="nGender" [(ngModel)]="newStudentForm.gender" [ariaLabel]="(&quot;Genre &quot;).trim()">
+              <app-select-option [value]="&quot;&quot;" [label]="(&quot;—&quot;).trim()" />
+              <app-select-option [value]="&quot;M&quot;" [label]="(&quot;Masculin&quot;).trim()" />
+              <app-select-option [value]="&quot;F&quot;" [label]="(&quot;Féminin&quot;).trim()" />
+            </app-select-field>
           </label>
         </div>
         <div class="class-roster__edit-actions">
-          <button type="submit" [disabled]="saving()">Ajouter {{ learner().definite }}</button>
-          <button type="button" (click)="cancelAddStudent()">Annuler</button>
+          <button pButton type="submit" [disabled]="saving()">Ajouter {{ learner().definite }}</button>
+          <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelAddStudent()">Annuler</button>
         </div>
       </form>
     }
 
     @if (loadingRoster()) {
-      <p class="class-roster__state">Chargement des {{ learner().plural }}…</p>
+      <app-loading-state message="Chargement des {{ learner().plural }}…" />
     } @else if (rows().length === 0) {
       <p class="class-roster__state">Aucun {{ learner().singular }} actif inscrit dans cette classe.</p>
     } @else {
@@ -89,11 +89,11 @@
         </div>
         <div class="class-roster__search class-roster__no-print">
           <label for="roster-student-search">Rechercher un {{ learner().singular }}</label>
-          <input id="roster-student-search" type="search" class="class-roster__select"
+          <input pInputText id="roster-student-search" type="search" class="class-roster__select"
                  [ngModel]="studentSearch()" (ngModelChange)="studentSearch.set($event)"
                  placeholder="Nom, prénom, matricule ou courriel" />
           @if (studentSearch()) {
-            <button type="button" class="class-roster__action" (click)="studentSearch.set('')">Effacer</button>
+            <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__action" (click)="studentSearch.set('')">Effacer</button>
           }
         </div>
         <div class="class-roster__table-wrap">
@@ -118,23 +118,23 @@
                   <td colspan="6">
                     <form class="class-roster__edit-form" (ngSubmit)="saveStudent(row.studentId)">
                       <div class="class-roster__edit-grid">
-                        <label>Prénom <input name="firstName" [(ngModel)]="studentForm.firstName" required /></label>
-                        <label>Nom <input name="lastName" [(ngModel)]="studentForm.lastName" required /></label>
-                        <label>Courriel (facultatif) <input type="email" email name="email" [(ngModel)]="studentForm.email" /></label>
-                        <label>Téléphone <input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="studentForm.phone" /></label>
-                        <label>Matricule <input type="text" autocomplete="off" [name]="'matricule_' + selectedSchoolId() + '_' + row.studentId" maxlength="50" [(ngModel)]="studentForm.registrationNumber" required /></label>
-                        <label>Naissance <input type="date" name="birthDate" [(ngModel)]="studentForm.birthDate" /></label>
+                        <label>Prénom <input pInputText name="firstName" [(ngModel)]="studentForm.firstName" required /></label>
+                        <label>Nom <input pInputText name="lastName" [(ngModel)]="studentForm.lastName" required /></label>
+                        <label>Courriel (facultatif) <input pInputText type="email" email name="email" [(ngModel)]="studentForm.email" /></label>
+                        <label>Téléphone <input pInputText name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="studentForm.phone" /></label>
+                        <label>Matricule <input pInputText type="text" autocomplete="off" [name]="'matricule_' + selectedSchoolId() + '_' + row.studentId" maxlength="50" [(ngModel)]="studentForm.registrationNumber" required /></label>
+                        <label>Naissance <app-date-field mode="date" name="birthDate" [(ngModel)]="studentForm.birthDate" [ariaLabel]="(&quot;Naissance &quot;).trim()" /></label>
                         <label>Genre
-                          <select name="gender" [(ngModel)]="studentForm.gender">
-                            <option value="">—</option>
-                            <option value="M">Masculin</option>
-                            <option value="F">Féminin</option>
-                          </select>
+                          <app-select-field name="gender" [(ngModel)]="studentForm.gender" [ariaLabel]="(&quot;Genre &quot;).trim()">
+                            <app-select-option [value]="&quot;&quot;" [label]="(&quot;—&quot;).trim()" />
+                            <app-select-option [value]="&quot;M&quot;" [label]="(&quot;Masculin&quot;).trim()" />
+                            <app-select-option [value]="&quot;F&quot;" [label]="(&quot;Féminin&quot;).trim()" />
+                          </app-select-field>
                         </label>
                       </div>
                       <div class="class-roster__edit-actions">
-                        <button type="submit" [disabled]="saving()">Enregistrer</button>
-                        <button type="button" (click)="cancelEdit()">Annuler</button>
+                        <button pButton type="submit" [disabled]="saving()">Enregistrer</button>
+                        <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()">Annuler</button>
                       </div>
                     </form>
                   </td>
@@ -147,24 +147,24 @@
                       @if (transferTargets().length === 0) {
                         <p class="class-roster__muted">Aucune autre classe n’existe dans cet établissement.</p>
                         <div class="class-roster__edit-actions">
-                          <button type="button" (click)="cancelEdit()">Fermer</button>
+                          <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()">Fermer</button>
                         </div>
                       } @else {
                         <label>Classe de destination
-                          <select class="class-roster__select" name="transferTarget" [(ngModel)]="transferTargetId" required>
+                          <app-select-field class="class-roster__select" name="transferTarget" [(ngModel)]="transferTargetId" required [ariaLabel]="(&quot;Classe de destination &quot;).trim()">
                             @for (group of transferTargetGroups(); track group.label) {
-                              <optgroup [label]="group.label">
+                              <ng-container>
                                 @for (target of group.classes; track target.id) {
-                                  <option [ngValue]="target.id">{{ className(target) }}</option>
+                                  <app-select-option [value]="target.id" [label]="((&quot;&quot; + ((className(target))) + &quot;&quot;)).trim()" [group]="group.label" />
                                 }
-                              </optgroup>
+                              </ng-container>
                             }
-                          </select>
+                          </app-select-field>
                         </label>
                         <p class="class-roster__muted">La fiche de {{ learner().definite }} (notes, présences, paiements, parents) est conservée.</p>
                         <div class="class-roster__edit-actions">
-                          <button type="submit" [disabled]="saving() || !transferTargetId">Transférer</button>
-                          <button type="button" (click)="cancelEdit()">Annuler</button>
+                          <button pButton type="submit" [disabled]="saving() || !transferTargetId">Transférer</button>
+                          <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()">Annuler</button>
                         </div>
                       }
                     </form>
@@ -181,7 +181,7 @@
                     <div>{{ row.email }}</div>
                     @if (row.emailVerified === false) {
                       <small>{{ row.invitationDeliveryStatus === 'FAILED' ? 'Envoi échoué' : 'Compte à activer' }}</small>
-                      <button type="button" class="class-roster__no-print" [disabled]="saving()" (click)="resendInvitation(row.userId)">Renvoyer le lien</button>
+                      <button pButton type="button" class="class-roster__no-print" [disabled]="saving()" (click)="resendInvitation(row.userId)">Renvoyer le lien</button>
                     }
                     @if (row.phone) { <div class="class-roster__muted">{{ row.phone }}</div> }
                   </td>
@@ -191,14 +191,14 @@
                       @if (editingParentId() === parent.parentId) {
                         <form class="class-roster__edit-form" (ngSubmit)="saveParent(parent.parentId, row.studentId)">
                           <div class="class-roster__edit-grid">
-                            <label>Prénom <input name="pFirstName" [(ngModel)]="parentForm.firstName" required /></label>
-                            <label>Nom <input name="pLastName" [(ngModel)]="parentForm.lastName" required /></label>
-                            <label>Courriel (facultatif) <input type="email" email name="pEmail" [(ngModel)]="parentForm.email" /></label>
-                            <label>Téléphone <input name="pPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="parentForm.phone" /></label>
+                            <label>Prénom <input pInputText name="pFirstName" [(ngModel)]="parentForm.firstName" required /></label>
+                            <label>Nom <input pInputText name="pLastName" [(ngModel)]="parentForm.lastName" required /></label>
+                            <label>Courriel (facultatif) <input pInputText type="email" email name="pEmail" [(ngModel)]="parentForm.email" /></label>
+                            <label>Téléphone <input pInputText name="pPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="parentForm.phone" /></label>
                           </div>
                           <div class="class-roster__edit-actions">
-                            <button type="submit" [disabled]="saving()">Enregistrer</button>
-                            <button type="button" (click)="cancelEdit()">Annuler</button>
+                            <button pButton type="submit" [disabled]="saving()">Enregistrer</button>
+                            <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()">Annuler</button>
                           </div>
                         </form>
                       } @else {
@@ -207,7 +207,7 @@
                           @if (parent.email) { <span class="class-roster__muted">{{ parent.email }}</span> }
                           @if (parent.phone) { <span class="class-roster__muted">{{ parent.phone }}</span> }
                           <div class="class-roster__parent-actions class-roster__no-print">
-                            <button type="button" class="class-roster__link" (click)="startEditParent(parent)">Modifier</button>
+                            <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__link ui-row-action" title="Modifier le parent" [attr.aria-label]="'Modifier le parent : ' + parent.firstName + ' ' + parent.lastName" (click)="startEditParent(parent)"><svg lucidePencil [size]="18" aria-hidden="true"></svg></button>
                             @if (parent.email) {
                               <a class="class-roster__link class-roster__link--contact" [href]="'mailto:' + parent.email" title="Contacter le parent par courriel">✉️ Contacter</a>
                             }
@@ -221,21 +221,21 @@
                       @if (addingParentStudentId() === row.studentId) {
                         <form class="class-roster__edit-form" #newParent="ngForm" (ngSubmit)="newParent.valid && addParent(row.studentId)">
                           <div class="class-roster__edit-grid">
-                            <label>Prénom<input name="firstName" [(ngModel)]="newParentForm.firstName" required maxlength="100" /></label>
-                            <label>Nom<input name="lastName" [(ngModel)]="newParentForm.lastName" required maxlength="100" /></label>
-                            <label>Courriel (facultatif)<input name="email" type="email" email [(ngModel)]="newParentForm.email" maxlength="150" /></label>
-                            <label>Téléphone<input name="phone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="newParentForm.phone" maxlength="30" /></label>
-                            <label>Lien avec {{ learner().definite }}<input name="relationship" [(ngModel)]="newParentForm.relationship" maxlength="50" placeholder="Père, mère, tuteur…" /></label>
+                            <label>Prénom<input pInputText name="firstName" [(ngModel)]="newParentForm.firstName" required maxlength="100" /></label>
+                            <label>Nom<input pInputText name="lastName" [(ngModel)]="newParentForm.lastName" required maxlength="100" /></label>
+                            <label>Courriel (facultatif)<input pInputText name="email" type="email" email [(ngModel)]="newParentForm.email" maxlength="150" /></label>
+                            <label>Téléphone<input pInputText name="phone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="newParentForm.phone" maxlength="30" /></label>
+                            <label>Lien avec {{ learner().definite }}<input pInputText name="relationship" [(ngModel)]="newParentForm.relationship" maxlength="50" placeholder="Père, mère, tuteur…" /></label>
                           </div>
                           <div class="class-roster__edit-actions">
-                            <button type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Ajouter' }}</button>
-                            <button type="button" (click)="cancelEdit()" [disabled]="saving()">Annuler</button>
+                            <button pButton type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Ajouter' }}</button>
+                            <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()" [disabled]="saving()">Annuler</button>
                           </div>
                         </form>
                       } @else {
                         <span class="class-roster__muted">Aucun parent associé</span>
                         <div class="class-roster__parent-actions class-roster__no-print">
-                          <button type="button" class="class-roster__link" (click)="startAddParent(row)" [disabled]="saving()"
+                          <button pButton severity="secondary" variant="text" type="button" class="class-roster__link" (click)="startAddParent(row)" [disabled]="saving()"
                             [attr.aria-label]="'Ajouter un parent pour ' + row.firstName + ' ' + row.lastName">+ Ajouter un parent</button>
                         </div>
                       }
@@ -249,10 +249,9 @@
                     }
                   </td>
                   <td class="class-roster__actions class-roster__no-print">
-                    <a class="class-roster__action class-roster__action--primary" [routerLink]="['/proprietaire/eleves', row.studentId]">Voir la fiche</a>
-                    <button type="button" class="class-roster__action" (click)="startEditStudent(row)">Modifier</button>
-                    <button type="button" class="class-roster__action" (click)="startTransfer(row)">Transférer</button>
-                    <button type="button" class="class-roster__action class-roster__danger" (click)="removeStudent(row)">Supprimer</button>
+                    <a class="class-roster__action ui-row-action" title="Voir la fiche" [attr.aria-label]="'Voir la fiche : ' + row.firstName + ' ' + row.lastName" [routerLink]="['/proprietaire/eleves', row.studentId]"><svg lucideEye [size]="18" aria-hidden="true"></svg></a>
+                    <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__action ui-row-action" title="Modifier" [attr.aria-label]="'Modifier : ' + row.firstName + ' ' + row.lastName" (click)="startEditStudent(row)"><svg lucidePencil [size]="18" aria-hidden="true"></svg></button>
+                    <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__action ui-row-action" title="Transférer vers une autre classe" [attr.aria-label]="'Transférer : ' + row.firstName + ' ' + row.lastName" (click)="startTransfer(row)"><svg lucideArrowRightLeft [size]="18" aria-hidden="true"></svg></button>
                   </td>
                 }
               </tr>

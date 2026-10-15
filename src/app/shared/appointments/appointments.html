@@ -1,20 +1,20 @@
 <section class="appointments" aria-label="Rendez-vous">
   <div class="appointments__toolbar">
     <div>@if (showHeading()) { <h2>Rendez-vous</h2> }<p class="appointments__pending"><span>{{ pendingCount() }}</span> demande(s) en attente non expirée(s)</p></div>
-    <div class="appointments__actions"><button type="button" class="appointments__button" [disabled]="loading() || busy()" (click)="refresh()">Actualiser</button>
-      @if (owner()) { <button type="button" class="appointments__button appointments__button--primary" [disabled]="loading() || busy()" [attr.aria-expanded]="showForm" aria-controls="appointment-form" (click)="showForm = !showForm">{{ showForm ? 'Fermer le formulaire' : '+ Prendre un rendez-vous' }}</button> }</div>
+    <div class="appointments__actions"><button pButton type="button" class="appointments__button" [disabled]="loading() || busy()" (click)="refresh()">Actualiser</button>
+      @if (owner()) { <button pButton type="button" class="appointments__button appointments__button--primary" [disabled]="loading() || busy()" [attr.aria-expanded]="showForm" aria-controls="appointment-form" (click)="showForm = !showForm">{{ showForm ? 'Fermer le formulaire' : '+ Prendre un rendez-vous' }}</button> }</div>
   </div>
-  @if (error()) { <p class="appointments__notice appointments__notice--error" role="alert">{{ error() }}</p> }
-  @if (success()) { <p class="appointments__notice" role="status">{{ success() }}</p> }
-  @if (loading()) { <p class="appointments__empty" role="status">Chargement des rendez-vous…</p> }
+  @if (error()) { <p-message severity="error" class="appointments__notice appointments__notice--error" role="alert">{{ error() }}</p-message> }
+  @if (success()) { <p-message severity="success" class="appointments__notice" role="status">{{ success() }}</p-message> }
+  @if (loading()) { <app-loading-state message="Chargement des rendez-vous…" /> }
   @else {
     @if (owner() && showForm) {
       <form id="appointment-form" class="appointments__form" (ngSubmit)="create()"><p class="appointments__eyebrow">Nouvelle demande</p><h3>Organiser une rencontre</h3>
         <div class="appointments__form-grid">
-          <label>Destinataire<select name="appointmentRecipient" [(ngModel)]="recipientUserId" required [disabled]="busy()"><option [ngValue]="null">Choisir un parent ou un enseignant</option>@for (recipient of recipients(); track recipient.userId) { <option [ngValue]="recipient.userId">{{ recipient.fullName }} · {{ recipient.role === 'PARENT' ? 'Parent' : 'Enseignant' }}</option> }</select></label>
-          <label>Date et heure<input type="datetime-local" name="appointmentDate" [(ngModel)]="proposedAt" required [disabled]="busy()" /></label>
-          <label class="appointments__wide">Motif et lieu proposé<textarea name="appointmentReason" [(ngModel)]="reason" maxlength="1000" required rows="3" [disabled]="busy()" placeholder="Sujet de la rencontre et lieu proposé"></textarea></label>
-        </div><button type="submit" class="appointments__button appointments__button--primary" [disabled]="busy() || !recipients().length">Envoyer la demande</button>
+          <label>Destinataire<app-select-field name="appointmentRecipient" [(ngModel)]="recipientUserId" required [disabled]="busy()" [ariaLabel]="(&quot;Destinataire&quot;).trim()"><app-select-option [value]="null" [label]="(&quot;Choisir un parent ou un enseignant&quot;).trim()" />@for (recipient of recipients(); track recipient.userId) { <app-select-option [value]="recipient.userId" [label]="((&quot;&quot; + ((recipient.fullName)) + &quot; · &quot; + ((recipient.role === 'PARENT' ? 'Parent' : 'Enseignant')) + &quot;&quot;)).trim()" /> }</app-select-field></label>
+          <label>Date et heure<app-date-field mode="datetime-local" name="appointmentDate" [(ngModel)]="proposedAt" required [disabled]="busy()" [ariaLabel]="(&quot;Date et heure&quot;).trim()" /></label>
+          <label class="appointments__wide">Motif et lieu proposé<textarea pTextarea name="appointmentReason" [(ngModel)]="reason" maxlength="1000" required rows="3" [disabled]="busy()" placeholder="Sujet de la rencontre et lieu proposé"></textarea></label>
+        </div><button pButton type="submit" class="appointments__button appointments__button--primary" [disabled]="busy() || !recipients().length">Envoyer la demande</button>
         @if (!recipients().length) { <p>Aucun parent ou enseignant accessible dans cet établissement.</p> }
       </form>
     }
@@ -34,10 +34,10 @@
                 @if (entry.studentId) { <a class="appointments__link" [routerLink]="['/proprietaire/eleves', entry.studentId]">Consulter la fiche de l’élève →</a> }
                 @if (entry.appointment.response) { <div class="appointments__response"><strong>Réponse</strong><p>{{ entry.appointment.response }}</p></div> }
                 @if (group.id === 'active' && entry.appointment.status === 'PENDING' && !entry.sent) {
-                  <label class="appointments__reply">Réponse<textarea [(ngModel)]="responses[entry.key]" maxlength="1000" rows="2" [disabled]="busy()" placeholder="Lieu de rencontre ou motif du refus"></textarea></label>
-                  <div class="appointments__actions"><button type="button" class="appointments__button appointments__button--primary" [disabled]="busy()" (click)="respond(entry, 'ACCEPTED')">Accepter</button><button type="button" class="appointments__button appointments__button--danger" [disabled]="busy()" (click)="respond(entry, 'REJECTED')">Refuser</button></div>
+                  <label class="appointments__reply">Réponse<textarea pTextarea [(ngModel)]="responses[entry.key]" maxlength="1000" rows="2" [disabled]="busy()" placeholder="Lieu de rencontre ou motif du refus"></textarea></label>
+                  <div class="appointments__actions"><button pButton type="button" class="appointments__button appointments__button--primary" [disabled]="busy()" (click)="respond(entry, 'ACCEPTED')">Accepter</button><button pButton severity="danger" type="button" class="appointments__button appointments__button--danger" [disabled]="busy()" (click)="respond(entry, 'REJECTED')">Refuser</button></div>
                 }
-                @if (group.id === 'active' && entry.sent) { <button type="button" class="appointments__button" [disabled]="busy()" (click)="cancelEntry(entry)">Annuler le rendez-vous</button> }
+                @if (group.id === 'active' && entry.sent) { <button pButton type="button" class="appointments__button" [disabled]="busy()" (click)="cancelEntry(entry)">Annuler le rendez-vous</button> }
               </div>
             </article>
           } @empty { @if (!error()) { <p class="appointments__empty">Aucun rendez-vous {{ group.id === 'active' ? 'en cours' : group.id === 'expired' ? 'expiré' : group.id === 'rejected' ? 'refusé' : 'annulé' }}.</p> } }

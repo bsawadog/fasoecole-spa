@@ -1,3 +1,4 @@
+@layer legacy {
 .approvals {
   max-width: 68rem;
   margin: 0 auto;
@@ -203,4 +204,6 @@
       grid-column: auto;
     }
   }
+}
+
 }

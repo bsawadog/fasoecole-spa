@@ -1,3 +1,4 @@
+@layer legacy {
 .dep { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; background: #f8fafc; }
 .dep__header {
   display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
@@ -82,4 +83,6 @@
 @media (max-width: 650px) {
   .dep { padding: 1rem; }
   .dep__wide { grid-column: auto; }
+}
+
 }

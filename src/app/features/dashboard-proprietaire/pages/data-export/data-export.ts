@@ -1,3 +1,6 @@
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -6,13 +9,13 @@ import { environment } from '../../../../../environments/environment';
 
 interface SchoolChoice { id:number;name:string;status:string; }
 @Component({
-  selector:'app-school-data-export',standalone:true,imports:[FormsModule],
+  selector:'app-school-data-export',standalone:true,imports:[LoadingState, ButtonModule, MessageModule, FormsModule],
   template:`
-    <main class="export">
-      <header><p class="eyebrow">VOS DONNÉES</p><h1>Exporter les données de mon établissement</h1>
+    <main class="export ui-workspace">
+      <header class="ui-page-header"><p class="eyebrow">VOS DONNÉES</p><h1>Exporter les données de mon établissement</h1>
         <p>Conservez une copie de vos dossiers et de vos activités, consultable sans FasoEcole.</p></header>
-      @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
-      @if (loading()) { <p>Chargement de vos établissements…</p> }
+      @if (error()) { <p-message severity="error" class="error" role="alert">{{ error() }}</p-message> }
+      @if (loading()) { <app-loading-state message="Chargement de vos établissements…" /> }
       @else if (!schools().length) { <section class="card"><h2>Aucun établissement à exporter</h2>
         <p>Ce téléchargement est réservé au propriétaire de l’établissement.</p></section> }
       @else {
@@ -28,12 +31,12 @@ interface SchoolChoice { id:number;name:string;status:string; }
           </div>
           <div class="downloads">
             <div class="download"><h3>Classeur Excel</h3><p>Les données dans des feuilles séparées, avec filtres et sommaire.</p>
-              <button type="button" [disabled]="busy() || !schoolId" (click)="download(false)">{{ busy() && !withFiles() ? 'Préparation du classeur…' : 'Télécharger Excel' }}</button></div>
+              <button pButton type="button" [disabled]="busy() || !schoolId" (click)="download(false)">{{ busy() && !withFiles() ? 'Préparation du classeur…' : 'Télécharger Excel' }}</button></div>
             <div class="download recommended"><h3>Archive avec documents</h3><p>Le même classeur Excel et les fichiers joints stockés dans FasoEcole, réunis dans un ZIP.</p>
-              <button type="button" [disabled]="busy() || !schoolId" (click)="download(true)">{{ busy() && withFiles() ? 'Préparation de l’archive…' : 'Télécharger Excel et documents' }}</button></div>
+              <button pButton type="button" [disabled]="busy() || !schoolId" (click)="download(true)">{{ busy() && withFiles() ? 'Préparation de l’archive…' : 'Télécharger Excel et documents' }}</button></div>
           </div>
-          @if (busy()) { <p class="progress" role="status">Préparation de votre copie. Le téléchargement peut prendre quelques minutes selon le volume des données et des documents.</p> }
-          @if (success()) { <p class="success" role="status">{{ success() }}</p> }
+          @if (busy()) { <p-message severity="success" class="progress" role="status">Préparation de votre copie. Le téléchargement peut prendre quelques minutes selon le volume des données et des documents.</p-message> }
+          @if (success()) { <p-message severity="success" class="success" role="status">{{ success() }}</p-message> }
           <p class="details">Nom du classeur : <strong>donnees_etablissement_date.xlsx</strong>, avec la date et l’heure d’export.
             Les matricules et numéros d’employé sont conservés comme du texte.</p>
           <p class="details">Les documents enregistrés comme liens externes sont référencés dans le classeur ; leur contenu n’est pas inclus dans le ZIP.
@@ -42,9 +45,9 @@ interface SchoolChoice { id:number;name:string;status:string; }
       }
     </main>
   `,
-  styles:[`
+  styles:[`@layer legacy {
     :host{display:block;color:#213e32}.export{max-width:1150px;margin:auto;padding:12px}header{margin-bottom:28px}.eyebrow{color:#19764f;font-size:11px;letter-spacing:.15em;font-weight:700}h1{font-size:29px;margin:8px 0 12px}header p{color:#697c70;line-height:1.6}.card{background:white;border:1px solid #e0e9e2;border-radius:18px;padding:28px}label{display:grid;gap:8px;max-width:520px;font-size:13px;font-weight:600}select{font:inherit;padding:12px;border:1px solid #cfded3;border-radius:9px;background:white}.scope{background:#eff7f2;border-radius:12px;padding:18px;margin:24px 0}.scope p{margin-bottom:0;font-size:13px;line-height:1.6}h2{font-size:20px}h3{font-size:15px}.categories{display:grid;grid-template-columns:1fr 1fr;gap:12px 28px;margin:20px 0}.categories p,.download p{font-size:13px;line-height:1.7;color:#6b7c70}.downloads{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:24px 0}.download{border:1px solid #e0e9e2;border-radius:14px;padding:22px}.recommended{border-color:#a5ceb5;background:#f8fcf9}button{font:inherit;font-size:13px;font-weight:600;background:#19764f;color:white;border:0;border-radius:9px;padding:12px 18px;cursor:pointer}button:disabled{opacity:.55;cursor:default}.details{font-size:12px;color:#697c70;line-height:1.7}.progress,.success,.error{padding:15px;border-radius:10px;font-size:13px;line-height:1.6}.progress{background:#f0f5ff;color:#39577b}.success{background:#eaf7ef;color:#19764f}.error{background:#fff0ed;color:#a23f31}@media(max-width:700px){.categories,.downloads{grid-template-columns:1fr}.card{padding:20px}.export{padding:0}h1{font-size:24px}}
-  `],
+   }`],
 })
 export class SchoolDataExport {
   private readonly http=inject(HttpClient);

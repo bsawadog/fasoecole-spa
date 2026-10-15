@@ -13,7 +13,7 @@ import { RouterLink } from '@angular/router';
     </div>
   `,
   styles: [
-    `
+    `@layer legacy {
       .unauthorized {
         min-height: 100vh;
         display: flex;
@@ -31,7 +31,7 @@ import { RouterLink } from '@angular/router';
         font-weight: 600;
         text-decoration: none;
       }
-    `,
+     }`,
   ],
 })
 export class Unauthorized {}

@@ -1,14 +1,14 @@
 <section class="student-detail">
   @if (loading()) {
-    <p>Chargement…</p>
+    <app-loading-state message="Chargement…" />
   } @else if (errorMessage()) {
     <div class="student-detail__alert">{{ errorMessage() }}</div>
-    <button type="button" (click)="goBack()">← Retour</button>
+    <button pButton type="button" (click)="goBack()">← Retour</button>
   } @else if (detail(); as d) {
     <header class="student-detail__header">
       <div class="student-detail__header-top student-detail__no-print">
-        <button type="button" class="student-detail__back" (click)="goBack()">← Retour aux élèves</button>
-        <button type="button" class="student-detail__print-btn" (click)="printPage()">🖨️ Imprimer / Enregistrer en PDF</button>
+        <button pButton severity="secondary" variant="text" type="button" class="student-detail__back" (click)="goBack()">← Retour aux élèves</button>
+        <button pButton type="button" class="student-detail__print-btn" (click)="printPage()">🖨️ Imprimer / Enregistrer en PDF</button>
       </div>
       <div class="student-detail__identity">
         <div class="student-detail__avatar">{{ initials(d) }}</div>
@@ -63,7 +63,7 @@
       <section class="student-detail__card">
         <div class="student-detail__card-head">
           <h2>Assiduité</h2>
-          <button type="button" class="student-detail__no-print student-detail__link-btn" (click)="openAddAttendance()">+ Signaler</button>
+          <button pButton severity="secondary" variant="text" type="button" class="student-detail__no-print student-detail__link-btn" (click)="openAddAttendance()">+ Signaler</button>
         </div>
         @if (d.attendanceSummary.totalRecords === 0) {
           <p class="student-detail__muted">Aucune présence enregistrée.</p>
@@ -115,25 +115,25 @@
             <div class="student-detail__form-row">
               <label>
                 Date
-                <input type="date" name="attendanceDate" [(ngModel)]="attendanceForm.attendanceDate" required />
+                <app-date-field mode="date" name="attendanceDate" [(ngModel)]="attendanceForm.attendanceDate" required [ariaLabel]="(&quot; Date &quot;).trim()" />
               </label>
               <label>
                 Statut
-                <select name="status" [(ngModel)]="attendanceForm.status">
-                  <option value="PRESENT">Présent</option>
-                  <option value="ABSENT">Absent</option>
-                  <option value="LATE">Retard</option>
-                  <option value="EXCUSED">Absence justifiée</option>
-                </select>
+                <app-select-field name="status" [(ngModel)]="attendanceForm.status" [ariaLabel]="(&quot; Statut &quot;).trim()">
+                  <app-select-option [value]="&quot;PRESENT&quot;" [label]="(&quot;Présent&quot;).trim()" />
+                  <app-select-option [value]="&quot;ABSENT&quot;" [label]="(&quot;Absent&quot;).trim()" />
+                  <app-select-option [value]="&quot;LATE&quot;" [label]="(&quot;Retard&quot;).trim()" />
+                  <app-select-option [value]="&quot;EXCUSED&quot;" [label]="(&quot;Absence justifiée&quot;).trim()" />
+                </app-select-field>
               </label>
               <label class="student-detail__form-grow">
                 Motif / justification
-                <input type="text" name="justification" [(ngModel)]="attendanceForm.justification" placeholder="Ex : certificat médical" />
+                <input pInputText type="text" name="justification" [(ngModel)]="attendanceForm.justification" placeholder="Ex : certificat médical" />
               </label>
             </div>
             <div class="student-detail__form-actions">
-              <button type="submit" [disabled]="saving()">{{ editingAttendanceId() !== null ? 'Enregistrer' : 'Ajouter' }}</button>
-              <button type="button" (click)="cancelAttendanceForm()">Annuler</button>
+              <button pButton type="submit" [disabled]="saving()">{{ editingAttendanceId() !== null ? 'Enregistrer' : 'Ajouter' }}</button>
+              <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelAttendanceForm()">Annuler</button>
             </div>
           </form>
         }
@@ -152,8 +152,8 @@
                   <td><span class="student-detail__badge" [ngClass]="attendanceBadgeClass(a.status)">{{ statusLabel(a.status) }}</span></td>
                   <td>{{ a.justification || '—' }}</td>
                   <td class="student-detail__no-print">
-                    <button type="button" class="student-detail__link-btn" (click)="startEditAttendance(a)">Modifier</button>
-                    <button type="button" class="student-detail__link-btn student-detail__link-btn--danger" (click)="removeAttendance(a.id)">Supprimer</button>
+                    <button pButton severity="secondary" variant="text" type="button" class="student-detail__link-btn" (click)="startEditAttendance(a)">Modifier</button>
+                    <button pButton severity="danger" variant="text" type="button" class="student-detail__link-btn student-detail__link-btn--danger" (click)="removeAttendance(a.id)">Supprimer</button>
                   </td>
                 </tr>
               }
@@ -169,7 +169,7 @@
             Payé : {{ d.billingSummary.totalPaid | number:'1.0-0' }} ·
             Reste à payer : {{ d.billingSummary.totalBalance | number:'1.0-0' }}
           </h2>
-          <button type="button" class="student-detail__no-print student-detail__link-btn" (click)="openAddInvoice()">+ Ajouter un frais</button>
+          <button pButton severity="secondary" variant="text" type="button" class="student-detail__no-print student-detail__link-btn" (click)="openAddInvoice()">+ Ajouter un frais</button>
         </div>
 
         @if (addingInvoice()) {
@@ -177,25 +177,25 @@
             <div class="student-detail__form-row">
               <label>
                 Type de frais
-                <select name="feeTypeId" [(ngModel)]="invoiceForm.feeTypeId" (ngModelChange)="onFeeTypeChange()" required>
-                  <option [ngValue]="null" disabled>— Choisir —</option>
+                <app-select-field name="feeTypeId" [(ngModel)]="invoiceForm.feeTypeId" (ngModelChange)="onFeeTypeChange()" required [ariaLabel]="(&quot; Type de frais &quot;).trim()">
+                  <app-select-option [value]="null" [label]="(&quot;— Choisir —&quot;).trim()" disabled />
                   @for (ft of feeTypes(); track ft.id) {
-                    <option [ngValue]="ft.id">{{ ft.name }} ({{ ft.amount | number:'1.0-0' }})</option>
+                    <app-select-option [value]="ft.id" [label]="((&quot;&quot; + ((ft.name)) + &quot; (&quot; + ((ft.amount | number:'1.0-0')) + &quot;)&quot;)).trim()" />
                   }
-                </select>
+                </app-select-field>
               </label>
               <label>
                 Montant dû
-                <input type="number" name="amountDue" [(ngModel)]="invoiceForm.amountDue" min="0" />
+                <app-number-field name="amountDue" [(ngModel)]="invoiceForm.amountDue" min="0" [ariaLabel]="(&quot; Montant dû &quot;).trim()" />
               </label>
               <label>
                 Échéance
-                <input type="date" name="dueDate" [(ngModel)]="invoiceForm.dueDate" required />
+                <app-date-field mode="date" name="dueDate" [(ngModel)]="invoiceForm.dueDate" required [ariaLabel]="(&quot; Échéance &quot;).trim()" />
               </label>
             </div>
             <div class="student-detail__form-actions">
-              <button type="submit" [disabled]="saving()">Ajouter</button>
-              <button type="button" (click)="cancelInvoiceForm()">Annuler</button>
+              <button pButton type="submit" [disabled]="saving()">Ajouter</button>
+              <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelInvoiceForm()">Annuler</button>
             </div>
           </form>
         }
@@ -215,10 +215,10 @@
                   <td>{{ inv.amountDue | number:'1.0-0' }}</td>
                   <td>{{ inv.totalPaid | number:'1.0-0' }}</td>
                   <td>{{ inv.balance | number:'1.0-0' }}</td>
-                  <td><span class="student-detail__badge" [ngClass]="invoiceBadgeClass(inv.status)">{{ invoiceStatusLabel(inv.status) }}</span></td>
+                  <td><p-tag [severity]="inv.status === 'PAID' ? 'success' : inv.status === 'OVERDUE' ? 'danger' : inv.status === 'CANCELLED' ? 'secondary' : 'warn'" [value]="invoiceStatusLabel(inv.status)" /></td>
                   <td class="student-detail__no-print">
-                    <button type="button" class="student-detail__link-btn" [disabled]="!canPayInvoice(inv)" (click)="openAddPayment(inv)">Encaisser</button>
-                    <button type="button" class="student-detail__link-btn student-detail__link-btn--danger" [disabled]="!isInvoiceActionable(inv)" (click)="cancelInvoice(inv.id)">Annuler</button>
+                    <button pButton severity="secondary" variant="text" type="button" class="student-detail__link-btn" [disabled]="!canPayInvoice(inv)" (click)="openAddPayment(inv)">Encaisser</button>
+                    <button pButton severity="danger" variant="text" type="button" class="student-detail__link-btn student-detail__link-btn--danger" [disabled]="!isInvoiceActionable(inv)" (click)="cancelInvoice(inv.id)">Annuler</button>
                   </td>
                 </tr>
                 @if (payingInvoiceId() === inv.id) {
@@ -228,26 +228,26 @@
                         <div class="student-detail__form-row">
                           <label>
                             Montant
-                            <input type="number" name="amount" [(ngModel)]="paymentForm.amount" min="0" required />
+                            <app-number-field name="amount" [(ngModel)]="paymentForm.amount" min="0" required [ariaLabel]="(&quot; Montant &quot;).trim()" />
                           </label>
                           <label>
                             Date
-                            <input type="date" name="paymentDate" [(ngModel)]="paymentForm.paymentDate" />
+                            <app-date-field mode="date" name="paymentDate" [(ngModel)]="paymentForm.paymentDate" [ariaLabel]="(&quot; Date &quot;).trim()" />
                           </label>
                           <label>
                             Méthode
-                            <select name="method" [(ngModel)]="paymentForm.method">
-                              <option value="CASH">Espèces</option>
-                              <option value="MOBILE_MONEY">Mobile Money</option>
-                              <option value="BANK_TRANSFER">Virement bancaire</option>
-                              <option value="CARD">Carte</option>
-                            </select>
+                            <app-select-field name="method" [(ngModel)]="paymentForm.method" [ariaLabel]="(&quot; Méthode &quot;).trim()">
+                              <app-select-option [value]="&quot;CASH&quot;" [label]="(&quot;Espèces&quot;).trim()" />
+                              <app-select-option [value]="&quot;MOBILE_MONEY&quot;" [label]="(&quot;Mobile Money&quot;).trim()" />
+                              <app-select-option [value]="&quot;BANK_TRANSFER&quot;" [label]="(&quot;Virement bancaire&quot;).trim()" />
+                              <app-select-option [value]="&quot;CARD&quot;" [label]="(&quot;Carte&quot;).trim()" />
+                            </app-select-field>
                           </label>
                         </div>
                         <p class="student-detail__muted">La référence du reçu sera générée automatiquement.</p>
                         <div class="student-detail__form-actions">
-                          <button type="submit" [disabled]="saving()">Enregistrer le paiement</button>
-                          <button type="button" (click)="cancelPaymentForm()">Annuler</button>
+                          <button pButton type="submit" [disabled]="saving()">Enregistrer le paiement</button>
+                          <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelPaymentForm()">Annuler</button>
                         </div>
                       </form>
                     </td>
@@ -279,9 +279,9 @@
                   <td>{{ paymentMethodLabel(p.method) }}</td>
                   <td>{{ p.amount | number:'1.0-0' }}</td>
                   <td class="student-detail__no-print">
-                    <button type="button" class="student-detail__link-btn" (click)="printReceiptById(p.id)">🖨️ Reçu</button>
-                    <button type="button" class="student-detail__link-btn" [disabled]="saving()" (click)="startEditPayment(p)">Modifier</button>
-                    <button type="button" class="student-detail__link-btn student-detail__link-btn--danger" [disabled]="saving()" (click)="removePayment(p.invoiceId, p.id)">Supprimer</button>
+                    <button pButton severity="secondary" variant="text" type="button" class="student-detail__link-btn" (click)="printReceiptById(p.id)">🖨️ Reçu</button>
+                    <button pButton severity="secondary" variant="text" type="button" class="student-detail__link-btn" [disabled]="saving()" (click)="startEditPayment(p)">Modifier</button>
+                    <button pButton severity="danger" variant="text" type="button" class="student-detail__link-btn student-detail__link-btn--danger" [disabled]="saving()" (click)="removePayment(p.invoiceId, p.id)">Supprimer</button>
                   </td>
                 </tr>
                 @if (editingPaymentId() === p.id) {
@@ -290,24 +290,24 @@
                       <form class="student-detail__form" (ngSubmit)="savePayment(p.invoiceId, p.id)">
                         <div class="student-detail__form-row">
                           <label>Montant
-                            <input type="number" name="editAmount" [(ngModel)]="editPaymentForm.amount" min="0.01" step="0.01" required />
+                            <app-number-field name="editAmount" [(ngModel)]="editPaymentForm.amount" min="0.01" step="0.01" required [ariaLabel]="(&quot;Montant &quot;).trim()" />
                           </label>
                           <label>Date
-                            <input type="date" name="editPaymentDate" [(ngModel)]="editPaymentForm.paymentDate" required />
+                            <app-date-field mode="date" name="editPaymentDate" [(ngModel)]="editPaymentForm.paymentDate" required [ariaLabel]="(&quot;Date &quot;).trim()" />
                           </label>
                           <label>Méthode
-                            <select name="editMethod" [(ngModel)]="editPaymentForm.method">
-                              <option value="CASH">Espèces</option>
-                              <option value="MOBILE_MONEY">Mobile Money</option>
-                              <option value="BANK_TRANSFER">Virement bancaire</option>
-                              <option value="CARD">Carte</option>
-                            </select>
+                            <app-select-field name="editMethod" [(ngModel)]="editPaymentForm.method" [ariaLabel]="(&quot;Méthode &quot;).trim()">
+                              <app-select-option [value]="&quot;CASH&quot;" [label]="(&quot;Espèces&quot;).trim()" />
+                              <app-select-option [value]="&quot;MOBILE_MONEY&quot;" [label]="(&quot;Mobile Money&quot;).trim()" />
+                              <app-select-option [value]="&quot;BANK_TRANSFER&quot;" [label]="(&quot;Virement bancaire&quot;).trim()" />
+                              <app-select-option [value]="&quot;CARD&quot;" [label]="(&quot;Carte&quot;).trim()" />
+                            </app-select-field>
                           </label>
                         </div>
                         <p class="student-detail__muted">La référence du reçu est conservée.</p>
                         <div class="student-detail__form-actions">
-                          <button type="submit" [disabled]="saving()">Enregistrer</button>
-                          <button type="button" (click)="cancelEditPayment()">Annuler</button>
+                          <button pButton type="submit" [disabled]="saving()">Enregistrer</button>
+                          <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEditPayment()">Annuler</button>
                         </div>
                       </form>
                     </td>

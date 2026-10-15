@@ -7,29 +7,29 @@
     @if (classes().length) {
       <div class="ss__actions">
         <label class="ss__picker">Classe
-          <select [ngModel]="classId()" (ngModelChange)="selectClass(+$event)" aria-label="Classe">
+          <app-select-field [ngModel]="classId()" (ngModelChange)="selectClass(+$event)" ariaLabel="Classe">
             @for (c of classes(); track c.classId) {
-              <option [ngValue]="c.classId">{{ c.className }} — {{ c.schoolName }} ({{ c.academicYearLabel }})</option>
+              <app-select-option [value]="c.classId" [label]="((&quot;&quot; + ((c.className)) + &quot; — &quot; + ((c.schoolName)) + &quot; (&quot; + ((c.academicYearLabel)) + &quot;)&quot;)).trim()" />
             }
-          </select>
+          </app-select-field>
         </label>
         <label class="ss__picker">Période
-          <select [ngModel]="periodId()" (ngModelChange)="selectPeriod(+$event)" aria-label="Période"
+          <app-select-field [ngModel]="periodId()" (ngModelChange)="selectPeriod(+$event)" ariaLabel="Période"
                   [disabled]="!periods().length">
             @for (p of periods(); track p.id) {
-              <option [ngValue]="p.id">{{ p.name }} ({{ periodStatus[p.status] }})</option>
+              <app-select-option [value]="p.id" [label]="((&quot;&quot; + ((p.name)) + &quot; (&quot; + ((periodStatus[p.status])) + &quot;)&quot;)).trim()" />
             }
-          </select>
+          </app-select-field>
         </label>
       </div>
     }
   </header>
 
-  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
-  @if (success()) { <p class="ss__alert ss__alert--success" role="status">{{ success() }}</p> }
+  @if (error()) { <p-message severity="error" class="ss__alert ss__alert--error" role="alert">{{ error() }}</p-message> }
+  @if (success()) { <p-message severity="success" class="ss__alert ss__alert--success" role="status">{{ success() }}</p-message> }
 
   @if (loading()) {
-    <p class="ss__state">Chargement…</p>
+    <app-loading-state message="Chargement…" />
   } @else if (!classes().length) {
     <p class="ss__state">Aucune classe ne vous est encore affectée.</p>
   } @else if (!periods().length) {
@@ -43,41 +43,41 @@
       <header class="ss__card-head">
         <h2 id="evaluations-title">Mes évaluations</h2>
         @if (editable() && !showForm()) {
-          <button type="button" class="ss__mini" (click)="openForm()">+ Nouvelle évaluation</button>
+          <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" (click)="openForm()">+ Nouvelle évaluation</button>
         }
       </header>
       <div class="ss__body">
         @if (showForm()) {
           <form class="ss__form" (ngSubmit)="createEvaluation()" aria-label="Nouvelle évaluation">
             <label>Matière
-              <select name="cst" [(ngModel)]="form.classSubjectTeacherId" required>
-                <option [ngValue]="null" disabled>Choisir…</option>
+              <app-select-field name="cst" [(ngModel)]="form.classSubjectTeacherId" required [ariaLabel]="(&quot;Matière &quot;).trim()">
+                <app-select-option [value]="null" [label]="(&quot;Choisir…&quot;).trim()" disabled />
                 @for (s of selectedClass()?.subjects ?? []; track s.classSubjectTeacherId) {
-                  <option [ngValue]="s.classSubjectTeacherId">{{ s.subjectName }}</option>
+                  <app-select-option [value]="s.classSubjectTeacherId" [label]="((&quot;&quot; + ((s.subjectName)) + &quot;&quot;)).trim()" />
                 }
-              </select>
+              </app-select-field>
             </label>
             <label>Intitulé
-              <input name="title" [(ngModel)]="form.title" maxlength="120" required placeholder="Ex. Devoir n°1" />
+              <input pInputText name="title" [(ngModel)]="form.title" maxlength="120" required placeholder="Ex. Devoir n°1" />
             </label>
             <label>Type
-              <select name="type" [(ngModel)]="form.type">
-                @for (t of types; track t.value) { <option [value]="t.value">{{ t.label }}</option> }
-              </select>
+              <app-select-field name="type" [(ngModel)]="form.type" [ariaLabel]="(&quot;Type &quot;).trim()">
+                @for (t of types; track t.value) { <app-select-option [value]="t.value" [label]="((&quot;&quot; + ((t.label)) + &quot;&quot;)).trim()" /> }
+              </app-select-field>
             </label>
             <label>Date
-              <input name="date" type="date" [(ngModel)]="form.evalDate" [min]="selectedPeriod()?.startDate ?? ''"
-                     [max]="selectedPeriod()?.endDate ?? ''" required />
+              <app-date-field mode="date" name="date" [(ngModel)]="form.evalDate" [min]="selectedPeriod()?.startDate ?? ''"
+                     [max]="selectedPeriod()?.endDate ?? ''" required [ariaLabel]="(&quot;Date &quot;).trim()" />
             </label>
             <label>Barème (noté sur)
-              <input name="max" type="number" min="1" max="100" [(ngModel)]="form.maxValue" />
+              <app-number-field name="max" min="1" max="100" [(ngModel)]="form.maxValue" [ariaLabel]="(&quot;Barème (noté sur) &quot;).trim()" />
             </label>
             <label>Poids
-              <input name="weight" type="number" min="0.25" max="10" step="0.25" [(ngModel)]="form.weight" />
+              <app-number-field name="weight" min="0.25" max="10" step="0.25" [(ngModel)]="form.weight" [ariaLabel]="(&quot;Poids &quot;).trim()" />
             </label>
             <div class="ss__actions ss__wide">
-              <button type="submit" class="ss__btn" [disabled]="busy()">Créer l’évaluation</button>
-              <button type="button" class="ss__btn ss__btn--ghost" (click)="showForm.set(false)">Annuler</button>
+              <button pButton type="submit" class="ss__btn" [disabled]="busy()">Créer l’évaluation</button>
+              <button pButton severity="secondary" variant="outlined" type="button" class="ss__btn ss__btn--ghost" (click)="showForm.set(false)">Annuler</button>
             </div>
           </form>
         }
@@ -103,11 +103,11 @@
                     <td class="ss__num">{{ e.averageOn20 === null ? '—' : (e.averageOn20 | number: '1.2-2') }}</td>
                     <td>
                       <div class="ss__actions">
-                        <button type="button" class="ss__mini" (click)="openSheet(e.id)">
+                        <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" (click)="openSheet(e.id)">
                           {{ editable() ? 'Saisir les notes' : 'Voir les notes' }}
                         </button>
                         @if (editable()) {
-                          <button type="button" class="ss__mini ss__mini--danger" (click)="deleteEvaluation(e)">Supprimer</button>
+                          <button pButton severity="danger" variant="outlined" type="button" class="ss__mini ss__mini--danger" (click)="deleteEvaluation(e)">Supprimer</button>
                         }
                       </div>
                     </td>
@@ -140,11 +140,11 @@
                       <td><label [for]="'grade-' + row.studentId">{{ row.fullName }}</label></td>
                       <td>{{ row.registrationNumber }}</td>
                       <td>
-                        <input class="ss__grade-input" [id]="'grade-' + row.studentId" [name]="'grade-' + row.studentId"
+                        <input pInputText class="ss__grade-input" [id]="'grade-' + row.studentId" [name]="'grade-' + row.studentId"
                                inputmode="decimal" [(ngModel)]="values[row.studentId]" [disabled]="!editable()"
                                placeholder="—" />
                       </td>
-                      <td><textarea [name]="'appreciation-' + row.studentId" [(ngModel)]="appreciations[row.studentId]"
+                      <td><textarea pTextarea [name]="'appreciation-' + row.studentId" [(ngModel)]="appreciations[row.studentId]"
                                     [disabled]="!editable()" rows="2" maxlength="500"
                                     placeholder="Appréciation pour l’élève"></textarea></td>
                     </tr>
@@ -155,16 +155,16 @@
             @if (editable()) {
               @if (altersExisting()) {
                 <label class="ss__field">Motif de la modification (obligatoire)
-                  <input name="reason" [(ngModel)]="reason" maxlength="255" placeholder="Ex. erreur de report" />
+                  <input pInputText name="reason" [(ngModel)]="reason" maxlength="255" placeholder="Ex. erreur de report" />
                 </label>
               } @else {
                 <label class="ss__field">Motif (requis pour supprimer une évaluation déjà notée)
-                  <input name="reason" [(ngModel)]="reason" maxlength="255" />
+                  <input pInputText name="reason" [(ngModel)]="reason" maxlength="255" />
                 </label>
               }
               <div class="ss__actions">
-                <button type="submit" class="ss__btn" [disabled]="busy()">Enregistrer les notes</button>
-                <button type="button" class="ss__btn ss__btn--ghost" (click)="sheet.set(null)">Fermer</button>
+                <button pButton type="submit" class="ss__btn" [disabled]="busy()">Enregistrer les notes</button>
+                <button pButton severity="secondary" variant="outlined" type="button" class="ss__btn ss__btn--ghost" (click)="sheet.set(null)">Fermer</button>
               </div>
             }
           }

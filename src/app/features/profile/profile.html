@@ -25,7 +25,7 @@
         <span>Confirmez-la pour accéder aux modules de votre établissement.</span>
         @if (verificationMessage()) { <span>{{ verificationMessage() }}</span> }
       </div>
-      <button type="button" class="profile__link-button" [disabled]="verificationSending()" (click)="resendVerification()">
+      <button pButton severity="secondary" variant="text" type="button" class="profile__link-button" [disabled]="verificationSending()" (click)="resendVerification()">
         {{ verificationSending() ? 'Envoi…' : 'Renvoyer le lien' }}
       </button>
     </section>
@@ -34,36 +34,36 @@
   <section class="profile__card" aria-labelledby="profile-info-title">
     <h2 id="profile-info-title">Informations personnelles</h2>
 
-    @if (error()) { <p class="profile__error" role="alert">{{ error() }}</p> }
-    @if (success()) { <p class="profile__success" role="status">Profil mis à jour.</p> }
+    @if (error()) { <p-message severity="error" class="profile__error" role="alert">{{ error() }}</p-message> }
+    @if (success()) { <p-message severity="success" class="profile__success" role="status">Profil mis à jour.</p-message> }
 
     <form #profileForm="ngForm" (ngSubmit)="save(profileForm)">
       <label for="profile-type">Type de profil</label>
-      <input id="profile-type" type="text" [value]="profileType()" readonly />
+      <input pInputText id="profile-type" type="text" [value]="profileType()" readonly />
 
       <label for="profile-first-name">Prénom</label>
-      <input id="profile-first-name" name="firstName" [(ngModel)]="form.firstName" required maxlength="100" />
+      <input pInputText id="profile-first-name" name="firstName" [(ngModel)]="form.firstName" required maxlength="100" />
 
       <label for="profile-last-name">Nom</label>
-      <input id="profile-last-name" name="lastName" [(ngModel)]="form.lastName" required maxlength="100" />
+      <input pInputText id="profile-last-name" name="lastName" [(ngModel)]="form.lastName" required maxlength="100" />
 
       <label for="profile-email">E-mail (identifiant)</label>
-      <input id="profile-email" type="email" [value]="user()?.email ?? ''" readonly />
+      <input pInputText id="profile-email" type="email" [value]="user()?.email ?? ''" readonly />
 
       <label for="profile-phone">Téléphone</label>
-      <input id="profile-phone" name="phone" type="tel" [(ngModel)]="form.phone" maxlength="30" />
+      <input pInputText id="profile-phone" name="phone" type="tel" [(ngModel)]="form.phone" maxlength="30" />
 
       @if (!user()?.approved && (user()?.requestedRole === 'STUDENT' || user()?.requestedRole === 'TEACHER')) {
         <label for="profile-initial-identifier">{{ user()?.requestedRole === 'STUDENT' ? 'Matricule' : 'Numéro d’employé' }} dans {{ user()?.requestedSchoolName }}</label>
-        <input id="profile-initial-identifier" type="text" name="initialSchoolIdentifier" [(ngModel)]="initialSchoolIdentifier" maxlength="50" required />
+        <input pInputText id="profile-initial-identifier" type="text" name="initialSchoolIdentifier" [(ngModel)]="initialSchoolIdentifier" maxlength="50" required />
         <small>Vous pouvez corriger ce numéro pendant l’attente de l’approbation.</small>
       }
       @if (user()?.requestedRole === 'PARENT' && !user()?.approved) {
         <label for="profile-initial-matricules">Matricules des enfants dans {{ user()?.requestedSchoolName }}</label>
-        <input id="profile-initial-matricules" type="text" name="initialChildMatricules" [(ngModel)]="initialChildMatricules" maxlength="1100" required />
+        <input pInputText id="profile-initial-matricules" type="text" name="initialChildMatricules" [(ngModel)]="initialChildMatricules" maxlength="1100" required />
         <small>Vous pouvez corriger les matricules pendant l’attente de l’approbation.</small>
       }
-      <button type="submit" [disabled]="saving()">
+      <button pButton type="submit" [disabled]="saving()">
         {{ saving() ? 'Enregistrement…' : 'Enregistrer les modifications' }}
       </button>
     </form>
@@ -72,25 +72,25 @@
   <section class="profile__card" aria-labelledby="profile-password-title">
     <h2 id="profile-password-title">Mot de passe</h2>
 
-    @if (passwordError()) { <p class="profile__error" role="alert">{{ passwordError() }}</p> }
-    @if (passwordSuccess()) { <p class="profile__success" role="status">Mot de passe modifié.</p> }
+    @if (passwordError()) { <p-message severity="error" class="profile__error" role="alert">{{ passwordError() }}</p-message> }
+    @if (passwordSuccess()) { <p-message severity="success" class="profile__success" role="status">Mot de passe modifié.</p-message> }
 
     <form #passwordFormRef="ngForm" (ngSubmit)="changePassword(passwordFormRef)">
       <label for="profile-current-password">Mot de passe actuel</label>
-      <input id="profile-current-password" name="currentPassword" type="password"
+      <input pInputText id="profile-current-password" name="currentPassword" type="password"
              autocomplete="current-password" [(ngModel)]="passwordForm.currentPassword" required />
 
       <label for="profile-new-password">Nouveau mot de passe</label>
-      <input id="profile-new-password" name="newPassword" type="password" autocomplete="new-password"
+      <input pInputText id="profile-new-password" name="newPassword" type="password" autocomplete="new-password"
              [(ngModel)]="passwordForm.newPassword" required minlength="8" maxlength="100"
              aria-describedby="profile-password-hint" />
       <small id="profile-password-hint" class="profile__hint">Au moins 8 caractères.</small>
 
       <label for="profile-confirm-password">Confirmer le nouveau mot de passe</label>
-      <input id="profile-confirm-password" name="confirmPassword" type="password" autocomplete="new-password"
+      <input pInputText id="profile-confirm-password" name="confirmPassword" type="password" autocomplete="new-password"
              [(ngModel)]="passwordForm.confirmPassword" required maxlength="100" />
 
-      <button type="submit" [disabled]="passwordSaving()">
+      <button pButton type="submit" [disabled]="passwordSaving()">
         {{ passwordSaving() ? 'Modification…' : 'Modifier le mot de passe' }}
       </button>
     </form>
@@ -103,48 +103,48 @@
         Demandez l’accès à un autre établissement. Le propriétaire de l’établissement validera votre demande.
       </p>
 
-      @if (accessError()) { <p class="profile__error" role="alert">{{ accessError() }}</p> }
-      @if (accessSuccess()) { <p class="profile__success" role="status">{{ accessSuccess() }}</p> }
+      @if (accessError()) { <p-message severity="error" class="profile__error" role="alert">{{ accessError() }}</p-message> }
+      @if (accessSuccess()) { <p-message severity="success" class="profile__success" role="status">{{ accessSuccess() }}</p-message> }
 
       <form class="profile__inline-form" (ngSubmit)="requestAccess()">
         <div>
           <label for="profile-access-school">Établissement</label>
-          <select id="profile-access-school" name="schoolId" [(ngModel)]="accessForm.schoolId" required>
-            <option [ngValue]="null" disabled>Choisir un établissement</option>
+          <app-select-field inputId="profile-access-school" name="schoolId" [(ngModel)]="accessForm.schoolId" required>
+            <app-select-option [value]="null" [label]="(&quot;Choisir un établissement&quot;).trim()" disabled />
             @for (school of schools(); track school.id) {
-              <option [ngValue]="school.id">{{ school.name }}</option>
+              <app-select-option [value]="school.id" [label]="((&quot;&quot; + ((school.name)) + &quot;&quot;)).trim()" />
             }
-          </select>
+          </app-select-field>
         </div>
         <div>
           <label for="profile-access-role">Profil</label>
-          <select id="profile-access-role" name="role" [(ngModel)]="accessForm.role">
+          <app-select-field inputId="profile-access-role" name="role" [(ngModel)]="accessForm.role">
             @for (role of requestableRoles; track role) {
-              <option [ngValue]="role">{{ roleLabels[role] }}</option>
+              <app-select-option [value]="role" [label]="((&quot;&quot; + ((roleLabels[role])) + &quot;&quot;)).trim()" />
             }
-          </select>
+          </app-select-field>
         </div>
         @if (accessForm.role !== 'PARENT') {
           <div>
             <label for="profile-access-identifier">{{ accessForm.role === 'STUDENT' ? 'Matricule' : 'Numéro d’employé' }} dans l’établissement demandé</label>
-            <input id="profile-access-identifier" type="text" name="accessSchoolIdentifier" [(ngModel)]="accessSchoolIdentifier" maxlength="50" required />
+            <input pInputText id="profile-access-identifier" type="text" name="accessSchoolIdentifier" [(ngModel)]="accessSchoolIdentifier" maxlength="50" required />
           </div>
         }
         @if (accessForm.role === 'PARENT') {
           <div>
             <label for="profile-access-matricules">Matricules de vos enfants dans cet établissement</label>
-            <input id="profile-access-matricules" type="text" name="accessChildMatricules" [(ngModel)]="accessChildMatricules" maxlength="1100" required />
+            <input pInputText id="profile-access-matricules" type="text" name="accessChildMatricules" [(ngModel)]="accessChildMatricules" maxlength="1100" required />
             <small>Séparez les matricules par une virgule. L’établissement vérifiera et approuvera les associations.</small>
           </div>
         }
-        <button type="submit" [disabled]="accessSaving()">
+        <button pButton type="submit" [disabled]="accessSaving()">
           {{ accessSaving() ? 'Envoi…' : 'Envoyer la demande' }}
         </button>
       </form>
 
       <h3>Mes demandes</h3>
       @if (accessLoading()) {
-        <p class="profile__muted">Chargement…</p>
+        <app-loading-state message="Chargement…" />
       } @else if (!requests().length) {
         <p class="profile__muted">Aucune demande pour le moment.</p>
       } @else {
@@ -161,7 +161,7 @@
                 {{ statusLabel(request.status) }}
               </span>
               @if (request.status === 'PENDING') {
-                <button type="button" class="profile__link-button" [disabled]="accessSaving()"
+                <button pButton severity="secondary" variant="text" type="button" class="profile__link-button" [disabled]="accessSaving()"
                         (click)="cancelRequest(request)">
                   Annuler
                 </button>

@@ -1,3 +1,11 @@
+import { DateField } from '../../../../shared/ui/date-field';
+import { LucidePencil, LucideTrash2 } from '@lucide/angular';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
@@ -42,7 +50,7 @@ interface AcademicForm {
 @Component({
   selector: 'app-owner-management',
   standalone: true,
-  imports: [FormValidationDirective, FormsModule, RouterLink, DatePipe, DecimalPipe],
+  imports: [LucidePencil, LucideTrash2, DateField, NumberField, SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink, DatePipe, DecimalPipe],
   templateUrl: './management.html',
   styleUrl: './management.scss',
 })

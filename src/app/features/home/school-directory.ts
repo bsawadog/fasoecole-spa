@@ -1,3 +1,4 @@
+import { LoadingState } from '../../shared/ui/loading-state';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService, RegistrationSchool } from '../../core/auth';
@@ -14,7 +15,7 @@ const SCHOOL_TYPES: Record<string, string> = {
 @Component({
   selector: 'app-school-directory',
   standalone: true,
-  imports: [RouterLink],
+  imports: [LoadingState, RouterLink],
   templateUrl: './school-directory.html',
   styleUrl: './school-directory.scss',
 })

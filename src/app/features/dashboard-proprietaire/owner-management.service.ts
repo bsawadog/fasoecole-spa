@@ -347,10 +347,6 @@ export class OwnerManagementService {
     return this.http.post<ClassRosterRow>(`${this.apiUrl}/classes/${classId}/roster/students`, payload);
   }
 
-  removeRosterStudent(classId: number, studentId: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/classes/${classId}/roster/students/${studentId}`);
-  }
-
   transferRosterStudent(classId: number, studentId: number, targetClassId: number): Observable<ClassRosterRow> {
     return this.http.post<ClassRosterRow>(
       `${this.apiUrl}/classes/${classId}/roster/students/${studentId}/transfer`,
@@ -364,6 +360,14 @@ export class OwnerManagementService {
 
   updateRosterParent(classId: number, parentId: number, payload: UpdateParentProfilePayload): Observable<ClassRosterRow> {
     return this.http.put<ClassRosterRow>(`${this.apiUrl}/classes/${classId}/roster/parents/${parentId}`, payload);
+  }
+
+  getTeacher(teacherId: number): Observable<TeacherRecord> {
+    return this.http.get<TeacherRecord>(`${this.apiUrl}/teachers/${teacherId}`);
+  }
+
+  updateTeacher(teacherId: number, payload: Pick<TeacherRecord, 'specialty' | 'hireDate'>): Observable<TeacherRecord> {
+    return this.http.put<TeacherRecord>(`${this.apiUrl}/teachers/${teacherId}`, payload);
   }
 
   addRosterParent(classId: number, studentId: number,

@@ -1,3 +1,12 @@
+import { DateField } from '../../../../shared/ui/date-field';
+import { LucideEye, LucidePencil, LucidePower, LucideRotateCcw } from '@lucide/angular';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { RosterImport } from '../../roster-import';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { NgTemplateOutlet } from '@angular/common';
@@ -6,7 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin, Subscription } from 'rxjs';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
-import { ClassRecord, LevelRecord, OwnerManagementService, SubjectRecord } from '../../owner-management.service';
+import { ClassRecord, LevelRecord, OwnerManagementService, SubjectRecord, TeacherRecord } from '../../owner-management.service';
 import { TeacherCard, TeacherWorkService } from '../../teacher-work.service';
 import { SchoolDataSyncService } from '../../../../shared/school-data-sync.service';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
@@ -14,7 +23,7 @@ import { ConfirmationService } from '../../../../shared/confirmation/confirmatio
 @Component({
   selector: 'app-teacher-roster',
   standalone: true,
-  imports: [RosterImport, FormValidationDirective, FormsModule, RouterLink, NgTemplateOutlet],
+  imports: [LucideEye, LucidePencil, LucidePower, LucideRotateCcw, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, RosterImport, FormValidationDirective, FormsModule, RouterLink, NgTemplateOutlet],
   templateUrl: './teacher-roster.html',
   styleUrl: './teacher-roster.scss',
 })
@@ -30,6 +39,8 @@ export class TeacherRoster implements OnInit, OnDestroy {
   private classRequest?: Subscription;
   private candidatesRequest?: Subscription;
   private allTeachersRequest?: Subscription;
+  private editRequest?: Subscription;
+  private editSaveRequest?: Subscription;
   private candidateSchoolIds = new Set<number>();
 
   readonly schools = signal<RegistrationSchool[]>([]);
@@ -48,6 +59,10 @@ export class TeacherRoster implements OnInit, OnDestroy {
   readonly saving = signal(false);
   readonly addingTeacher = signal(false);
   readonly assigningTeacher = signal(false);
+  readonly editingTeacher = signal<TeacherRecord | null>(null);
+  readonly loadingEditor = signal(false);
+  editingTeacherName = '';
+  teacherEditForm = { specialty: '', hireDate: '' };
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
 
@@ -88,6 +103,8 @@ export class TeacherRoster implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.editRequest?.unsubscribe();
+    this.editSaveRequest?.unsubscribe();
     this.syncSubscription?.unsubscribe();
     this.schoolRequest?.unsubscribe();
     this.classRequest?.unsubscribe();
@@ -111,6 +128,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
   }
 
   openAddTeacher(): void {
+    this.cancelForms();
     this.assigningTeacher.set(false);
     this.addingTeacher.set(true);
     this.newTeacher = { firstName: '', lastName: '', email: '', phone: '',
@@ -119,6 +137,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
   }
 
   openAssignment(): void {
+    this.cancelForms();
     this.addingTeacher.set(false);
     this.assigningTeacher.set(true);
     this.assignment = { teacherId: this.candidates()[0]?.id ?? 0, subjectId: this.subjects()[0]?.id ?? 0 };
@@ -126,8 +145,57 @@ export class TeacherRoster implements OnInit, OnDestroy {
   }
 
   cancelForms(): void {
+    this.editRequest?.unsubscribe();
+    this.loadingEditor.set(false);
+    this.editingTeacher.set(null);
     this.addingTeacher.set(false);
     this.assigningTeacher.set(false);
+  }
+
+  startEditTeacher(teacher: TeacherCard): void {
+    if (this.saving()) return;
+    this.cancelForms();
+    this.error.set(null);
+    this.success.set(null);
+    this.editingTeacherName = `${teacher.firstName} ${teacher.lastName}`;
+    this.loadingEditor.set(true);
+    this.editRequest = this.management.getTeacher(teacher.id).subscribe({
+      next: record => {
+        this.teacherEditForm = { specialty: record.specialty ?? '', hireDate: record.hireDate ?? '' };
+        this.editingTeacher.set(record);
+        this.loadingEditor.set(false);
+      },
+      error: () => {
+        this.loadingEditor.set(false);
+        this.error.set('Impossible de charger les informations de cet enseignant.');
+      },
+    });
+  }
+
+  saveTeacherEdit(): void {
+    const record = this.editingTeacher();
+    if (!record || this.saving()) return;
+    this.saving.set(true);
+    this.error.set(null);
+    this.editSaveRequest = this.management.updateTeacher(record.id, {
+      specialty: this.teacherEditForm.specialty.trim() || null,
+      hireDate: this.teacherEditForm.hireDate || null,
+    }).subscribe({
+      next: updated => {
+        const replace = (rows: TeacherCard[]) => rows.map(teacher => teacher.id === updated.id
+          ? { ...teacher, specialty: updated.specialty } : teacher);
+        this.teachers.update(replace);
+        this.allTeachers.update(replace);
+        this.candidates.update(replace);
+        this.saving.set(false);
+        this.cancelForms();
+        this.success.set('Les informations de l’enseignant ont été mises à jour.');
+      },
+      error: err => {
+        this.saving.set(false);
+        this.error.set(err?.error?.message ?? 'Impossible de modifier cet enseignant.');
+      },
+    });
   }
 
   async setTeacherActive(teacher: TeacherCard, active: boolean): Promise<void> {
@@ -278,7 +346,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
     this.syncSubscription?.unsubscribe();
     this.syncSubscription = this.sync.watch(schoolId).subscribe(() => {
       const id = this.selectedClassId();
-      if (this.loading() || !id) return;
+      if (this.loading() || this.loadingTeachers() || !id) return;
       this.classRequest?.unsubscribe();
       this.classRequest = this.teacherWork.teachersByClass(id).subscribe({next: rows => this.teachers.set(rows)});
       if (this.showAllTeachers()) this.refreshAllTeachers();

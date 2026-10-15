@@ -1,3 +1,8 @@
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth';
@@ -153,7 +158,7 @@ const QUESTIONS: HelpQuestion[] = [
 ];
 
 @Component({
-  selector: 'app-owner-help', standalone: true, imports: [RouterLink],
+  selector: 'app-owner-help', standalone: true, imports: [SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, RouterLink],
   templateUrl: './help.html', styleUrl: './help.scss',
 })
 export class OwnerHelp {

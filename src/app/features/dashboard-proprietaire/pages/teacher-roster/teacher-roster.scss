@@ -1,3 +1,4 @@
+@layer legacy {
 .teacher-roster { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; background: #f8fafc; }
 .teacher-roster__header {
   display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
@@ -75,3 +76,5 @@
 .teacher-roster__badge--off { background: #e2e8f0; color: #475569; }
 .teacher-roster__row--inactive td { color: #64748b; }
 .teacher-roster__row--inactive .teacher-roster__avatar { background: #e2e8f0; color: #64748b; }
+
+}

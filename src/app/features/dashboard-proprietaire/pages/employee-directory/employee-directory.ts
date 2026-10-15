@@ -1,3 +1,6 @@
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -8,14 +11,14 @@ import { TeacherWorkService } from '../../teacher-work.service';
 
 interface Employee { key: string; name: string; job: string; email: string; phone: string | null; route: string; staffId?: number; }
 @Component({
-  selector: 'app-employee-directory', standalone: true, imports: [FormsModule, RouterLink],
+  selector: 'app-employee-directory', standalone: true, imports: [LoadingState, InputTextModule, MessageModule, FormsModule, RouterLink],
   template: `
     <h1>Tous les employés de l’école</h1>
     <p>Enseignants et personnel : consultez leur fiche.</p>
 
-    <label>Rechercher <input [(ngModel)]="search" placeholder="Nom, fonction ou courriel"></label>
-    @if (error()) { <p role="alert">{{ error() }}</p> }
-    @if (loading()) { <p>Chargement…</p> } @else {
+    <label>Rechercher <input pInputText [(ngModel)]="search" placeholder="Nom, fonction ou courriel"></label>
+    @if (error()) { <p-message severity="error" role="alert">{{ error() }}</p-message> }
+    @if (loading()) { <app-loading-state message="Chargement…" /> } @else {
       <div class="table-wrap"><table><thead><tr><th>Employé</th><th>Fonction</th><th>Contact</th><th></th></tr></thead><tbody>
         @for (employee of filtered(); track employee.key) {
           <tr><td>{{ employee.name }}</td><td>{{ employee.job }}</td><td>{{ employee.email }}@if (employee.phone) { <br>{{ employee.phone }} }</td>
@@ -24,7 +27,7 @@ interface Employee { key: string; name: string; job: string; email: string; phon
       </tbody></table></div>
     }
   `,
-  styles: [`:host{display:block}label{display:inline-flex;gap:10px;align-items:center;margin:12px 20px 12px 0}input,select{padding:10px;border:1px solid #cbd5e1;border-radius:8px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;background:white}th,td{text-align:left;padding:16px;border-bottom:1px solid #e2e8f0}a{color:#15803d}`],
+  styles: [`@layer legacy { :host{display:block}label{display:inline-flex;gap:10px;align-items:center;margin:12px 20px 12px 0}input,select{padding:10px;border:1px solid #cbd5e1;border-radius:8px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;background:white}th,td{text-align:left;padding:16px;border-bottom:1px solid #e2e8f0}a{color:#15803d} }`],
 })
 export class EmployeeDirectory implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);

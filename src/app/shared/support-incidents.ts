@@ -1,3 +1,7 @@
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -10,33 +14,33 @@ import { environment } from '../../environments/environment';
 interface IncidentEvent { action:string; note:string; created_at:string; first_name:string; last_name:string; }
 interface Incident { id:number; school_id:number; school_name:string; title:string; page_title:string; description:string; status:string; has_image:boolean; updated_at:string; events?:IncidentEvent[]; }
 @Component({
- selector:'app-support-incidents', standalone:true, imports:[FormsModule,DatePipe],
- styles:[` :host{display:block} section{background:white;padding:24px;border-radius:16px;margin-bottom:20px} h1,h2{margin-top:0} label{display:block;margin:12px 0} input,select,textarea{display:block;padding:10px;border:1px solid #ccd8d1;border-radius:8px;width:100%;box-sizing:border-box} textarea{min-height:100px} button{padding:9px 14px;margin:5px;border:1px solid #cbd5d1;border-radius:8px;background:#eff7f2;cursor:pointer} button:disabled{opacity:.5;cursor:default} .layout{display:grid;grid-template-columns:minmax(260px,1fr) minmax(300px,1.5fr);gap:20px}.incident{display:block;width:100%;text-align:left}.selected{border-color:#13834b}small{display:block;color:#58685f}img{max-width:100%;max-height:450px} .error{color:#b42318}.event{border-left:3px solid #c5e4d1;padding:10px;margin:12px 0;white-space:pre-wrap}.description{white-space:pre-wrap}@media(max-width:800px){.layout{display:block}}`],
+ selector:'app-support-incidents', standalone:true, imports:[InputTextModule, TextareaModule, ButtonModule, MessageModule, FormsModule,DatePipe],
+ styles:[`@layer legacy {  :host{display:block} section{background:white;padding:24px;border-radius:16px;margin-bottom:20px} h1,h2{margin-top:0} label{display:block;margin:12px 0} input,select,textarea{display:block;padding:10px;border:1px solid #ccd8d1;border-radius:8px;width:100%;box-sizing:border-box} textarea{min-height:100px} button{padding:9px 14px;margin:5px;border:1px solid #cbd5d1;border-radius:8px;background:#eff7f2;cursor:pointer} button:disabled{opacity:.5;cursor:default} .layout{display:grid;grid-template-columns:minmax(260px,1fr) minmax(300px,1.5fr);gap:20px}.incident{display:block;width:100%;text-align:left}.selected{border-color:#13834b}small{display:block;color:#58685f}img{max-width:100%;max-height:450px} .error{color:#b42318}.event{border-left:3px solid #c5e4d1;padding:10px;margin:12px 0;white-space:pre-wrap}.description{white-space:pre-wrap}@media(max-width:800px){.layout{display:block}} }`],
  template:`
  <h1>Incidents et assistance</h1><p>Déclarez un problème, suivez sa prise en charge et confirmez le résultat du nouveau test. Mise à jour toutes les 10 secondes.</p>
- @if(error()){<p class="error" role="alert">{{error()}}</p>} @if(notice()){<p role="status">{{notice()}}</p>}
- @if(!admin){<section><button (click)="creating=!creating">{{creating?'Annuler':'Ouvrir un incident'}}</button>
+ @if(error()){<p-message severity="error" class="error" role="alert">{{error()}}</p-message>} @if(notice()){<p-message severity="success" role="status">{{notice()}}</p-message>}
+ @if(!admin){<section><button pButton (click)="creating=!creating">{{creating?'Annuler':'Ouvrir un incident'}}</button>
  @if(creating){<form (ngSubmit)="create()" #form="ngForm">
- <label>Titre de l’incident<input name="title" [(ngModel)]="title" required maxlength="160"></label>
- <label>Page concernée<input name="page" [(ngModel)]="pageTitle" required maxlength="200" placeholder="Ex. Élèves par classe"></label>
- <label>Description et étapes pour reproduire<textarea name="description" [(ngModel)]="description" required maxlength="8000"></textarea></label>
+ <label>Titre de l’incident<input pInputText name="title" [(ngModel)]="title" required maxlength="160"></label>
+ <label>Page concernée<input pInputText name="page" [(ngModel)]="pageTitle" required maxlength="200" placeholder="Ex. Élèves par classe"></label>
+ <label>Description et étapes pour reproduire<textarea pTextarea name="description" [(ngModel)]="description" required maxlength="8000"></textarea></label>
  <label>Image facultative — PNG/JPEG, 2 Mo maximum<input type="file" accept="image/png,image/jpeg" (change)="fileChanged($event)"></label>
  <p>Ne joignez pas de mot de passe ou de document contenant des données inutiles au diagnostic.</p>
- <button type="submit" [disabled]="busy() || form.invalid || !title.trim() || !pageTitle.trim() || !description.trim()">Envoyer l’incident</button></form>}
+ <button pButton type="submit" [disabled]="busy() || form.invalid || !title.trim() || !pageTitle.trim() || !description.trim()">Envoyer l’incident</button></form>}
  </section>}
- <div class="layout"><section><label>Rechercher<input type="search" [(ngModel)]="search" maxlength="160" (ngModelChange)="page=0;refresh()" placeholder="Titre ou établissement"></label>
+ <div class="layout"><section><label>Rechercher<input pInputText type="search" [(ngModel)]="search" maxlength="160" (ngModelChange)="page=0;refresh()" placeholder="Titre ou établissement"></label>
  @for(i of rows();track i.id){<button class="incident" [disabled]="busy()" [class.selected]="selected()?.id===i.id" (click)="select(i.id)"><strong>#{{i.id}} · {{i.title}}</strong><small>{{i.school_name}} · {{label(i.status)}} · {{i.updated_at|date:'dd/MM/yyyy HH:mm'}}</small></button>} @empty{<p>Aucun incident.</p>}
- <button [disabled]="page===0" (click)="page=page-1;refresh()">Précédent</button><span>Page {{page+1}}</span><button [disabled]="rows().length<30" (click)="page=page+1;refresh()">Suivant</button></section>
+ <button pButton severity="secondary" variant="outlined" [disabled]="page===0" (click)="page=page-1;refresh()">Précédent</button><span>Page {{page+1}}</span><button pButton severity="secondary" variant="outlined" [disabled]="rows().length<30" (click)="page=page+1;refresh()">Suivant</button></section>
  @if(selected();as i){<section><h2>{{i.title}}</h2><p>{{i.school_name}} · {{i.page_title}} · <strong>{{label(i.status)}}</strong></p><p class="description">{{i.description}}</p>
- @if(admin){<button (click)="openSchool(i.school_id)" [disabled]="busy()">Ouvrir l’espace propriétaire</button>}
- @if(i.has_image){<button (click)="showImage(i.id)">Voir l’image jointe</button>} @if(imageUrl()){<img [src]="imageUrl()" alt="Capture jointe à l’incident">}
+ @if(admin){<button pButton (click)="openSchool(i.school_id)" [disabled]="busy()">Ouvrir l’espace propriétaire</button>}
+ @if(i.has_image){<button pButton (click)="showImage(i.id)">Voir l’image jointe</button>} @if(imageUrl()){<img [src]="imageUrl()" alt="Capture jointe à l’incident">}
  <h3>Historique</h3>@for(e of i.events;track $index){<div class="event"><strong>{{e.first_name}} {{e.last_name}} · {{actionLabel(e.action)}}</strong><small>{{e.created_at|date:'dd/MM/yyyy HH:mm'}}</small>{{e.note}}</div>}
- <label>Commentaire<textarea [(ngModel)]="note" maxlength="8000" placeholder="Correction apportée, résultat du test ou précision"></textarea></label>
- @if(admin&&i.status==='OPEN'){<button [disabled]="busy()" (click)="act('CLAIM')">Prendre en charge</button>}
- @if(admin&&i.status==='IN_PROGRESS'){<button [disabled]="busy()||!note.trim()" (click)="act('RETEST')">Demander de retester</button>}
- @if(i.status==='RETEST_REQUESTED'||i.status==='CLOSED'){<button [disabled]="busy()||!note.trim()" (click)="act('REOPEN')">{{i.status==='CLOSED'?'Rouvrir':'Le problème persiste'}}</button>}
- @if(i.status!=='CLOSED'){<button [disabled]="busy()||!note.trim()" (click)="act('COMMENT')">Ajouter un commentaire</button><button [disabled]="busy()" (click)="closing=true">Fermer l’incident</button>}
- @if(closing){<div role="dialog" aria-modal="true" aria-label="Confirmer la clôture"><p>Confirmez-vous la fermeture de cet incident ?</p><button [disabled]="busy()" (click)="act('CLOSE')">Confirmer</button><button (click)="closing=false">Annuler</button></div>}
+ <label>Commentaire<textarea pTextarea [(ngModel)]="note" maxlength="8000" placeholder="Correction apportée, résultat du test ou précision"></textarea></label>
+ @if(admin&&i.status==='OPEN'){<button pButton [disabled]="busy()" (click)="act('CLAIM')">Prendre en charge</button>}
+ @if(admin&&i.status==='IN_PROGRESS'){<button pButton [disabled]="busy()||!note.trim()" (click)="act('RETEST')">Demander de retester</button>}
+ @if(i.status==='RETEST_REQUESTED'||i.status==='CLOSED'){<button pButton [disabled]="busy()||!note.trim()" (click)="act('REOPEN')">{{i.status==='CLOSED'?'Rouvrir':'Le problème persiste'}}</button>}
+ @if(i.status!=='CLOSED'){<button pButton [disabled]="busy()||!note.trim()" (click)="act('COMMENT')">Ajouter un commentaire</button><button pButton [disabled]="busy()" (click)="closing=true">Fermer l’incident</button>}
+ @if(closing){<div role="dialog" aria-modal="true" aria-label="Confirmer la clôture"><p>Confirmez-vous la fermeture de cet incident ?</p><button pButton [disabled]="busy()" (click)="act('CLOSE')">Confirmer</button><button pButton severity="secondary" variant="outlined" (click)="closing=false">Annuler</button></div>}
  </section>}</div>`
 })
 export class SupportIncidents {

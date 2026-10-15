@@ -10,11 +10,11 @@
 
   </header>
 
-  @if (error()) { <div class="stf__alert stf__alert--error" role="alert">{{ error() }}</div> }
-  @if (success()) { <div class="stf__alert stf__alert--success" role="status">{{ success() }}</div> }
+  @if (error()) { <p-message severity="error" class="stf__alert stf__alert--error" role="alert">{{ error() }}</p-message> }
+  @if (success()) { <p-message severity="success" class="stf__alert stf__alert--success" role="status">{{ success() }}</p-message> }
 
   @if (loading()) {
-    <p class="stf__state">Chargement…</p>
+    <app-loading-state message="Chargement…" />
   } @else if (!schools().length) {
     <p class="stf__state">Aucun établissement associé à votre compte.</p>
   } @else {
@@ -22,7 +22,7 @@
       <div class="stf__card-head">
         <h2>Membres du personnel</h2>
         <span class="stf__count">{{ activeCount() }} actif(s) / {{ staff().length }}</span>
-        <button type="button" class="stf__btn stf__btn--green" (click)="openCreate()" [disabled]="busy()">+ Ajouter un membre</button>
+        <button pButton type="button" class="stf__btn stf__btn--green" (click)="openCreate()" [disabled]="busy()">+ Ajouter un membre</button>
       </div>
 
       @if (formOpen()) {
@@ -32,30 +32,30 @@
             <div class="stf__presets">
               <span>Profils types :</span>
               @for (p of presets; track p.title) {
-                <button type="button" class="stf__chip" (click)="applyPreset(p)">{{ p.title }}</button>
+                <button pButton type="button" class="stf__chip" (click)="applyPreset(p)">{{ p.title }}</button>
               }
             </div>
           }
           <div class="stf__form">
             <label>Prénom
-              <input name="firstName" [(ngModel)]="form.firstName" [disabled]="!!editing && !editing.managedAccount" required />
+              <input pInputText name="firstName" [(ngModel)]="form.firstName" [disabled]="!!editing && !editing.managedAccount" required />
             </label>
             <label>Nom
-              <input name="lastName" [(ngModel)]="form.lastName" [disabled]="!!editing && !editing.managedAccount" required />
+              <input pInputText name="lastName" [(ngModel)]="form.lastName" [disabled]="!!editing && !editing.managedAccount" required />
             </label>
             <label>Courriel (facultatif)
-              <input name="email" type="email" email [(ngModel)]="form.email" [disabled]="!!editing" />
+              <input pInputText name="email" type="email" email [(ngModel)]="form.email" [disabled]="!!editing" />
             </label>
             <label>Téléphone (facultatif)
-              <input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="form.phone" [disabled]="!!editing && !editing.managedAccount" />
+              <input pInputText name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="form.phone" [disabled]="!!editing && !editing.managedAccount" />
             </label>
             <label>Fonction
-              <input name="jobTitle" [(ngModel)]="form.jobTitle" list="stf-titles" maxlength="80" required />
+              <input pInputText name="jobTitle" [(ngModel)]="form.jobTitle" list="stf-titles" maxlength="80" required />
               <datalist id="stf-titles">
-                @for (p of presets; track p.title) { <option [value]="p.title"></option> }
+                @for (p of presets; track p.title) { <app-select-option [value]="p.title" [label]="('').trim()" /> }
               </datalist>
             </label>
-            <label>Salaire mensuel (FCFA)<input name="monthlySalary" type="number" min="0" step="0.01" max="9999999999.99" [(ngModel)]="form.monthlySalary" [required]="!editing" placeholder="À renseigner" /></label>
+            <label>Salaire mensuel (FCFA)<app-number-field name="monthlySalary" min="0" step="0.01" max="9999999999.99" [(ngModel)]="form.monthlySalary" [required]="!editing" placeholder="À renseigner" [ariaLabel]="(&quot;Salaire mensuel (FCFA)&quot;).trim()" /></label>
           </div>
           <p class="stf__muted">Le salaire mensuel alimente les dépenses à payer. Une modification s’applique aux mois préparés ensuite ; les échéances déjà préparées conservent leur montant.</p>
           @if (editing && !editing.managedAccount) {
@@ -73,8 +73,8 @@
           </fieldset>
           <p class="stf__muted">Les demandes de compte et la gestion du personnel restent réservées au propriétaire.</p>
           <div class="stf__actions">
-            <button type="submit" class="stf__btn" [disabled]="busy()">{{ editing ? 'Enregistrer' : 'Créer le compte' }}</button>
-            <button type="button" class="stf__btn stf__btn--ghost" (click)="closeForm()">Annuler</button>
+            <button pButton type="submit" class="stf__btn" [disabled]="busy()">{{ editing ? 'Enregistrer' : 'Créer le compte' }}</button>
+            <button pButton severity="secondary" variant="outlined" type="button" class="stf__btn stf__btn--ghost" (click)="closeForm()">Annuler</button>
           </div>
         </form>
       }
@@ -108,14 +108,14 @@
                   </td>
                   <td>
                     <div class="stf__row-actions">
-                      <button type="button" class="stf__mini" (click)="openEdit(s)" [disabled]="busy()">Modifier</button>
-                      <button type="button" class="stf__mini" (click)="toggleActive(s)" [disabled]="busy()">
+                      <button pButton severity="secondary" variant="outlined" type="button" class="stf__mini" (click)="openEdit(s)" [disabled]="busy()">Modifier</button>
+                      <button pButton severity="secondary" variant="outlined" type="button" class="stf__mini" (click)="toggleActive(s)" [disabled]="busy()">
                         {{ s.active ? 'Suspendre' : 'Réactiver' }}
                       </button>
                       @if (s.managedAccount) {
-                        <button type="button" class="stf__mini" (click)="resetPassword(s)" [disabled]="busy()">Envoyer un lien</button>
+                        <button pButton severity="secondary" variant="outlined" type="button" class="stf__mini" (click)="resetPassword(s)" [disabled]="busy()">Envoyer un lien</button>
                       }
-                      <button type="button" class="stf__mini stf__mini--danger" (click)="remove(s)" [disabled]="busy()">Retirer</button>
+                      <button pButton severity="danger" variant="outlined" type="button" class="stf__mini stf__mini--danger" (click)="remove(s)" [disabled]="busy()">Retirer</button>
                     </div>
                   </td>
                 </tr>

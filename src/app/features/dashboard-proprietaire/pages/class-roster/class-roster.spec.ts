@@ -53,6 +53,15 @@ describe('ClassRoster transfer', () => {
     expect(component.transferTargetGroups().map((g) => g.label)).toEqual(['2025-2026', '2026-2027']);
   });
 
+  it('offers accessible icon actions without a student deletion action', () => {
+    const { fixture } = setup();
+    const actions = fixture.nativeElement.querySelector('.class-roster__actions');
+    expect(actions.querySelectorAll('svg').length).toBe(3);
+    expect(actions.querySelector('a[title="Voir la fiche"]')).not.toBeNull();
+    expect(actions.querySelector('button[title="Transférer vers une autre classe"]')).not.toBeNull();
+    expect(actions.querySelector('button[title="Supprimer"]')).toBeNull();
+  });
+
   it('transfers the student and removes them from the current list', async () => {
     const { fixture, component, api, confirmation } = setup();
     component.startTransfer(row as never);

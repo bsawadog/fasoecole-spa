@@ -4,8 +4,8 @@
     <h2 id="confirmation-title">{{ request.title }}</h2>
     <p id="confirmation-message">{{ request.message }}</p>
     <div class="confirmation__actions">
-      <button type="button" class="confirmation__cancel" (click)="confirmation.respond(false)">Annuler</button>
-      <button type="button" class="confirmation__confirm" [class.confirmation__confirm--danger]="request.destructive" (click)="confirmation.respond(true)">{{ request.confirmLabel }}</button>
+      <button pButton severity="secondary" variant="outlined" type="button" class="confirmation__cancel" (click)="confirmation.respond(false)">Annuler</button>
+      <button pButton [severity]="request.destructive ? 'danger' : 'primary'" type="button" class="confirmation__confirm" [class.confirmation__confirm--danger]="request.destructive" (click)="confirmation.respond(true)">{{ request.confirmLabel }}</button>
     </div>
   }
 </dialog>

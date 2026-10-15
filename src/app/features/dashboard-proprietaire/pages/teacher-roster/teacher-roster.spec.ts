@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { SelectField } from '../../../../shared/ui/select-field';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
+import { SchoolDataSyncService } from '../../../../shared/school-data-sync.service';
 import { AuthService } from '../../../../core/auth';
 import { OwnerManagementService } from '../../owner-management.service';
 import { TeacherWorkService } from '../../teacher-work.service';
@@ -8,6 +11,33 @@ import { ConfirmationService } from '../../../../shared/confirmation/confirmatio
 import { TeacherRoster } from './teacher-roster';
 
 describe('TeacherRoster', () => {
+  it('finishes loading teachers when a live refresh arrives during the initial request', () => {
+    const refresh = new Subject<void>();
+    const pending = new Subject<never[]>();
+    const teachersByClass = vi.fn(() => pending);
+    TestBed.configureTestingModule({
+      imports: [TeacherRoster],
+      providers: [
+        provideRouter([]),
+        { provide: ConfirmationService, useValue: {} },
+        { provide: SchoolDataSyncService, useValue: { watch: () => refresh } },
+        { provide: AuthService, useValue: { user: () => ({ id: 7 }), selectedSchoolType: () => 'PRIMAIRE',
+          getOwnedSchools: () => of([{ id: 5, name: 'École', type: 'PRIMAIRE' }]) } },
+        { provide: OwnerManagementService, useValue: {
+          getClasses: () => of([{ id: 1, name: 'CP1', levelId: 8, schoolId: 5 }]),
+          getLevels: () => of([]), getSubjects: () => of([]),
+        } },
+        { provide: TeacherWorkService, useValue: { teachersByClass, candidatesByClass: () => of([]) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(TeacherRoster);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.loadingTeachers()).toBe(true);
+    refresh.next();
+    expect(teachersByClass).toHaveBeenCalledTimes(1);
+    pending.next([]);
+    expect(fixture.componentInstance.loadingTeachers()).toBe(false);
+  });
   it.each(['SENT', 'FAILED'])('creates a teacher without a password and reports invitation status %s', invitationDeliveryStatus => {
     const createTeacher = vi.fn((_classId: number, _payload: Record<string, unknown>) => of({ id: 4, schoolId: 5, firstName: 'Awa', lastName: 'Diallo', email: 'awa@test.bf',
       phone: null, specialty: null, subjects: ['Mathématiques'], activeInClass: true, classCount: 1,
@@ -77,11 +107,12 @@ describe('TeacherRoster', () => {
     const link = fixture.nativeElement.querySelector('a[href="/proprietaire/enseignants/4"]');
     expect(link).not.toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Désactivé');
-    expect(fixture.nativeElement.textContent).toContain('Réactiver');
+    const reactivate = fixture.nativeElement.querySelector('button[aria-label="Réactiver : Awa Traoré"]');
+    expect(reactivate).not.toBeNull();
+    expect(reactivate.querySelector('svg')).not.toBeNull();
 
-    const select = fixture.nativeElement.querySelector('select') as HTMLSelectElement;
-    select.value = '2';
-    select.dispatchEvent(new Event('change'));
+    const select = fixture.debugElement.query(By.directive(SelectField)).componentInstance as SelectField;
+    select.update(2);
     fixture.detectChanges();
     expect(teachersByClass).toHaveBeenCalledWith(2);
     expect(fixture.nativeElement.textContent).not.toContain('Awa Traoré');

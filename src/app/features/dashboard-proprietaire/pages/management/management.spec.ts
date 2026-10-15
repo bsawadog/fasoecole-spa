@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { DateField, parseLocalDate } from '../../../../shared/ui/date-field';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { AuthService } from '../../../../core/auth';
@@ -48,6 +50,9 @@ describe('OwnerManagement academic years', () => {
     async function submit(values: Record<string, string> = {}) {
       await fixture.whenStable();
       for (const [name, value] of Object.entries(values)) {
+        const dateField = fixture.debugElement.queryAll(By.directive(DateField))
+          .map(field => field.componentInstance as DateField).find(field => field.name === name);
+        if (dateField) { dateField.selectDate(parseLocalDate(value, 'date')); continue; }
         const input = form.querySelector<HTMLInputElement>('input[name="' + name + '"]')!;
         input.value = value;
         input.dispatchEvent(new Event('input', { bubbles: true }));

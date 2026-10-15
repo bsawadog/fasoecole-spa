@@ -1,17 +1,17 @@
 <main class="teacher-detail">
   @if (loading() && !detail()) {
-    <p class="teacher-detail__state">Chargement de la fiche enseignant…</p>
-    @if (error()) { <p class="teacher-detail__alert teacher-detail__alert--error" role="alert">{{ error() }}</p> }
+    <app-loading-state message="Chargement de la fiche enseignant…" />
+    @if (error()) { <p-message severity="error" class="teacher-detail__alert teacher-detail__alert--error" role="alert">{{ error() }}</p-message> }
   } @else if (detail(); as data) {
     <header class="teacher-detail__header">
       <div class="teacher-detail__header-top">
         <a class="teacher-detail__back" routerLink="/proprietaire/enseignants">← Retour aux enseignants</a>
         <div class="teacher-detail__header-actions">
           <label class="teacher-detail__month">Mois suivi
-            <input type="month" [value]="month()" (change)="changeMonth($event)">
+            <app-date-field mode="month" [value]="month()" (change)="changeMonth($event)" [ariaLabel]="(&quot;Mois suivi &quot;).trim()" />
           </label>
-          <button type="button" class="teacher-detail__print-btn" (click)="printPage()">🖨️ Imprimer / Enregistrer en PDF</button>
-          <button type="button" class="teacher-detail__send-btn" [disabled]="sending()" (click)="sendToTeacher()">
+          <button pButton type="button" class="teacher-detail__print-btn" (click)="printPage()">🖨️ Imprimer / Enregistrer en PDF</button>
+          <button pButton type="button" class="teacher-detail__send-btn" [disabled]="sending()" (click)="sendToTeacher()">
             ✉️ {{ sending() ? 'Envoi…' : 'Envoyer à l’enseignant' }}
           </button>
         </div>
@@ -24,8 +24,8 @@
             <span class="teacher-detail__print-only"> · Mois {{ month() }}</span></p>
         </div>
       </div>
-      @if (error()) { <p class="teacher-detail__alert teacher-detail__alert--error" role="alert">{{ error() }}</p> }
-      @if (success()) { <p class="teacher-detail__alert teacher-detail__alert--success" role="status">{{ success() }}</p> }
+      @if (error()) { <p-message severity="error" class="teacher-detail__alert teacher-detail__alert--error" role="alert">{{ error() }}</p-message> }
+      @if (success()) { <p-message severity="success" class="teacher-detail__alert teacher-detail__alert--success" role="status">{{ success() }}</p-message> }
     </header>
     <section class="teacher-detail__panel" aria-label="Contact">
       <h2>Informations</h2>
@@ -53,15 +53,15 @@
       <form (ngSubmit)="setRate()">
         <h3>Définir le taux</h3>
         <label>Type de rémunération
-          <select name="rateType" [(ngModel)]="rateForm.type">
-            <option value="FIXED_MONTHLY">Salaire mensuel fixe</option>
-            <option value="HOURLY">Taux horaire</option>
-            <option value="MONTHLY">Salaire mensuel (au prorata des heures pointées)</option>
-          </select>
+          <app-select-field name="rateType" [(ngModel)]="rateForm.type" [ariaLabel]="(&quot;Type de rémunération &quot;).trim()">
+            <app-select-option [value]="&quot;FIXED_MONTHLY&quot;" [label]="(&quot;Salaire mensuel fixe&quot;).trim()" />
+            <app-select-option [value]="&quot;HOURLY&quot;" [label]="(&quot;Taux horaire&quot;).trim()" />
+            <app-select-option [value]="&quot;MONTHLY&quot;" [label]="(&quot;Salaire mensuel (au prorata des heures pointées)&quot;).trim()" />
+          </app-select-field>
         </label>
-        <label>Montant (FCFA)<input name="rateAmount" type="number" min="1" step="1" [(ngModel)]="rateForm.amount" required></label>
-        <label>Applicable à partir du<input name="rateFrom" type="date" [(ngModel)]="rateForm.effectiveFrom" required></label>
-        <button type="submit" [disabled]="saving()">Enregistrer le taux</button>
+        <label>Montant (FCFA)<app-number-field name="rateAmount" min="1" step="1" [(ngModel)]="rateForm.amount" required [ariaLabel]="(&quot;Montant (FCFA)&quot;).trim()" /></label>
+        <label>Applicable à partir du<app-date-field mode="date" name="rateFrom" [(ngModel)]="rateForm.effectiveFrom" required [ariaLabel]="(&quot;Applicable à partir du&quot;).trim()" /></label>
+        <button pButton type="submit" [disabled]="saving()">Enregistrer le taux</button>
       </form>
       @if (data.month.perClass.length) {
         <h3>Répartition par classe</h3>
@@ -85,19 +85,19 @@
       <p>Ajoutez un créneau pour une classe. Les modifications prennent effet à la date indiquée ; terminer un créneau conserve l’historique.</p>
       <form (ngSubmit)="addSlot()">
         <label>Classe
-          <select name="slotClass" [(ngModel)]="slotForm.classId" required>
-            @for (item of classes(); track item.id) { <option [ngValue]="item.id">{{ classLabel(item) }}</option> }
-          </select>
+          <app-select-field name="slotClass" [(ngModel)]="slotForm.classId" required [ariaLabel]="(&quot;Classe &quot;).trim()">
+            @for (item of classes(); track item.id) { <app-select-option [value]="item.id" [label]="((&quot;&quot; + ((classLabel(item))) + &quot;&quot;)).trim()" /> }
+          </app-select-field>
         </label>
         <label>Jour
-          <select name="slotDay" [(ngModel)]="slotForm.dayOfWeek">
-            @for (day of weekdays; track day; let index = $index) { <option [ngValue]="index + 1">{{ day }}</option> }
-          </select>
+          <app-select-field name="slotDay" [(ngModel)]="slotForm.dayOfWeek" [ariaLabel]="(&quot;Jour &quot;).trim()">
+            @for (day of weekdays; track day; let index = $index) { <app-select-option [value]="index + 1" [label]="((&quot;&quot; + ((day)) + &quot;&quot;)).trim()" /> }
+          </app-select-field>
         </label>
-        <label>Début<input name="slotStart" type="time" [(ngModel)]="slotForm.startTime" required></label>
-        <label>Fin<input name="slotEnd" type="time" [(ngModel)]="slotForm.endTime" required></label>
-        <label>À partir du<input name="slotFrom" type="date" [(ngModel)]="slotForm.effectiveFrom" required></label>
-        <button type="submit" [disabled]="saving() || !classes().length">Ajouter un créneau</button>
+        <label>Début<app-date-field mode="time" name="slotStart" [(ngModel)]="slotForm.startTime" required [ariaLabel]="(&quot;Début&quot;).trim()" /></label>
+        <label>Fin<app-date-field mode="time" name="slotEnd" [(ngModel)]="slotForm.endTime" required [ariaLabel]="(&quot;Fin&quot;).trim()" /></label>
+        <label>À partir du<app-date-field mode="date" name="slotFrom" [(ngModel)]="slotForm.effectiveFrom" required [ariaLabel]="(&quot;À partir du&quot;).trim()" /></label>
+        <button pButton type="submit" [disabled]="saving() || !classes().length">Ajouter un créneau</button>
       </form>
       @if (!classes().length) { <p>Aucune classe n’est disponible pour cet établissement. Créez d’abord une classe dans la gestion académique.</p> }
       @if (data.schedule.length) {
@@ -110,7 +110,7 @@
                   <td>{{ slot.className }}</td><td>{{ weekdays[slot.dayOfWeek - 1] }}</td>
                   <td>{{ slot.startTime.slice(0, 5) }}–{{ slot.endTime.slice(0, 5) }}</td>
                   <td>{{ slot.effectiveFrom }} → {{ slot.effectiveTo || 'En cours' }}</td>
-                  <td class="teacher-detail__no-print">@if (!slot.effectiveTo) { <button class="teacher-detail__danger" type="button" [disabled]="saving()" (click)="removeSlot(slot.id)">Terminer</button> }</td>
+                  <td class="teacher-detail__no-print">@if (!slot.effectiveTo) { <button pButton severity="danger" class="teacher-detail__danger" type="button" [disabled]="saving()" (click)="removeSlot(slot.id)">Terminer</button> }</td>
                 </tr>
               }
             </tbody>
@@ -136,8 +136,8 @@
                   <td>{{ session.hours | number: '1.0-2' }} h</td>
                   <td>{{ session.status === 'PRESENT' ? 'Présent' : session.status === 'ABSENT' ? 'Absent' : 'À pointer' }}</td>
                   <td class="teacher-detail__actions teacher-detail__no-print">
-                    <button type="button" [disabled]="saving() || !isPast(session.date)" (click)="point(session, 'PRESENT')">Présent</button>
-                    <button type="button" [disabled]="saving() || !isPast(session.date)" (click)="point(session, 'ABSENT')">Absent</button>
+                    <button pButton type="button" [disabled]="saving() || !isPast(session.date)" (click)="point(session, 'PRESENT')">Présent</button>
+                    <button pButton type="button" [disabled]="saving() || !isPast(session.date)" (click)="point(session, 'ABSENT')">Absent</button>
                   </td>
                 </tr>
               }
@@ -151,14 +151,14 @@
       <h2>Heures supplémentaires — {{ month() }}</h2>
       <form (ngSubmit)="addExtra()">
         <label>Classe
-          <select name="extraClass" [(ngModel)]="extraForm.classId" required>
-            @for (item of classes(); track item.id) { <option [ngValue]="item.id">{{ classLabel(item) }}</option> }
-          </select>
+          <app-select-field name="extraClass" [(ngModel)]="extraForm.classId" required [ariaLabel]="(&quot;Classe &quot;).trim()">
+            @for (item of classes(); track item.id) { <app-select-option [value]="item.id" [label]="((&quot;&quot; + ((classLabel(item))) + &quot;&quot;)).trim()" /> }
+          </app-select-field>
         </label>
-        <label>Date<input name="extraDate" type="date" [(ngModel)]="extraForm.date" required></label>
-        <label>Nombre d’heures<input name="extraHours" type="number" min="0.25" step="0.25" [(ngModel)]="extraForm.hours" required></label>
-        <label>Motif<input name="extraDescription" [(ngModel)]="extraForm.description"></label>
-        <button type="submit" [disabled]="saving() || !classes().length">Ajouter des heures</button>
+        <label>Date<app-date-field mode="date" name="extraDate" [(ngModel)]="extraForm.date" required [ariaLabel]="(&quot;Date&quot;).trim()" /></label>
+        <label>Nombre d’heures<app-number-field name="extraHours" min="0.25" step="0.25" [(ngModel)]="extraForm.hours" required [ariaLabel]="(&quot;Nombre d’heures&quot;).trim()" /></label>
+        <label>Motif<input pInputText name="extraDescription" [(ngModel)]="extraForm.description"></label>
+        <button pButton type="submit" [disabled]="saving() || !classes().length">Ajouter des heures</button>
       </form>
       @if (data.month.extras.length) {
         <div class="teacher-detail__table-wrap">
@@ -168,7 +168,7 @@
               @for (extra of data.month.extras; track extra.id) {
                 <tr><td>{{ extra.date }}</td><td>{{ extra.className }}</td><td>{{ extra.hours | number: '1.0-2' }} h</td>
                   <td>{{ extra.description || '—' }}</td>
-                  <td class="teacher-detail__no-print"><button class="teacher-detail__danger" type="button" [disabled]="saving()" (click)="removeExtra(extra.id)">Supprimer</button></td></tr>
+                  <td class="teacher-detail__no-print"><button pButton severity="danger" class="teacher-detail__danger" type="button" [disabled]="saving()" (click)="removeExtra(extra.id)">Supprimer</button></td></tr>
               }
             </tbody>
           </table>
@@ -179,10 +179,10 @@
     <section class="teacher-detail__panel">
       <h2>Versements — {{ month() }}</h2>
       <form (ngSubmit)="addPayment()">
-        <label>Date du versement<input name="paymentDate" type="date" [(ngModel)]="paymentForm.date" required></label>
-        <label>Montant (FCFA)<input name="paymentAmount" type="number" min="1" step="1" [(ngModel)]="paymentForm.amount" required></label>
-        <label>Référence<input name="paymentReference" [(ngModel)]="paymentForm.reference"></label>
-        <button type="submit" [disabled]="saving() || data.month.remaining <= 0">Enregistrer un versement</button>
+        <label>Date du versement<app-date-field mode="date" name="paymentDate" [(ngModel)]="paymentForm.date" required [ariaLabel]="(&quot;Date du versement&quot;).trim()" /></label>
+        <label>Montant (FCFA)<app-number-field name="paymentAmount" min="1" step="1" [(ngModel)]="paymentForm.amount" required [ariaLabel]="(&quot;Montant (FCFA)&quot;).trim()" /></label>
+        <label>Référence<input pInputText name="paymentReference" [(ngModel)]="paymentForm.reference"></label>
+        <button pButton type="submit" [disabled]="saving() || data.month.remaining <= 0">Enregistrer un versement</button>
       </form>
       @if (data.month.payments.length) {
         <div class="teacher-detail__table-wrap">
@@ -192,7 +192,7 @@
               @for (payment of data.month.payments; track payment.id) {
                 <tr><td>{{ payment.date }}</td><td>{{ payment.amount | number: '1.0-0' }} FCFA</td>
                   <td>{{ payment.reference || '—' }}</td>
-                  <td class="teacher-detail__no-print"><button class="teacher-detail__danger" type="button" [disabled]="saving()" (click)="removePayment(payment.id)">Supprimer</button></td></tr>
+                  <td class="teacher-detail__no-print"><button pButton severity="danger" class="teacher-detail__danger" type="button" [disabled]="saving()" (click)="removePayment(payment.id)">Supprimer</button></td></tr>
               }
             </tbody>
           </table>
@@ -200,7 +200,7 @@
       }
     </section>
   } @else {
-    @if (error()) { <p class="teacher-detail__alert teacher-detail__alert--error" role="alert">{{ error() }}</p> }
+    @if (error()) { <p-message severity="error" class="teacher-detail__alert teacher-detail__alert--error" role="alert">{{ error() }}</p-message> }
     <a class="teacher-detail__action" routerLink="/proprietaire/enseignants">← Retour aux enseignants</a>
   }
 </main>

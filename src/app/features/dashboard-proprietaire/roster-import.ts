@@ -1,3 +1,5 @@
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { Component, computed, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ClassRecord, OwnerManagementService, SubjectRecord } from './owner-management.service';
@@ -102,28 +104,29 @@ async function readWorkbook(file: File): Promise<string[][]> {
 }
 
 @Component({
+  imports: [ButtonModule, MessageModule],
   selector: 'app-roster-import', standalone: true,
   template: `
     <details class="import"><summary>Importer {{ kind() === 'teachers' ? 'des enseignants' : 'des élèves / étudiants' }} depuis un fichier</summary>
       <p>Formats acceptés : <strong>Excel .xlsx ou CSV UTF-8</strong>. Seule la première feuille Excel est utilisée. Maximum : 500 lignes et 2 Mo. Les formules doivent être remplacées par leurs valeurs.</p>
-      <button type="button" (click)="download()">Télécharger le modèle CSV</button>
+      <button pButton type="button" (click)="download()">Télécharger le modèle CSV</button>
       <p>Colonnes obligatoires : <strong>{{ required().join(', ') }}</strong>.</p>
       <p>Colonnes facultatives : {{ optional().join(', ') }}. Dates : AAAA-MM-JJ. Matricules et numéros d’employé : cellules au format texte pour conserver les zéros.</p>
       <p>Utilisez le nom exact d’une classe de l’année sélectionnée{{ kind() === 'teachers' ? ' et d’une matière de cet établissement. Répétez un enseignant avec le même courriel pour plusieurs affectations' : '. Une ligne représente un élève. Pour ajouter un parent, renseignez ses prénom, nom et courriel' }}. Aucun mot de passe à fournir : les invitations suivent le fonctionnement habituel.</p>
       <p>Classes disponibles : {{ classNames() }}.</p>
       @if (kind() === 'teachers') { <p>Matières disponibles : {{ subjectNames() }}.</p> }
       <input type="file" accept=".csv,.xlsx" aria-label="Fichier Excel ou CSV à importer" [disabled]="busy()" (change)="load($event)">
-      @if (message()) { <p role="status">{{ message() }}</p> }
+      @if (message()) { <p-message severity="success" role="status">{{ message() }}</p-message> }
       @if (rows().length) {
         <p>{{ rows().length }} lignes — {{ invalid() }} avec erreur. Les contrôles de doublons et d’autorisation du serveur sont appliqués lors de l’enregistrement.</p>
         <div class="scroll"><table><thead><tr><th>Ligne</th><th>Nom</th><th>Courriel</th><th>Classe</th><th>Résultat</th></tr></thead><tbody>
           @for (row of rows(); track row.line) { <tr><td>{{ row.line }}</td><td>{{ row.data['prenom'] }} {{ row.data['nom'] }}</td><td>{{ row.data['courriel'] }}</td><td>{{ row.data['classe'] }}</td><td>{{ row.errors.join(' ; ') || row.status }}</td></tr> }
         </tbody></table></div>
-        <button type="button" [disabled]="busy() || invalid() > 0 || remaining() === 0" (click)="save()">{{ busy() ? 'Import en cours…' : 'Confirmer / reprendre l’import' }}</button>
+        <button pButton type="button" [disabled]="busy() || invalid() > 0 || remaining() === 0" (click)="save()">{{ busy() ? 'Import en cours…' : 'Confirmer / reprendre l’import' }}</button>
         <p>L’import s’effectue ligne par ligne. Les lignes enregistrées sont conservées si une autre ligne échoue. Gardez cette page ouverte pendant l’import.</p>
       }
     </details>`,
-  styles: [`.import{margin:1rem 0;padding:1rem;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc}summary{cursor:pointer;font-weight:600}p{font-size:.9rem}button{padding:.6rem;margin:.4rem;border-radius:8px;border:1px solid #94a3b8;cursor:pointer}button:disabled{opacity:.5;cursor:default}.scroll{max-height:340px;overflow:auto}table{width:100%;border-collapse:collapse;font-size:.85rem}th,td{padding:.6rem;text-align:left;border-bottom:1px solid #cbd5e1}`],
+  styles: [`@layer legacy { .import{margin:1rem 0;padding:1rem;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc}summary{cursor:pointer;font-weight:600}p{font-size:.9rem}button{padding:.6rem;margin:.4rem;border-radius:8px;border:1px solid #94a3b8;cursor:pointer}button:disabled{opacity:.5;cursor:default}.scroll{max-height:340px;overflow:auto}table{width:100%;border-collapse:collapse;font-size:.85rem}th,td{padding:.6rem;text-align:left;border-bottom:1px solid #cbd5e1} }`],
 })
 export class RosterImport {
   readonly schoolId = input.required<number>();

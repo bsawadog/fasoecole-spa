@@ -5,19 +5,19 @@
       <h1>Messages</h1>
       <p>Écrivez à l’établissement ou aux enseignants de vos enfants.</p>
     </div>
-    <button class="ss__btn" type="button" (click)="showComposer.set(!showComposer())" [disabled]="!schools().length">
+    <button pButton class="ss__btn" type="button" (click)="showComposer.set(!showComposer())" [disabled]="!schools().length">
       Nouveau message
     </button>
   </header>
 
-  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
-  @if (success()) { <p class="ss__alert ss__alert--success" role="status">{{ success() }}</p> }
+  @if (error()) { <p-message severity="error" class="ss__alert ss__alert--error" role="alert">{{ error() }}</p-message> }
+  @if (success()) { <p-message severity="success" class="ss__alert ss__alert--success" role="status">{{ success() }}</p-message> }
 
   <div class="ss__split">
     <aside class="ss__card" aria-label="Conversations">
       <div class="ss__card-head"><h2>Mes conversations</h2></div>
       @if (loading()) {
-        <p class="ss__body ss__muted">Chargement…</p>
+        <app-loading-state message="Chargement…" />
       } @else if (!conversations().length) {
         <p class="ss__body ss__muted">Aucune conversation pour le moment.</p>
       } @else {
@@ -42,20 +42,20 @@
             <p class="ss__state">Aucun établissement associé à votre compte.</p>
           } @else {
             <label class="ss__field">Établissement
-              <select name="schoolId" [(ngModel)]="schoolId" (ngModelChange)="selectSchool($event)" required>
+              <app-select-field name="schoolId" [(ngModel)]="schoolId" (ngModelChange)="selectSchool($event)" required [ariaLabel]="(&quot;Établissement &quot;).trim()">
                 @for (school of schools(); track school.schoolId) {
-                  <option [ngValue]="school.schoolId">{{ school.name }}</option>
+                  <app-select-option [value]="school.schoolId" [label]="((&quot;&quot; + ((school.name)) + &quot;&quot;)).trim()" />
                 }
-              </select>
+              </app-select-field>
             </label>
             @if (studentsForSchool().length) {
               <label class="ss__field">Enfant concerné
-                <select name="studentId" [ngModel]="studentId" (ngModelChange)="selectStudent($event)" required>
-                  <option [ngValue]="null">Choisir un enfant</option>
+                <app-select-field name="studentId" [ngModel]="studentId" (ngModelChange)="selectStudent($event)" required [ariaLabel]="(&quot;Enfant concerné &quot;).trim()">
+                  <app-select-option [value]="null" [label]="(&quot;Choisir un enfant&quot;).trim()" />
                   @for (child of studentsForSchool(); track child.studentId) {
-                    <option [ngValue]="child.studentId">{{ child.fullName }}</option>
+                    <app-select-option [value]="child.studentId" [label]="((&quot;&quot; + ((child.fullName)) + &quot;&quot;)).trim()" />
                   }
-                </select>
+                </app-select-field>
               </label>
             }
             <label class="ss__field"><span>Destinataires</span>
@@ -72,15 +72,15 @@
               </div>
             }
             <label class="ss__field">Objet
-              <input name="subject" [(ngModel)]="subject" maxlength="160" required />
+              <input pInputText name="subject" [(ngModel)]="subject" maxlength="160" required />
             </label>
             <label class="ss__field">Votre message
-              <textarea name="message" [(ngModel)]="message" rows="5" maxlength="4000" [required]="!messageFiles.length"></textarea>
+              <textarea pTextarea name="message" [(ngModel)]="message" rows="5" maxlength="4000" [required]="!messageFiles.length"></textarea>
             </label>
             <app-conversation-files [(files)]="messageFiles" [disabled]="sending()" />
             <div class="ss__actions">
-              <button class="ss__btn" type="submit" [disabled]="sending()">{{ sending() ? 'Envoi…' : 'Envoyer' }}</button>
-              <button class="ss__mini" type="button" (click)="showComposer.set(false)">Annuler</button>
+              <button pButton class="ss__btn" type="submit" [disabled]="sending()">{{ sending() ? 'Envoi…' : 'Envoyer' }}</button>
+              <button pButton severity="secondary" variant="outlined" class="ss__mini" type="button" (click)="showComposer.set(false)">Annuler</button>
             </div>
           }
         </form>
@@ -101,10 +101,10 @@
         </div>
         <form class="ss__body" (ngSubmit)="sendReply()">
           <label class="ss__field">Répondre
-            <textarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" [required]="!replyFiles.length"></textarea>
+            <textarea pTextarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" [required]="!replyFiles.length"></textarea>
           </label>
           <app-conversation-files [(files)]="replyFiles" [disabled]="sending()" />
-          <button class="ss__btn" type="submit" [disabled]="sending() || (!reply.trim() && !replyFiles.length)">{{ sending() ? 'Envoi…' : 'Envoyer la réponse' }}</button>
+          <button pButton class="ss__btn" type="submit" [disabled]="sending() || (!reply.trim() && !replyFiles.length)">{{ sending() ? 'Envoi…' : 'Envoyer la réponse' }}</button>
         </form>
       } @else {
         <div class="ss__state">Sélectionnez une conversation ou démarrez un nouveau message.</div>

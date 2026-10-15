@@ -6,7 +6,7 @@
 
   @if (schoolId; as id) {
     @if (loading()) {
-      <p class="school-directory__state">Chargement de la fiche de l’établissement…</p>
+      <app-loading-state message="Chargement de la fiche de l’établissement…" />
     } @else if (selectedSchool(); as school) {
       <section class="school-profile">
         <p class="school-profile__eyebrow">Établissement partenaire FasoEcole</p>
@@ -32,7 +32,7 @@
     </section>
 
     @if (loading()) {
-      <p class="school-directory__state">Chargement des établissements…</p>
+      <app-loading-state message="Chargement des établissements…" />
     } @else if (failed()) {
       <p class="school-directory__state" role="alert">Le répertoire est momentanément indisponible. Réessayez plus tard.</p>
     } @else if (!visibleSchools().length) {

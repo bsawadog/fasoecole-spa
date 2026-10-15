@@ -1,3 +1,7 @@
+@use './app/shared/ui/application';
+
+@layer legacy, primeng, application;
+
 html,
 body {
   height: 100%;
@@ -28,4 +32,8 @@ body {
 .shell__page textarea {
   box-sizing: border-box;
   max-width: 100%;
+}
+
+.p-license-host {
+  display: none;
 }

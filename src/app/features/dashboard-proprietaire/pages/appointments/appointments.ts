@@ -1,3 +1,5 @@
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { MessageModule } from 'primeng/message';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -7,15 +9,15 @@ import { Appointments } from '../../../../shared/appointments/appointments';
 
 @Component({
   selector: 'app-owner-appointments-page', standalone: true,
-  imports: [Appointments, FormsModule, RouterLink],
+  imports: [LoadingState, MessageModule, Appointments, FormsModule, RouterLink],
   styleUrl: '../../../../shared/self-space/self-space.scss',
   template: `
     <main class="ss">
       <header class="ss__header"><div><a [routerLink]="home">Retour à l’accueil</a><h1>Rendez-vous</h1><p>Consultez les demandes reçues et les rendez-vous que vous avez pris.</p></div>
 
       </header>
-      @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
-      @if (loading()) { <p class="ss__state">Chargement…</p> }
+      @if (error()) { <p-message severity="error" class="ss__alert ss__alert--error" role="alert">{{ error() }}</p-message> }
+      @if (loading()) { <app-loading-state message="Chargement…" /> }
       @else if (schoolId()) { <app-appointments [owner]="true" [schoolId]="schoolId()" [showHeading]="false" /> }
       @else if (!error()) { <p class="ss__state">Aucun établissement accessible.</p> }
     </main>`,

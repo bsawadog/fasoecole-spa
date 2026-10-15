@@ -1,3 +1,4 @@
+@layer legacy {
 // Styles communs des espaces enseignant, élève et parent.
 .ss { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; background: #f8fafc; }
 .ss__header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 1.1rem 1.3rem; border-radius: .6rem; color: #fff; background: linear-gradient(135deg, #14532d, #15803d); }
@@ -100,4 +101,6 @@
   .ss__no-print, .ss__tabs, .ss__back { display: none !important; }
   .ss__table-wrap { overflow: visible; }
   .ss__card { box-shadow: none; }
+}
+
 }

@@ -1,4 +1,5 @@
 <div class="shell">
+  <app-navigation-activity />
   <aside id="modules-menu" class="shell__sidebar" [hidden]="!modulesOpen()">
     <div class="shell__brand">
       <img src="assets/images/fasoecole-logo-alt.svg" alt="FasoEcole" />
@@ -54,11 +55,11 @@
 
   <main class="shell__content">
     @if (platformIntervention()) {
-      <p role="status">Intervention SUPER_ADMIN · {{ selectedContextSchool()?.schoolName }}. Les actions sont effectuées avec votre identité d’administrateur.</p>
+      <p-message severity="success" role="status">Intervention SUPER_ADMIN · {{ selectedContextSchool()?.schoolName }}. Les actions sont effectuées avec votre identité d’administrateur.</p-message>
     }
     <header class="shell__topbar">
       @if (!modulesOpen()) {
-      <button class="shell__action shell__modules-toggle" type="button"
+      <button pButton severity="secondary" variant="outlined" class="shell__action shell__modules-toggle" type="button"
               aria-controls="modules-menu" [attr.aria-expanded]="modulesOpen()"
               aria-label="Ouvrir le menu des modules" title="Ouvrir le menu des modules"
               (click)="modulesOpen.set(true)">
@@ -83,7 +84,7 @@
         <svg lucideUserRound [size]="18" aria-hidden="true"></svg>
         <span>Mon profil</span>
       </a>
-      <button class="shell__action shell__action--logout" type="button" (click)="logout()" title="Se déconnecter" aria-label="Se déconnecter">
+      <button pButton severity="secondary" variant="outlined" class="shell__action shell__action--logout" type="button" (click)="logout()" title="Se déconnecter" aria-label="Se déconnecter">
         <svg lucideLogOut [size]="18" aria-hidden="true"></svg>
         <span>Se déconnecter</span>
       </button>
@@ -118,7 +119,7 @@
         </section>
       }
     }
-    @if (ownerContextLoading()) { <p role="status">Chargement de vos établissements…</p> }
+    @if (ownerContextLoading()) { <app-loading-state message="Chargement de vos établissements…" /> }
     @else if (previewPage()) {
       <section class="shell__status" [class.shell__status--pending]="schoolPreview()?.status === 'PENDING_APPROVAL'" role="status">
         <div>

@@ -1,15 +1,15 @@
-<section class="approvals">
-  <header class="approvals__heading">
+<section class="approvals ui-workspace">
+  <header class="approvals__heading ui-page-header">
     <p class="approvals__eyebrow">Gestion des accès</p>
     <h1>Demandes de compte</h1>
     <p>Examinez les inscriptions adressées à vos établissements et définissez le profil de chaque personne.</p>
   </header>
 
   @if (errorMessage()) {
-    <p class="approvals__message approvals__message--error" role="alert">{{ errorMessage() }}</p>
+    <p-message severity="error" class="approvals__message approvals__message--error" role="alert">{{ errorMessage() }}</p-message>
   }
   @if (successMessage()) {
-    <p class="approvals__message approvals__message--success" role="status">{{ successMessage() }}</p>
+    <p-message severity="success" class="approvals__message approvals__message--success" role="status">{{ successMessage() }}</p-message>
   }
 
   @if (loading()) {
@@ -32,7 +32,7 @@
               <p>{{ request.email }}</p>
               @if (request.emailVerified !== true) {
                 <p>Courriel à confirmer. {{ request.invitationDeliveryStatus === 'FAILED' ? 'Dernier envoi échoué.' : '' }}</p>
-                <button type="button" [disabled]="resendingId() !== null" (click)="resend(request)">Renvoyer le lien</button>
+                <button pButton type="button" [disabled]="resendingId() !== null" (click)="resend(request)">Renvoyer le lien</button>
               }
               <p class="approvals__requested-role">
                 Profil demandé : <strong>{{ requestedRoleLabel(request.requestedRole) }}</strong>
@@ -55,21 +55,21 @@
           <div class="approvals__controls">
             <label>
               Établissement à attribuer
-              <select [value]="selections()[request.id]?.schoolId" (change)="changeSchool(request.id, $event)">
+              <app-select-field [value]="selections()[request.id]?.schoolId" (change)="changeSchool(request.id, $event)" [ariaLabel]="(&quot; Établissement à attribuer &quot;).trim()">
                 @for (school of schools(); track school.id) {
-                  <option [value]="school.id">{{ school.name }}</option>
+                  <app-select-option [value]="school.id" [label]="((&quot;&quot; + ((school.name)) + &quot;&quot;)).trim()" />
                 }
-              </select>
+              </app-select-field>
             </label>
             <label>
               Profil
-              <select [value]="selections()[request.id]?.role" (change)="changeRole(request.id, $event)">
-                <option value="TEACHER">Enseignant</option>
-                <option value="PARENT">Parent</option>
-                <option value="STUDENT">Étudiant</option>
-              </select>
+              <app-select-field [value]="selections()[request.id]?.role" (change)="changeRole(request.id, $event)" [ariaLabel]="(&quot; Profil &quot;).trim()">
+                <app-select-option [value]="&quot;TEACHER&quot;" [label]="(&quot;Enseignant&quot;).trim()" />
+                <app-select-option [value]="&quot;PARENT&quot;" [label]="(&quot;Parent&quot;).trim()" />
+                <app-select-option [value]="&quot;STUDENT&quot;" [label]="(&quot;Étudiant&quot;).trim()" />
+              </app-select-field>
             </label>
-            <button
+            <button pButton
               type="button"
               [disabled]="savingUserId() !== null || schools().length === 0 || request.emailVerified !== true"
               (click)="approve(request)"
@@ -109,10 +109,10 @@
             </div>
           </div>
           <div class="approvals__controls">
-            <button type="button" [disabled]="decidingAccessId() !== null" (click)="decideAutomatic(request, true)">
+            <button pButton type="button" [disabled]="decidingAccessId() !== null" (click)="decideAutomatic(request, true)">
               {{ decidingAccessId() === request.id ? 'Traitement…' : 'Confirmer' }}
             </button>
-            <button type="button" class="approvals__reject" [disabled]="decidingAccessId() !== null"
+            <button pButton severity="danger" type="button" class="approvals__reject" [disabled]="decidingAccessId() !== null"
                     (click)="decideAutomatic(request, false)">
               Refuser l’accès
             </button>
@@ -155,10 +155,10 @@
             </div>
           </div>
           <div class="approvals__controls">
-            <button type="button" [disabled]="decidingAccessId() !== null" (click)="decideAccess(request, true)">
+            <button pButton type="button" [disabled]="decidingAccessId() !== null" (click)="decideAccess(request, true)">
               {{ decidingAccessId() === request.id ? 'Traitement…' : 'Accorder l’accès' }}
             </button>
-            <button type="button" class="approvals__reject" [disabled]="decidingAccessId() !== null"
+            <button pButton severity="danger" type="button" class="approvals__reject" [disabled]="decidingAccessId() !== null"
                     (click)="decideAccess(request, false)">
               Refuser
             </button>

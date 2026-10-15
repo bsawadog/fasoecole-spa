@@ -4,12 +4,12 @@
 
     @if (summary(); as s) {
 
-      <button type="button" class="dep__btn" (click)="exportCsv()" [disabled]="loading()">Exporter CSV</button>
-      <button type="button" class="dep__btn" (click)="print()" [disabled]="loading()">Imprimer / PDF</button>
+      <button pButton type="button" class="dep__btn" (click)="exportCsv()" [disabled]="loading()">Exporter CSV</button>
+      <button pButton type="button" class="dep__btn" (click)="print()" [disabled]="loading()">Imprimer / PDF</button>
     }
   </div>
-  @if (error()) { <p class="dep__alert dep__alert--error" role="alert">{{ error() }} <button type="button" (click)="load()">Réessayer</button></p> }
-  @if (loading()) { <p role="status">Chargement des états…</p> }
+  @if (error()) { <p class="dep__alert dep__alert--error" role="alert">{{ error() }} <button pButton type="button" (click)="load()">Réessayer</button></p> }
+  @if (loading()) { <app-loading-state message="Chargement des états…" /> }
   @else if (!schools().length) { <p>Aucun établissement accessible.</p> }
   @else if (summary(); as s) {
     <h2>{{ s.schoolName }}</h2><p>Du {{ s.from | date:'dd/MM/yyyy' }} au {{ s.to | date:'dd/MM/yyyy' }} · {{ s.year?.label ?? 'Année civile' }} · FCFA</p>

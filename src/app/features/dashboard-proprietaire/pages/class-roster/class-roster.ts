@@ -1,3 +1,10 @@
+import { DateField } from '../../../../shared/ui/date-field';
+import { LucidePencil, LucideEye, LucideArrowRightLeft } from '@lucide/angular';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
 import { RosterImport } from '../../roster-import';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
@@ -47,7 +54,7 @@ interface NewStudentForm {
 @Component({
   selector: 'app-class-roster',
   standalone: true,
-  imports: [RosterImport, FormValidationDirective, FormsModule, RouterLink],
+  imports: [LucidePencil, LucideEye, LucideArrowRightLeft, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, RosterImport, FormValidationDirective, FormsModule, RouterLink],
   templateUrl: './class-roster.html',
   styleUrl: './class-roster.scss',
 })
@@ -319,26 +326,6 @@ export class ClassRoster implements OnInit, OnDestroy {
         this.successMessage.set(`Les informations de ${this.learner().definite} ont été mises à jour.`);
       },
       error: () => this.fail(`La mise à jour de ${this.learner().definite} a échoué.`),
-    });
-  }
-
-  async removeStudent(row: ClassRosterRow): Promise<void> {
-    const classId = this.selectedClassId();
-    if (!classId) return;
-    if (!await this.confirmation.confirm({
-      title: `Supprimer cet ${this.learner().singular} définitivement ?`,
-      message: `Supprimer ${row.firstName} ${row.lastName} ainsi que son compte, ses notes, ses présences et ses paiements ?`,
-      confirmLabel: 'Supprimer définitivement',
-      destructive: true,
-    })) return;
-    this.saving.set(true);
-    this.api.removeRosterStudent(classId, row.studentId).subscribe({
-      next: () => {
-        this.rows.update((rows) => rows.filter((r) => r.studentId !== row.studentId));
-        this.saving.set(false);
-        this.successMessage.set(`${this.learner().column} supprimé de l’établissement.`);
-      },
-      error: () => this.fail(`La suppression de ${this.learner().definite} a échoué.`),
     });
   }
 

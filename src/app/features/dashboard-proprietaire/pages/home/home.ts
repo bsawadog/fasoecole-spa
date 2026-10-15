@@ -1,3 +1,5 @@
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { Component, computed, DestroyRef, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, Subscription, timer } from 'rxjs';
@@ -31,7 +33,7 @@ import { DatedAppointment, pendingAppointmentCount } from '../../../../shared/ap
 @Component({
   selector: 'app-proprietaire-home',
   standalone: true,
-  imports: [
+  imports: [ButtonModule, MessageModule,
     DatePipe,
     DecimalPipe,
     RouterLink,
