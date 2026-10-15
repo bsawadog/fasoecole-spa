@@ -1,3 +1,4 @@
+import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
 import { NumberField } from '../../../../shared/ui/number-field';
 import { SelectField } from '../../../../shared/ui/select-field';
@@ -38,7 +39,7 @@ const monthStart = () => today().slice(0, 8) + '01';
 @Component({
   selector: 'app-finance',
   standalone: true,
-  imports: [DateField, NumberField, SelectField, SelectOption, TagModule, ProgressBarModule, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, TableModule, FormValidationDirective, FormsModule, RouterLink, DecimalPipe],
+  imports: [TooltipModule, DateField, NumberField, SelectField, SelectOption, TagModule, ProgressBarModule, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, TableModule, FormValidationDirective, FormsModule, RouterLink, DecimalPipe],
   templateUrl: './finance.html',
   styleUrl: './finance.scss',
 })

@@ -1,6 +1,6 @@
 import { Component, input, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { AuthService, SchoolAccess } from '../../auth';
 import { OwnerFamilyMessagesService } from '../../../features/dashboard-proprietaire/family-messages.service';
@@ -34,7 +34,7 @@ describe('AppShell account readiness', () => {
     };
     const self = { unreadConversationCount: vi.fn(() => of(5)) };
     const messages = { unreadCount: () => 0, refreshUnreadCount: vi.fn(() => of(0)) };
-    TestBed.configureTestingModule({ imports: [AppShell], providers: [provideRouter([]),
+    TestBed.configureTestingModule({ imports: [AppShell], providers: [provideRouter([{ path: 'profil', component: AcademicContextStub }]),
       { provide: AuthService, useValue: auth }, { provide: SelfSpaceService, useValue: self },
       { provide: OwnerFamilyMessagesService, useValue: messages },
     ] });
@@ -98,6 +98,19 @@ describe('AppShell account readiness', () => {
     auth.ownerAccess.set([pendingSchool, approvedSchool]);
     fixture.detectChanges();
     expect(fixture.componentInstance.selectedContextSchool()?.schoolId).toBe(2);
+    fixture.destroy();
+  });
+
+  it('keeps the context in the shared header and updates the breadcrumb on profile navigation', async () => {
+    const { fixture } = setup('parent');
+    expect(fixture.componentInstance.modulesOpen()).toBe(true);
+    expect(fixture.nativeElement.querySelector('.shell__topbar app-academic-context')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.shell__topbar > .shell__action--logout')).toBeNull();
+    await TestBed.inject(Router).navigateByUrl('/profil');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.breadcrumbs().map(crumb => crumb.label)).toEqual(['Accueil', 'Mon profil']);
+    expect(fixture.nativeElement.querySelector('.shell__breadcrumbs [aria-current="page"]').textContent).toContain('Mon profil');
+    expect(fixture.componentInstance.modulesOpen()).toBe(true);
     fixture.destroy();
   });
 });

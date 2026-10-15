@@ -1,3 +1,4 @@
+import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
 import { NumberField } from '../../../../shared/ui/number-field';
 import { SelectField } from '../../../../shared/ui/select-field';
@@ -70,7 +71,7 @@ interface Draft {
 @Component({
   selector: 'app-enrollment',
   standalone: true,
-  imports: [DateField, NumberField, SelectField, SelectOption, TableRow, TableModule, CheckboxModule, InputNumberModule, SelectModule, TagModule, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink],
+  imports: [TooltipModule, DateField, NumberField, SelectField, SelectOption, TableRow, TableModule, CheckboxModule, InputNumberModule, SelectModule, TagModule, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink],
   templateUrl: './enrollment.html',
   styleUrl: './enrollment.scss',
 })

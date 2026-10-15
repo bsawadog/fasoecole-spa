@@ -339,7 +339,7 @@
                           <td>{{ row.annualAverage ?? '—' }}</td>
                           <td><span [class]="'enr__badge enr__badge--' + row.decision">{{ label(row.decision) }}</span></td>
                           <td>{{ row.targetClassName ?? '—' }}</td>
-                          <td><button pButton severity="danger" variant="outlined" type="button" class="enr__mini enr__mini--danger" (click)="undo(row)" [disabled]="busy() || sourceClosed()">Annuler</button></td>
+                          <td><button pButton severity="danger" variant="outlined" type="button" class="enr__mini enr__mini--danger ui-row-action ui-row-action--danger" (click)="undo(row)" [disabled]="busy() || sourceClosed()" pTooltip="Annuler" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Annuler"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12 M6 18L18 6" /></svg></button></td>
                         </tr>
                       } @else if (draft(row); as d) {
                         <tr [class.enr__selected]="d.selected">

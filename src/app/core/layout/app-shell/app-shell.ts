@@ -1,4 +1,5 @@
 import { LoadingState } from '../../../shared/ui/loading-state';
+import { AccountActions } from './account-actions';
 import { NavigationActivity } from '../../../shared/ui/navigation-activity';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
@@ -14,15 +15,11 @@ import {
   LucideChartPie,
   LucideClock3,
   LucideGraduationCap,
-  LucideHouse,
-  LucideLogOut,
-  LucideMessageCircle,
+  LucideHouse,  LucideMessageCircle,
   LucideMessagesSquare,
   LucideNotebookPen,
   LucideShieldCheck,
-  LucideStar,
-  LucideUserRound,
-  LucideUsers,
+  LucideStar,  LucideUsers,
   LucideWallet,
 } from '@lucide/angular';
 import { AuthService, OwnerModule } from '../../auth';
@@ -132,7 +129,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [NavigationActivity, LoadingState, ButtonModule, MessageModule,
+  imports: [AccountActions, NavigationActivity, LoadingState, ButtonModule, MessageModule,
     NgTemplateOutlet,
     RouterOutlet,
     AcademicContextPicker,
@@ -144,22 +141,18 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     LucideChartPie,
     LucideClock3,
     LucideGraduationCap,
-    LucideHouse,
-    LucideLogOut,
-    LucideMessageCircle,
+    LucideHouse,    LucideMessageCircle,
     LucideMessagesSquare,
     LucideNotebookPen,
     LucideShieldCheck,
-    LucideStar,
-    LucideUserRound,
-    LucideUsers,
+    LucideStar,    LucideUsers,
     LucideWallet,
   ],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
 })
 export class AppShell implements OnInit {
-  readonly modulesOpen = signal(false);
+  readonly modulesOpen = signal(true);
   private readonly auth = inject(AuthService);
   private readonly supportHttp = inject(HttpClient);
   readonly incidentsAttention = signal(0);
@@ -222,6 +215,34 @@ export class AppShell implements OnInit {
     .map(item => item.label === 'Élèves par classe' && this.auth.selectedSchoolType() === 'UNIVERSITE'
       ? { ...item, label: 'Étudiants par classe' } : item));
   readonly messageNavigation = computed(() => this.accessibleNavigation().find(item => item.icon === 'message'));
+  readonly breadcrumbs = computed(() => {
+    const route = this.routeUrl().split(/[?#]/)[0];
+    const role = this.auth.role();
+    if (!role) return [];
+    const home = this.menuItems().find(item => item.icon === 'home')?.routerLink ?? `/${role}`;
+    const crumbs: { label: string; url: string }[] = [{ label: 'Accueil', url: home }];
+    if (route === home) return crumbs;
+    if (route === '/profil') return [...crumbs, { label: 'Mon profil', url: route }];
+    const parent = this.accessibleNavigation().filter(item => item.icon !== 'home' && (route === item.routerLink || route.startsWith(item.routerLink + '/')))
+      .sort((a, b) => b.routerLink.length - a.routerLink.length)[0];
+    if (parent) {
+      crumbs.push({ label: parent.label, url: parent.routerLink });
+      if (route !== parent.routerLink) crumbs.push({ label: 'Fiche détaillée', url: route });
+    } else {
+      const labels: Record<string, string> = {
+        eleves: 'Élèves', enseignants: 'Enseignants', parents: 'Parents', rendezVous: 'Rendez-vous',
+        'rendez-vous': 'Rendez-vous', annonces: 'Annonces', documents: 'Documents', absences: 'Absences',
+        'tous-les-employes': 'Tous les employés',
+      };
+      const segments = route.split('/').filter(Boolean);
+      if (segments[1]) {
+        const label = labels[segments[1]] ?? segments[1].replace(/-/g, ' ');
+        crumbs.push({ label: label.charAt(0).toUpperCase() + label.slice(1), url: `/${segments[0]}/${segments[1]}` });
+        if (segments.length > 2) crumbs.push({ label: 'Fiche détaillée', url: route });
+      }
+    }
+    return crumbs;
+  });
   readonly navigationSections = computed(() => {
     const items = this.menuItems();
     const role = items.some(item => item.routerLink.startsWith('/proprietaire')) ? 'proprietaire' : this.auth.role();

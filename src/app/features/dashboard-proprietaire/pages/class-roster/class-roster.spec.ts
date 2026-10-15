@@ -28,6 +28,7 @@ describe('ClassRoster transfer', () => {
       ])),
       getClassRoster: vi.fn(() => of([row])),
       transferRosterStudent: vi.fn(() => of({ ...row })),
+      deleteRosterStudent: vi.fn(() => of(undefined)),
     };
     const confirmation = { confirm: vi.fn(() => Promise.resolve(true)) };
     TestBed.configureTestingModule({
@@ -53,13 +54,13 @@ describe('ClassRoster transfer', () => {
     expect(component.transferTargetGroups().map((g) => g.label)).toEqual(['2025-2026', '2026-2027']);
   });
 
-  it('offers accessible icon actions without a student deletion action', () => {
+  it('offers accessible icon actions with a student deletion action', () => {
     const { fixture } = setup();
     const actions = fixture.nativeElement.querySelector('.class-roster__actions');
-    expect(actions.querySelectorAll('svg').length).toBe(3);
-    expect(actions.querySelector('a[title="Voir la fiche"]')).not.toBeNull();
-    expect(actions.querySelector('button[title="Transférer vers une autre classe"]')).not.toBeNull();
-    expect(actions.querySelector('button[title="Supprimer"]')).toBeNull();
+    expect(actions.querySelectorAll('svg').length).toBe(4);
+    expect(actions.querySelector('a[aria-label^="Voir la fiche"]')).not.toBeNull();
+    expect(actions.querySelector('button[aria-label^="Transf"]')).not.toBeNull();
+    expect(actions.querySelector('button[aria-label^="Supprimer"]')).not.toBeNull();
   });
 
   it('transfers the student and removes them from the current list', async () => {
@@ -76,4 +77,16 @@ describe('ClassRoster transfer', () => {
     expect(component.successMessage()).toContain('CM1 · B (2025-2026)');
     expect(component.successMessage()).toContain('fiche est conservée');
   });
+  it('deletes only after confirmation and keeps the row on cancellation', async () => {
+    const { component, api, confirmation } = setup();
+    confirmation.confirm.mockResolvedValueOnce(false);
+    await component.deleteStudent(row as never);
+    expect(api.deleteRosterStudent).not.toHaveBeenCalled();
+    expect(component.rows()).toHaveLength(1);
+    await component.deleteStudent(row as never);
+    expect(api.deleteRosterStudent).toHaveBeenCalledWith(100, 7);
+    expect(component.rows()).toEqual([]);
+    expect(component.saving()).toBe(false);
+  });
+
 });

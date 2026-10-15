@@ -58,7 +58,7 @@
               <tr><td>{{ row.date | date:'dd/MM/yyyy' }}</td><td>{{ row.label }}@if (row.reference) {<small class="cash-reference">{{ row.reference }}</small>}</td><td>{{ sourceLabels[row.source] }}</td>
                 <td>{{ row.direction === 'IN' ? (row.amount | number:'1.0-2') : '—' }}</td><td>{{ row.direction === 'OUT' ? (row.amount | number:'1.0-2') : '—' }}</td>
                 <td [class.dep__neg]="row.balance < 0">{{ row.balance | number:'1.0-2' }}</td><td class="cash-controls">
-                  @if (editable() && row.source === 'MANUAL') {<button pButton severity="secondary" variant="text" type="button" class="dep__link" (click)="remove(row)" [disabled]="busy()">Supprimer</button>}
+                  @if (editable() && row.source === 'MANUAL') {<button pButton severity="secondary" variant="text" type="button" class="dep__link ui-row-action ui-row-action--danger" (click)="remove(row)" [disabled]="busy()" pTooltip="Supprimer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Supprimer"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18 M9 6V4h6v2 M5 6l1 14h12l1-14 M10 10v6 M14 10v6" /></svg></button>}
                 </td></tr>
             } @empty {<tr><td colspan="7">Aucun mouvement pour ce mois. Le solde précédent est conservé.</td></tr>}
           </tbody><tfoot><tr><td></td><td>Total du mois (FCFA)</td><td></td><td>{{ d.receipts | number:'1.0-2' }}</td><td>{{ d.payments | number:'1.0-2' }}</td><td>{{ d.closingBalance | number:'1.0-2' }}</td><td class="cash-controls"></td></tr></tfoot>

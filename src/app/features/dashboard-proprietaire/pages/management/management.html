@@ -164,8 +164,8 @@
                     <td><strong>{{ academicName(row) }}</strong></td>
                     <td>{{ academicDescription(row) }}</td>
                     <td class="owner-management__actions">
-                      <button pButton variant="outlined" type="button" class="owner-management__icon-action" [attr.aria-label]="'Modifier : ' + academicName(row)" title="Modifier" (click)="editAcademic(row)"><svg lucidePencil [size]="18" aria-hidden="true"></svg></button>
-                      <button pButton severity="danger" variant="outlined" type="button" class="owner-management__icon-action owner-management__delete" [attr.aria-label]="'Supprimer : ' + academicName(row)" title="Supprimer" (click)="deleteAcademic(row)"><svg lucideTrash2 [size]="18" aria-hidden="true"></svg></button>
+                      <button pButton variant="outlined" type="button" class="owner-management__icon-action ui-row-action--warning" [attr.aria-label]="'Modifier : ' + academicName(row)" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="editAcademic(row)"><svg lucidePencil [size]="18" aria-hidden="true"></svg></button>
+                      <button pButton severity="danger" variant="outlined" type="button" class="owner-management__icon-action owner-management__delete ui-row-action--danger" [attr.aria-label]="'Supprimer : ' + academicName(row)" pTooltip="Supprimer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="deleteAcademic(row)"><svg lucideTrash2 [size]="18" aria-hidden="true"></svg></button>
                     </td>
                   </tr>
                 }
@@ -217,8 +217,8 @@
                     <td>{{ frequencyLabel(fee.frequency) }}</td>
                     <td>{{ fee.amount | number: '1.0-0' }} FCFA</td>
                     <td class="owner-management__actions">
-                      <button pButton variant="outlined" type="button" class="owner-management__icon-action" [attr.aria-label]="'Modifier : ' + fee.name" title="Modifier" (click)="editFee(fee)"><svg lucidePencil [size]="18" aria-hidden="true"></svg></button>
-                      <button pButton severity="danger" variant="outlined" type="button" class="owner-management__icon-action owner-management__delete" [attr.aria-label]="'Supprimer : ' + fee.name" title="Supprimer" (click)="deleteFee(fee)"><svg lucideTrash2 [size]="18" aria-hidden="true"></svg></button>
+                      <button pButton variant="outlined" type="button" class="owner-management__icon-action ui-row-action--warning" [attr.aria-label]="'Modifier : ' + fee.name" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="editFee(fee)"><svg lucidePencil [size]="18" aria-hidden="true"></svg></button>
+                      <button pButton severity="danger" variant="outlined" type="button" class="owner-management__icon-action owner-management__delete ui-row-action--danger" [attr.aria-label]="'Supprimer : ' + fee.name" pTooltip="Supprimer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="deleteFee(fee)"><svg lucideTrash2 [size]="18" aria-hidden="true"></svg></button>
                     </td>
                   </tr>
                 }

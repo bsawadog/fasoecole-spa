@@ -80,14 +80,18 @@
           }
         </a>
       }
-      <a routerLink="/profil" class="shell__action" routerLinkActive="shell__action--active" title="Mon profil" aria-label="Mon profil">
-        <svg lucideUserRound [size]="18" aria-hidden="true"></svg>
-        <span>Mon profil</span>
-      </a>
-      <button pButton severity="secondary" variant="outlined" class="shell__action shell__action--logout" type="button" (click)="logout()" title="Se déconnecter" aria-label="Se déconnecter">
-        <svg lucideLogOut [size]="18" aria-hidden="true"></svg>
-        <span>Se déconnecter</span>
-      </button>
+      <app-account-actions />
+      <nav class="shell__breadcrumbs" aria-label="Fil d’Ariane">
+        <ol>
+          @for (crumb of breadcrumbs(); track $index) {
+            <li>
+              @if (!$first) { <span aria-hidden="true">›</span> }
+              @if ($last) { <span aria-current="page">{{ crumb.label }}</span> }
+              @else { <a [routerLink]="crumb.url">{{ crumb.label }}</a> }
+            </li>
+          }
+        </ol>
+      </nav>
     </header>
 
     <div class="shell__page">

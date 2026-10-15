@@ -9,6 +9,28 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
+@media screen {
+  // The sticky header must keep enough height for its controls and breadcrumb.
+  .shell__topbar {
+    flex-shrink: 0;
+    height: auto;
+  }
+
+  .shell__breadcrumbs {
+    box-sizing: border-box;
+    width: 100%;
+    margin-top: .35rem;
+    padding-block: .65rem .25rem;
+    border-top: 1px solid var(--ui-border, #e0e8e4);
+    line-height: 1.6;
+  }
+
+  .shell__page {
+    flex-shrink: 0;
+    padding-top: clamp(1.25rem, 2.5vw, 1.75rem);
+  }
+}
+
 // Routed components share the shell's gutter; cards keep their own inner spacing.
 .shell__page > router-outlet + * {
   display: block;
@@ -36,4 +58,148 @@ body {
 
 .p-license-host {
   display: none;
+}
+
+.p-tooltip {
+  --p-tooltip-background: #000;
+  --p-tooltip-color: #fff;
+
+  .p-tooltip-text {
+    background: #000;
+    color: #fff;
+    padding: .65rem .9rem;
+    border-radius: .45rem;
+    line-height: 1.45;
+  }
+}
+
+// Compact table actions retain a comfortable target and a visible keyboard focus.
+.shell__page :is(td, .p-datatable-tbody > tr > td) :is(.ui-row-action, .owner-management__icon-action) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2.5rem;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0;
+  gap: 0;
+  vertical-align: middle;
+
+  svg { flex-shrink: 0; }
+
+  &:focus-visible {
+    outline: 2px solid var(--ui-ink, #192f27);
+    outline-offset: 3px;
+  }
+}
+
+.shell__page td :is(.fin__row-actions, .gr__row-actions, .dep__row-actions, .stf__row-actions, .row-actions),
+.shell__page td:is(.fin__row-actions, .owner-management__actions) {
+  gap: .375rem;
+  white-space: nowrap;
+}
+
+// Academic modules share the blue identity of the class rosters.
+@media screen {
+  .shell__page .ui-academic-blue {
+    --ui-primary: #2563eb;
+    --ui-primary-soft: #eff6ff;
+    --ui-border: #dbeafe;
+    --p-primary-color: #2563eb;
+    --p-primary-hover-color: #1d4ed8;
+    --p-primary-active-color: #1e40af;
+    --p-primary-contrast-color: #fff;
+    --p-select-focus-border-color: #2563eb;
+    --p-inputtext-focus-border-color: #2563eb;
+    --p-textarea-focus-border-color: #2563eb;
+    --p-select-option-selected-background: #dbeafe;
+    --p-select-option-selected-color: #1e40af;
+    --p-select-option-selected-focus-background: #bfdbfe;
+    --p-select-option-selected-focus-color: #1e40af;
+
+    :is(.gr__header, .ss__header) {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: #fff;
+      box-shadow: 0 2px 6px rgb(30 58 138 / 18%);
+      h1 { color: #fff; }
+      p, .ss__picker { color: #dbeafe; }
+    }
+
+    .gr__header-icon { background: #dbeafe; color: #1e40af; }
+    :is(.gr__card-head, .ss__card-head) {
+      background: #eff6ff;
+      border-bottom: 3px solid #2563eb;
+      h2 { color: #1e40af; }
+    }
+
+    :is(.gr__count, .ss__chip, .ss__mini--selected) { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+    .gr__tab { color: #1e40af; border-color: #bfdbfe; }
+    .gr__tab--on { background: #2563eb; border-color: #2563eb; color: #fff; }
+    .gr__toolbar { background: #f8faff; }
+    .gr__panel { background: #f8faff; border-color: #bfdbfe; }
+
+    :is(.gr__btn, .ss__btn):not([severity='danger']):not(.ui-row-action) {
+      background: #2563eb; border-color: #2563eb; color: #fff;
+      &:enabled:hover { background: #1d4ed8; border-color: #1d4ed8; }
+    }
+    :is(.gr__btn--ghost, .ss__btn--ghost):not(.ui-row-action) {
+      background: #fff; color: #1d4ed8; border-color: #93c5fd;
+      &:enabled:hover { background: #eff6ff; color: #1e40af; }
+    }
+    .ss__mini:not(.ui-row-action):not(.ss__mini--danger) { color: #1d4ed8; border-color: #bfdbfe; }
+
+    th { background: #eff6ff; color: #1e40af; }
+    tbody tr:nth-child(even) { background: #f3f7ff; }
+    tbody tr:hover { background: #dbeafe; }
+    td a:not(.ui-row-action) { color: #1d4ed8; }
+    :focus-visible { outline-color: #93c5fd; }
+  }
+}
+
+// Explicit action colors override the shared button theme, including on hover.
+.shell__page :is(.ui-row-action, .owner-management__icon-action) {
+  --action-color: #1d4ed8;
+  --action-background: #eff6ff;
+  --action-border: #bfdbfe;
+  --action-hover: #dbeafe;
+  color: var(--action-color);
+  background: var(--action-background);
+  border-color: var(--action-border);
+
+  &.ui-row-action--danger {
+    --action-color: #b91c1c;
+    --action-background: #fef2f2;
+    --action-border: #fecaca;
+    --action-hover: #fee2e2;
+  }
+
+  &.ui-row-action--success {
+    --action-color: #15803d;
+    --action-background: #f0fdf4;
+    --action-border: #bbf7d0;
+    --action-hover: #dcfce7;
+  }
+
+  &.ui-row-action--warning {
+    --action-color: #92400e;
+    --action-background: #fffbeb;
+    --action-border: #fde68a;
+    --action-hover: #fef3c7;
+  }
+
+  &.ui-row-action--info {
+    --action-color: #6d28d9;
+    --action-background: #f5f3ff;
+    --action-border: #ddd6fe;
+    --action-hover: #ede9fe;
+  }
+
+  &:enabled:hover,
+  &:is(a):hover {
+    color: var(--action-color);
+    background: var(--action-hover);
+    border-color: var(--action-color);
+  }
 }

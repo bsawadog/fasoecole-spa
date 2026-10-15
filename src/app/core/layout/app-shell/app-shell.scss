@@ -144,6 +144,20 @@
     background: #fff;
   }
 
+  &__breadcrumbs {
+    flex: 1 0 100%;
+    min-width: 0;
+    font-size: .8rem;
+    color: #62776d;
+
+    ol { display: flex; flex-wrap: wrap; gap: .5rem; list-style: none; padding: .15rem 0; margin: 0; }
+    li { display: flex; gap: .5rem; align-items: center; overflow-wrap: anywhere; }
+    a { color: #047857; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    a:focus-visible { outline: 2px solid #047857; outline-offset: 3px; }
+    [aria-current] { color: #24392f; font-weight: 600; }
+  }
+
   &__school-context {
     flex: 1 1 28rem;
     min-width: 0;

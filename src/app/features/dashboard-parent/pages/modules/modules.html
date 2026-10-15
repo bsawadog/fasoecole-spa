@@ -1,4 +1,4 @@
-<div class="ss portal" [class.portal--receipt]="receipt()">
+<div class="ss portal" [class.portal--receipt]="receipt()" [class.ui-academic-blue]="module() === 'notes'">
   <header class="ss__header portal-no-print">
     <div><h1>{{ title() }}</h1><p>Suivez les informations de votre enfant.</p></div>
     @if (children().length) {

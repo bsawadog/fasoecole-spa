@@ -1,3 +1,4 @@
+import { TooltipModule } from 'primeng/tooltip';
 import { LoadingState } from '../../../../shared/ui/loading-state';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
@@ -16,7 +17,7 @@ interface ParentRow extends RosterParent { children: StudentRecord[]; }
 
 @Component({
   selector: 'app-people-directory', standalone: true,
-  imports: [TableModule, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, FormsModule, RouterLink],
+  imports: [TooltipModule, TableModule, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, FormsModule, RouterLink],
   templateUrl: './people-directory.html',
   styleUrl: '../class-roster/class-roster.scss',
 })

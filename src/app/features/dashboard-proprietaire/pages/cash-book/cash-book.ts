@@ -1,3 +1,4 @@
+import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
 import { NumberField } from '../../../../shared/ui/number-field';
 import { SelectField } from '../../../../shared/ui/select-field';
@@ -22,7 +23,7 @@ const today = () => {
 };
 @Component({
   selector: 'app-cash-book', standalone: true,
-  imports: [DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormsModule, DatePipe, DecimalPipe, FormValidationDirective],
+  imports: [TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormsModule, DatePipe, DecimalPipe, FormValidationDirective],
   templateUrl: './cash-book.html', styleUrls: ['../expenses/expenses.scss', './cash-book.scss'],
 })
 export class CashBookPage implements OnInit, OnDestroy {

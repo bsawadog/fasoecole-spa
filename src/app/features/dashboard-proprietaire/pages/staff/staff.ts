@@ -1,3 +1,4 @@
+import { TooltipModule } from 'primeng/tooltip';
 import { NumberField } from '../../../../shared/ui/number-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
 import { LoadingState } from '../../../../shared/ui/loading-state';
@@ -32,7 +33,7 @@ const MODULE_HINTS: Record<OwnerModule, string> = {
 @Component({
   selector: 'app-staff',
   standalone: true,
-  imports: [NumberField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DecimalPipe],
+  imports: [TooltipModule, NumberField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DecimalPipe],
   templateUrl: './staff.html',
   styleUrl: './staff.scss',
 })

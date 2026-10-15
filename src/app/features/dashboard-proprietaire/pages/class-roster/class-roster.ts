@@ -1,5 +1,6 @@
+import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
-import { LucidePencil, LucideEye, LucideArrowRightLeft } from '@lucide/angular';
+import { LucidePencil, LucideEye, LucideArrowRightLeft, LucideTrash2 } from '@lucide/angular';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
 import { LoadingState } from '../../../../shared/ui/loading-state';
@@ -54,7 +55,7 @@ interface NewStudentForm {
 @Component({
   selector: 'app-class-roster',
   standalone: true,
-  imports: [LucidePencil, LucideEye, LucideArrowRightLeft, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, RosterImport, FormValidationDirective, FormsModule, RouterLink],
+  imports: [TooltipModule, LucidePencil, LucideEye, LucideArrowRightLeft, LucideTrash2, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, RosterImport, FormValidationDirective, FormsModule, RouterLink],
   templateUrl: './class-roster.html',
   styleUrl: './class-roster.scss',
 })
@@ -348,6 +349,32 @@ export class ClassRoster implements OnInit, OnDestroy {
         this.successMessage.set('Les informations du parent ont été mises à jour.');
       },
       error: (err) => this.fail(err?.error?.message ?? 'La mise à jour du parent a échoué.'),
+    });
+  }
+
+  async deleteStudent(row: ClassRosterRow): Promise<void> {
+    const classId = this.selectedClassId();
+    if (!classId || this.saving()) return;
+    if (!await this.confirmation.confirm({
+      title: `Supprimer cet ${this.learner().singular} ?`,
+      message: `${row.firstName} ${row.lastName} sera définitivement supprimé de l’établissement, avec son compte, ses inscriptions et ses données associées (notes, présences, factures). Cette action ne retire pas uniquement son inscription à cette classe.`,
+      confirmLabel: 'Supprimer définitivement',
+      destructive: true,
+    })) return;
+    if (this.saving() || this.selectedClassId() !== classId) return;
+    this.saving.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    this.api.deleteRosterStudent(classId, row.studentId).subscribe({
+      next: () => {
+        if (this.selectedClassId() === classId) {
+          this.rows.update(rows => rows.filter(item => item.studentId !== row.studentId));
+          this.cancelEdit();
+          this.successMessage.set(`${row.firstName} ${row.lastName} a été supprimé(e).`);
+        }
+        this.saving.set(false);
+      },
+      error: err => this.fail(err?.error?.message ?? 'Impossible de supprimer cet élève.'),
     });
   }
 

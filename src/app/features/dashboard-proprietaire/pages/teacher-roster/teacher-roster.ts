@@ -1,5 +1,6 @@
+import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
-import { LucideEye, LucidePencil, LucidePower, LucideRotateCcw } from '@lucide/angular';
+import { LucideEye, LucidePencil, LucidePower, LucideRotateCcw, LucideTrash2 } from '@lucide/angular';
 import { NumberField } from '../../../../shared/ui/number-field';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
@@ -23,7 +24,7 @@ import { ConfirmationService } from '../../../../shared/confirmation/confirmatio
 @Component({
   selector: 'app-teacher-roster',
   standalone: true,
-  imports: [LucideEye, LucidePencil, LucidePower, LucideRotateCcw, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, RosterImport, FormValidationDirective, FormsModule, RouterLink, NgTemplateOutlet],
+  imports: [TooltipModule, LucideEye, LucidePencil, LucidePower, LucideRotateCcw, LucideTrash2, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, RosterImport, FormValidationDirective, FormsModule, RouterLink, NgTemplateOutlet],
   templateUrl: './teacher-roster.html',
   styleUrl: './teacher-roster.scss',
 })
@@ -226,6 +227,36 @@ export class TeacherRoster implements OnInit, OnDestroy {
       error: err => {
         this.saving.set(false);
         this.error.set(err?.error?.message ?? 'Impossible de modifier le statut de cet enseignant.');
+      },
+    });
+  }
+
+  async deleteTeacher(teacher: TeacherCard): Promise<void> {
+    const classId = this.selectedClassId();
+    if (!classId || this.saving()) return;
+    const name = `${teacher.firstName} ${teacher.lastName}`;
+    if (!await this.confirmation.confirm({
+      title: 'Supprimer cet enseignant ?',
+      message: `${name} sera définitivement supprimé de l’établissement, avec ses affectations dans toutes les classes et ses données associées. Cette action ne retire pas uniquement son affectation à cette classe.`,
+      confirmLabel: 'Supprimer définitivement',
+      destructive: true,
+    })) return;
+    if (this.saving() || this.selectedClassId() !== classId) return;
+    this.saving.set(true);
+    this.error.set(null);
+    this.success.set(null);
+    this.management.deleteTeacher(teacher.id).subscribe({
+      next: () => {
+        this.saving.set(false);
+        if (this.selectedClassId() === classId) {
+          this.success.set(`${name} a été supprimé.`);
+          this.selectClass(classId);
+        }
+        this.refreshAllTeachers();
+      },
+      error: err => {
+        this.saving.set(false);
+        this.error.set(err?.error?.message ?? 'Impossible de supprimer cet enseignant.');
       },
     });
   }

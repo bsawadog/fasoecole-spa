@@ -118,3 +118,32 @@ describe('TeacherRoster', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Awa Traoré');
   });
 });
+
+
+describe('TeacherRoster deletion', () => {
+  it('requires confirmation and refreshes the class after deletion', async () => {
+    const confirm = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    const deleteTeacher = vi.fn(() => of(undefined));
+    const teachersByClass = vi.fn(() => of([]));
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AuthService, useValue: {} },
+        { provide: OwnerManagementService, useValue: { deleteTeacher } },
+        { provide: TeacherWorkService, useValue: { teachersByClass, candidatesByClass: () => of([]) } },
+        { provide: SchoolDataSyncService, useValue: {} },
+        { provide: ConfirmationService, useValue: { confirm } },
+      ],
+    });
+    const page = TestBed.runInInjectionContext(() => new TeacherRoster());
+    page.selectedClassId.set(1);
+    const teacher = { id: 4, firstName: 'Awa', lastName: 'Diallo' } as never;
+    await page.deleteTeacher(teacher);
+    expect(deleteTeacher).not.toHaveBeenCalled();
+    await page.deleteTeacher(teacher);
+    expect(confirm).toHaveBeenLastCalledWith(expect.objectContaining({ destructive: true }));
+    expect(deleteTeacher).toHaveBeenCalledWith(4);
+    expect(teachersByClass).toHaveBeenCalledWith(1);
+    expect(page.saving()).toBe(false);
+    page.ngOnDestroy();
+  });
+});

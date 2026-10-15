@@ -362,6 +362,14 @@ export class OwnerManagementService {
     return this.http.put<ClassRosterRow>(`${this.apiUrl}/classes/${classId}/roster/parents/${parentId}`, payload);
   }
 
+  deleteRosterStudent(classId: number, studentId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/classes/${classId}/roster/students/${studentId}`);
+  }
+
+  deleteTeacher(teacherId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/teachers/${teacherId}`);
+  }
+
   getTeacher(teacherId: number): Observable<TeacherRecord> {
     return this.http.get<TeacherRecord>(`${this.apiUrl}/teachers/${teacherId}`);
   }

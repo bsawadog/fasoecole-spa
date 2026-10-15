@@ -1,4 +1,4 @@
-<div class="ss life">
+<div class="ss life" [class.ui-academic-blue]="module() === 'suivi-devoirs'">
   <header class="ss__header">
     <div><h1>{{ title() }}</h1><p>Les informations de votre établissement, de votre classe ou de votre enfant.</p></div>
     <button pButton severity="secondary" variant="outlined" class="ss__btn ss__btn--ghost" type="button" (click)="reload()" [disabled]="loading() || saving() || contextId() === null">Actualiser</button>

@@ -12,7 +12,7 @@ import { StudentGradesView } from '../../../../shared/self-space/student-grades-
   imports: [SelectField, SelectOption, LoadingState, FormsModule, StudentGradesView],
   providers: [MyStudentsState],
   template: `
-    <div class="ss">
+    <div class="ss ui-academic-blue">
       <header class="ss__header">
         <div>
           <h1>Mes notes</h1>

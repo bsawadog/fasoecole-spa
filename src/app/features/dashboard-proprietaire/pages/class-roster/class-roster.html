@@ -133,8 +133,8 @@
                         </label>
                       </div>
                       <div class="class-roster__edit-actions">
-                        <button pButton type="submit" [disabled]="saving()">Enregistrer</button>
-                        <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()">Annuler</button>
+                        <button pButton type="submit" [disabled]="saving()" class="ui-row-action" pTooltip="Enregistrer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Enregistrer"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 6" /></svg></button>
+                        <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()" class="ui-row-action" pTooltip="Annuler" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Annuler"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12 M6 18L18 6" /></svg></button>
                       </div>
                     </form>
                   </td>
@@ -164,7 +164,7 @@
                         <p class="class-roster__muted">La fiche de {{ learner().definite }} (notes, présences, paiements, parents) est conservée.</p>
                         <div class="class-roster__edit-actions">
                           <button pButton type="submit" [disabled]="saving() || !transferTargetId">Transférer</button>
-                          <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()">Annuler</button>
+                          <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()" class="ui-row-action" pTooltip="Annuler" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Annuler"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12 M6 18L18 6" /></svg></button>
                         </div>
                       }
                     </form>
@@ -181,7 +181,7 @@
                     <div>{{ row.email }}</div>
                     @if (row.emailVerified === false) {
                       <small>{{ row.invitationDeliveryStatus === 'FAILED' ? 'Envoi échoué' : 'Compte à activer' }}</small>
-                      <button pButton type="button" class="class-roster__no-print" [disabled]="saving()" (click)="resendInvitation(row.userId)">Renvoyer le lien</button>
+                      <button pButton type="button" class="class-roster__no-print ui-row-action ui-row-action--info" [disabled]="saving()" (click)="resendInvitation(row.userId)" pTooltip="Renvoyer le lien" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Renvoyer le lien"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v14H3Z M3 5l9 8 9-8" /></svg></button>
                     }
                     @if (row.phone) { <div class="class-roster__muted">{{ row.phone }}</div> }
                   </td>
@@ -197,8 +197,8 @@
                             <label>Téléphone <input pInputText name="pPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="parentForm.phone" /></label>
                           </div>
                           <div class="class-roster__edit-actions">
-                            <button pButton type="submit" [disabled]="saving()">Enregistrer</button>
-                            <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()">Annuler</button>
+                            <button pButton type="submit" [disabled]="saving()" class="ui-row-action" pTooltip="Enregistrer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Enregistrer"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 6" /></svg></button>
+                            <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()" class="ui-row-action" pTooltip="Annuler" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Annuler"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12 M6 18L18 6" /></svg></button>
                           </div>
                         </form>
                       } @else {
@@ -207,7 +207,7 @@
                           @if (parent.email) { <span class="class-roster__muted">{{ parent.email }}</span> }
                           @if (parent.phone) { <span class="class-roster__muted">{{ parent.phone }}</span> }
                           <div class="class-roster__parent-actions class-roster__no-print">
-                            <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__link ui-row-action" title="Modifier le parent" [attr.aria-label]="'Modifier le parent : ' + parent.firstName + ' ' + parent.lastName" (click)="startEditParent(parent)"><svg lucidePencil [size]="18" aria-hidden="true"></svg></button>
+                            <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__link ui-row-action ui-row-action--warning" pTooltip="Modifier le parent" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Modifier le parent : ' + parent.firstName + ' ' + parent.lastName" (click)="startEditParent(parent)"><svg lucidePencil [size]="18" aria-hidden="true"></svg></button>
                             @if (parent.email) {
                               <a class="class-roster__link class-roster__link--contact" [href]="'mailto:' + parent.email" title="Contacter le parent par courriel">✉️ Contacter</a>
                             }
@@ -229,7 +229,7 @@
                           </div>
                           <div class="class-roster__edit-actions">
                             <button pButton type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Ajouter' }}</button>
-                            <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()" [disabled]="saving()">Annuler</button>
+                            <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()" [disabled]="saving()" class="ui-row-action" pTooltip="Annuler" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Annuler"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12 M6 18L18 6" /></svg></button>
                           </div>
                         </form>
                       } @else {
@@ -249,9 +249,10 @@
                     }
                   </td>
                   <td class="class-roster__actions class-roster__no-print">
-                    <a class="class-roster__action ui-row-action" title="Voir la fiche" [attr.aria-label]="'Voir la fiche : ' + row.firstName + ' ' + row.lastName" [routerLink]="['/proprietaire/eleves', row.studentId]"><svg lucideEye [size]="18" aria-hidden="true"></svg></a>
-                    <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__action ui-row-action" title="Modifier" [attr.aria-label]="'Modifier : ' + row.firstName + ' ' + row.lastName" (click)="startEditStudent(row)"><svg lucidePencil [size]="18" aria-hidden="true"></svg></button>
-                    <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__action ui-row-action" title="Transférer vers une autre classe" [attr.aria-label]="'Transférer : ' + row.firstName + ' ' + row.lastName" (click)="startTransfer(row)"><svg lucideArrowRightLeft [size]="18" aria-hidden="true"></svg></button>
+                    <a class="class-roster__action ui-row-action" pTooltip="Voir la fiche" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Voir la fiche : ' + row.firstName + ' ' + row.lastName" [routerLink]="['/proprietaire/eleves', row.studentId]"><svg lucideEye [size]="18" aria-hidden="true"></svg></a>
+                    <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__action ui-row-action ui-row-action--warning" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Modifier : ' + row.firstName + ' ' + row.lastName" (click)="startEditStudent(row)"><svg lucidePencil [size]="18" aria-hidden="true"></svg></button>
+                    <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__action ui-row-action ui-row-action--info" pTooltip="Transférer vers une autre classe" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Transférer : ' + row.firstName + ' ' + row.lastName" (click)="startTransfer(row)"><svg lucideArrowRightLeft [size]="18" aria-hidden="true"></svg></button>
+                    <button pButton severity="danger" variant="outlined" type="button" class="class-roster__action ui-row-action ui-row-action--danger" pTooltip="Supprimer la fiche de cet élève de l’établissement" tooltipPosition="top" tooltipEvent="both" [showDelay]="500" appendTo="body" [attr.aria-label]="'Supprimer : ' + row.firstName + ' ' + row.lastName" [disabled]="saving()" (click)="deleteStudent(row)"><svg lucideTrash2 [size]="18" aria-hidden="true"></svg></button>
                   </td>
                 }
               </tr>

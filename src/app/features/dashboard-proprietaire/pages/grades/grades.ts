@@ -1,3 +1,4 @@
+import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
 import { NumberField } from '../../../../shared/ui/number-field';
 import { SelectField } from '../../../../shared/ui/select-field';
@@ -26,7 +27,7 @@ type SheetValue = number | string | null;
 @Component({
   selector: 'app-grades',
   standalone: true,
-  imports: [DateField, NumberField, SelectField, SelectOption, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, TableModule, FormsModule, DecimalPipe, DatePipe],
+  imports: [TooltipModule, DateField, NumberField, SelectField, SelectOption, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, TableModule, FormsModule, DecimalPipe, DatePipe],
   templateUrl: './grades.html',
   styleUrl: './grades.scss',
 })
