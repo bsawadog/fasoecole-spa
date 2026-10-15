@@ -1,0 +1,161 @@
+// Shared public-page palette; preserve the existing geometry and content.
+@media screen {
+  .school-directory,
+  .service-detail {
+    background: linear-gradient(135deg, #061638 0%, #08375d 60%, #07556b 100%);
+    color: #f0f7ff;
+    --ui-muted: #c1d6e8;
+    --ui-border: #2d5a78;
+    --p-skeleton-background: #16415e;
+    --p-skeleton-animation-background: rgb(125 211 252 / 12%);
+
+    header img { background: #fff; border-radius: .5rem; }
+    h1, h2, strong { color: #f0f7ff; }
+    a { color: #a5e9f3; }
+    a:hover { color: #e0f7ff; }
+    :focus-visible { outline-color: #a5f3fc; }
+
+    :is(.school-directory__hero > p:last-child, .school-profile__intro,
+      .school-profile__features article span, .service-detail__intro,
+      .service-detail__card li) { color: #c1d6e8; }
+
+    :is(.school-directory__eyebrow, .school-profile__eyebrow,
+      .service-detail__eyebrow, .school-directory__back,
+      .school-profile__all, .service-detail__back) { color: #a5e9f3; }
+
+    :is(.school-card, .school-profile__features article, .service-detail__card) {
+      background: #0d3154;
+      border-color: #2d5a78;
+      color: #f0f7ff;
+      box-shadow: 0 .6rem 2rem rgb(2 12 31 / 15%);
+    }
+    .school-card:hover, .school-card:focus-visible {
+      background: #103d5d;
+      border-color: #7dd3fc;
+      color: #f0f7ff;
+      box-shadow: 0 1rem 2.3rem rgb(2 12 31 / 25%);
+    }
+    .school-card__type, .school-profile__type { background: #14516b; color: #a5f3fc; }
+    .school-card__more, .service-detail__card li svg { color: #9ce5f3; }
+    .school-directory__state { background: #0d3154; color: #c1d6e8; }
+    app-loading-state .loading-state { background: #0d3154; border-color: #2d5a78; }
+
+    .school-profile__cta, .service-detail__cta { background: #0c6b83; color: #fff; }
+    .school-profile__cta:hover,
+    .service-detail__cta:hover,
+    .service-detail__cta:focus-visible { background: #0e8097; color: #fff; }
+  }
+
+  .public-onboarding {
+    background: linear-gradient(135deg, #061638 0%, #08375d 60%, #07556b 100%);
+    color: #f0f7ff;
+    color-scheme: dark;
+    --p-inputtext-focus-border-color: #7dd3fc;
+    --p-button-primary-background: #0c6b83;
+    --p-button-primary-border-color: #3997ae;
+    --p-button-primary-color: #fff;
+    --p-button-primary-hover-background: #0e8097;
+    --p-button-primary-hover-border-color: #7dd3fc;
+    --p-button-primary-hover-color: #fff;
+
+    .brand img { background: #fff; border-radius: .5rem; }
+    .eyebrow { color: #a5e9f3; }
+    h1, h2, label, li strong { color: #f0f7ff; }
+    p, li span, small { color: #c1d6e8; }
+    a { color: #a5e9f3; }
+    a:hover { color: #e0f7ff; }
+    li::marker { color: #7dd3fc; }
+    .card { background: #0d3154; border-color: #2d5a78; box-shadow: 0 16px 50px rgb(2 12 31 / 25%); }
+    input { background: #092643; border-color: #49738f; color: #f0f7ff; }
+    input::placeholder { color: #b9cfe0; }
+    input:enabled:focus { border-color: #7dd3fc; }
+    input.ng-touched.ng-invalid { border-color: #fca5a5; }
+    button, .button { background: #0c6b83; color: #fff; }
+    button:enabled:hover, .button:hover { background: #0e8097; color: #fff; }
+    .text-button { background: transparent; color: #a5e9f3; }
+    .text-button:enabled:hover { background: transparent; color: #e0f7ff; }
+    .form-validation-error { color: #fecaca; }
+    :focus-visible { outline-color: #a5f3fc; }
+  }
+
+  .home.home {
+    --green: #7dd3fc;
+    --ink: #f0f7ff;
+    --muted: #c1d6e8;
+    background: linear-gradient(135deg, #061638 0%, #08375d 60%, #07556b 100%);
+    color: var(--ink);
+
+    .home__brand-logo,
+    .home__footer-logo { background: #fff; border-radius: .5rem; }
+
+    .home__nav-link { color: #d7e9f6; }
+    .home__nav-link:hover,
+    .home__dropdown[open] > .home__nav-link { color: #a5f3fc; }
+    .home__dropdown > summary {
+      color: #e1eef8;
+      background: linear-gradient(135deg, rgb(6 22 56 / 40%), rgb(7 85 107 / 40%));
+      border-radius: .4rem;
+      box-shadow: inset 0 0 0 1px rgb(125 211 252 / 20%);
+    }
+    .home__dropdown[open] > summary,
+    .home__dropdown > summary:hover {
+      background: linear-gradient(135deg, #0b3154, #0b4c60);
+      box-shadow: inset 0 0 0 1px #5794b2;
+    }
+    .home__dropdown-menu {
+      background: linear-gradient(135deg, #061638 0%, #08375d 60%, #07556b 100%);
+      border-color: #35627e;
+      box-shadow: 0 .8rem 2rem rgb(2 12 31 / 35%);
+    }
+    .home__dropdown-menu a { color: #e1eef8; }
+    .home__dropdown-menu a:hover,
+    .home__dropdown-menu a:focus-visible { background: #0c6b83; color: #fff; }
+    .home__dropdown-menu a svg { color: #7dd3fc; }
+
+    .home__button { background: #0c6b83; color: #fff; border-color: #3997ae; }
+    .home__button:hover { background: #0e8097; }
+    .home__button--header { color: #e0f2fe; background: rgb(125 211 252 / 10%); border-color: #5794b2; }
+    .home__button--header:hover { background: #0c6b83; color: #fff; }
+
+    .home__hero { background: #08294c; }
+    .home__hero::after {
+      background: linear-gradient(90deg, #071f43 0%, rgb(7 31 67 / 95%) 35%, rgb(7 63 85 / 12%) 82%);
+    }
+    .home__hero h1 { color: #f0f7ff; }
+    .home__hero h1 span { color: #7dd3fc; }
+    .home__description { color: #c1d6e8; }
+    .home__eyebrow { color: #a5e9f3; }
+    .home__section-heading > p { color: #c1d6e8; }
+
+    .home__program-card {
+      --program-background: #0d3154;
+      --program-accent: #9ce5f3;
+      --program-ink: #f0f7ff;
+      background: #0d3154;
+      border-color: #2d5a78;
+      box-shadow: 0 4px 24px rgb(2 12 31 / 15%);
+    }
+    .home__program-image-wrap { background: #0b294b; }
+    .home__program-icon { color: #dff7ff; background: #0c6b83; border-color: #0d3154; }
+    .home__service-card {
+      background: #0c3051;
+      border-color: #2d5a78;
+      box-shadow: 0 .4rem 1.5rem rgb(2 12 31 / 12%);
+      &:hover, &:focus-visible { background: #103d5d; border-color: #7dd3fc; box-shadow: 0 .8rem 1.8rem rgb(2 12 31 / 25%); }
+    }
+    .home__service-icon,
+    .home__about-icon { color: #a5f3fc; background: #14516b; }
+    .home__service-more { color: #9ce5f3; }
+    .home__about { background: linear-gradient(110deg, #0b3559, #0b4c60); }
+    .home__about p:last-child { color: #c1d6e8; }
+    .home__footer { border-color: #3b6c87; color: #bfd7e6; }
+    .home__footer a { color: #a5e9f3; }
+    :focus-visible { outline-color: #a5f3fc; }
+
+    @media (max-width: 650px) {
+      .home__hero::after {
+        background: linear-gradient(180deg, #071f43 0%, #071f43 42%, rgb(7 63 85 / 12%) 83%);
+      }
+    }
+  }
+}

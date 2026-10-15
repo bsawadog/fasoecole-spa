@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService, RegistrationSchool } from '../../core/auth';
 
 const SCHOOL_TYPES: Record<string, string> = {
+  PRESCOLAIRE_PRIMAIRE: 'Maternelle et primaire',
   PRESCOLAIRE: 'Maternelle',
   PRIMAIRE: 'Primaire',
   SECONDAIRE: 'Secondaire',
@@ -28,9 +29,22 @@ export class SchoolDirectory implements OnInit {
   readonly failed = signal(false);
   readonly schoolId = Number(this.route.snapshot.paramMap.get('id')) || null;
   readonly selectedSchool = computed(() => this.schools().find((school) => school.id === this.schoolId) ?? null);
+  readonly directoryTitle = computed(() => {
+    const type = this.filterType();
+    return type && SCHOOL_TYPES[type] ? `Établissements · ${SCHOOL_TYPES[type]}` : 'Les établissements partenaires';
+  });
+  readonly platformFeatures = [
+    { slug: 'suivi-scolaire', title: 'Suivi scolaire', description: 'Notes, bulletins, présences et informations de scolarité.' },
+    { slug: 'portail-parent', title: 'Espace familles', description: 'Un compte pour accompagner la scolarité de plusieurs enfants.' },
+    { slug: 'frais-scolaires', title: 'Frais et paiements', description: 'Suivi des frais scolaires, des versements et des reçus.' },
+    { slug: 'communication', title: 'Communication', description: 'Messages et annonces pour rapprocher les familles et les équipes éducatives.' },
+    { slug: 'tableaux-de-bord', title: 'Gestion de l’établissement', description: 'Tableaux de bord pour suivre les effectifs et l’activité de l’établissement.' },
+  ];
   readonly visibleSchools = computed(() => {
     const type = this.filterType();
-    return this.schools().filter((school) => !type || school.type === type);
+    return this.schools().filter((school) => !type || (type === 'PRESCOLAIRE_PRIMAIRE'
+      ? school.type === 'PRESCOLAIRE' || school.type === 'PRIMAIRE'
+      : school.type === type));
   });
 
   ngOnInit(): void {

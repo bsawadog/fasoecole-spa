@@ -1,4 +1,5 @@
 @use './app/shared/ui/application';
+@use './app/features/home/home-palette';
 
 @layer legacy, primeng, application;
 
@@ -120,7 +121,7 @@ body {
   }
 }
 
-// Full-page login artwork with a centered, readable form on every screen size.
+// Place the login form over the gradient and keep the classroom visible.
 .auth-page.auth-page--background {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -204,6 +205,14 @@ body {
 
   .auth-card__form-panel {
     padding: clamp(1.25rem, 4vw, 2rem);
+  }
+
+  @media (min-width: 900px) {
+    justify-items: start;
+    padding-inline: clamp(2rem, 6vw, 7rem);
+
+    .auth-card { width: min(28rem, 40vw); }
+    .auth-card__visual--illustration .auth-card__image { object-position: right center; }
   }
 }
 

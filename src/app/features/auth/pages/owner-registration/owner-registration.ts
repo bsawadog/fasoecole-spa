@@ -10,6 +10,7 @@ import { AuthService } from '../../../../core/auth';
 
 @Component({
   selector:'app-owner-registration',standalone:true,imports: [InputTextModule, ButtonModule, MessageModule, FormValidationDirective, ReactiveFormsModule,RouterLink],
+  host: { class: 'public-onboarding' },
   template:`
     <main class="onboarding">
       <a class="brand" routerLink="/"><img src="assets/images/fasoecole-logo-alt.svg" alt="FasoEcole · retour à l’accueil" /></a>
