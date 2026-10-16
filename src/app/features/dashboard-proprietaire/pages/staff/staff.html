@@ -4,7 +4,7 @@
       <span class="stf__header-icon" aria-hidden="true">🔑</span>
       <div>
         <h1>Personnel et accès</h1>
-        <p>Ouvrez des comptes à votre équipe (directeur, comptable, secrétaire…) et choisissez les modules auxquels chacun a accès.</p>
+        <p>Ajoutez une fonction à votre équipe (directeur, comptable, secrétaire…) et choisissez les modules autorisés. Un même compte peut être personnel, enseignant et parent.</p>
       </div>
     </div>
 
@@ -28,6 +28,9 @@
       @if (formOpen()) {
         <form class="stf__panel" (ngSubmit)="save()">
           <h3>{{ editing ? 'Modifier ' + editing.firstName + ' ' + editing.lastName : 'Nouveau membre du personnel' }}</h3>
+          @if (!editing) {
+            <p class="stf__muted">Saisissez le courriel habituel de la personne : son compte existant sera réutilisé sans changer son identité ni son mot de passe. Elle recevra une notification ; un nouveau compte recevra un lien d’activation.</p>
+          }
           @if (!editing) {
             <div class="stf__presets">
               <span>Profils types :</span>
@@ -63,17 +66,24 @@
           }
           <fieldset class="stf__modules">
             <legend>Modules autorisés (aucun pour un employé sans accès à la gestion)</legend>
-            @for (m of modules; track m.code) {
+            @for (group of moduleGroups; track group.title) {
+              <div class="stf__module-group" role="group" [attr.aria-label]="group.title">
+                <h4>{{ group.title }}</h4>
+                <div class="stf__module-options">
+            @for (m of group.modules; track m.code) {
               <label class="stf__module" [class.stf__module--on]="form.modules.has(m.code)">
                 <input type="checkbox" [checked]="form.modules.has(m.code)"
                        (change)="toggleModule(m.code, $any($event.target).checked)" />
                 <span><strong>{{ m.label }}</strong><small>{{ m.hint }}</small></span>
               </label>
             }
+                </div>
+              </div>
+            }
           </fieldset>
-          <p class="stf__muted">Les demandes de compte et la gestion du personnel restent réservées au propriétaire.</p>
+          <p class="stf__muted">Chaque module se choisit séparément. La création d’établissements et d’employés, la validation des comptes, la clôture d’année, la gestion du personnel, l’export complet et l’assistance restent réservés au propriétaire.</p>
           <div class="stf__actions">
-            <button pButton type="submit" class="stf__btn" [disabled]="busy()">{{ editing ? 'Enregistrer' : 'Créer le compte' }}</button>
+            <button pButton type="submit" class="stf__btn" [disabled]="busy()">{{ editing ? 'Enregistrer' : 'Ajouter cette fonction' }}</button>
             <button pButton severity="secondary" variant="outlined" type="button" class="stf__btn stf__btn--ghost" (click)="closeForm()">Annuler</button>
           </div>
         </form>

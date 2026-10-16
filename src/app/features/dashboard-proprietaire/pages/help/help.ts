@@ -18,6 +18,73 @@ interface HelpQuestion {
 }
 
 const QUESTIONS: HelpQuestion[] = [
+  { id: 'profiles', category: 'Compte et accès', question: 'Comment passer du profil propriétaire au profil enseignant ou parent ?', steps: [
+    'Ouvrez le menu de votre profil en haut de la page, près de votre nom.',
+    'Dans « Changer d’espace », choisissez le profil que vous souhaitez utiliser.',
+    'Le menu et les informations affichés correspondent alors au profil sélectionné.',
+    'Pour revenir à la gestion de votre établissement, choisissez de nouveau l’espace propriétaire.',
+  ], note: 'Seuls les rôles déjà attribués à votre compte sont proposés. Changer d’espace ne donne pas de nouvelles autorisations.', route: '/proprietaire', linkLabel: 'Retourner à mon espace' },
+  { id: 'shared-account', category: 'Compte et accès', question: 'Comment donner plusieurs rôles à une même personne ?', steps: [
+    'Utilisez toujours le même courriel pour cette personne.',
+    'Pour ajouter le rôle parent, associez ce courriel à un enfant depuis « Élèves par classe ». Pour ajouter une fonction d’enseignant ou de personnel, utilisez « Créer un employé ».',
+    'Le compte existant conserve son identité et son mot de passe ; la nouvelle fonction lui est ajoutée.',
+    'Un compte déjà activé reçoit une notification. Un compte qui doit encore être activé reçoit un lien pour terminer cette action.',
+    'La personne peut ensuite choisir son espace depuis le menu de son profil.',
+  ], note: 'Un propriétaire peut aussi être parent, enseignant ou employé. Le rôle propriétaire ne peut pas être attribué depuis la création d’un employé.', route: '/proprietaire/employes', linkLabel: 'Ajouter une fonction' },
+  { id: 'permissions', category: 'Personnel', question: 'Comment autoriser les modules d’un employé ?', steps: [
+    'Ouvrez « Personnel & accès » et sélectionnez l’établissement concerné.',
+    'Ajoutez ou modifiez l’employé, puis choisissez ses modules autorisés.',
+    'Utilisez un profil proposé, par exemple comptable ou secrétaire, comme point de départ puis ajustez les cases selon ses missions.',
+    'Vérifiez les trois groupes : administration et enseignement, vie scolaire et familles, finances.',
+    'Enregistrez et vérifiez que son accès à la gestion est actif.',
+  ], note: 'Les 17 modules sont indépendants : autoriser les élèves ne donne pas automatiquement accès au portail parents ou à la messagerie. Aucun module signifie aucun accès à la gestion. Les opérations réservées au propriétaire restent protégées.', route: '/proprietaire/personnel', linkLabel: 'Gérer le personnel et les accès' },
+  { id: 'teacher-pay', category: 'Personnel', question: 'Comment fixer le salaire ou le taux horaire d’un nouvel enseignant ?', steps: [
+    'Ouvrez « Créer un employé » et choisissez la fonction « Enseignant ».',
+    'Renseignez son identité, ses coordonnées et les informations d’embauche.',
+    'Choisissez « Salaire mensuel fixe » et saisissez le montant en FCFA, ou « Taux horaire avec créneaux » et saisissez le montant par heure.',
+    'Indiquez la date d’effet du tarif.',
+    'Ajoutez les créneaux hebdomadaires : classe, matière, jour, heure de début, heure de fin et date de début.',
+    'Enregistrez : les affectations aux classes et matières ainsi que le planning sont créés avec l’enseignant.',
+  ], note: 'Au moins un créneau est obligatoire pour le taux horaire ; les créneaux sont facultatifs pour le salaire mensuel. Préparez les classes et matières dans une année ouverte. Les chevauchements sont refusés. La paie horaire dépend ensuite des heures pointées et des heures supplémentaires.', route: '/proprietaire/employes', linkLabel: 'Créer un enseignant et sa rémunération' },
+  { id: 'calendar', category: 'Vie scolaire et familles', question: 'Où consulter et organiser le calendrier scolaire ?', steps: [
+    'Sélectionnez le bon établissement et ouvrez « Calendrier scolaire ».',
+    'Consultez les événements de la période souhaitée.',
+    'Si vous êtes autorisé à les gérer, renseignez les dates et les informations des examens, réunions ou vacances.',
+    'Vérifiez les informations enregistrées dans le calendrier.',
+  ], route: '/proprietaire/calendrier', linkLabel: 'Ouvrir le calendrier scolaire' },
+  { id: 'discipline', category: 'Vie scolaire et familles', question: 'Où suivre les observations et incidents de vie scolaire ?', steps: [
+    'Ouvrez « Discipline et vie scolaire » pour l’établissement concerné.',
+    'Consultez les observations et incidents concernant les élèves.',
+    'Renseignez les faits et les informations de suivi dans les actions disponibles selon vos droits.',
+    'Consultez régulièrement le suivi pour accompagner les élèves concernés.',
+  ], route: '/proprietaire/discipline', linkLabel: 'Ouvrir la discipline et la vie scolaire' },
+  { id: 'library', category: 'Vie scolaire et familles', question: 'Comment suivre les livres et les prêts ?', steps: [
+    'Ouvrez « Bibliothèque » et consultez le catalogue de l’établissement.',
+    'Ajoutez les ouvrages avec les actions de gestion disponibles selon vos droits.',
+    'Enregistrez les prêts et les retours pour tenir la disponibilité des livres à jour.',
+  ], route: '/proprietaire/bibliotheque', linkLabel: 'Ouvrir la bibliothèque' },
+  { id: 'homework', category: 'Suivi scolaire', question: 'Où suivre les remises et corrections des devoirs ?', steps: [
+    'Ouvrez « Suivi des devoirs » pour l’établissement concerné.',
+    'Consultez les devoirs et les remises des élèves.',
+    'Vérifiez les corrections et commentaires disponibles ; effectuez les actions correspondant à vos droits.',
+  ], route: '/proprietaire/suivi-devoirs', linkLabel: 'Ouvrir le suivi des devoirs' },
+  { id: 'parent-portal', category: 'Vie scolaire et familles', question: 'À quoi sert le portail parents ?', steps: [
+    'Ouvrez « Portail parents » pour l’établissement sélectionné.',
+    'Consultez et gérez les annonces, documents et devoirs destinés aux familles selon vos autorisations.',
+    'Utilisez les fonctions de rendez-vous pour organiser les échanges avec les familles.',
+    'Pour une conversation individuelle ou groupée, ouvrez le module « Messages ».',
+  ], note: 'L’accès au portail parents et l’accès à la messagerie se règlent séparément dans « Personnel & accès ».', route: '/proprietaire/portail-parents', linkLabel: 'Ouvrir le portail parents' },
+  { id: 'administrative-requests', category: 'Vie scolaire et familles', question: 'Où traiter les demandes de certificats et attestations ?', steps: [
+    'Ouvrez « Demandes administratives ».',
+    'Consultez la demande, son bénéficiaire et les informations fournies.',
+    'Effectuez le traitement proposé selon vos autorisations et vérifiez son état.',
+  ], note: 'Ce module est distinct des « Demandes de compte », qui servent à approuver les accès des utilisateurs.', route: '/proprietaire/demandes-administratives', linkLabel: 'Ouvrir les demandes administratives' },
+  { id: 'financial-tools', category: 'Finances', question: 'Comment distinguer dépenses, caisse et états financiers ?', steps: [
+    'Utilisez « Dépenses & budget » pour suivre les charges, salaires, versements et budgets.',
+    'Utilisez « Brouillard de caisse » pour les ouvertures, mouvements et clôtures de caisse.',
+    'Utilisez « États financiers » pour consulter, exporter ou imprimer les états proposés.',
+    'Dans « Personnel & accès », attribuez séparément les modules nécessaires à chaque employé.',
+  ], route: '/proprietaire/etats-financiers', linkLabel: 'Consulter les états financiers' },
   { id: 'request', category: 'Établissement', question: 'Comment demander la création d’un établissement ?', steps: [
     'Ouvrez « Créer une école » dans le menu.',
     'Renseignez le nom, le type et l’adresse de l’établissement.',
@@ -59,9 +126,9 @@ const QUESTIONS: HelpQuestion[] = [
   ], note: 'Pour une inscription avec les responsables et les frais scolaires, utilisez le module « Inscriptions ». Le titulaire choisit son mot de passe depuis son invitation.', route: '/proprietaire/classes', linkLabel: 'Ouvrir les élèves / étudiants par classe' },
   { id: 'parent', category: 'Élèves et parents', question: 'Comment associer un parent à un élève ?', steps: [
     'Ouvrez la liste des élèves ou étudiants de la classe.',
-    'Repérez la ligne de l’enfant sans parent associé.',
+    'Repérez la ligne de l’enfant concerné.',
     'Cliquez sur le bouton d’ajout du parent sur cette ligne.',
-    'Renseignez son identité, ses coordonnées et son lien avec l’enfant, puis enregistrez.',
+    'Renseignez son identité, ses coordonnées et son lien avec l’enfant. Si son compte existe déjà, utilisez son courriel habituel, puis enregistrez.',
     'Vérifiez que le parent figure maintenant sur la ligne de l’enfant.',
   ], note: 'Lorsqu’un parent demande lui-même un compte, il fournit les matricules de ses enfants. Vérifiez son identité et les correspondances avant d’approuver sa demande.', route: '/proprietaire/classes', linkLabel: 'Associer un parent' },
   { id: 'approval', category: 'Élèves et parents', question: 'Comment approuver une demande de compte ?', steps: [
@@ -130,8 +197,10 @@ const QUESTIONS: HelpQuestion[] = [
   { id: 'grades', category: 'Suivi scolaire', question: 'Comment consulter les notes et les bulletins ?', steps: [
     'Sélectionnez l’établissement et l’année scolaire.',
     'Ouvrez « Notes & bulletins ».',
-    'Choisissez la classe et la période ou l’évaluation à consulter.',
-    'Vérifiez les notes saisies et les résultats avant de préparer ou consulter les bulletins.',
+    'À l’étape 1, créez les périodes (trimestres ou semestres). À l’étape 2, créez les évaluations de la classe.',
+    'À l’étape 3, choisissez une évaluation et entrez les notes. À l’étape 4, vérifiez les moyennes, le classement et les appréciations.',
+    'À l’étape 5, générez les bulletins, vérifiez leur aperçu puis imprimez-les ou enregistrez-les en PDF. Publiez la période pour les rendre définitifs.',
+    'Utilisez les outils complémentaires pour la synthèse de l’établissement, les coefficients des matières ou l’historique des notes.',
   ], route: '/proprietaire/notes', linkLabel: 'Ouvrir les notes et bulletins' },
   { id: 'fees', category: 'Finances', question: 'Comment préparer les frais scolaires et suivre les paiements ?', steps: [
     'Configurez les types de frais et les tarifs depuis « Gestion de l’école ».',
@@ -179,5 +248,6 @@ export class OwnerHelp {
       && words.every(word => normalize([item.question, item.category, ...item.steps, item.note ?? ''].join(' ')).includes(word)));
   });
   choose(id: string): void { this.selected.update(value => value === id ? null : id); }
+  print(): void { window.print(); }
   reset(): void { this.search.set(''); this.category.set('Toutes'); this.selected.set(null); }
 }

@@ -1,4 +1,4 @@
-import { Component, input, signal } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
@@ -26,7 +26,7 @@ describe('AppShell account readiness', () => {
       rawRoles: role === 'proprietaire' ? ['SCHOOL_ADMIN'] : ['PARENT'],
       approved: false, emailVerified: false, requestedSchoolName: 'École', requestedSchoolType: 'PRIMAIRE' });
     const auth = {
-      user, role: () => role, isSchoolOwner: () => role === 'proprietaire', selectedSchoolType: () => 'PRIMAIRE',
+      user, role: computed(() => user().role), isSchoolOwner: () => user().rawRoles.includes('SCHOOL_ADMIN'), selectedSchoolType: () => 'PRIMAIRE',
       ownerModules: () => new Set(), ownerAccess, schoolContextId, logout: vi.fn(),
       refreshCurrentUser: vi.fn(() => of(user())),
       getOwnedSchools: vi.fn(() => of([{ id: 2, name: 'École', type: 'PRIMAIRE' }])),
@@ -63,6 +63,30 @@ describe('AppShell account readiness', () => {
     expect(auth.getOwnedSchools).toHaveBeenCalledWith(7, 'DASHBOARD');
     expect(messages.refreshUnreadCount).toHaveBeenCalledWith([2]);
     vi.advanceTimersByTime(20_000); expect(auth.getOwnedSchools).toHaveBeenCalledOnce();
+    fixture.destroy();
+  });
+
+  it('updates navigation and stops owner polling when switching to the parent space', () => {
+    const { fixture, user, auth, self } = setup('proprietaire');
+    user.update(current => ({ ...current, approved: true, emailVerified: true, rawRoles: ['SCHOOL_ADMIN', 'PARENT'] }));
+    fixture.detectChanges(); vi.advanceTimersByTime(20_001);
+    auth.loadOwnerAccess.mockClear();
+    user.update(current => ({ ...current, role: 'parent' }));
+    fixture.detectChanges(); vi.advanceTimersByTime(20_001);
+    expect(auth.loadOwnerAccess).not.toHaveBeenCalled();
+    expect(self.unreadConversationCount).toHaveBeenCalled();
+    expect(fixture.componentInstance.menuItems().some(item => item.routerLink === '/parent/enfants')).toBe(true);
+    expect(fixture.componentInstance.menuItems().some(item => item.routerLink.startsWith('/proprietaire'))).toBe(false);
+    fixture.destroy();
+  });
+
+  it('shows library navigation without student management for a delegated librarian', () => {
+    const { fixture, user, auth } = setup('proprietaire');
+    vi.spyOn(auth, 'ownerModules').mockReturnValue(new Set(['LIBRARY']));
+    user.update(current => ({ ...current, approved: true, emailVerified: true, rawRoles: ['STAFF'] }));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.menuItems().map(item => item.routerLink)).toEqual(['/proprietaire/bibliotheque']);
+    expect(fixture.componentInstance.messageNavigation()).toBeUndefined();
     fixture.destroy();
   });
 

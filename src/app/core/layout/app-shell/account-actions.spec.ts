@@ -3,7 +3,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
+import { of } from 'rxjs';
 import { AuthService } from '../../auth';
+import { User } from '../../models';
 import { AccountActions } from './account-actions';
 import { environment } from '../../../../environments/environment';
 
@@ -12,18 +14,58 @@ describe('AccountActions', () => {
   afterEach(() => vi.useRealTimers());
 
   function setup(approved = true) {
-    const user = signal({ id: 7, firstName: 'Awa', lastName: 'Diallo', approved, emailVerified: true });
+    const user = signal({ id: 7, firstName: 'Awa', lastName: 'Diallo', approved, emailVerified: true,
+      role: 'enseignant', rawRoles: ['TEACHER', 'PARENT'] });
     const logout = vi.fn();
+    const switchRole = vi.fn(async (role: string) => { user.update(current => ({ ...current, role })); return true; });
     TestBed.configureTestingModule({
       imports: [AccountActions],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(),
-        { provide: AuthService, useValue: { user, logout } }],
+        { provide: AuthService, useValue: { user, logout, switchRole, refreshCurrentUser: vi.fn(() => of(user())) } }],
     });
     const fixture = TestBed.createComponent(AccountActions);
     fixture.detectChanges();
     vi.advanceTimersByTime(1);
-    return { fixture, page: fixture.componentInstance, http: TestBed.inject(HttpTestingController), logout };
+    return { fixture, page: fixture.componentInstance, http: TestBed.inject(HttpTestingController), logout, user, switchRole };
   }
+
+  it('shows the active space and lets a multi-role user switch from the profile menu', async () => {
+    const { fixture, page, http, switchRole } = setup();
+    http.expectOne(`${environment.apiUrl}/notifications/by-user/7`).flush([]);
+    expect(fixture.nativeElement.textContent).toContain('Espace Enseignant');
+    page.toggle('profile'); fixture.detectChanges();
+    const options = fixture.nativeElement.querySelectorAll('.account-spaces button');
+    expect(options.length).toBe(2);
+    expect(options[0].getAttribute('aria-pressed')).toBe('true');
+    await page.changeSpace('parent'); fixture.detectChanges();
+    expect(switchRole).toHaveBeenCalledWith('parent');
+    expect(fixture.nativeElement.textContent).toContain('Espace Parent');
+    expect(page.opened()).toBeNull();
+    fixture.destroy();
+  });
+
+  it('hides the switcher for a single-role account', () => {
+    const { fixture, page, http, user } = setup();
+    http.expectOne(`${environment.apiUrl}/notifications/by-user/7`).flush([]);
+    user.update(current => ({ ...current, rawRoles: ['TEACHER'] }));
+    page.toggle('profile'); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.account-spaces')).toBeNull();
+    fixture.destroy();
+  });
+
+  it('refreshes role assignments when opening the profile without requiring a new login', () => {
+    const { fixture, page, http, user } = setup();
+    http.expectOne(`${environment.apiUrl}/notifications/by-user/7`).flush([]);
+    user.update(current => ({ ...current, rawRoles: ['TEACHER'] }));
+    vi.mocked(TestBed.inject(AuthService).refreshCurrentUser).mockImplementationOnce(() => {
+      user.update(current => ({ ...current, rawRoles: ['TEACHER', 'PARENT'] }));
+      return of(user() as unknown as User);
+    });
+    page.toggle('profile'); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.account-spaces button').length).toBe(2);
+    expect(TestBed.inject(AuthService).refreshCurrentUser).toHaveBeenCalledOnce();
+    fixture.destroy();
+  });
 
   it('loads real notifications and persists the read state', () => {
     const { fixture, page, http } = setup();

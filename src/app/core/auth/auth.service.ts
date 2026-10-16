@@ -3,9 +3,10 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, defer, finalize, map, of, shareReplay, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoginRequest, LoginResponse, ROLE_HOME_ROUTE, User, UserDto, resolveRole } from '../models';
+import { LoginRequest, LoginResponse, ROLE_HOME_ROUTE, User, UserDto, Role, resolveRoles, resolveRole } from '../models';
 
 const STORAGE_KEY = 'fasoecole_auth';
+const SPACE_KEY = 'fasoecole_active_role_';
 
 interface StoredSession {
   token: string;
@@ -56,7 +57,8 @@ export interface ProfileUpdate {
 export type ApprovalRole = 'TEACHER' | 'PARENT' | 'STUDENT';
 
 /** Modules de l'espace propriétaire pouvant être délégués au personnel. */
-export type OwnerModule = 'DASHBOARD' | 'MANAGEMENT' | 'STUDENTS' | 'TEACHERS' | 'FINANCE' | 'EXPENSES' | 'GRADES' | 'ENROLLMENT';
+export type OwnerModule = 'DASHBOARD' | 'MANAGEMENT' | 'STUDENTS' | 'TEACHERS' | 'FINANCE' | 'EXPENSES' | 'GRADES' | 'ENROLLMENT'
+  | 'CALENDAR' | 'DISCIPLINE' | 'LIBRARY' | 'HOMEWORK' | 'REQUESTS' | 'PARENT_PORTAL' | 'MESSAGES' | 'CASH_BOOK' | 'FINANCIAL_STATEMENTS';
 
 export const OWNER_MODULES: { code: OwnerModule; label: string; route: string }[] = [
   { code: 'DASHBOARD', label: 'Tableau de bord', route: '/proprietaire' },
@@ -67,7 +69,21 @@ export const OWNER_MODULES: { code: OwnerModule; label: string; route: string }[
   { code: 'EXPENSES', label: 'Dépenses & budget', route: '/proprietaire/depenses' },
   { code: 'GRADES', label: 'Notes & bulletins', route: '/proprietaire/notes' },
   { code: 'ENROLLMENT', label: 'Inscriptions', route: '/proprietaire/inscriptions' },
+  { code: 'CALENDAR', label: 'Calendrier scolaire', route: '/proprietaire/calendrier' },
+  { code: 'DISCIPLINE', label: 'Discipline et vie scolaire', route: '/proprietaire/discipline' },
+  { code: 'LIBRARY', label: 'Bibliothèque', route: '/proprietaire/bibliotheque' },
+  { code: 'HOMEWORK', label: 'Suivi des devoirs', route: '/proprietaire/suivi-devoirs' },
+  { code: 'REQUESTS', label: 'Demandes administratives', route: '/proprietaire/demandes-administratives' },
+  { code: 'PARENT_PORTAL', label: 'Portail parents', route: '/proprietaire/portail-parents' },
+  { code: 'MESSAGES', label: 'Messages', route: '/proprietaire/messages' },
+  { code: 'CASH_BOOK', label: 'Brouillard de caisse', route: '/proprietaire/caisse' },
+  { code: 'FINANCIAL_STATEMENTS', label: 'États financiers', route: '/proprietaire/etats-financiers' },
 ];
+
+export const OWNER_LIFE_MODULES: Record<'calendrier' | 'discipline' | 'bibliotheque' | 'suivi-devoirs' | 'demandes-administratives', OwnerModule> = {
+  calendrier: 'CALENDAR', discipline: 'DISCIPLINE', bibliotheque: 'LIBRARY',
+  'suivi-devoirs': 'HOMEWORK', 'demandes-administratives': 'REQUESTS',
+};
 
 /** Établissement accessible dans l'espace propriétaire (possédé ou délégué). */
 export interface SchoolAccess {
@@ -153,6 +169,24 @@ export class AuthService {
   readonly user = this._user.asReadonly();
   readonly isAuthenticated = computed(() => !!this._user());
   readonly role = computed(() => this._user()?.role ?? null);
+  readonly availableRoles = computed(() => resolveRoles(this._user()?.rawRoles ?? []));
+
+  async switchRole(role: Role): Promise<boolean> {
+    const user = this._user();
+    const token = this._token();
+    if (!user || !token || !user.approved || !user.emailVerified || user.mustChangePassword
+      || !this.availableRoles().includes(role)) return false;
+    if (role === user.role) return true;
+    this.setSession(token, { ...user, role });
+    try {
+      const navigated = await this.router.navigateByUrl(ROLE_HOME_ROUTE[role]);
+      if (!navigated) this.setSession(token, user);
+      return navigated;
+    } catch {
+      this.setSession(token, user);
+      return false;
+    }
+  }
 
   private readonly _ownerAccess = signal<SchoolAccess[] | null>(null);
   private ownerAccessRequest?: { token: string | null; response: Observable<SchoolAccess[]> };
@@ -330,7 +364,7 @@ export class AuthService {
       map((profile) => this.toUser(profile, profile.roles)),
       tap((user) => {
         this.setSession(token, user);
-        if (!previousUser.approved && user.approved && previousUser.role !== user.role) {
+        if (user.approved && user.emailVerified && !user.mustChangePassword && previousUser.role !== user.role) {
           this.router.navigateByUrl(ROLE_HOME_ROUTE[user.role]);
         }
       })
@@ -404,7 +438,8 @@ export class AuthService {
 
   private toUser(profile: UserDto, backendRoles: string[]): User {
     const effectiveRoles = backendRoles.length ? backendRoles : profile.requestedRole ? [profile.requestedRole] : [];
-    const role = resolveRole(effectiveRoles);
+    const preferred = localStorage.getItem(SPACE_KEY + profile.id) as Role | null;
+    const role = preferred && resolveRoles(effectiveRoles).includes(preferred) ? preferred : resolveRole(effectiveRoles);
     if (!role) {
       throw new Error(`Aucun rôle applicatif reconnu parmi : ${backendRoles.join(', ')}`);
     }
@@ -450,6 +485,7 @@ export class AuthService {
     }
     this._token.set(token);
     this._user.set(user);
+    localStorage.setItem(SPACE_KEY + user.id, user.role);
     const payload: StoredSession = { token, user };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   }
@@ -459,10 +495,16 @@ export class AuthService {
     if (!raw) return null;
     try {
       const session = JSON.parse(raw) as StoredSession;
+      const available = resolveRoles(session.user.rawRoles ?? []);
+      const preferred = localStorage.getItem(SPACE_KEY + session.user.id) as Role | null;
+      const role = preferred && available.includes(preferred) ? preferred
+        : available.includes(session.user.role) ? session.user.role : available[0];
+      if (!role) return null;
       return {
         ...session,
         user: {
           ...session.user,
+          role,
           approved: session.user.approved ?? true,
           requestedSchoolId: session.user.requestedSchoolId ?? null,
           requestedSchoolName: session.user.requestedSchoolName ?? null,

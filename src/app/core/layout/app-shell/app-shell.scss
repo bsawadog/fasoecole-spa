@@ -70,6 +70,9 @@
     padding: 0.6rem 0.75rem;
     border-radius: 8px;
     color: #d1d5db;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.45;
     text-decoration: none;
     transition: background 0.15s ease;
 
@@ -88,18 +91,26 @@
   }
 
   &__nav-section {
-    margin-top: 0.4rem;
-    .shell__nav-link { margin: 0.2rem 0 0.2rem 0.4rem; }
+    margin-top: 0.85rem;
+    .shell__nav-link { margin: 0.25rem 0 0.25rem 0.85rem; }
+
+    &[open] > .shell__nav-heading {
+      border-left-color: #60a5fa;
+    }
   }
 
   &__nav-heading {
-    padding: 0.7rem 0.75rem;
+    padding: 0.8rem 0.75rem;
+    border-left: 3px solid #3b82f6;
     border-radius: 8px;
-    color: #e5e7eb;
-    font-size: 0.85rem;
-    font-weight: 700;
+    background: transparent;
+    color: #dbeafe;
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.4;
     cursor: pointer;
 
+    &::marker { color: #93c5fd; font-size: 0.8em; }
     &:hover { background: rgba(255, 255, 255, 0.06); }
     &:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
   }

@@ -67,7 +67,7 @@ export class CashBookPage implements OnInit, OnDestroy {
   ngOnInit(): void {
     const id = this.auth.user()?.id;
     if (!id) { this.loading.set(false); return; }
-    this.requests.add(this.auth.getOwnedSchools(id,'EXPENSES').subscribe({
+    this.requests.add(this.auth.getOwnedSchools(id,'CASH_BOOK').subscribe({
       next: schools => {
         this.schools.set(schools);
         const stored=Number(localStorage.getItem('fasoecole_owner_school'));

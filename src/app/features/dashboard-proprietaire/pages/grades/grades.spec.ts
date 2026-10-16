@@ -99,4 +99,37 @@ describe('GradesPage', () => {
     expect(grades.saveGrades).toHaveBeenCalledWith(51,
       [{ studentId: 20, value: 15 }, { studentId: 21, value: 12 }], 'Erreur de report');
   });
+
+  it('separates evaluation setup, grade entry and subject coefficients', () => {
+    const { fixture } = setup();
+    const page = fixture.componentInstance;
+    page.setTab('evaluations');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[placeholder="Devoir n°1"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.gr__table--sheet')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-label="Coefficient Mathématiques"]')).toBeNull();
+
+    page.openSheet(evaluation);
+    fixture.detectChanges();
+    expect(page.tab()).toBe('entry');
+    expect(fixture.nativeElement.querySelector('input[placeholder="Devoir n°1"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.gr__table--sheet')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Awa Kaboré');
+
+    page.setTab('coefficients');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[aria-label="Coefficient Mathématiques"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.gr__table--sheet')).toBeNull();
+  });
+
+  it('keeps a locked period read-only in the separate grade entry screen', () => {
+    const { fixture } = setup();
+    const page = fixture.componentInstance;
+    page.periods.set([{ ...period, status: 'LOCKED' }]);
+    page.openSheet(evaluation);
+    fixture.detectChanges();
+    expect(page.editable()).toBe(false);
+    expect(fixture.nativeElement.textContent).toContain('consultation seule');
+    expect(fixture.nativeElement.textContent).not.toContain('Enregistrer les notes');
+  });
 });

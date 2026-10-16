@@ -13,7 +13,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
-import { AuthService } from '../../core/auth';
+import { AuthService, OWNER_LIFE_MODULES } from '../../core/auth';
 import { ConfirmationService } from '../confirmation/confirmation.service';
 import { apiError, SelfSpaceService } from '../self-space/self-space.service';
 import { FormValidationDirective } from '../form-validation.directive';
@@ -80,7 +80,7 @@ export class SchoolLifePage implements OnInit {
     if (this.owner()) {
       const userId = this.auth.user()?.id;
       if (!userId) { this.loading.set(false); return; }
-      this.auth.getOwnedSchools(userId, 'STUDENTS').pipe(takeUntilDestroyed(this.destroy)).subscribe({
+      this.auth.getOwnedSchools(userId, OWNER_LIFE_MODULES[this.module()]).pipe(takeUntilDestroyed(this.destroy)).subscribe({
         next: schools => { if (version === this.version) this.initialize(schools); },
         error: err => this.contextFailure(err, version),
       });

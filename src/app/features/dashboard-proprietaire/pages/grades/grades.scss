@@ -10,8 +10,13 @@
 .gr__select--strong { border: 2px solid #f59e0b; background: #fffbeb; color: #78350f; }
 .gr__filters { display: flex; flex-wrap: wrap; align-items: end; gap: .9rem; padding: .8rem 1rem; background: #fff; border: 1px solid #e2e8f0; border-radius: .6rem; }
 .gr__filters label { display: flex; flex-direction: column; gap: .25rem; color: #475569; font-size: .8rem; font-weight: 700; }
-.gr__tabs { display: flex; flex-wrap: wrap; gap: .4rem; }
-.gr__tab { padding: .5rem 1rem; border: 1px solid #cbd5e1; border-radius: 999px; background: #fff; color: #14532d; font-weight: 600; cursor: pointer; }
+.gr__tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: .5rem; }
+.gr__tab { display: flex; align-items: center; gap: .6rem; padding: .8rem; border: 1px solid #cbd5e1; border-radius: .6rem; background: #fff; color: #14532d; font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer; text-align: left; }
+.gr__step-number { display: grid; place-items: center; flex: 0 0 1.7rem; height: 1.7rem; border: 1px solid currentColor; border-radius: 50%; font-weight: 800; }
+.gr__tools { display: flex; flex-wrap: wrap; gap: .5rem; }
+.gr__guide { padding: 1rem; border-left: 4px solid #2563eb; border-radius: .4rem; background: #eff6ff; color: #1e3a8a; }
+.gr__guide h2 { margin: 0 0 .4rem; font-size: 1.1rem; }
+.gr__guide p { margin: 0; line-height: 1.6; }
 .gr__tab--on { background: #f59e0b; border-color: #d97706; color: #fff; }
 .gr__alert, .gr__state { margin: 0; padding: .8rem 1rem; border-radius: .4rem; font-size: .9rem; }
 .gr__alert--error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
@@ -25,7 +30,7 @@
 .gr__kpi small { color: #64748b; }
 .gr__kpi--ok { border-left-color: #16a34a; }
 .gr__kpi--warn { border-left-color: #f59e0b; }
-.gr__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr)); gap: 1rem; }
+.gr__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1rem; }
 .gr__card { background: #fff; border: 1px solid #e2e8f0; border-radius: .6rem; overflow: hidden; }
 .gr__card-head { display: flex; justify-content: space-between; align-items: center; gap: .6rem; flex-wrap: wrap; padding: .6rem 1rem; background: #f0fdf4; border-bottom: 3px solid #16a34a; }
 .gr__card-head h2 { margin: 0; color: #166534; font-size: .82rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }

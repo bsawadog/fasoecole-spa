@@ -33,7 +33,7 @@ export class OwnerAppointmentsPage implements OnInit {
   ngOnInit(): void {
     const userId = this.auth.user()?.id;
     if (!userId) { this.loading.set(false); this.error.set('Compte introuvable.'); return; }
-    this.auth.getOwnedSchools(userId, 'STUDENTS').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.auth.getOwnedSchools(userId, 'PARENT_PORTAL').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: schools => {
         this.schools.set(schools);
         const school = schools.find(s => s.id === Number(localStorage.getItem('fasoecole_owner_school'))) ?? schools[0];

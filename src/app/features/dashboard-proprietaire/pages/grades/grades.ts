@@ -9,10 +9,10 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { TableModule } from 'primeng/table';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, Observable, Subscription } from 'rxjs';
+import { forkJoin, Observable, Subscription, tap } from 'rxjs';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
 import { AcademicYearRecord, ClassRecord, LevelRecord, OwnerManagementService } from '../../owner-management.service';
 import {
@@ -21,13 +21,13 @@ import {
 } from '../../grades.service';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 
-type Tab = 'overview' | 'periods' | 'entry' | 'results' | 'bulletins' | 'history';
+type Tab = 'overview' | 'periods' | 'evaluations' | 'entry' | 'results' | 'bulletins' | 'coefficients' | 'history';
 type SheetValue = number | string | null;
 
 @Component({
   selector: 'app-grades',
   standalone: true,
-  imports: [TooltipModule, DateField, NumberField, SelectField, SelectOption, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, TableModule, FormsModule, DecimalPipe, DatePipe],
+  imports: [TooltipModule, DateField, NumberField, SelectField, SelectOption, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, TableModule, FormsModule, DecimalPipe, DatePipe, NgTemplateOutlet],
   templateUrl: './grades.html',
   styleUrl: './grades.scss',
 })
@@ -37,18 +37,21 @@ export class GradesPage implements OnInit, OnDestroy {
   private readonly grades = inject(GradesService);
   private readonly confirmation = inject(ConfirmationService);
   private requests = new Subscription();
+  private sheetRequest?: Subscription;
 
   readonly statusLabels = PERIOD_STATUS_LABELS;
   readonly evaluationTypes = EVALUATION_TYPES;
   readonly typeKeys = Object.keys(EVALUATION_TYPES);
   readonly mentionKeys = ['Très bien', 'Bien', 'Assez bien', 'Passable', 'Insuffisant'];
-  readonly tabs: { id: Tab; label: string; needsClass: boolean }[] = [
-    { id: 'overview', label: 'Synthèse', needsClass: false },
-    { id: 'periods', label: 'Périodes', needsClass: false },
-    { id: 'entry', label: 'Évaluations & saisie', needsClass: true },
-    { id: 'results', label: 'Résultats & classement', needsClass: true },
-    { id: 'bulletins', label: 'Bulletins', needsClass: true },
-    { id: 'history', label: 'Historique des notes', needsClass: true },
+  readonly tabs: { id: Tab; label: string; description: string; needsClass: boolean; step?: number }[] = [
+    { id: 'periods', label: 'Créer les périodes', description: 'Définissez les trimestres ou semestres de l’année, puis gérez leur ouverture et leur publication.', needsClass: false, step: 1 },
+    { id: 'evaluations', label: 'Créer les évaluations', description: 'Préparez les devoirs et examens : matière, enseignant, date, barème et poids. La saisie des notes se fait à l’étape suivante.', needsClass: true, step: 2 },
+    { id: 'entry', label: 'Entrer les notes', description: 'Choisissez une évaluation dans la liste pour ouvrir sa feuille, puis saisissez et enregistrez les notes des élèves.', needsClass: true, step: 3 },
+    { id: 'results', label: 'Résultats et classement', description: 'Vérifiez les moyennes et les rangs de la classe, puis renseignez les appréciations du conseil.', needsClass: true, step: 4 },
+    { id: 'bulletins', label: 'Bulletins', description: 'Préparez les bulletins, vérifiez leur aperçu et imprimez un élève ou toute la classe. La publication de la période les rend définitifs.', needsClass: true, step: 5 },
+    { id: 'overview', label: 'Synthèse', description: 'Consultez les indicateurs de l’établissement et comparez les résultats des classes pour la période sélectionnée.', needsClass: false },
+    { id: 'coefficients', label: 'Coefficients des matières', description: 'Réglez le poids de chaque matière dans la moyenne générale de la classe. Le poids d’une évaluation se règle lors de sa création.', needsClass: true },
+    { id: 'history', label: 'Historique des notes', description: 'Retrouvez les saisies, corrections et suppressions de notes, avec leur auteur et leur motif.', needsClass: true },
   ];
 
   readonly schools = signal<RegistrationSchool[]>([]);
@@ -95,6 +98,8 @@ export class GradesPage implements OnInit, OnDestroy {
     .filter(a => a.active)
     .map(a => ({ id: a.classSubjectTeacherId, label: `${s.subjectName} — ${a.teacherName}` }))));
   readonly currentTab = computed(() => this.tabs.find(t => t.id === this.tab())!);
+  readonly workflowTabs = this.tabs.filter(t => t.step);
+  readonly toolTabs = this.tabs.filter(t => !t.step);
 
   ngOnInit(): void {
     const ownerId = this.auth.user()?.id;
@@ -214,8 +219,9 @@ export class GradesPage implements OnInit, OnDestroy {
     const ok = await this.confirmation.confirm({ title: m.title, message: m.message, confirmLabel: m.label,
       destructive: status === 'OPEN' && period.status === 'PUBLISHED' });
     if (ok) {
-      this.run(this.grades.changeStatus(period.id, status),
-        `Période « ${period.name} » : ${this.statusLabels[status].toLowerCase()}.`, () => this.reloadPeriods());
+      this.run(this.grades.changeStatus(period.id, status).pipe(tap(updated => {
+        this.periods.update(periods => periods.map(item => item.id === updated.id ? updated : item));
+      })), `Période « ${period.name} » : ${this.statusLabels[status].toLowerCase()}.`);
     }
   }
 
@@ -232,12 +238,14 @@ export class GradesPage implements OnInit, OnDestroy {
   // ------------------------------------------------------------ évaluations
 
   editEvaluation(evaluation: EvaluationInfo): void {
+    if (this.tab() !== 'evaluations') this.setTab('evaluations');
     this.editingEvalId = evaluation.id;
     this.evalForm = { classSubjectTeacherId: evaluation.classSubjectTeacherId, title: evaluation.title,
       type: evaluation.type, evalDate: evaluation.evalDate, maxValue: evaluation.maxValue, weight: evaluation.weight };
   }
 
   resetEvaluation(): void {
+    this.sheetRequest?.unsubscribe();
     this.editingEvalId = null;
     this.evalForm = this.emptyEvaluation();
     this.sheet.set(null);
@@ -274,14 +282,18 @@ export class GradesPage implements OnInit, OnDestroy {
   }
 
   openSheet(evaluation: EvaluationInfo): void {
-    this.requests.add(this.grades.sheet(evaluation.id).subscribe({
+    if (this.tab() !== 'entry') this.setTab('entry');
+    this.sheetRequest?.unsubscribe();
+    this.sheet.set(null);
+    this.sheetRequest = this.grades.sheet(evaluation.id).subscribe({
       next: sheet => {
         this.sheetValues = Object.fromEntries(sheet.rows.map(r => [r.studentId, r.value]));
         this.sheetReason = '';
         this.sheet.set(sheet);
       },
       error: err => this.fail(err, 'Impossible de charger la feuille de notes.'),
-    }));
+    });
+    this.requests.add(this.sheetRequest);
   }
 
   changedExisting(): number {
@@ -382,7 +394,9 @@ export class GradesPage implements OnInit, OnDestroy {
       case 'overview':
         load(this.grades.summary(periodId), data => this.summary.set(data), 'Impossible de charger la synthèse.');
         break;
+      case 'evaluations':
       case 'entry':
+      case 'coefficients':
         load(forkJoin({ subjects: this.grades.subjects(classId!), evaluations: this.grades.evaluations(classId!, periodId) }),
           ({ subjects, evaluations }) => {
             this.subjects.set(subjects);

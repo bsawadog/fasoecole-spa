@@ -101,7 +101,7 @@ export class OwnerMessages implements OnInit {
       this.error.set('Impossible d’identifier votre compte propriétaire.');
       return;
     }
-    this.auth.getOwnedSchools(ownerId, 'STUDENTS').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.auth.getOwnedSchools(ownerId, 'MESSAGES').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (schools) => this.initializeSchools(schools),
       error: () => {
         this.loading.set(false);

@@ -31,7 +31,9 @@
 .stf__form label { display: flex; flex-direction: column; gap: .25rem; color: #475569; font-size: .8rem; font-weight: 600; }
 .stf__form input { padding: .45rem .55rem; border: 1px solid #cbd5e1; border-radius: .35rem; font: inherit; font-size: .88rem; }
 .stf__form input:disabled { background: #f1f5f9; color: #64748b; }
-.stf__modules { margin: 0; padding: .8rem; border: 1px solid #fde68a; border-radius: .4rem; background: #fff; display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: .5rem; }
+.stf__modules { margin: 0; padding: .8rem; border: 1px solid #bfdbfe; border-radius: .4rem; background: #fff; display: grid; gap: 1rem; }
+.stf__module-group h4 { margin: 0 0 .65rem; padding-bottom: .5rem; border-bottom: 1px solid #dbeafe; color: #1e3a8a; font-size: 1rem; }
+.stf__module-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: .5rem; }
 .stf__modules legend { padding: 0 .3rem; color: #78350f; font-weight: 700; font-size: .85rem; }
 .stf__module { display: flex; gap: .55rem; align-items: flex-start; padding: .55rem; border: 1px solid #e2e8f0; border-radius: .35rem; cursor: pointer; }
 .stf__module span { display: flex; flex-direction: column; gap: .15rem; }

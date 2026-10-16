@@ -73,7 +73,7 @@
         <strong>{{ data.pendingAccountApprovals }}</strong>
         <span class="owner-dashboard__metric-action">Traiter les demandes <svg lucideArrowRight [size]="15" aria-hidden="true"></svg></span>
       </a>
-      @if (canRecordReport()) {
+      @if (canManageAppointments()) {
         <a class="owner-dashboard__metric owner-dashboard__metric--blue" routerLink="/proprietaire/rendez-vous">
           <span class="owner-dashboard__metric-icon"><svg lucideCalendarCheck2 [size]="21" aria-hidden="true"></svg></span>
           <span class="owner-dashboard__metric-label">Rendez-vous</span>
@@ -197,7 +197,7 @@
       <section class="owner-dashboard__panel" id="communication">
         <div class="owner-dashboard__panel-heading">
           <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--amber"><svg lucideMessageCircle [size]="20" aria-hidden="true"></svg></span>
-          <div><h2><a routerLink="/proprietaire/messages">Communication</a></h2><p>Sur votre compte propriétaire</p></div>
+          <div><h2>@if (canUseMessages()) { <a routerLink="/proprietaire/messages">Communication</a> } @else { Communication }</h2><p>Sur votre compte propriétaire</p></div>
         </div>
         <div class="owner-dashboard__unread">
           <svg lucideMail [size]="20" aria-hidden="true"></svg>

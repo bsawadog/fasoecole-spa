@@ -337,6 +337,7 @@ export class ClassRoster implements OnInit, OnDestroy {
     }
     this.saving.set(true);
     this.api.updateRosterParent(classId, parentId, {
+      studentId,
       firstName: this.parentForm.firstName.trim(),
       lastName: this.parentForm.lastName.trim(),
       email: this.parentForm.email.trim() || null,
@@ -357,7 +358,7 @@ export class ClassRoster implements OnInit, OnDestroy {
     if (!classId || this.saving()) return;
     if (!await this.confirmation.confirm({
       title: `Supprimer cet ${this.learner().singular} ?`,
-      message: `${row.firstName} ${row.lastName} sera définitivement supprimé de l’établissement, avec son compte, ses inscriptions et ses données associées (notes, présences, factures). Cette action ne retire pas uniquement son inscription à cette classe.`,
+      message: `Le dossier scolaire de ${row.firstName} ${row.lastName} sera définitivement supprimé de l’établissement, avec ses inscriptions et ses données associées (notes, présences, factures). Son compte et ses autres rôles seront conservés. Cette action ne retire pas uniquement son inscription à cette classe.`,
       confirmLabel: 'Supprimer définitivement',
       destructive: true,
     })) return;
@@ -396,7 +397,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   }
 
   startAddParent(row: ClassRosterRow): void {
-    if (this.saving() || row.parents.length) return;
+    if (this.saving()) return;
     this.cancelEdit();
     this.addingStudent.set(false);
     this.newParentForm = { firstName: '', lastName: '', email: '', phone: '', relationship: '' };

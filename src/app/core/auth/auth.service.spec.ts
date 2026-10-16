@@ -14,18 +14,75 @@ describe('AuthService account flow', () => {
     onboardingSteps: ['READY'] };
 
   beforeEach(() => {
+    localStorage.removeItem('fasoecole_active_role_7');
     localStorage.removeItem('fasoecole_auth');
     localStorage.removeItem('fasoecole_owner_school');
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])] });
     auth = TestBed.inject(AuthService);
     http = TestBed.inject(HttpTestingController);
   });
-  afterEach(() => { http.verify(); localStorage.removeItem('fasoecole_auth'); localStorage.removeItem('fasoecole_owner_school'); });
+  afterEach(() => { localStorage.removeItem('fasoecole_active_role_7'); http.verify(); localStorage.removeItem('fasoecole_auth'); localStorage.removeItem('fasoecole_owner_school'); });
 
   const access: SchoolAccess[] = [
     { schoolId: 1, schoolName: 'École A', schoolType: 'PRIMAIRE', status: 'ACTIVE', owner: true, jobTitle: 'Propriétaire', modules: OWNER_MODULES.map(module => module.code) },
     { schoolId: 2, schoolName: 'École B', schoolType: 'PRIMAIRE', status: 'ACTIVE', owner: true, jobTitle: 'Propriétaire', modules: OWNER_MODULES.map(module => module.code) },
   ];
+
+  function multiRoleLogin(roles = ['SCHOOL_ADMIN', 'TEACHER', 'PARENT']) {
+    auth.login(profile.email, 'secret').subscribe();
+    http.expectOne(`${environment.apiUrl}/auth/login`).flush({ token: 'multi-role-token', userId: 7, email: profile.email, roles });
+    http.expectOne(`${environment.apiUrl}/users/me`).flush({ ...profile, roles });
+  }
+
+  it('switches among authorized spaces without changing the token and remembers the choice after login', async () => {
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    multiRoleLogin();
+    expect(auth.availableRoles()).toEqual(['proprietaire', 'enseignant', 'parent']);
+    expect(await auth.switchRole('parent')).toBe(true);
+    expect(auth.role()).toBe('parent');
+    expect(auth.getToken()).toBe('multi-role-token');
+    expect(navigate).toHaveBeenLastCalledWith('/parent');
+    auth.logout();
+    multiRoleLogin();
+    expect(auth.role()).toBe('parent');
+  });
+
+  it('rejects unassigned roles and rolls back a canceled navigation', async () => {
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(false);
+    multiRoleLogin();
+    expect(await auth.switchRole('admin')).toBe(false);
+    expect(navigate).not.toHaveBeenCalled();
+    expect(await auth.switchRole('parent')).toBe(false);
+    expect(auth.role()).toBe('proprietaire');
+    expect(localStorage.getItem('fasoecole_active_role_7')).toBe('proprietaire');
+  });
+
+  it('falls back when a remembered role is removed and deduplicates administrative roles', () => {
+    localStorage.setItem('fasoecole_active_role_7', 'parent');
+    multiRoleLogin(['SCHOOL_ADMIN', 'STAFF', 'TEACHER']);
+    expect(auth.role()).toBe('proprietaire');
+    expect(auth.availableRoles()).toEqual(['proprietaire', 'enseignant']);
+  });
+
+  it('prevents switching before account activation', async () => {
+    multiRoleLogin();
+    auth.refreshCurrentUser().subscribe();
+    http.expectOne(`${environment.apiUrl}/users/me`).flush({ ...profile, roles: ['SCHOOL_ADMIN', 'PARENT'], emailVerified: false });
+    expect(await auth.switchRole('parent')).toBe(false);
+  });
+
+  it('keeps the chosen space on refresh and returns to an authorized space if access is revoked', async () => {
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    multiRoleLogin();
+    await auth.switchRole('parent');
+    auth.refreshCurrentUser().subscribe();
+    http.expectOne(`${environment.apiUrl}/users/me`).flush({ ...profile, roles: ['SCHOOL_ADMIN', 'PARENT'] });
+    expect(auth.role()).toBe('parent');
+    auth.refreshCurrentUser().subscribe();
+    http.expectOne(`${environment.apiUrl}/users/me`).flush({ ...profile, roles: ['SCHOOL_ADMIN'] });
+    expect(auth.role()).toBe('proprietaire');
+    expect(navigate).toHaveBeenLastCalledWith('/proprietaire');
+  });
 
   it.each(OWNER_MODULES.map(module => [module.code]))('limits the %s module to the globally selected school', module => {
     auth.selectSchoolContext(2);

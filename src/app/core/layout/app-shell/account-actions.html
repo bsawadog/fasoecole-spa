@@ -30,11 +30,26 @@
 }
 <div class="account-control">
   <button type="button" class="account-trigger" aria-controls="account-profile" [attr.aria-expanded]="opened() === 'profile'" (click)="toggle('profile')">
-    <svg lucideUserRound [size]="19" aria-hidden="true"></svg><span>{{ auth.user()?.lastName }} {{ auth.user()?.firstName }}</span>
+    <svg lucideUserRound [size]="19" aria-hidden="true"></svg><span class="account-identity">{{ auth.user()?.lastName }} {{ auth.user()?.firstName }}
+      @if (activeSpace(); as space) { <small>Espace {{ spaceLabel(space) }}</small> }
+    </span>
   </button>
   @if (opened() === 'profile') {
     <section id="account-profile" class="account-panel" aria-label="Mon compte">
       <p class="account-name">{{ auth.user()?.firstName }} {{ auth.user()?.lastName }}</p>
+      @if (refreshingSpaces()) { <p role="status">Actualisation des espaces…</p> }
+      @if (spaces().length > 1 && auth.user()?.approved && auth.user()?.emailVerified && !auth.user()?.mustChangePassword) {
+        <div class="account-spaces" role="group" aria-label="Changer d’espace">
+          <p>Changer d’espace</p>
+          @for (space of spaces(); track space) {
+            <button type="button" [attr.aria-pressed]="activeSpace() === space" [disabled]="switching() || refreshingSpaces()" (click)="changeSpace(space)">
+              {{ spaceLabel(space) }}
+              @if (activeSpace() === space) { <span class="account-space-current">Actif</span> }
+            </button>
+          }
+        </div>
+      }
+      @if (switchError()) { <p role="alert">{{ switchError() }}</p> }
       <a routerLink="/profil" (click)="opened.set(null)"><svg lucideUserRound [size]="18" aria-hidden="true"></svg>Mon profil</a>
       <button type="button" class="account-logout" (click)="auth.logout()"><svg lucideLogOut [size]="18" aria-hidden="true"></svg>Se déconnecter</button>
     </section>

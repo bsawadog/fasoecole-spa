@@ -7,6 +7,7 @@ import { catchError, EMPTY, exhaustMap, filter, timer } from 'rxjs';
 import { LucideBell, LucideUserRound, LucideLogOut } from '@lucide/angular';
 import { TooltipModule } from 'primeng/tooltip';
 import { AuthService } from '../../auth';
+import { Role, ROLE_LABEL, resolveRoles } from '../../models';
 import { environment } from '../../../../environments/environment';
 
 export interface AccountNotification {
@@ -36,6 +37,25 @@ export class AccountActions implements OnInit {
   readonly loading = signal(true);
   readonly error = signal('');
   readonly marking = signal<number[]>([]);
+  readonly spaces = computed(() => resolveRoles(this.auth.user()?.rawRoles ?? []));
+  readonly activeSpace = computed(() => this.auth.user()?.role);
+  readonly switching = signal(false);
+  readonly switchError = signal('');
+  readonly refreshingSpaces = signal(false);
+
+  spaceLabel(role: Role): string {
+    return role === 'proprietaire' && !this.auth.user()?.rawRoles.includes('SCHOOL_ADMIN')
+      ? 'Personnel administratif' : ROLE_LABEL[role];
+  }
+
+  async changeSpace(role: Role): Promise<void> {
+    if (this.switching() || this.refreshingSpaces() || role === this.activeSpace()) return;
+    this.switching.set(true);
+    this.switchError.set('');
+    if (await this.auth.switchRole(role)) this.opened.set(null);
+    else this.switchError.set('Impossible de changer d’espace. Veuillez réessayer.');
+    this.switching.set(false);
+  }
 
   ngOnInit(): void {
     this.router.events.pipe(filter(event => event instanceof NavigationEnd), takeUntilDestroyed(this.destroyRef))
@@ -59,6 +79,13 @@ export class AccountActions implements OnInit {
 
   toggle(panel: 'profile' | 'notifications'): void {
     this.opened.update(current => current === panel ? null : panel);
+    if (panel === 'profile' && this.opened() === 'profile' && !this.refreshingSpaces()) {
+      this.refreshingSpaces.set(true);
+      this.auth.refreshCurrentUser().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: () => { this.refreshingSpaces.set(false); this.switchError.set(''); },
+        error: () => { this.refreshingSpaces.set(false); this.switchError.set('Impossible d’actualiser vos espaces. Réessayez en ouvrant ce menu.'); },
+      });
+    }
   }
 
   markRead(item: AccountNotification): void {

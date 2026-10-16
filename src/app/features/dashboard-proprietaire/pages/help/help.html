@@ -1,6 +1,9 @@
 <main class="help">
   <header><span class="help__eyebrow">GUIDE DU PROPRIÉTAIRE</span><h1>Aide</h1>
-    <p>Sélectionnez une question pour afficher les étapes à suivre.</p></header>
+    <p>Sélectionnez une question pour afficher les étapes à suivre.</p>
+    <button pButton type="button" class="help__print" (click)="print()" [disabled]="questions().length === 0">Imprimer l’aide</button>
+    <p class="help__print-hint">L’impression inclut toutes les réponses correspondant aux filtres. Effacez les filtres pour imprimer le guide complet.</p>
+  </header>
   @if (waitingApproval()) {
     <p-message severity="info" class="help__notice" role="status">Vous pouvez consulter cette aide pendant l’attente d’approbation. La saisie des informations de l’établissement commencera après activation par le SUPER_ADMIN.</p-message>
   }

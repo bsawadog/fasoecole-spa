@@ -27,7 +27,7 @@ export class FinancialStatements implements OnInit, OnDestroy {
   ngOnInit(): void {
     const owner = this.auth.user()?.id;
     if (!owner) { this.loading.set(false); return; }
-    this.requests.add(this.auth.getOwnedSchools(owner, 'EXPENSES').subscribe({
+    this.requests.add(this.auth.getOwnedSchools(owner, 'FINANCIAL_STATEMENTS').subscribe({
       next: schools => {
         this.schools.set(schools);
         const stored = Number(localStorage.getItem('fasoecole_owner_school'));

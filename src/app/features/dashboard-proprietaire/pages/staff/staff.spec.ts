@@ -64,7 +64,7 @@ describe('StaffPage', () => {
     page.applyPreset(page.presets[3]);
     page.save();
     expect(api.create).toHaveBeenCalledWith(5, expect.objectContaining({
-      email: 'ali@ecole.bf', jobTitle: 'Surveillant général', monthlySalary: 75000, modules: ['STUDENTS'],
+      email: 'ali@ecole.bf', jobTitle: 'Surveillant général', monthlySalary: 75000, modules: ['STUDENTS', 'DISCIPLINE', 'HOMEWORK', 'MESSAGES'],
     }));
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('L’envoi du courriel a échoué');
@@ -80,6 +80,18 @@ describe('StaffPage', () => {
     expect(api.create).toHaveBeenCalledWith(5, expect.objectContaining({ jobTitle: 'Gardien', email: '', phone: null, modules: [] }));
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Aucune invitation envoyée');
+  });
+
+  it('offers all delegated modules and saves library access without granting student records', () => {
+    const { fixture, api } = setup();
+    const page = fixture.componentInstance;
+    page.openCreate(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.stf__module input').length).toBe(17);
+    expect(fixture.nativeElement.querySelectorAll('.stf__module-group').length).toBe(3);
+    Object.assign(page.form, { firstName: 'Ali', lastName: 'Sawadogo', jobTitle: 'Bibliothécaire' });
+    page.toggleModule('LIBRARY', true);
+    page.save();
+    expect(api.create).toHaveBeenCalledWith(5, expect.objectContaining({ modules: ['LIBRARY'] }));
   });
 
   it('suspends a member after confirmation', async () => {

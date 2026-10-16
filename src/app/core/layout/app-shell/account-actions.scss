@@ -23,3 +23,12 @@ li button { display: block; margin-top: .5rem; border: 1px solid #cce7d9; border
 li button:disabled { opacity: .6; cursor: wait; }
 .account-read { margin-left: .65rem; }
 @media (max-width: 700px) { .account-panel--notifications { position: fixed; top: auto; right: 1rem; margin-top: .6rem; width: calc(100vw - 2rem); box-sizing: border-box; } }
+:host .account-identity { display: flex; flex-direction: column; text-align: left; gap: 3px; }
+:host .account-identity small { font-size: .72rem; font-weight: 400; opacity: .8; }
+.account-spaces { padding: .5rem 0; margin-bottom: .5rem; border-bottom: 1px solid #e2e8f0; }
+.account-spaces > p { margin: 0 0 .4rem; font-size: .75rem; color: #64748b; }
+.account-spaces button { display: flex; align-items: center; justify-content: space-between; gap: .5rem; width: 100%; padding: .65rem .5rem; border: 0; border-radius: .5rem; background: transparent; color: #334155; text-align: left; cursor: pointer; }
+.account-spaces button:hover, .account-spaces button[aria-pressed="true"] { background: #eff6ff; color: #1d4ed8; }
+.account-spaces button:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.account-spaces button:disabled { opacity: .6; cursor: wait; }
+.account-space-current { font-size: .7rem; font-weight: 600; }

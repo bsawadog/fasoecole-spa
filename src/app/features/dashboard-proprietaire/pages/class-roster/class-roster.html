@@ -196,6 +196,7 @@
                             <label>Courriel (facultatif) <input pInputText type="email" email name="pEmail" [(ngModel)]="parentForm.email" /></label>
                             <label>Téléphone <input pInputText name="pPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="parentForm.phone" /></label>
                           </div>
+                          <p class="class-roster__muted">Un courriel déjà utilisé permet de rattacher le compte existant à cet élève, sans modifier son identité ni ses autres rôles.</p>
                           <div class="class-roster__edit-actions">
                             <button pButton type="submit" [disabled]="saving()" class="ui-row-action" pTooltip="Enregistrer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Enregistrer"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 6" /></svg></button>
                             <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()" class="ui-row-action" pTooltip="Annuler" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Annuler"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12 M6 18L18 6" /></svg></button>
@@ -217,7 +218,8 @@
                           </div>
                         </div>
                       }
-                    } @empty {
+                    }
+                    @if (!row.parents.length) { <span class="class-roster__muted">Aucun parent associé</span> }
                       @if (addingParentStudentId() === row.studentId) {
                         <form class="class-roster__edit-form" #newParent="ngForm" (ngSubmit)="newParent.valid && addParent(row.studentId)">
                           <div class="class-roster__edit-grid">
@@ -227,19 +229,19 @@
                             <label>Téléphone<input pInputText name="phone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="newParentForm.phone" maxlength="30" /></label>
                             <label>Lien avec {{ learner().definite }}<input pInputText name="relationship" [(ngModel)]="newParentForm.relationship" maxlength="50" placeholder="Père, mère, tuteur…" /></label>
                           </div>
+                          <p class="class-roster__muted">Si ce courriel appartient à un compte existant, celui-ci sera rattaché à cet élève comme parent. Son identité et ses autres rôles seront conservés.</p>
                           <div class="class-roster__edit-actions">
                             <button pButton type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Ajouter' }}</button>
                             <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()" [disabled]="saving()" class="ui-row-action" pTooltip="Annuler" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Annuler"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12 M6 18L18 6" /></svg></button>
                           </div>
                         </form>
                       } @else {
-                        <span class="class-roster__muted">Aucun parent associé</span>
                         <div class="class-roster__parent-actions class-roster__no-print">
                           <button pButton severity="secondary" variant="text" type="button" class="class-roster__link" (click)="startAddParent(row)" [disabled]="saving()"
                             [attr.aria-label]="'Ajouter un parent pour ' + row.firstName + ' ' + row.lastName">+ Ajouter un parent</button>
                         </div>
                       }
-                    }
+
                   </td>
                   <td>
                     @if (row.teacherNames.length > 0) {

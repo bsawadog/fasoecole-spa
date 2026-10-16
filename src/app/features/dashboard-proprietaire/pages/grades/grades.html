@@ -4,7 +4,7 @@
       <span class="gr__header-icon" aria-hidden="true">20</span>
       <div>
         <h1>Notes &amp; bulletins</h1>
-        <p>Périodes, évaluations, saisie tracée, moyennes pondérées, classements et bulletins imprimables.</p>
+        <p>Suivez les étapes, de la création des périodes à l’impression des bulletins.</p>
       </div>
     </div>
 
@@ -38,11 +38,22 @@
   }
 
   <nav class="gr__tabs gr__no-print" aria-label="Sections notes et bulletins">
-    @for (item of tabs; track item.id) {
+    @for (item of workflowTabs; track item.id) {
       <button type="button" class="gr__tab" [class.gr__tab--on]="tab() === item.id"
-              [attr.aria-current]="tab() === item.id ? 'page' : null" (click)="setTab(item.id)">{{ item.label }}</button>
+              [attr.aria-current]="tab() === item.id ? 'page' : null" [disabled]="busy()" (click)="setTab(item.id)"><span class="gr__step-number" aria-hidden="true">{{ item.step }}</span>{{ item.label }}</button>
     }
   </nav>
+  <nav class="gr__tools gr__no-print" aria-label="Outils complémentaires">
+    @for (item of toolTabs; track item.id) {
+      <button type="button" class="gr__mini" [class.gr__tab--on]="tab() === item.id" [attr.aria-current]="tab() === item.id ? 'page' : null" [disabled]="busy()" (click)="setTab(item.id)">{{ item.label }}</button>
+    }
+  </nav>
+  @if (!loading() && schools().length) {
+    <div class="gr__guide gr__no-print">
+      <h2>{{ currentTab().step ? 'Étape ' + currentTab().step + ' — ' : '' }}{{ currentTab().label }}</h2>
+      <p>{{ currentTab().description }}</p>
+    </div>
+  }
 
   @if (error()) { <p-message severity="error" class="gr__alert gr__alert--error gr__no-print" role="alert">{{ error() }}</p-message> }
   @if (success()) { <p-message severity="success" class="gr__alert gr__alert--success gr__no-print" role="status">{{ success() }}</p-message> }
@@ -52,10 +63,17 @@
   } @else if (!schools().length) {
     <p class="gr__state">Aucun établissement associé à votre compte.</p>
   } @else if (tab() !== 'periods' && !period()) {
-    <p class="gr__state">Créez d’abord une période d’évaluation (onglet « Périodes »).</p>
+    <div class="gr__state">Créez d’abord un trimestre ou un semestre pour cette année.
+      <button pButton type="button" class="gr__btn" (click)="setTab('periods')">Créer les périodes</button>
+    </div>
   } @else if (currentTab().needsClass && !classId()) {
     <p class="gr__state">Aucune classe pour l’année de cette période.</p>
   } @else {
+    @if ((tab() === 'evaluations' || tab() === 'entry') && !editable()) {
+      <div class="gr__alert gr__alert--warn">Période {{ statusLabels[period()!.status].toLowerCase() }} : consultation seule.
+        <button type="button" class="gr__mini" (click)="setTab('periods')">Gérer l’ouverture de la période</button>
+      </div>
+    }
     @switch (tab()) {
       @case ('overview') {
         @if (summary(); as s) {
@@ -92,6 +110,11 @@
           <div class="gr__card">
             <div class="gr__card-head"><h2>{{ editingPeriodId ? 'Modifier la période' : 'Nouvelle période' }}</h2></div>
             <div class="gr__body gr__form">
+              <label class="gr__wide">Année scolaire de la période
+                <app-select-field [(ngModel)]="periodForm.academicYearId" ariaLabel="Année scolaire de la période">
+                  @for (year of years(); track year.id) { <app-select-option [value]="year.id" [label]="year.label" /> }
+                </app-select-field>
+              </label>
               <label>Code<input pInputText [(ngModel)]="periodForm.code" maxlength="20" placeholder="TERM1"></label>
               <label>Libellé<input pInputText [(ngModel)]="periodForm.name" maxlength="80" placeholder="1er trimestre"></label>
               <label>Début<app-date-field mode="date" [(ngModel)]="periodForm.startDate" [ariaLabel]="(&quot;Début&quot;).trim()" /></label>
@@ -106,6 +129,11 @@
           <div class="gr__card">
             <div class="gr__card-head"><h2>Découpage automatique</h2></div>
             <div class="gr__body gr__form">
+              <label class="gr__wide">Année scolaire à découper
+                <app-select-field [(ngModel)]="defaults.academicYearId" ariaLabel="Année scolaire à découper">
+                  @for (year of years(); track year.id) { <app-select-option [value]="year.id" [label]="year.label" /> }
+                </app-select-field>
+              </label>
               <label>Découpage
                 <app-select-field [(ngModel)]="defaults.scheme" [ariaLabel]="(&quot;Découpage &quot;).trim()">
                   <app-select-option [value]="&quot;TRIMESTRE&quot;" [label]="(&quot;3 trimestres&quot;).trim()" />
@@ -152,11 +180,7 @@
         </div>
       }
 
-      @case ('entry') {
-        @if (!editable()) {
-          <div class="gr__alert gr__alert--warn">Période {{ statusLabels[period()!.status].toLowerCase() }} : consultation seule. Rouvrez-la dans « Périodes » pour modifier les notes.</div>
-        }
-        <div class="gr__grid">
+      @case ('evaluations') {
           <div class="gr__card">
             <div class="gr__card-head"><h2>{{ editingEvalId ? 'Modifier l’évaluation' : 'Nouvelle évaluation' }}</h2></div>
             <div class="gr__body gr__form">
@@ -179,7 +203,11 @@
               </div>
             </div>
           </div>
-          <div class="gr__card">
+
+        <ng-container *ngTemplateOutlet="evaluationList" />
+      }
+      @case ('coefficients') {
+        <div class="gr__card">
             <div class="gr__card-head"><h2>Coefficients des matières</h2></div>
             <div class="gr__table-wrap"><table class="gr__table">
               <thead><tr><th>Matière</th><th>Enseignant(s)</th><th>Coef.</th></tr></thead>
@@ -201,61 +229,10 @@
               </tbody>
             </table></div>
           </div>
-        </div>
 
-        <div class="gr__card">
-          <div class="gr__card-head"><h2>Évaluations de la période</h2><span class="gr__count">{{ evaluations().length }}</span></div>
-          <div class="gr__table-wrap"><p-table class="gr__table ui-data-table" [value]="evaluations()" dataKey="id" [rowHover]="true" [paginator]="(evaluations()).length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
-      <ng-template #header><tr><th>Matière</th><th>Évaluation</th><th>Date</th><th>Barème</th><th>Poids</th><th>Saisie</th><th>Moyenne /20</th><th>Actions</th></tr></ng-template>
-      <ng-template #body [appTableRow]="evaluations()" let-e>
-                <tr [class.gr__selected]="sheet()?.evaluation?.id === e.id">
-                  <td><strong>{{ e.subjectName }}</strong><div class="gr__muted">{{ e.teacherName }}</div></td>
-                  <td>{{ e.title }}<div class="gr__muted">{{ evaluationTypes[e.type] ?? e.type }}</div></td>
-                  <td>{{ e.evalDate | date:'dd/MM/yyyy' }}</td>
-                  <td>/{{ e.maxValue | number:'1.0-2' }}</td>
-                  <td>×{{ e.weight | number:'1.0-2' }}</td>
-                  <td>{{ e.gradedCount }}/{{ e.studentCount }}</td>
-                  <td>{{ e.averageOn20 != null ? (e.averageOn20 | number:'1.2-2') : '—' }}</td>
-                  <td><div class="gr__row-actions">
-                    <button pButton severity="secondary" variant="outlined" type="button" class="gr__mini gr__mini--ok ui-row-action" (click)="openSheet(e)" pTooltip="{{ editable() ? 'Saisir les notes' : 'Voir les notes' }}" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="{{ editable() ? 'Saisir les notes' : 'Voir les notes' }}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9 M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z" /></svg></button>
-                    @if (editable()) {
-                      <button pButton severity="secondary" variant="outlined" type="button" class="gr__mini ui-row-action ui-row-action--warning" (click)="editEvaluation(e)" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Modifier"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9 M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z" /></svg></button>
-                      <button pButton severity="danger" variant="outlined" type="button" class="gr__mini gr__mini--danger ui-row-action ui-row-action--danger" [disabled]="busy()" (click)="deleteEvaluation(e)" pTooltip="Supprimer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Supprimer"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18 M9 6V4h6v2 M5 6l1 14h12l1-14 M10 10v6 M14 10v6" /></svg></button>
-                    }
-                  </div></td>
-                </tr>
-              </ng-template>
-      <ng-template #emptymessage><tr><td colspan="8" class="gr__muted">Aucune évaluation pour cette classe et cette période.</td></tr></ng-template>
-    </p-table></div>
-
-          @if (sheet(); as sh) {
-            <div class="gr__panel">
-              <h3>{{ sh.evaluation.subjectName }} — {{ sh.evaluation.title }} · noté sur {{ sh.evaluation.maxValue | number:'1.0-2' }}</h3>
-              <div class="gr__table-wrap"><p-table class="gr__table gr__table--sheet ui-data-table" [value]="sh.rows" dataKey="studentId" [rowHover]="true" [paginator]="(sh.rows).length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
-      <ng-template #header><tr><th>Élève</th><th>Matricule</th><th>Note</th></tr></ng-template>
-      <ng-template #body [appTableRow]="sh.rows" let-r>
-                    <tr>
-                      <td><strong>{{ r.fullName }}</strong></td>
-                      <td class="gr__muted">{{ r.registrationNumber }}</td>
-                      <td><app-number-field class="gr__num" min="0" [max]="sh.evaluation.maxValue" step="0.25"
-                                 [(ngModel)]="sheetValues[r.studentId]" [disabled]="!editable()" [ariaLabel]="'Note de ' + r.fullName" />
-                        @if (r.value != null) { <span class="gr__muted"> (actuelle : {{ r.value | number:'1.0-2' }})</span> }</td>
-                    </tr>
-                  </ng-template>
-      <ng-template #emptymessage><tr><td colspan="3" class="gr__muted">Aucun élève inscrit dans la classe.</td></tr></ng-template>
-    </p-table></div>
-              @if (editable()) {
-                <label class="gr__reason">Motif de modification {{ changedExisting() ? '(obligatoire : ' + changedExisting() + ' note(s) existante(s) modifiée(s))' : '(si vous corrigez une note déjà saisie)' }}
-                  <input pInputText [(ngModel)]="sheetReason" maxlength="255" placeholder="Ex. erreur de report, copie re-corrigée…"></label>
-                <p class="gr__muted">Laissez une case vide pour effacer la note. Chaque modification est tracée dans l’historique.</p>
-                <div class="gr__actions">
-                  <button pButton type="button" class="gr__btn gr__btn--green" [disabled]="busy()" (click)="saveSheet()">Enregistrer les notes</button>
-                  <button pButton severity="secondary" variant="outlined" type="button" class="gr__btn gr__btn--ghost" (click)="sheet.set(null)">Fermer</button>
-                </div>
-              }
-            </div>
-          }
-        </div>
+      }
+      @case ('entry') {
+        <ng-container *ngTemplateOutlet="evaluationList" />
       }
 
       @case ('results') {
@@ -272,7 +249,7 @@
           <div class="gr__card">
             <div class="gr__card-head">
               <h2>Classement — {{ r.levelName ? r.levelName + ' · ' : '' }}{{ r.className }}</h2>
-              <button pButton type="button" class="gr__btn gr__btn--green" [disabled]="busy() || r.period.status === 'PUBLISHED'" (click)="generateReportCards()">Générer les bulletins</button>
+              <button pButton type="button" class="gr__btn" (click)="setTab('bulletins')">Passer aux bulletins</button>
             </div>
             <div class="gr__table-wrap"><table class="gr__table">
               <thead><tr><th>Rang</th><th>Élève</th>
@@ -326,6 +303,15 @@
               <button pButton type="button" class="gr__btn" [disabled]="!b.bulletins.length" (click)="print('all')">Imprimer / PDF toute la classe</button>
             </div>
             <div class="gr__body">
+              <div class="gr__actions">
+                <button pButton type="button" class="gr__btn" [disabled]="busy() || b.published || !b.bulletins.length" (click)="generateReportCards()">Générer les bulletins</button>
+                @if (period(); as p) {
+                  @if (p.status !== 'PUBLISHED') {
+                    <button pButton type="button" class="gr__btn" [disabled]="busy() || !b.bulletins.length" (click)="setStatus(p, 'PUBLISHED')">Publier la période</button>
+                  }
+                }
+              </div>
+              <p class="gr__muted">La publication concerne toutes les classes de cette période. Vérifiez leurs résultats avant de confirmer.</p>
               <p class="gr__muted">{{ b.published ? 'Résultats publiés : bulletins définitifs.' : 'Aperçu provisoire — publiez la période pour figer les bulletins.' }}
                 Pour un PDF, choisissez « Enregistrer au format PDF » dans la fenêtre d’impression.</p>
               <div class="gr__row-actions">
@@ -401,5 +387,73 @@
         </div>
       }
     }
+    @if (currentTab().step; as step) {
+      <div class="gr__actions gr__no-print">
+        @if (step > 1) { <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy()" (click)="setTab(workflowTabs[step - 2].id)">Étape précédente</button> }
+        @if (step < workflowTabs.length) { <button pButton type="button" [disabled]="busy() || !period()" (click)="setTab(workflowTabs[step].id)">Suivant : {{ workflowTabs[step].label }}</button> }
+      </div>
+    }
   }
 </section>
+
+<ng-template #evaluationList>
+
+        <div class="gr__card">
+          <div class="gr__card-head"><h2>Évaluations de la période</h2><span class="gr__count">{{ evaluations().length }}</span></div>
+          <div class="gr__table-wrap"><p-table class="gr__table ui-data-table" [value]="evaluations()" dataKey="id" [rowHover]="true" [paginator]="(evaluations()).length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
+      <ng-template #header><tr><th>Matière</th><th>Évaluation</th><th>Date</th><th>Barème</th><th>Poids</th><th>Saisie</th><th>Moyenne /20</th><th>Actions</th></tr></ng-template>
+      <ng-template #body [appTableRow]="evaluations()" let-e>
+                <tr [class.gr__selected]="sheet()?.evaluation?.id === e.id">
+                  <td><strong>{{ e.subjectName }}</strong><div class="gr__muted">{{ e.teacherName }}</div></td>
+                  <td>{{ e.title }}<div class="gr__muted">{{ evaluationTypes[e.type] ?? e.type }}</div></td>
+                  <td>{{ e.evalDate | date:'dd/MM/yyyy' }}</td>
+                  <td>/{{ e.maxValue | number:'1.0-2' }}</td>
+                  <td>×{{ e.weight | number:'1.0-2' }}</td>
+                  <td>{{ e.gradedCount }}/{{ e.studentCount }}</td>
+                  <td>{{ e.averageOn20 != null ? (e.averageOn20 | number:'1.2-2') : '—' }}</td>
+                  <td><div class="gr__row-actions">
+                    <button pButton severity="secondary" variant="outlined" type="button" class="gr__mini gr__mini--ok ui-row-action" (click)="openSheet(e)" pTooltip="{{ editable() ? 'Saisir les notes' : 'Voir les notes' }}" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="{{ editable() ? 'Saisir les notes' : 'Voir les notes' }}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9 M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z" /></svg></button>
+                    @if (editable() && tab() === 'evaluations') {
+                      <button pButton severity="secondary" variant="outlined" type="button" class="gr__mini ui-row-action ui-row-action--warning" (click)="editEvaluation(e)" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Modifier"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9 M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z" /></svg></button>
+                      <button pButton severity="danger" variant="outlined" type="button" class="gr__mini gr__mini--danger ui-row-action ui-row-action--danger" [disabled]="busy()" (click)="deleteEvaluation(e)" pTooltip="Supprimer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Supprimer"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18 M9 6V4h6v2 M5 6l1 14h12l1-14 M10 10v6 M14 10v6" /></svg></button>
+                    }
+                  </div></td>
+                </tr>
+              </ng-template>
+      <ng-template #emptymessage><tr><td colspan="8" class="gr__muted">Aucune évaluation pour cette classe et cette période.
+        @if (tab() === 'entry') { <button type="button" class="gr__mini" (click)="setTab('evaluations')">Créer une évaluation</button> }
+      </td></tr></ng-template>
+    </p-table></div>
+
+          @if (tab() === 'entry') {
+          @if (sheet(); as sh) {
+            <div class="gr__panel">
+              <h3>{{ sh.evaluation.subjectName }} — {{ sh.evaluation.title }} · noté sur {{ sh.evaluation.maxValue | number:'1.0-2' }}</h3>
+              <div class="gr__table-wrap"><p-table class="gr__table gr__table--sheet ui-data-table" [value]="sh.rows" dataKey="studentId" [rowHover]="true" [paginator]="(sh.rows).length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
+      <ng-template #header><tr><th>Élève</th><th>Matricule</th><th>Note</th></tr></ng-template>
+      <ng-template #body [appTableRow]="sh.rows" let-r>
+                    <tr>
+                      <td><strong>{{ r.fullName }}</strong></td>
+                      <td class="gr__muted">{{ r.registrationNumber }}</td>
+                      <td><app-number-field class="gr__num" min="0" [max]="sh.evaluation.maxValue" step="0.25"
+                                 [(ngModel)]="sheetValues[r.studentId]" [disabled]="!editable()" [ariaLabel]="'Note de ' + r.fullName" />
+                        @if (r.value != null) { <span class="gr__muted"> (actuelle : {{ r.value | number:'1.0-2' }})</span> }</td>
+                    </tr>
+                  </ng-template>
+      <ng-template #emptymessage><tr><td colspan="3" class="gr__muted">Aucun élève inscrit dans la classe.</td></tr></ng-template>
+    </p-table></div>
+              @if (editable()) {
+                <label class="gr__reason">Motif de modification {{ changedExisting() ? '(obligatoire : ' + changedExisting() + ' note(s) existante(s) modifiée(s))' : '(si vous corrigez une note déjà saisie)' }}
+                  <input pInputText [(ngModel)]="sheetReason" maxlength="255" placeholder="Ex. erreur de report, copie re-corrigée…"></label>
+                <p class="gr__muted">Laissez une case vide pour effacer la note. Chaque modification est tracée dans l’historique.</p>
+                <div class="gr__actions">
+                  <button pButton type="button" class="gr__btn gr__btn--green" [disabled]="busy()" (click)="saveSheet()">Enregistrer les notes</button>
+                  <button pButton severity="secondary" variant="outlined" type="button" class="gr__btn gr__btn--ghost" (click)="sheet.set(null)">Fermer</button>
+                </div>
+              }
+            </div>
+          }
+          }
+        </div>
+
+</ng-template>

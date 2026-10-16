@@ -28,6 +28,15 @@ const MODULE_HINTS: Record<OwnerModule, string> = {
   EXPENSES: 'Charges à payer, salaires, versements, budget annuel et bilan recettes / dépenses.',
   GRADES: 'Périodes, évaluations, notes, bulletins et coefficients.',
   ENROLLMENT: 'Nouvelle année scolaire, réinscriptions et passage en classe supérieure.',
+  CALENDAR: 'Événements, examens, réunions et vacances.',
+  DISCIPLINE: 'Observations, incidents de vie scolaire et accompagnement des élèves.',
+  LIBRARY: 'Catalogue, prêts et retours de livres.',
+  HOMEWORK: 'Suivi des remises, corrections et commentaires sur les devoirs.',
+  REQUESTS: 'Traitement des demandes de certificats et attestations.',
+  PARENT_PORTAL: 'Annonces, documents, devoirs et rendez-vous avec les familles.',
+  MESSAGES: 'Messagerie de l’établissement et échanges avec les familles.',
+  CASH_BOOK: 'Ouverture de caisse, mouvements et clôture de caisse.',
+  FINANCIAL_STATEMENTS: 'Consultation, export et impression des états financiers.',
 };
 
 @Component({
@@ -45,11 +54,16 @@ export class StaffPage implements OnInit {
   private readonly confirmation = inject(ConfirmationService);
 
   readonly modules = OWNER_MODULES.map((m) => ({ ...m, hint: MODULE_HINTS[m.code] }));
+  readonly moduleGroups = [
+    { title: 'Administration et enseignement', codes: ['DASHBOARD', 'MANAGEMENT', 'STUDENTS', 'TEACHERS', 'GRADES', 'ENROLLMENT'] },
+    { title: 'Vie scolaire et familles', codes: ['CALENDAR', 'DISCIPLINE', 'LIBRARY', 'HOMEWORK', 'REQUESTS', 'PARENT_PORTAL', 'MESSAGES'] },
+    { title: 'Finances', codes: ['FINANCE', 'EXPENSES', 'CASH_BOOK', 'FINANCIAL_STATEMENTS'] },
+  ].map(group => ({ title: group.title, modules: this.modules.filter(module => group.codes.includes(module.code)) }));
   readonly presets: Preset[] = [
-    { title: 'Directeur des études', modules: ['DASHBOARD', 'MANAGEMENT', 'STUDENTS', 'TEACHERS', 'GRADES', 'ENROLLMENT'] },
-    { title: 'Comptable', modules: ['DASHBOARD', 'FINANCE', 'EXPENSES'] },
-    { title: 'Secrétaire', modules: ['STUDENTS', 'FINANCE', 'ENROLLMENT'] },
-    { title: 'Surveillant général', modules: ['STUDENTS'] },
+    { title: 'Directeur des études', modules: ['DASHBOARD', 'MANAGEMENT', 'STUDENTS', 'TEACHERS', 'GRADES', 'ENROLLMENT', 'CALENDAR', 'DISCIPLINE', 'LIBRARY', 'HOMEWORK', 'REQUESTS', 'PARENT_PORTAL', 'MESSAGES'] },
+    { title: 'Comptable', modules: ['DASHBOARD', 'FINANCE', 'EXPENSES', 'CASH_BOOK', 'FINANCIAL_STATEMENTS'] },
+    { title: 'Secrétaire', modules: ['STUDENTS', 'FINANCE', 'ENROLLMENT', 'CALENDAR', 'REQUESTS', 'PARENT_PORTAL', 'MESSAGES'] },
+    { title: 'Surveillant général', modules: ['STUDENTS', 'DISCIPLINE', 'HOMEWORK', 'MESSAGES'] },
     { title: 'Gardien', modules: [] },
     { title: 'Agent d’entretien', modules: [] },
   ];
@@ -183,7 +197,7 @@ export class StaffPage implements OnInit {
         const name = `${created.staff.firstName} ${created.staff.lastName}`;
         this.done(`${created.existingAccount ? 'Accès ajouté' : 'Compte créé'} pour ${name}. `
           + (!payload.email ? 'Aucune invitation envoyée : aucun courriel renseigné.' : created.emailSent ? 'Le titulaire a reçu un courriel avec les instructions.'
-            : 'L’envoi du courriel a échoué : utilisez Envoyer un lien pour réessayer.'));
+            : 'L’envoi du courriel a échoué. La fonction a été ajoutée.'));
       },
       error: (err) => this.fail(err, 'Impossible de créer ce membre du personnel.'),
     });

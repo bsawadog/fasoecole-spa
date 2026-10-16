@@ -120,6 +120,7 @@ export interface UpdateStudentProfilePayload {
 }
 
 export interface UpdateParentProfilePayload {
+  studentId?: number;
   firstName: string;
   lastName: string;
   email: string | null;

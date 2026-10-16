@@ -16,10 +16,10 @@ import { SchoolDataSyncService } from '../../../../shared/school-data-sync.servi
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import { apiError } from '../../../../shared/self-space/self-space.service';
-import { APPOINTMENT_LABELS, ParentAppointment, ParentPortalService, PortalPost, PostKind } from '../../../../shared/self-space/parent-portal.service';
+import { APPOINTMENT_LABELS, ParentAppointment, ParentPortalService, PortalPost, PortalStudent, PostKind } from '../../../../shared/self-space/parent-portal.service';
 import { ConversationFiles } from '../../../../shared/self-space/message-attachments';
 import { PortalPosts } from '../../../../shared/self-space/portal-posts';
-import { ClassRecord, ClassRosterRow, OwnerManagementService } from '../../owner-management.service';
+import { ClassRecord, OwnerManagementService } from '../../owner-management.service';
 
 @Component({
   selector: 'app-owner-parent-portal', standalone: true,
@@ -37,7 +37,7 @@ export class OwnerParentPortal implements OnInit {
   readonly schools = signal<RegistrationSchool[]>([]);
   readonly schoolId = signal<number | null>(null);
   readonly classes = signal<ClassRecord[]>([]);
-  readonly students = signal<ClassRosterRow[]>([]);
+  readonly students = signal<PortalStudent[]>([]);
   readonly loadingStudents = signal(false);
   readonly posts = signal<PortalPost[]>([]);
   readonly appointments = signal<ParentAppointment[]>([]);
@@ -56,7 +56,7 @@ export class OwnerParentPortal implements OnInit {
   ngOnInit(): void {
     const userId = this.auth.user()?.id;
     if (!userId) { this.loading.set(false); this.error.set('Compte introuvable.'); return; }
-    this.auth.getOwnedSchools(userId, 'STUDENTS').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.auth.getOwnedSchools(userId, 'PARENT_PORTAL').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: schools => {
         this.schools.set(schools);
         const stored = Number(localStorage.getItem('fasoecole_owner_school'));
@@ -78,9 +78,9 @@ export class OwnerParentPortal implements OnInit {
   }
   chooseClass(classId: number | null): void {
     this.classId = classId; this.studentId = null; this.students.set([]);
-    if (classId === null) { this.loadingStudents.set(false); return; }
+    if (classId === null || this.schoolId() === null) { this.loadingStudents.set(false); return; }
     const schoolId = this.schoolId(); this.loadingStudents.set(true);
-    this.management.getClassRoster(classId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.schoolStudents(schoolId!, classId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: students => { if (this.schoolId() === schoolId && this.classId === classId) { this.students.set(students); this.loadingStudents.set(false); } },
       error: err => { if (this.schoolId() === schoolId && this.classId === classId) { this.loadingStudents.set(false); this.error.set(apiError(err, 'Impossible de charger les enfants de cette classe.')); } },
     });

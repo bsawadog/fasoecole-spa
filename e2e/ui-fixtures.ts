@@ -22,10 +22,10 @@ const finance = { schoolName: school.name, expected: 1560000, discounts: 0, coll
   perFeeType: fees.map(fee => ({ feeTypeId: fee.id, feeTypeName: fee.name, expected: fee.amount * 24, collected: 0, remaining: fee.amount * 24 })), recentPayments: [] };
 
 /** All API calls are intercepted: UI checks never touch a school account or database. */
-export async function mockSchool(page: Page, profile: Profile = 'proprietaire') {
+export async function mockSchool(page: Page, profile: Profile = 'proprietaire', additionalRoles: string[] = [], delegatedModules?: string[]) {
   const user = { id: 7, email: 'demo@example.test', firstName: 'Mariam', lastName: 'Ouédraogo', role: profile,
-    approved: true, emailVerified: true, mustChangePassword: false, passwordSet: true, ownerAccount: profile === 'proprietaire',
-    rawRoles: [roles[profile]], requestedSchoolId: null, requestedSchoolName: null, requestedRole: null };
+    approved: true, emailVerified: true, mustChangePassword: false, passwordSet: true, ownerAccount: profile === 'proprietaire' && delegatedModules === undefined,
+    rawRoles: delegatedModules === undefined ? [...new Set([roles[profile], ...additionalRoles])] : ['STAFF'], requestedSchoolId: null, requestedSchoolName: null, requestedRole: null };
   await page.addInitScript(({ user }) => {
     localStorage.setItem('fasoecole_auth', JSON.stringify({ token: 'ui-test-session', user }));
     localStorage.setItem('fasoecole_owner_school', '1');
@@ -38,7 +38,7 @@ export async function mockSchool(page: Page, profile: Profile = 'proprietaire') 
     if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*' } });
     if (api === '/users/me') data = { ...user, roles: user.rawRoles };
     else if (api === '/academic-years/context-schools' || api.startsWith('/schools/by-owner/') || api === '/auth/registration-schools') data = [school];
-    else if (api === '/owner/staff/my-access') data = [{ schoolId: 1, schoolName: school.name, schoolType: school.type, status: 'ACTIVE', owner: true, jobTitle: 'Direction', modules: ['DASHBOARD', 'MANAGEMENT', 'STUDENTS', 'TEACHERS', 'FINANCE', 'EXPENSES', 'GRADES', 'ENROLLMENT'] }];
+    else if (api === '/owner/staff/my-access') data = [{ schoolId: 1, schoolName: school.name, schoolType: school.type, status: 'ACTIVE', owner: delegatedModules === undefined, jobTitle: 'Direction', modules: delegatedModules ?? ['DASHBOARD', 'MANAGEMENT', 'STUDENTS', 'TEACHERS', 'FINANCE', 'EXPENSES', 'GRADES', 'ENROLLMENT', 'CALENDAR', 'DISCIPLINE', 'LIBRARY', 'HOMEWORK', 'REQUESTS', 'PARENT_PORTAL', 'MESSAGES', 'CASH_BOOK', 'FINANCIAL_STATEMENTS'] }];
     else if (api === '/schools/1') data = school;
     else if (api === '/academic-years') data = [year];
     else if (api === '/levels') data = [{ id: 1, name: 'CP1', schoolId: 1, cycle: 'PRIMAIRE', sortOrder: 1 }];

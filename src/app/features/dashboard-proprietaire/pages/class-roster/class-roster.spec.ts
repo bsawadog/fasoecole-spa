@@ -29,6 +29,7 @@ describe('ClassRoster transfer', () => {
       getClassRoster: vi.fn(() => of([row])),
       transferRosterStudent: vi.fn(() => of({ ...row })),
       deleteRosterStudent: vi.fn(() => of(undefined)),
+      updateRosterParent: vi.fn(() => of({ ...row })),
     };
     const confirmation = { confirm: vi.fn(() => Promise.resolve(true)) };
     TestBed.configureTestingModule({
@@ -87,6 +88,21 @@ describe('ClassRoster transfer', () => {
     expect(api.deleteRosterStudent).toHaveBeenCalledWith(100, 7);
     expect(component.rows()).toEqual([]);
     expect(component.saving()).toBe(false);
+  });
+
+  it('identifies the selected child when replacing a parent with an existing account', () => {
+    const { component, api } = setup();
+    component.parentForm = { firstName: 'Boubacar', lastName: 'Sawadogo', email: 'admin@fasoecole.com', phone: '' };
+    component.saveParent(30, 7);
+    expect(api.updateRosterParent).toHaveBeenCalledWith(100, 30, {
+      studentId: 7, firstName: 'Boubacar', lastName: 'Sawadogo', email: 'admin@fasoecole.com', phone: null,
+    });
+  });
+
+  it('allows adding another parent even when the child already has one', () => {
+    const { component } = setup();
+    component.startAddParent({ ...row, parents: [{ parentId: 30 }] } as never);
+    expect(component.addingParentStudentId()).toBe(7);
   });
 
 });

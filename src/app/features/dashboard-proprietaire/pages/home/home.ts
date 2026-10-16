@@ -78,6 +78,10 @@ export class ProprietaireHome implements OnDestroy, OnInit {
   readonly showAttendanceHistory = signal(false);
   readonly canRecordReport = computed(() => this.auth.isSchoolOwner()
     || (this.auth.ownerAccess() ?? []).some(access => access.schoolId === this.selectedSchoolId() && access.modules.includes('STUDENTS')));
+  readonly canManageAppointments = computed(() => this.auth.isSchoolOwner()
+    || (this.auth.ownerAccess() ?? []).some(access => access.schoolId === this.selectedSchoolId() && access.modules.includes('PARENT_PORTAL')));
+  readonly canUseMessages = computed(() => this.auth.isSchoolOwner()
+    || (this.auth.ownerAccess() ?? []).some(access => access.schoolId === this.selectedSchoolId() && access.modules.includes('MESSAGES')));
   readonly sync = inject(SchoolDataSyncService);
   private syncSubscription?: Subscription;
   readonly lastUpdated = signal<Date | null>(null);
@@ -188,7 +192,7 @@ export class ProprietaireHome implements OnDestroy, OnInit {
   }
 
   private refreshAppointmentCount(schoolId: number): void {
-    if (!this.canRecordReport()) return;
+    if (!this.canManageAppointments()) return;
     this.appointmentRequest?.unsubscribe();
     this.appointmentRequest = forkJoin({
       incoming: this.appointmentsApi.received(),
