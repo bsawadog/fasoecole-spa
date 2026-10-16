@@ -2,7 +2,7 @@
   <header class="owner-management__header">
     <div>
       <p class="owner-management__eyebrow">Administration de l’école</p>
-      <h1>Gestion de l’établissement</h1>
+      <h1>Configuration de l’école</h1>
       <p>Configurez l’école, organisez l’année scolaire et suivez vos effectifs et tarifs.</p>
     </div>
     @if (school(); as currentSchool) {
@@ -22,10 +22,10 @@
   } @else if (schools().length === 0) {
     <section class="owner-management__empty">
       <h2>Aucun établissement associé</h2>
-      <p>Un établissement doit être associé à votre compte propriétaire pour accéder à sa gestion.</p>
+      <p>Un établissement doit être associé à votre compte propriétaire pour accéder à sa configuration.</p>
     </section>
   } @else {
-    <nav class="owner-management__tabs" aria-label="Sections de gestion">
+    <nav class="owner-management__tabs" aria-label="Sections de configuration">
       @for (item of sections; track item.id) {
         <button type="button" [class.owner-management__tab--active]="section() === item.id" (click)="selectSection(item.id)">
           {{ item.label }}

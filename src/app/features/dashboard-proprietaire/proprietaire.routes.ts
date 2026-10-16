@@ -2,6 +2,14 @@ import { Routes } from '@angular/router';
 import { ownerModuleGuard, OWNER_LIFE_MODULES } from '../../core/auth';
 
 export const PROPRIETAIRE_ROUTES: Routes = [
+  { path: 'impots-taxes', canActivate: [ownerModuleGuard('TAXES')],
+    loadComponent: () => import('./pages/taxes/taxes').then(m => m.SchoolTaxesPage) },
+  { path: 'salaires', canActivate: [ownerModuleGuard('PAYROLL')],
+    loadComponent: () => import('./pages/payroll/payroll').then(m => m.PayrollPage) },
+  { path: 'patrimoine', data: { resourceKind: 'assets' }, canActivate: [ownerModuleGuard('ASSETS')],
+    loadComponent: () => import('./pages/resources/resources').then(m => m.SchoolResourcesPage) },
+  { path: 'stocks', data: { resourceKind: 'stock' }, canActivate: [ownerModuleGuard('INVENTORY')],
+    loadComponent: () => import('./pages/resources/resources').then(m => m.SchoolResourcesPage) },
   { path: 'caisse', canActivate: [ownerModuleGuard('CASH_BOOK')],
     loadComponent: () => import('./pages/cash-book/cash-book').then(m => m.CashBookPage) },
   { path: 'etats-financiers', canActivate: [ownerModuleGuard('FINANCIAL_STATEMENTS')],

@@ -19,7 +19,7 @@ import { PayableOverview, PayablePayment, PayableRow, PayablesService } from '..
 
 const date = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 export const PAYABLE_STATUS = { UNPAID: 'À payer', PARTIAL: 'Partiellement payée', PAID: 'Soldée', CANCELLED: 'Annulée', NOT_DUE: 'Aucun montant dû' };
-export const PAYABLE_SOURCE = { MANUAL: 'Dépense ponctuelle', FIXED: 'Charge fixe', STAFF_SALARY: 'Salaire du personnel', TEACHER_SALARY: 'Salaire enseignant' };
+export const PAYABLE_SOURCE = { MANUAL: 'Dépense ponctuelle', FIXED: 'Charge fixe', STAFF_SALARY: 'Salaire du personnel', TEACHER_SALARY: 'Salaire enseignant', TAX:'Impôt / taxe' };
 
 @Component({
   selector: 'app-payables', standalone: true,

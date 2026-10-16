@@ -5,7 +5,7 @@ import { PaymentMethod } from './finance.service';
 import { ExpenseCategory } from './expenses.service';
 
 export interface PayableRow {
-  id: number; source: 'MANUAL' | 'FIXED' | 'STAFF_SALARY' | 'TEACHER_SALARY'; period: string;
+  id: number; source: 'MANUAL' | 'FIXED' | 'STAFF_SALARY' | 'TEACHER_SALARY' | 'TAX'; period: string;
   dueDate: string; label: string; supplier: string | null; categoryId: number; categoryName: string;
   amount: number; paid: number; remaining: number; status: 'UNPAID' | 'PARTIAL' | 'PAID' | 'CANCELLED' | 'NOT_DUE';
   overdue: boolean; notes: string | null;

@@ -38,7 +38,7 @@ export async function mockSchool(page: Page, profile: Profile = 'proprietaire', 
     if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*' } });
     if (api === '/users/me') data = { ...user, roles: user.rawRoles };
     else if (api === '/academic-years/context-schools' || api.startsWith('/schools/by-owner/') || api === '/auth/registration-schools') data = [school];
-    else if (api === '/owner/staff/my-access') data = [{ schoolId: 1, schoolName: school.name, schoolType: school.type, status: 'ACTIVE', owner: delegatedModules === undefined, jobTitle: 'Direction', modules: delegatedModules ?? ['DASHBOARD', 'MANAGEMENT', 'STUDENTS', 'TEACHERS', 'FINANCE', 'EXPENSES', 'GRADES', 'ENROLLMENT', 'CALENDAR', 'DISCIPLINE', 'LIBRARY', 'HOMEWORK', 'REQUESTS', 'PARENT_PORTAL', 'MESSAGES', 'CASH_BOOK', 'FINANCIAL_STATEMENTS'] }];
+    else if (api === '/owner/staff/my-access') data = [{ schoolId: 1, schoolName: school.name, schoolType: school.type, status: 'ACTIVE', owner: delegatedModules === undefined, jobTitle: 'Direction', modules: delegatedModules ?? ['DASHBOARD', 'MANAGEMENT', 'STUDENTS', 'TEACHERS', 'FINANCE', 'EXPENSES', 'GRADES', 'ENROLLMENT', 'CALENDAR', 'DISCIPLINE', 'LIBRARY', 'HOMEWORK', 'REQUESTS', 'PARENT_PORTAL', 'MESSAGES', 'CASH_BOOK', 'FINANCIAL_STATEMENTS', 'ASSETS', 'INVENTORY', 'PAYROLL', 'TAXES'] }];
     else if (api === '/schools/1') data = school;
     else if (api === '/academic-years') data = [year];
     else if (api === '/levels') data = [{ id: 1, name: 'CP1', schoolId: 1, cycle: 'PRIMAIRE', sortOrder: 1 }];

@@ -58,14 +58,16 @@ export type ApprovalRole = 'TEACHER' | 'PARENT' | 'STUDENT';
 
 /** Modules de l'espace propriétaire pouvant être délégués au personnel. */
 export type OwnerModule = 'DASHBOARD' | 'MANAGEMENT' | 'STUDENTS' | 'TEACHERS' | 'FINANCE' | 'EXPENSES' | 'GRADES' | 'ENROLLMENT'
-  | 'CALENDAR' | 'DISCIPLINE' | 'LIBRARY' | 'HOMEWORK' | 'REQUESTS' | 'PARENT_PORTAL' | 'MESSAGES' | 'CASH_BOOK' | 'FINANCIAL_STATEMENTS';
+  | 'CALENDAR' | 'DISCIPLINE' | 'LIBRARY' | 'HOMEWORK' | 'REQUESTS' | 'PARENT_PORTAL' | 'MESSAGES' | 'CASH_BOOK' | 'FINANCIAL_STATEMENTS' | 'ASSETS' | 'INVENTORY' | 'PAYROLL' | 'TAXES';
 
 export const OWNER_MODULES: { code: OwnerModule; label: string; route: string }[] = [
   { code: 'DASHBOARD', label: 'Tableau de bord', route: '/proprietaire' },
-  { code: 'MANAGEMENT', label: 'Gestion de l’école', route: '/proprietaire/gestion' },
+  { code: 'MANAGEMENT', label: 'Configuration de l’école', route: '/proprietaire/gestion' },
   { code: 'STUDENTS', label: 'Élèves & dossiers', route: '/proprietaire/classes' },
   { code: 'TEACHERS', label: 'Enseignants & paie', route: '/proprietaire/enseignants' },
   { code: 'FINANCE', label: 'Recouvrement', route: '/proprietaire/frais' },
+  { code: 'PAYROLL', label: 'Salaires', route: '/proprietaire/salaires' },
+  { code: 'TAXES', label: 'Impôts et taxes', route: '/proprietaire/impots-taxes' },
   { code: 'EXPENSES', label: 'Dépenses & budget', route: '/proprietaire/depenses' },
   { code: 'GRADES', label: 'Notes & bulletins', route: '/proprietaire/notes' },
   { code: 'ENROLLMENT', label: 'Inscriptions', route: '/proprietaire/inscriptions' },
@@ -78,6 +80,8 @@ export const OWNER_MODULES: { code: OwnerModule; label: string; route: string }[
   { code: 'MESSAGES', label: 'Messages', route: '/proprietaire/messages' },
   { code: 'CASH_BOOK', label: 'Brouillard de caisse', route: '/proprietaire/caisse' },
   { code: 'FINANCIAL_STATEMENTS', label: 'États financiers', route: '/proprietaire/etats-financiers' },
+  { code: 'ASSETS', label: 'Patrimoine et mobilier', route: '/proprietaire/patrimoine' },
+  { code: 'INVENTORY', label: 'Stocks et fournitures', route: '/proprietaire/stocks' },
 ];
 
 export const OWNER_LIFE_MODULES: Record<'calendrier' | 'discipline' | 'bibliotheque' | 'suivi-devoirs' | 'demandes-administratives', OwnerModule> = {

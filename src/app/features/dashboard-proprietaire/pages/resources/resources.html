@@ -1,0 +1,151 @@
+<main class="resources ui-workspace">
+  <header class="ui-page-header"><h1>{{ title }}</h1>
+    <p>{{ mode === 'assets' ? 'Inventoriez les bâtiments, salles, tables-bancs et équipements, puis suivez leur état et leur emplacement.' : 'Suivez les réceptions, les consommations et les comptages des fournitures de votre établissement.' }}</p>
+  </header>
+  <p class="resources__intro resource-controls">{{ mode === 'assets' ? 'Un bien durable en service se suit ici. Pour des biens identiques au même emplacement et dans le même état, utilisez une fiche de lot avec sa quantité. Séparez les fiches si leur état ou leur emplacement diffère.' : 'La craie, les chiffons et les produits d’entretien se suivent ici. Les chaises et autres équipements déjà en service se suivent dans Patrimoine et mobilier ; leur réserve peut être suivie comme petit matériel.' }}</p>
+  <p class="resources__intro resource-controls">Ce registre suit l’établissement sur plusieurs années scolaires. Les achats et paiements restent à enregistrer dans « Dépenses &amp; budget ».</p>
+  @if (error()) { <p-message severity="error" role="alert" class="resource-controls">{{ error() }}</p-message> }
+  @if (success()) { <p-message severity="success" role="status" class="resource-controls">{{ success() }}</p-message> }
+  @if (loading()) { <app-loading-state message="Chargement du registre…" /> }
+  @if (!loading() && !schools().length) { <p>Aucun établissement accessible pour ce module.</p> }
+  @if (schools().length) {
+    <div class="resources__toolbar resource-controls">
+      <button pButton type="button" [disabled]="loading() || busy() || !ready()" (click)="edit()">{{ mode === 'assets' ? 'Ajouter un bien' : 'Ajouter un article' }}</button>
+      <button pButton severity="secondary" variant="outlined" type="button" [disabled]="loading() || busy()" (click)="close(); load()">Actualiser</button>
+      <button pButton severity="secondary" variant="outlined" type="button" [disabled]="loading() || !ready()" (click)="exportCsv()">Exporter CSV</button>
+      <button pButton severity="secondary" variant="outlined" type="button" [disabled]="loading() || !ready()" (click)="print()">Imprimer / PDF</button>
+    </div>
+  }
+  @if (ready()) {
+    <h2 class="resources__school">{{ schoolName() }}</h2>
+    <div class="resources__kpis">
+      @if (mode === 'assets') {
+        <div><span>Biens actifs (unités)</span><strong>{{ activeAssets() | number }}</strong></div>
+        <div><span>Fiches à surveiller / entretenir</span><strong>{{ maintenanceCount() | number }}</strong></div>
+        <div><span>Valeur d’acquisition renseignée (biens propres)</span><strong>{{ assetValue() | number:'1.0-2' }} FCFA</strong></div>
+      } @else {
+        <div><span>Articles actifs</span><strong>{{ activeItemCount() }} fiche(s)</strong></div>
+        <div class="resources__alert-kpi"><span>Articles à réapprovisionner</span><strong>{{ lowCount() | number }}</strong></div>
+        <div><span>Valeur indicative du stock actif</span><strong>{{ stockValue() | number:'1.0-2' }} FCFA</strong></div>
+      }
+    </div>
+    <p class="resources__muted">{{ mode === 'assets' ? 'La valeur affichée exclut les locations, les prêts et les biens sortis du patrimoine. Les valeurs non renseignées ne sont pas comptées ; aucun amortissement n’est calculé.' : 'La valeur indicative utilise le coût unitaire de référence renseigné sur chaque article. Les quantités de différentes unités ne sont pas additionnées.' }}</p>
+
+    @if (panel() === 'form') {
+      <section class="resources__panel resource-controls" aria-label="Fiche à enregistrer">
+        <h2 tabindex="-1">{{ selected() ? 'Modifier la fiche' : mode === 'assets' ? 'Nouveau bien' : 'Nouvel article' }}</h2>
+        <form #resourceForm="ngForm" (ngSubmit)="resourceForm.valid && save()">
+          <fieldset class="resources__form" [disabled]="busy()">
+            @if (mode === 'assets') {
+              <label>Référence du bien<input pInputText name="code" [(ngModel)]="assetForm.code" maxlength="40" required placeholder="Ex. BAT-001, MOB-001" /></label>
+              <label>Désignation<input pInputText name="name" [(ngModel)]="assetForm.name" maxlength="150" required placeholder="Ex. Bâtiment A, tables-bancs CM1" /></label>
+              <label>Catégorie du bien<app-select-field name="category" [(ngModel)]="assetForm.category" ariaLabel="Catégorie du bien">@for (option of categoryOptions; track option.value) { <app-select-option [value]="option.value" [label]="option.label" /> }</app-select-field></label>
+              <label>Emplacement<input pInputText name="location" [(ngModel)]="assetForm.location" maxlength="150" required placeholder="Ex. Bâtiment A — salle CM1" /></label>
+              <label>Responsable / service<input pInputText name="custodian" [(ngModel)]="assetForm.custodian" maxlength="150" /></label>
+              <label>Mode de détention<app-select-field name="ownership" [(ngModel)]="assetForm.ownership" ariaLabel="Mode de détention">@for (option of ownershipOptions; track option.value) { <app-select-option [value]="option.value" [label]="option.label" /> }</app-select-field></label>
+              <label>État du bien<app-select-field name="condition" [(ngModel)]="assetForm.condition" ariaLabel="État du bien">@for (option of conditionOptions; track option.value) { <app-select-option [value]="option.value" [label]="option.label" /> }</app-select-field></label>
+              <label>Statut du bien<app-select-field name="status" [(ngModel)]="assetForm.status" ariaLabel="Statut du bien">@for (option of statusOptions; track option.value) { <app-select-option [value]="option.value" [label]="option.label" /> }</app-select-field></label>
+              <label>Quantité du lot<app-number-field name="quantity" [(ngModel)]="assetForm.quantity" min="1" max="1000000" step="1" required ariaLabel="Quantité du lot" /></label>
+              <label>Valeur d’acquisition unitaire (FCFA)<app-number-field name="unitValue" [(ngModel)]="assetForm.unitValue" min="0" max="999999999999.99" step="0.01" ariaLabel="Valeur d’acquisition unitaire (FCFA)" /></label>
+              <label>Date d’acquisition<app-date-field name="acquiredOn" [(ngModel)]="assetForm.acquiredOn" [max]="currentDate" ariaLabel="Date d’acquisition" /></label>
+              <label>Prochain entretien / contrôle<app-date-field name="maintenanceOn" [(ngModel)]="assetForm.maintenanceOn" ariaLabel="Prochain entretien / contrôle" /></label>
+              <label class="resources__wide">Observations<input pInputText name="notes" [(ngModel)]="assetForm.notes" maxlength="2000" placeholder="Description, numéro de série, travaux à prévoir…" /></label>
+              @if (selected()) { <label class="resources__wide">Motif de modification<input pInputText name="changeReason" [(ngModel)]="assetForm.changeReason" required maxlength="500" placeholder="Ex. déplacement en CM2, réparation, réforme du mobilier…" /></label> }
+            } @else {
+              <label>Référence de l’article<input pInputText name="code" [(ngModel)]="stockForm.code" maxlength="40" required placeholder="Ex. CRAIE-01" /></label>
+              <label>Désignation<input pInputText name="name" [(ngModel)]="stockForm.name" maxlength="150" required placeholder="Ex. Craie blanche, détergent" /></label>
+              <label>Catégorie d’article<app-select-field name="category" [(ngModel)]="stockForm.category" ariaLabel="Catégorie d’article">@for (option of categoryOptions; track option.value) { <app-select-option [value]="option.value" [label]="option.label" /> }</app-select-field></label>
+              <label>Unité de suivi<input pInputText name="unit" [(ngModel)]="stockForm.unit" maxlength="30" required placeholder="boîte, pièce, litre, paquet…" /></label>
+              <label>Emplacement de stockage<input pInputText name="location" [(ngModel)]="stockForm.location" maxlength="150" required placeholder="Ex. Magasin principal" /></label>
+              <label>Seuil minimum<app-number-field name="minimumQuantity" [(ngModel)]="stockForm.minimumQuantity" min="0" max="99999999999.999" step="0.001" required ariaLabel="Seuil minimum" /></label>
+              <label>Coût unitaire de référence (FCFA)<app-number-field name="unitCost" [(ngModel)]="stockForm.unitCost" min="0" max="999999999999.99" step="0.01" ariaLabel="Coût unitaire de référence (FCFA)" /></label>
+              <label>État de la fiche<app-select-field name="active" [(ngModel)]="stockForm.active" ariaLabel="État de la fiche"><app-select-option [value]="true" label="Active" /><app-select-option [value]="false" label="Archivée (stock à zéro)" /></app-select-field></label>
+              <label class="resources__wide">Observations<input pInputText name="notes" [(ngModel)]="stockForm.notes" maxlength="2000" /></label>
+              <p class="resources__wide resources__muted">Créez une fiche par article, unité et lieu de stockage. L’article démarre à zéro : utilisez ensuite une entrée ou un inventaire physique. Après le premier mouvement, l’unité reste fixe pour préserver la cohérence du journal.</p>
+            }
+          </fieldset>
+          <div class="resources__toolbar"><button pButton type="submit" [disabled]="busy()">Enregistrer la fiche</button><button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy()" (click)="close()">Annuler</button></div>
+        </form>
+      </section>
+    }
+
+    @if (panel() === 'movement') {
+      @if (selectedStock(); as item) {
+        <section class="resources__panel resource-controls" aria-label="Nouveau mouvement de stock">
+          <h2 tabindex="-1">Mouvement — {{ item.name }}</h2><p>Disponible : <strong>{{ item.quantity | number:'1.0-3' }} {{ item.unit }}</strong> · {{ item.location }}</p>
+          <form #movementValidation="ngForm" (ngSubmit)="movementValidation.valid && saveMovement()">
+            <fieldset class="resources__form" [disabled]="busy()">
+              <label>Type de mouvement<app-select-field name="kind" [(ngModel)]="movementForm.kind" ariaLabel="Type de mouvement">@for (option of movementOptions; track option.value) { <app-select-option [value]="option.value" [label]="option.label" /> }</app-select-field></label>
+              <label>Date du mouvement<app-date-field name="date" [(ngModel)]="movementForm.date" [max]="currentDate" required ariaLabel="Date du mouvement" /></label>
+              <label>{{ movementForm.kind === 'COUNT' ? 'Quantité réellement comptée' : 'Quantité du mouvement' }} ({{ item.unit }})<app-number-field name="quantity" [(ngModel)]="movementForm.quantity" [min]="movementForm.kind === 'COUNT' ? 0 : 0.001" max="99999999999.999" step="0.001" required ariaLabel="Quantité du mouvement" /></label>
+              <label>{{ movementForm.kind === 'IN' ? 'Fournisseur / provenance' : 'Destinataire / service' }}<input pInputText name="recipient" [(ngModel)]="movementForm.recipient" maxlength="150" [required]="movementForm.kind === 'OUT'" /></label>
+              <label>Pièce / référence<input pInputText name="reference" [(ngModel)]="movementForm.reference" maxlength="100" placeholder="Bon d’entrée, bon de sortie…" /></label>
+              <label class="resources__wide">Motif du mouvement<input pInputText name="reason" [(ngModel)]="movementForm.reason" maxlength="500" required placeholder="Ex. achat, dotation CP1, produit abîmé, écart de comptage…" /></label>
+            </fieldset>
+            @if (movementForm.kind === 'COUNT') { <p class="resources__notice">Saisissez le total présent, et non la différence. L’inventaire remplacera la quantité disponible et conservera l’écart dans le journal.</p> }
+            <div class="resources__toolbar"><button pButton type="submit" [disabled]="busy()">Enregistrer le mouvement</button><button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy()" (click)="close()">Annuler</button></div>
+          </form>
+        </section>
+      }
+    }
+
+    @if (panel() === 'history') {
+      <section class="resources__panel resource-controls" aria-label="Historique de la fiche">
+        <div class="resources__toolbar"><h2 tabindex="-1">Historique — {{ selected()?.name }}</h2><button pButton severity="secondary" variant="outlined" type="button" (click)="close()">Fermer l’historique</button></div>
+        <p class="resources__muted">Les 200 derniers enregistrements sont affichés, du plus récent au plus ancien.</p>
+        @if (historyLoading()) { <app-loading-state message="Chargement de l’historique…" /> }
+        @else if (mode === 'assets') {
+          @for (event of events(); track event.id) { <article class="resources__event"><strong>{{ event.type === 'CREATE' ? 'Création' : 'Modification' }} — {{ event.reason }}</strong><p>{{ eventSummary(event) }}</p><small>{{ event.createdAt | date:'dd/MM/yyyy HH:mm' }} · {{ event.actor }}</small></article> }
+          @empty { <p>Aucun historique disponible.</p> }
+        } @else {
+          <div class="resources__table-wrap"><table><thead><tr><th>Date / saisie</th><th>Opération</th><th>Variation</th><th>Stock après saisie</th><th>Motif / pièce</th><th>Destinataire / provenance</th><th>Saisi par</th></tr></thead><tbody>
+            @for (movement of movements(); track movement.id) { <tr><td>{{ movement.date | date:'dd/MM/yyyy' }}<small>{{ movement.createdAt | date:'dd/MM/yyyy HH:mm' }}</small></td><td>{{ kindLabels[movement.kind] }}@if (movement.kind === 'COUNT') { <small>Compté : {{ movement.requestedQuantity | number:'1.0-3' }}</small> }</td><td>{{ movement.quantityChange > 0 ? '+' : '' }}{{ movement.quantityChange | number:'1.0-3' }}</td><td>{{ movement.balanceAfter | number:'1.0-3' }}</td><td>{{ movement.reason }}<small>{{ movement.reference }}</small></td><td>{{ movement.recipient || '—' }}</td><td>{{ movement.actor }}</td></tr> }
+            @empty { <tr><td colspan="7">Aucun mouvement. Enregistrez une réception ou le stock initial.</td></tr> }
+          </tbody></table></div>
+          <p class="resources__muted">Le stock après saisie suit l’ordre d’enregistrement. Pour corriger une erreur, saisissez un mouvement inverse ou un inventaire avec son motif ; le journal reste conservé.</p>
+        }
+      </section>
+    }
+
+    <section class="resources__filters resource-controls" aria-label="Filtrer le registre">
+      <label>Rechercher<input pInputText type="search" [value]="search()" (input)="search.set($any($event.target).value)" placeholder="Référence, nom, emplacement…" /></label>
+      <label>Catégorie<app-select-field [ngModel]="category()" (ngModelChange)="category.set($event)" ariaLabel="Filtrer par catégorie"><app-select-option value="" label="Toutes les catégories" />@for (option of categoryOptions; track option.value) { <app-select-option [value]="option.value" [label]="option.label" /> }</app-select-field></label>
+      <label>Afficher<app-select-field [ngModel]="filter()" (ngModelChange)="filter.set($event)" ariaLabel="Afficher les fiches">
+        <app-select-option value="active" label="Fiches actives" /><app-select-option value="all" label="Toutes les fiches" />
+        @if (mode === 'assets') { <app-select-option value="maintenance" label="À surveiller / entretenir" /><app-select-option value="retired" label="Sorties du patrimoine" /> }
+        @else { <app-select-option value="low" label="À réapprovisionner" /><app-select-option value="archived" label="Articles archivés" /> }
+      </app-select-field></label>
+    </section>
+    <p class="resources__muted">{{ mode === 'assets' ? filteredAssets().length : filteredItems().length }} fiche(s) dans le registre filtré · {{ currentDate | date:'dd/MM/yyyy' }}</p>
+    @if (mode === 'assets') {
+      <p-table [value]="filteredAssets()" dataKey="id" [paginator]="!printing() && filteredAssets().length > 25" [rows]="25" [rowsPerPageOptions]="[25,50,100]" [rowHover]="true" styleClass="resources__data-table">
+        <ng-template #header><tr><th>Référence / bien</th><th>Emplacement / responsable</th><th>Quantité</th><th>État / statut</th><th>Valeur unitaire</th><th>Entretien prévu</th><th class="resource-controls">Actions</th></tr></ng-template>
+        <ng-template #body [appTableRow]="filteredAssets()" let-item><tr>
+          <td><strong>{{ item.name }}</strong><small>{{ item.code }} · {{ assetCategories[item.category] }}</small><small>{{ ownership[item.ownership] }}</small></td>
+          <td>{{ item.location }}<small>{{ item.custodian || '—' }}</small></td><td>{{ item.quantity | number }}</td>
+          <td><span class="resources__badge" [class.resources__badge--warning]="item.condition === 'DAMAGED' || item.condition === 'UNUSABLE'">{{ conditions[item.condition] }}</span><small>{{ statusLabels[item.status] }}</small></td>
+          <td>{{ item.unitValue != null ? (item.unitValue | number:'1.0-2') + ' FCFA' : 'Non renseignée' }}</td><td>{{ item.maintenanceOn ? (item.maintenanceOn | date:'dd/MM/yyyy') : '—' }}</td>
+          <td class="resource-controls"><div class="resources__row-actions">
+            <button pButton variant="text" type="button" class="ui-row-action ui-row-action--warning" [disabled]="busy()" (click)="edit(item)" pTooltip="Modifier le bien" tooltipPosition="top" tooltipEvent="both" appendTo="body" [showDelay]="500" [attr.aria-label]="'Modifier : ' + item.name"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 20h9M16 3l5 5L9 20l-5 1 1-5Z" /></svg></button>
+            <button pButton variant="text" type="button" class="ui-row-action ui-row-action--info" [disabled]="busy()" (click)="history(item)" pTooltip="Historique du bien" tooltipPosition="top" tooltipEvent="both" appendTo="body" [showDelay]="500" [attr.aria-label]="'Historique : ' + item.name"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3 11a9 9 0 1 1 3 8M3 4v7h7M12 7v5l3 2" /></svg></button>
+          </div></td>
+        </tr></ng-template>
+        <ng-template #emptymessage><tr><td colspan="7">Aucun bien pour ces filtres. Ajoutez votre premier bâtiment ou votre mobilier avec « Ajouter un bien ».</td></tr></ng-template>
+      </p-table>
+    } @else {
+      <p-table [value]="filteredItems()" dataKey="id" [paginator]="!printing() && filteredItems().length > 25" [rows]="25" [rowsPerPageOptions]="[25,50,100]" [rowHover]="true" styleClass="resources__data-table">
+        <ng-template #header><tr><th>Référence / article</th><th>Emplacement</th><th>Disponible</th><th>Seuil minimum</th><th>Suivi</th><th class="resource-controls">Actions</th></tr></ng-template>
+        <ng-template #body [appTableRow]="filteredItems()" let-item><tr>
+          <td><strong>{{ item.name }}</strong><small>{{ item.code }} · {{ stockCategories[item.category] }}</small></td><td>{{ item.location }}</td><td><strong>{{ item.quantity | number:'1.0-3' }} {{ item.unit }}</strong></td><td>{{ item.minimumQuantity | number:'1.0-3' }} {{ item.unit }}</td>
+          <td><span class="resources__badge" [class.resources__badge--warning]="item.active && item.quantity <= item.minimumQuantity">{{ !item.active ? 'Archivé' : item.quantity <= item.minimumQuantity ? 'À réapprovisionner' : 'Disponible' }}</span></td>
+          <td class="resource-controls"><div class="resources__row-actions">
+            <button pButton variant="text" type="button" class="ui-row-action ui-row-action--success" [disabled]="busy() || !item.active" (click)="openMovement(item)" pTooltip="Entrée, sortie ou inventaire" tooltipPosition="top" tooltipEvent="both" appendTo="body" [showDelay]="500" [attr.aria-label]="'Mouvement : ' + item.name"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4" /></svg></button>
+            <button pButton variant="text" type="button" class="ui-row-action ui-row-action--warning" [disabled]="busy()" (click)="edit(item)" pTooltip="Modifier l’article" tooltipPosition="top" tooltipEvent="both" appendTo="body" [showDelay]="500" [attr.aria-label]="'Modifier : ' + item.name"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 20h9M16 3l5 5L9 20l-5 1 1-5Z" /></svg></button>
+            <button pButton variant="text" type="button" class="ui-row-action ui-row-action--info" [disabled]="busy()" (click)="history(item)" pTooltip="Journal des mouvements" tooltipPosition="top" tooltipEvent="both" appendTo="body" [showDelay]="500" [attr.aria-label]="'Historique : ' + item.name"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3 11a9 9 0 1 1 3 8M3 4v7h7M12 7v5l3 2" /></svg></button>
+          </div></td>
+        </tr></ng-template>
+        <ng-template #emptymessage><tr><td colspan="6">Aucun article pour ces filtres. Ajoutez vos fournitures avec « Ajouter un article ».</td></tr></ng-template>
+      </p-table>
+    }
+  }
+</main>

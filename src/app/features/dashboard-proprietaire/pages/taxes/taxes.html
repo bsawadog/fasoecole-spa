@@ -1,0 +1,119 @@
+<main class="taxes ui-workspace">
+  <header class="ui-page-header"><h1>Impôts et taxes</h1><p>Obligations fiscales, échéances, règlements et soldes de votre établissement.</p></header>
+  @if(error()){<p-message severity="error" role="alert" class="taxes-controls">{{ error() }}</p-message>}
+  @if(success()){<p-message severity="success" role="status" class="taxes-controls">{{ success() }}</p-message>}
+  <div class="taxes__toolbar taxes-controls">
+    <label>Année fiscale<app-number-field [(ngModel)]="year" (ngModelChange)="changeYear()" min="1900" max="2200" step="1" [disabled]="busy()" ariaLabel="Année fiscale" /></label>
+    <button pButton type="button" [disabled]="busy() || !schoolId()" (click)="openCreate()">Ajouter un impôt ou une taxe</button>
+    <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy() || !schoolId()" (click)="openPayroll()">Reprendre IUTS / TPA des salaires</button>
+    <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy() || loading()" (click)="load()">Actualiser</button>
+    <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy() || !data()" (click)="exportCsv()">Exporter CSV</button>
+    <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy() || !data()" (click)="print()">Imprimer le registre</button>
+  </div>
+  <p class="taxes__notice taxes-controls">Enregistrez uniquement les impôts applicables à votre établissement, selon les montants et échéances confirmés par votre comptable. Aucun taux, régime fiscal, exonération, déclaration ou paiement n’est calculé automatiquement. Le catalogue ne signifie pas que chaque taxe est due.</p>
+  @if(loading()){<app-loading-state message="Chargement des impôts et taxes…" />}
+  @else if(!schools().length){<p>Aucun établissement accessible pour ce module.</p>}
+  @if(data(); as d){
+    <h2>{{ schoolName() }} — Registre fiscal {{ d.year }}</h2>
+    <div class="taxes__kpis">
+      <div><span>Total des obligations</span><strong>{{ d.due | number:'1.0-2' }} FCFA</strong></div>
+      <div><span>Règlements enregistrés</span><strong>{{ d.paid | number:'1.0-2' }} FCFA</strong></div>
+      <div><span>Reste à payer</span><strong>{{ d.remaining | number:'1.0-2' }} FCFA</strong></div>
+      <div><span>Solde en retard</span><strong>{{ d.overdue | number:'1.0-2' }} FCFA</strong></div>
+    </div>
+    <p class="taxes__muted">Périodes fiscales recouvrant {{ d.year }} et anciennes obligations non soldées. Les totaux portent sur ces obligations et leurs règlements cumulés, quelle que soit la date de paiement ; les obligations annulées sont exclues.</p>
+    <div class="taxes__catalog" aria-label="Synthèse par type d’impôt">
+      @for(summary of summaries();track summary.code){
+        <article><h3>{{ labels[summary.code] }}</h3>@if(summary.count){<p>Dû : {{ summary.due | number:'1.0-2' }} FCFA</p><p>Réglé : {{ summary.paid | number:'1.0-2' }} FCFA</p><strong>Reste : {{ summary.remaining | number:'1.0-2' }} FCFA</strong>}@else{<p>Aucune obligation enregistrée</p>}</article>
+      }
+    </div>
+  }
+
+  @if(formOpen()){
+    <section class="taxes__panel taxes-controls" aria-label="Saisie d’une obligation fiscale">
+      <h2 class="taxes__form-title" tabindex="-1">{{ editing() ? 'Corriger l’obligation fiscale' : 'Nouvel impôt ou taxe' }}</h2>
+      <form #taxForm="ngForm" (ngSubmit)="taxForm.valid && save()">
+        <fieldset [disabled]="busy()" class="taxes__form">
+          <label>Type d’impôt<app-select-field name="code" [(ngModel)]="form.code" (ngModelChange)="form.label=labels[form.code]" [disabled]="!!editing()" ariaLabel="Type d’impôt">@for(code of codes;track code){<app-select-option [value]="code" [label]="labels[code]" />}</app-select-field></label>
+          <label>Libellé<input pInputText name="label" [(ngModel)]="form.label" maxlength="120" required [disabled]="!!editing()" /></label>
+          <label>Début de période<app-date-field name="periodStart" [(ngModel)]="form.periodStart" required [disabled]="!!editing()" ariaLabel="Début de période" /></label>
+          <label>Fin de période<app-date-field name="periodEnd" [(ngModel)]="form.periodEnd" [min]="form.periodStart" required [disabled]="!!editing()" ariaLabel="Fin de période" /></label>
+          <label>Montant dû (FCFA)<app-number-field name="amount" [(ngModel)]="form.amount" min="0" max="9999999999.99" step="0.01" required [disabled]="editing()?.origin === 'PAYROLL'" ariaLabel="Montant dû (FCFA)" /></label>
+          <label>Date limite de paiement<app-date-field name="dueDate" [(ngModel)]="form.dueDate" required ariaLabel="Date limite de paiement" /></label>
+          <label>Organisme bénéficiaire<input pInputText name="creditor" [(ngModel)]="form.creditor" maxlength="150" required /></label>
+          <label>Référence de déclaration / avis<input pInputText name="declarationReference" [(ngModel)]="form.declarationReference" maxlength="100" /></label>
+          <label>Observations<textarea pInputText name="notes" [(ngModel)]="form.notes" maxlength="500" rows="2"></textarea></label>
+          @if(editing()){<label>Motif de correction<input pInputText name="reason" [(ngModel)]="form.reason" maxlength="300" required /></label>}
+        </fieldset>
+        <p class="taxes__muted">La période peut être mensuelle, trimestrielle, annuelle ou personnalisée. Une obligation peut être corrigée ou annulée avant tout règlement. Après paiement, son historique est conservé.</p>
+        <div class="taxes__toolbar"><button pButton type="submit" [disabled]="busy()">Enregistrer l’obligation</button><button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy()" (click)="closePanels()">Fermer la saisie</button></div>
+      </form>
+    </section>
+  }
+
+  @if(payrollOpen()){
+    <section class="taxes__panel taxes-controls" aria-label="Reprise des montants des salaires">
+      <h2>Reprendre ou actualiser l’IUTS et la TPA</h2>
+      <p>Les montants proviennent des saisies manuelles des rémunérations préparées pour le mois. Un salaire versé à un employé n’est pas un règlement aux impôts. La TPA reste une charge patronale.</p>
+      @if(previewLoading()){<app-loading-state message="Lecture des montants des salaires…" />}
+      @if(preview();as p){<p><strong>IUTS : {{ p.iuts | number:'1.0-2' }} FCFA · TPA : {{ p.tpa | number:'1.0-2' }} FCFA</strong> · {{ p.remunerations }} rémunération(s) préparée(s).</p>}
+      <form #importForm="ngForm" (ngSubmit)="importForm.valid && importPayroll()">
+        <fieldset [disabled]="busy()" class="taxes__form">
+          <label>Mois des salaires<app-date-field mode="month" name="payrollMonth" [(ngModel)]="payroll.month" (ngModelChange)="loadPreview()" [max]="currentMonth" required ariaLabel="Mois des salaires" /></label>
+          <label>Date limite de paiement<app-date-field name="payrollDueDate" [(ngModel)]="payroll.dueDate" required ariaLabel="Date limite de paiement" /></label>
+          <label>Organisme bénéficiaire<input pInputText name="payrollCreditor" [(ngModel)]="payroll.creditor" maxlength="150" required /></label>
+          <label>Référence de déclaration / avis<input pInputText name="payrollReference" [(ngModel)]="payroll.declarationReference" maxlength="100" /></label>
+          <label>Motif / référence du contrôle<input pInputText name="payrollReason" [(ngModel)]="payroll.reason" maxlength="300" required /></label>
+        </fieldset>
+        <div class="taxes__toolbar"><button pButton type="submit" [disabled]="busy() || previewLoading() || !preview() || payroll.month > currentMonth">Reprendre / actualiser les montants</button><button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy()" (click)="closePanels()">Fermer la reprise</button></div>
+        <p class="taxes__muted">Une reprise crée au plus une obligation IUTS et une obligation TPA pour le mois, uniquement pour les montants positifs. Une actualisation conserve les paiements et l’échéance déjà enregistrés. Si une obligation IUTS ou TPA a déjà été saisie manuellement sur une période qui recouvre ce mois, la reprise est refusée pour éviter un doublon. Actualisez à nouveau après toute correction des salaires.</p>
+      </form>
+    </section>
+  }
+
+  @if(detailLoading()){<app-loading-state message="Chargement de l’historique…" />}
+  @if(detail(); as detail){
+    <section class="taxes__panel taxes-controls" aria-label="Fiche de l’obligation fiscale">
+      <div class="taxes__toolbar"><h2 class="taxes__detail-title" tabindex="-1">{{ detail.tax.obligation.label }}</h2><button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy()" (click)="closePanels()">Fermer la fiche</button></div>
+      <p>{{ labels[detail.tax.code] }} · Du {{ detail.tax.periodStart | date:'dd/MM/yyyy' }} au {{ detail.tax.periodEnd | date:'dd/MM/yyyy' }} · Échéance : {{ detail.tax.obligation.dueDate | date:'dd/MM/yyyy' }}</p>
+      <p>{{ detail.tax.obligation.supplier }} · Référence : {{ detail.tax.declarationReference || 'Non renseignée' }}</p>
+      <p>{{ detail.tax.obligation.notes }}</p>
+      <div class="taxes__amounts"><strong>Dû : {{ detail.tax.obligation.amount | number:'1.0-2' }} FCFA</strong><span>Réglé : {{ detail.tax.obligation.paid | number:'1.0-2' }} FCFA</span><strong>Reste : {{ detail.tax.obligation.remaining | number:'1.0-2' }} FCFA</strong><span>{{ statuses[detail.tax.obligation.status] }}</span></div>
+      @if(detail.tax.obligation.remaining > 0 && detail.tax.obligation.status !== 'CANCELLED'){<button pButton type="button" [disabled]="busy()" (click)="openPayment()">Enregistrer un règlement</button>}
+      @if(detail.tax.obligation.paid === 0 && detail.tax.obligation.status !== 'CANCELLED'){<button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy()" (click)="openEdit(detail.tax)">Corriger cette obligation</button>}
+      @if(paymentOpen()){
+        <form #payForm="ngForm" (ngSubmit)="payForm.valid && recordPayment()" class="taxes__payment" aria-label="Enregistrer un règlement fiscal">
+          <h3 class="taxes__payment-title" tabindex="-1">Nouveau règlement</h3>
+          <fieldset [disabled]="busy()" class="taxes__form">
+            <label>Montant du règlement (FCFA)<app-number-field name="paymentAmount" [(ngModel)]="payment.amount" min="0.01" [max]="detail.tax.obligation.remaining" step="0.01" required ariaLabel="Montant du règlement (FCFA)" /></label>
+            <label>Date du règlement<app-date-field name="paymentDate" [(ngModel)]="payment.date" [max]="currentDate" required ariaLabel="Date du règlement" /></label>
+            <label>Mode de paiement<app-select-field name="paymentMethod" [(ngModel)]="payment.method" ariaLabel="Mode de paiement">@for(method of methods;track method){<app-select-option [value]="method" [label]="methodLabels[method]" />}</app-select-field></label>
+            <label>Référence du reçu / quittance<input pInputText name="paymentReference" [(ngModel)]="payment.reference" maxlength="100" /></label>
+          </fieldset>
+          <p class="taxes__muted">Le règlement sera repris une seule fois dans les dépenses et, s’il est en espèces, dans la caisse selon sa période d’ouverture. Ne le ressaisissez pas ailleurs. Les règlements déjà saisis séparément dans les dépenses ne sont pas rapprochés automatiquement.</p>
+          <div class="taxes__toolbar"><button pButton type="submit" [disabled]="busy()">Valider le règlement</button><button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy()" (click)="paymentOpen.set(false)">Annuler le règlement</button></div>
+        </form>
+      }
+      <h3>Paiements enregistrés</h3>
+      <div class="taxes__table-wrap"><table><thead><tr><th>Date</th><th>Montant</th><th>Mode</th><th>Référence / quittance</th></tr></thead><tbody>@for(p of detail.payments;track p.id){<tr><td>{{ p.date | date:'dd/MM/yyyy' }}</td><td>{{ p.amount | number:'1.0-2' }} FCFA</td><td>{{ p.method ? methodLabels[p.method] : 'Non renseigné' }}</td><td>{{ p.reference || '—' }}</td></tr>}@empty{<tr><td colspan="4">Aucun règlement enregistré.</td></tr>}</tbody></table></div>
+      <details><summary>Historique de l’obligation</summary><div class="taxes__table-wrap"><table><thead><tr><th>Date</th><th>Action</th><th>Montant dû</th><th>Échéance</th><th>Motif / auteur</th></tr></thead><tbody>@for(event of detail.events;track event.id){<tr><td>{{ event.createdAt | date:'dd/MM/yyyy HH:mm' }}</td><td>{{ eventLabels[event.action] || event.action }}</td><td>{{ event.amount | number:'1.0-2' }}</td><td>{{ event.dueDate | date:'dd/MM/yyyy' }}</td><td>{{ event.reason }}<small>{{ event.author }}</small></td></tr>}</tbody></table></div></details>
+      @if(detail.tax.origin === 'MANUAL' && detail.tax.obligation.paid === 0 && detail.tax.obligation.status !== 'CANCELLED'){
+        <div class="taxes__toolbar"><label>Motif d’annulation<input pInputText [(ngModel)]="cancelReason" maxlength="300" [disabled]="busy()" /></label><button pButton severity="danger" variant="outlined" type="button" [disabled]="busy()" (click)="cancel()">Annuler cette obligation</button></div>
+      }
+    </section>
+  }
+
+  @if(data()){
+    <div class="taxes__filters taxes-controls">
+      <label>Rechercher<input pInputText type="search" [value]="search()" (input)="search.set($any($event.target).value)" placeholder="Type, organisme, référence…" /></label>
+      <label>Type<app-select-field [ngModel]="codeFilter()" (ngModelChange)="codeFilter.set($event)" ariaLabel="Filtrer par type"><app-select-option value="ALL" label="Tous les types" />@for(code of codes;track code){<app-select-option [value]="code" [label]="labels[code]" />}</app-select-field></label>
+      <label>Statut<app-select-field [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)" ariaLabel="Filtrer par statut"><app-select-option value="ALL" label="Tous les statuts" /><app-select-option value="OPEN" label="Avec un reste à payer" /><app-select-option value="OVERDUE" label="En retard" /><app-select-option value="PAID" label="Soldés" /><app-select-option value="PARTIAL" label="Partiellement réglés" /><app-select-option value="CANCELLED" label="Annulés" /></app-select-field></label>
+    </div>
+    <p>{{ rows().length }} obligation(s) dans le registre filtré · Montants en FCFA</p>
+    <p-table [value]="rows()" dataKey="id" [paginator]="!printing() && rows().length > 25" [rows]="25" [rowsPerPageOptions]="[25,50,100]" [rowHover]="true">
+      <ng-template #header><tr><th>Impôt / taxe</th><th>Période / origine</th><th>Échéance</th><th>Dû</th><th>Réglé</th><th>Reste</th><th>Suivi</th><th class="taxes-controls">Actions</th></tr></ng-template>
+      <ng-template #body [appTableRow]="rows()" let-row><tr><td><strong>{{ row.obligation.label }}</strong><small>{{ labels[row.code] }} · {{ row.obligation.supplier }}</small><small>{{ row.declarationReference }}</small></td><td>{{ row.periodStart | date:'dd/MM/yyyy' }}<small>au {{ row.periodEnd | date:'dd/MM/yyyy' }}</small><small>{{ row.origin === 'PAYROLL' ? 'Reprise des salaires' : 'Saisie manuelle' }}</small>@if(row.carryover){<strong>Solde antérieur</strong>}</td><td>{{ row.obligation.dueDate | date:'dd/MM/yyyy' }}</td><td>{{ row.obligation.amount | number:'1.0-2' }}</td><td>{{ row.obligation.paid | number:'1.0-2' }}</td><td>{{ row.obligation.remaining | number:'1.0-2' }}</td><td><span class="taxes__badge" [class.taxes__badge--paid]="row.obligation.status === 'PAID'">{{ statuses[row.obligation.status] }}</span>@if(row.obligation.overdue){<small class="taxes__late">En retard</small>}</td><td class="taxes-controls"><button pButton variant="text" type="button" class="ui-row-action ui-row-action--info" [disabled]="busy()" (click)="openDetail(row)" [attr.aria-label]="'Consulter : ' + row.obligation.label" pTooltip="Paiements, solde et historique" tooltipPosition="top" tooltipEvent="both" [showDelay]="500" appendTo="body"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h10l4 4v14H5ZM14 3v5h5M8 12h8M8 16h6" /></svg></button></td></tr></ng-template>
+      <ng-template #emptymessage><tr><td colspan="8">Aucune obligation pour ces filtres. Ajoutez les taxes applicables ou reprenez les montants des salaires.</td></tr></ng-template>
+    </p-table>
+  }
+</main>

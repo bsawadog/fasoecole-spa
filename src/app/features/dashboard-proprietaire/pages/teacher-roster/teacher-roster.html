@@ -4,7 +4,7 @@
       <span class="teacher-roster__header-icon" aria-hidden="true">E</span>
       <div>
         <h1>Enseignants par classe</h1>
-        <p>Sélectionnez une classe pour consulter ses enseignants et accéder à leur fiche.</p>
+        <p>Affectez les enseignants existants à une classe et à leurs matières, puis consultez leur fiche.</p>
       </div>
     </div>
 
@@ -22,7 +22,7 @@
   } @else if (!schools().length) {
     <p class="teacher-roster__state">Aucun établissement associé à votre compte.</p>
   } @else if (!classes().length) {
-    <p class="teacher-roster__state">Aucune classe dans cet établissement. Créez-en une dans Gestion de l’établissement.</p>
+    <p class="teacher-roster__state">Aucune classe dans cet établissement. Créez-en une dans Configuration de l’école.</p>
   } @else {
     <section class="teacher-roster__card" aria-label="Choix de la classe">
       <div class="teacher-roster__card-head"><h2>Classe sélectionnée</h2></div>
@@ -35,7 +35,6 @@
           </app-select-field>
         </label>
         <div class="teacher-roster__toolbar-actions">
-          <button pButton type="button" class="teacher-roster__add-btn" (click)="openAddTeacher()" [disabled]="!subjects().length">+ Ajouter un enseignant</button>
           <button pButton type="button" class="teacher-roster__add-btn" (click)="openAssignment()" [disabled]="!subjects().length || !candidates().length">
             Affecter un enseignant existant
           </button>
@@ -45,10 +44,11 @@
         </div>
       </div>
       @if (!subjects().length) {
-        <p class="teacher-roster__hint">Créez d’abord une matière dans Gestion de l’établissement → Académique pour pouvoir affecter un enseignant.</p>
+        <p class="teacher-roster__hint">Créez d’abord une matière dans Configuration de l’école → Académique pour pouvoir affecter un enseignant.</p>
       } @else if (!candidates().length) {
-        <p class="teacher-roster__hint">Aucun enseignant existant n’est disponible : utilisez « Ajouter un enseignant » pour en créer un.</p>
+        <p class="teacher-roster__hint">Aucun enseignant existant n’est disponible. Le propriétaire peut en ajouter depuis « Créer un employé » en choisissant la fonction « Enseignant », puis revenir ici pour l’affecter.</p>
       }
+      <p class="teacher-roster__hint">La création individuelle des enseignants et leur rémunération se préparent dans « Créer un employé ». Cette page gère leurs affectations aux classes et matières.</p>
     </section>
 
     @if (loadingEditor()) {
@@ -67,49 +67,24 @@
         </div>
       </form>
     }
-    @if (addingTeacher()) {
-      <form class="teacher-roster__new-form teacher-roster__card" (ngSubmit)="saveTeacher()">
-        <div class="teacher-roster__card-head"><h2>Nouvel enseignant dans cette classe</h2></div>
-        <div class="teacher-roster__edit-grid">
-          <label>Prénom<input pInputText name="firstName" [(ngModel)]="newTeacher.firstName" required maxlength="100"></label>
-          <label>Nom<input pInputText name="lastName" [(ngModel)]="newTeacher.lastName" required maxlength="100"></label>
-          <label>Courriel (facultatif)<input pInputText name="email" type="email" email [(ngModel)]="newTeacher.email" maxlength="150"></label>
-          <p>Un lien d’activation sera envoyé par courriel pour choisir le mot de passe.</p>
-          <label>Téléphone<input pInputText name="phone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="newTeacher.phone" maxlength="30"></label>
-          <label>Numéro d’employé<input pInputText type="text" name="employeeNumber" [(ngModel)]="newTeacher.employeeNumber" maxlength="50" placeholder="Attribué automatiquement si vide"></label>
-          <label>Spécialité<input pInputText name="specialty" [(ngModel)]="newTeacher.specialty" maxlength="150"></label>
-          <label>Date d’embauche<app-date-field mode="date" name="hireDate" [(ngModel)]="newTeacher.hireDate" [ariaLabel]="(&quot;Date d’embauche&quot;).trim()" /></label>
-          <label>Salaire mensuel fixe (FCFA)<app-number-field name="monthlySalary" min="0" max="9999999999.99" step="0.01" [(ngModel)]="newTeacher.monthlySalary" placeholder="Ou définir un taux dans la fiche enseignant" [ariaLabel]="(&quot;Salaire mensuel fixe (FCFA)&quot;).trim()" /></label>
-          <label>Matière enseignée
-            <app-select-field name="subjectId" [(ngModel)]="newTeacher.subjectId" required [ariaLabel]="(&quot;Matière enseignée &quot;).trim()">
-              @for (subject of subjects(); track subject.id) { <app-select-option [value]="subject.id" [label]="((&quot;&quot; + ((subject.name)) + &quot;&quot;)).trim()" /> }
-            </app-select-field>
-          </label>
-        </div>
-        <div class="teacher-roster__edit-actions">
-          <button pButton type="submit" [disabled]="saving()">Créer et affecter</button>
-          <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelForms()">Annuler</button>
-        </div>
-      </form>
-    }
-
     @if (assigningTeacher()) {
       <form class="teacher-roster__new-form teacher-roster__card" (ngSubmit)="saveAssignment()">
         <div class="teacher-roster__card-head"><h2>Affecter un enseignant existant</h2></div>
         <p class="teacher-roster__hint">Seuls les enseignants liés à vos établissements sont proposés.</p>
         <div class="teacher-roster__edit-grid">
           <label>Enseignant
-            <app-select-field name="existingTeacher" [(ngModel)]="assignment.teacherId" required [ariaLabel]="(&quot;Enseignant &quot;).trim()">
+            <app-select-field name="existingTeacher" [ngModel]="assignment.teacherId" (ngModelChange)="chooseAssignmentTeacher($event)" required [ariaLabel]="(&quot;Enseignant &quot;).trim()">
               @for (candidate of candidates(); track candidate.id) {
                 <app-select-option [value]="candidate.id" [label]="((&quot;&quot; + ((candidate.firstName)) + &quot; &quot; + ((candidate.lastName)) + &quot; · &quot; + ((candidate.email)) + &quot;&quot;)).trim()" />
               }
             </app-select-field>
           </label>
-          <label>Matière
-            <app-select-field name="existingSubject" [(ngModel)]="assignment.subjectId" required [ariaLabel]="(&quot;Matière &quot;).trim()">
-              @for (subject of subjects(); track subject.id) { <app-select-option [value]="subject.id" [label]="((&quot;&quot; + ((subject.name)) + &quot;&quot;)).trim()" /> }
-            </app-select-field>
-          </label>
+          <fieldset class="teacher-roster__subjects"><legend>Matières à enseigner dans cette classe</legend>
+            <p>Les matières du dossier de l’enseignant sont précochées lorsqu’elles existent dans cet établissement. Ajustez les choix ; les affectations déjà présentes sont conservées.</p>
+            @for (subject of subjects(); track subject.id) {
+              <label><input type="checkbox" [name]="'assignmentSubject' + subject.id" [checked]="assignmentSubjectIds.includes(subject.id)" (change)="toggleSubject(subject.id, $any($event.target).checked)"> {{ subject.name }}</label>
+            }
+          </fieldset>
         </div>
         <div class="teacher-roster__edit-actions">
           <button pButton type="submit" [disabled]="saving()">Affecter à cette classe</button>
@@ -168,7 +143,7 @@
                   <div class="teacher-roster__muted">{{ teacher.specialty || 'Spécialité non renseignée' }} · {{ teacher.employeeNumber || 'Numéro à attribuer' }}</div></div>
               </div>
             </td>
-            <td>{{ teacher.subjects.join(', ') || empty }}</td>
+            <td>{{ (classMode ? teacher.subjects.join(', ') : teachingSubjectsLabel(teacher)) || empty }}</td>
             <td>{{ teacher.email }}<div class="teacher-roster__muted">{{ teacher.phone || '—' }}</div>
               @if (teacher.emailVerified === false && teacher.userId) {
                 <small>{{ teacher.invitationDeliveryStatus === 'FAILED' ? 'Envoi échoué' : 'Compte à activer' }}</small>

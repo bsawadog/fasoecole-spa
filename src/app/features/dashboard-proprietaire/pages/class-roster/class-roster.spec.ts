@@ -57,6 +57,10 @@ describe('ClassRoster transfer', () => {
 
   it('offers accessible icon actions with a student deletion action', () => {
     const { fixture } = setup();
+    expect(fixture.nativeElement.textContent).toContain('Inscriptions');
+    expect(fixture.nativeElement.querySelector('input[name="nFirstName"]')).toBeNull();
+    expect(Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>)
+      .some(button => /Ajouter un (élève|étudiant)/.test(button.textContent ?? ''))).toBe(false);
     const actions = fixture.nativeElement.querySelector('.class-roster__actions');
     expect(actions.querySelectorAll('svg').length).toBe(4);
     expect(actions.querySelector('a[aria-label^="Voir la fiche"]')).not.toBeNull();

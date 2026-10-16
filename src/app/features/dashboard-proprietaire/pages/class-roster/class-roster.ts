@@ -19,7 +19,6 @@ import {
   AcademicYearRecord,
   ClassRecord,
   ClassRosterRow,
-  CreateRosterStudentPayload,
   LevelRecord,
   OwnerManagementService,
   RosterParent,
@@ -40,16 +39,6 @@ interface ParentEditForm {
   lastName: string;
   email: string;
   phone: string;
-}
-
-interface NewStudentForm {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  registrationNumber: string;
-  birthDate: string;
-  gender: string;
 }
 
 @Component({
@@ -98,12 +87,10 @@ export class ClassRoster implements OnInit, OnDestroy {
   readonly editingParentId = signal<number | null>(null);
   readonly addingParentStudentId = signal<number | null>(null);
   newParentForm = { firstName: '', lastName: '', email: '', phone: '', relationship: '' };
-  readonly addingStudent = signal(false);
   readonly transferringStudentId = signal<number | null>(null);
   transferTargetId: number | null = null;
   studentForm: StudentEditForm = this.emptyStudentForm();
   parentForm: ParentEditForm = this.emptyParentForm();
-  newStudentForm: NewStudentForm = this.emptyNewStudentForm();
 
   ngOnInit(): void {
     const ownerId = this.auth.user()?.id;
@@ -266,44 +253,6 @@ export class ClassRoster implements OnInit, OnDestroy {
     });
   }
 
-  openAddStudent(): void {
-    this.cancelEdit();
-    this.newStudentForm = this.emptyNewStudentForm();
-    this.addingStudent.set(true);
-    this.errorMessage.set(null);
-  }
-
-  cancelAddStudent(): void {
-    this.addingStudent.set(false);
-  }
-
-  submitNewStudent(): void {
-    const classId = this.selectedClassId();
-    if (!classId || !this.newStudentForm.firstName.trim() || !this.newStudentForm.lastName.trim()) {
-      this.errorMessage.set('Veuillez remplir tous les champs obligatoires.');
-      return;
-    }
-    this.saving.set(true);
-    const payload: CreateRosterStudentPayload = {
-      firstName: this.newStudentForm.firstName.trim(),
-      lastName: this.newStudentForm.lastName.trim(),
-      email: this.newStudentForm.email.trim(),
-      phone: this.newStudentForm.phone.trim() || null,
-      registrationNumber: this.newStudentForm.registrationNumber.trim() || null,
-      birthDate: this.newStudentForm.birthDate || null,
-      gender: this.newStudentForm.gender || null,
-    };
-    this.api.createRosterStudent(classId, payload).subscribe({
-      next: (created) => {
-        this.rows.update((rows) => [...rows, created]);
-        this.saving.set(false);
-        this.addingStudent.set(false);
-        this.successMessage.set(`${this.learner().column} ajouté à la classe.`);
-      },
-      error: (err) => this.fail(err?.error?.message ?? `L’ajout de ${this.learner().definite} a échoué.`),
-    });
-  }
-
   saveStudent(studentId: number): void {
     const classId = this.selectedClassId();
     if (!classId || !this.studentForm.firstName.trim() || !this.studentForm.lastName.trim() ||
@@ -399,7 +348,6 @@ export class ClassRoster implements OnInit, OnDestroy {
   startAddParent(row: ClassRosterRow): void {
     if (this.saving()) return;
     this.cancelEdit();
-    this.addingStudent.set(false);
     this.newParentForm = { firstName: '', lastName: '', email: '', phone: '', relationship: '' };
     this.addingParentStudentId.set(row.studentId);
     this.errorMessage.set(null);
@@ -475,7 +423,6 @@ export class ClassRoster implements OnInit, OnDestroy {
     this.loadingRoster.set(true);
     this.errorMessage.set(null);
     this.cancelEdit();
-    this.addingStudent.set(false);
 
     this.classRequest = this.api.getClassRoster(classId).subscribe({
       next: (rows) => {
@@ -496,13 +443,6 @@ export class ClassRoster implements OnInit, OnDestroy {
 
   private emptyParentForm(): ParentEditForm {
     return { firstName: '', lastName: '', email: '', phone: '' };
-  }
-
-  private emptyNewStudentForm(): NewStudentForm {
-    return {
-      firstName: '', lastName: '', email: '', phone: '',
-      registrationNumber: '', birthDate: '', gender: '',
-    };
   }
 
   private fail(message: string): void {

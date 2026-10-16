@@ -86,7 +86,7 @@ describe('StaffPage', () => {
     const { fixture, api } = setup();
     const page = fixture.componentInstance;
     page.openCreate(); fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('.stf__module input').length).toBe(17);
+    expect(fixture.nativeElement.querySelectorAll('.stf__module input').length).toBe(21);
     expect(fixture.nativeElement.querySelectorAll('.stf__module-group').length).toBe(3);
     Object.assign(page.form, { firstName: 'Ali', lastName: 'Sawadogo', jobTitle: 'Bibliothécaire' });
     page.toggleModule('LIBRARY', true);

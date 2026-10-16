@@ -16,6 +16,7 @@ export interface TeacherCard {
   phone: string | null;
   specialty: string | null;
   subjects: string[];
+  teachingSubjects?: { id: number; name: string }[];
   activeInClass: boolean | null;
   classCount: number;
 }
@@ -95,13 +96,14 @@ export class TeacherWorkService {
 
   createTeacher(classId: number, payload: {
     firstName: string; lastName: string; email: string; password?: string; phone: string | null;
-    employeeNumber?: string | null; specialty: string | null; hireDate: string | null; monthlySalary?: number | null; subjectId: number;
+    employeeNumber?: string | null; specialty: string | null; hireDate: string | null; monthlySalary?: number | null; subjectId?: number; subjectIds?: number[];
   }): Observable<TeacherCard> {
     return this.http.post<TeacherCard>(`${this.url}/classes/${classId}/teachers`, payload);
   }
 
-  assignTeacher(classId: number, teacherId: number, subjectId: number): Observable<TeacherCard> {
-    return this.http.post<TeacherCard>(`${this.url}/classes/${classId}/assignments`, { teacherId, subjectId });
+  assignTeacher(classId: number, teacherId: number, subjects: number | number[]): Observable<TeacherCard> {
+    return this.http.post<TeacherCard>(`${this.url}/classes/${classId}/assignments`,
+      Array.isArray(subjects) ? { teacherId, subjectIds: subjects } : { teacherId, subjectId: subjects });
   }
 
   detail(teacherId: number, month: string): Observable<TeacherDetail> {

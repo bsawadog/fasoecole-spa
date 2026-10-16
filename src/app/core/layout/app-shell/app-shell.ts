@@ -52,6 +52,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Utilisateurs', icon: 'users', routerLink: '/admin/utilisateurs' },
   ],
   proprietaire: [
+    { label: 'Salaires', icon: 'wallet', routerLink: '/proprietaire/salaires', module: 'PAYROLL' },
     { label: 'Calendrier scolaire', icon: 'calendar', routerLink: '/proprietaire/calendrier', module: 'CALENDAR' },
     { label: 'Discipline et vie scolaire', icon: 'shield', routerLink: '/proprietaire/discipline', module: 'DISCIPLINE' },
     { label: 'Bibliothèque', icon: 'book', routerLink: '/proprietaire/bibliotheque', module: 'LIBRARY' },
@@ -68,11 +69,14 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Demandes de compte', icon: 'users', routerLink: '/proprietaire/demandes', module: null },
     { label: 'Messages', icon: 'message', routerLink: '/proprietaire/messages', module: 'MESSAGES' },
     { label: 'Portail parents', icon: 'book', routerLink: '/proprietaire/portail-parents', module: 'PARENT_PORTAL' },
-    { label: 'Gestion de l’école', icon: 'book', routerLink: '/proprietaire/gestion', module: 'MANAGEMENT' },
+    { label: 'Configuration de l’école', icon: 'book', routerLink: '/proprietaire/gestion', module: 'MANAGEMENT' },
     { label: 'Brouillard de caisse', icon: 'wallet', routerLink: '/proprietaire/caisse', module: 'CASH_BOOK' },
     { label: 'États financiers', icon: 'chart', routerLink: '/proprietaire/etats-financiers', module: 'FINANCIAL_STATEMENTS' },
+    { label: 'Patrimoine et mobilier', icon: 'building', routerLink: '/proprietaire/patrimoine', module: 'ASSETS' },
+    { label: 'Stocks et fournitures', icon: 'book', routerLink: '/proprietaire/stocks', module: 'INVENTORY' },
     { label: 'Recouvrement', icon: 'wallet', routerLink: '/proprietaire/frais', module: 'FINANCE' },
     { label: 'Dépenses & budget', icon: 'chart', routerLink: '/proprietaire/depenses', module: 'EXPENSES' },
+    { label: 'Impôts et taxes', icon: 'notes', routerLink: '/proprietaire/impots-taxes', module: 'TAXES' },
     { label: 'Notes & bulletins', icon: 'notes', routerLink: '/proprietaire/notes', module: 'GRADES' },
     { label: 'Personnel & accès', icon: 'shield', routerLink: '/proprietaire/personnel', module: null },
     { label: 'Exporter mes données', icon: 'notes', routerLink: '/proprietaire/export', module: null },
@@ -250,8 +254,8 @@ export class AppShell implements OnInit {
     const groupsByRole: Record<Role, { title: string; routes: string[] }[]> = {
       proprietaire: [
       { title: 'Administration', routes: ['creer-ecole', 'gestion', 'classes', 'enseignants', 'inscriptions', 'employes', 'personnel', 'notes', 'suivi-devoirs', 'demandes', 'cloture', 'export'] },
+      { title: 'Finance et comptabilité', routes: ['salaires', 'impots-taxes', 'frais', 'depenses', 'caisse', 'etats-financiers', 'patrimoine', 'stocks'] },
       { title: 'Vie scolaire et familles', routes: ['calendrier', 'discipline', 'bibliotheque', 'portail-parents', 'demandes-administratives'] },
-      { title: 'Finances', routes: ['frais', 'depenses', 'caisse', 'etats-financiers'] },
       { title: 'Assistance', routes: ['incidents', 'aide'] },
       ],
       enseignant: [
@@ -263,7 +267,7 @@ export class AppShell implements OnInit {
         { title: 'Suivi de mes enfants', routes: ['enfants', 'notes', 'devoirs', 'suivi-devoirs', 'absences', 'discipline'] },
         { title: 'Vie scolaire', routes: ['emploi', 'calendrier', 'bibliotheque'] },
         { title: 'Relations avec l’école', routes: ['annonces', 'documents', 'rendez-vous', 'demandes-administratives'] },
-        { title: 'Finances', routes: ['frais'] },
+        { title: 'Finance et comptabilité', routes: ['frais'] },
       ],
       etudiant: [
         { title: 'Mes études', routes: ['notes', 'suivi-devoirs'] },

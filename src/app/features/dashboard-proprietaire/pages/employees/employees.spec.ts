@@ -39,10 +39,10 @@ describe('Teacher creation and initial compensation', () => {
 
   it('sends the hourly rate and all initial class and subject slots in a single creation request', () => {
     const { page, fixture, http } = setup();
-    page.changeRateType('HOURLY'); page.form.hourlyRate = 2500; page.form.monthlySalary = 95000;
+    page.changeRateType('HOURLY'); page.addSlot(); page.form.hourlyRate = 2500; page.form.monthlySalary = 95000;
     Object.assign(page.slots[0], { classId: 11, subjectId: 8, dayOfWeek: 1, startTime: '08:00', endTime: '10:00', effectiveFrom: '2026-10-15' });
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Créneaux hebdomadaires (obligatoires)');
+    expect(fixture.nativeElement.textContent).toContain('Créneaux hebdomadaires (facultatifs)');
     expect(page.weeklyHours()).toBe('2');
     page.save();
     const request = http.expectOne(`${environment.apiUrl}/teacher-work/schools/1/teachers`);
@@ -52,11 +52,9 @@ describe('Teacher creation and initial compensation', () => {
     expect(page.slots).toHaveLength(0); expect(page.form.rateType).toBe('FIXED_MONTHLY'); http.verify();
   });
 
-  it('requires slots for hourly pay and validates the end time before making a request', () => {
+  it('validates the end time of an optional slot before making a request', () => {
     const { page, http } = setup();
     page.changeRateType('HOURLY'); page.form.hourlyRate = 2500;
-    page.removeSlot(0); page.save();
-    expect(page.error()).toContain('au moins un créneau');
     page.addSlot(); Object.assign(page.slots[0], { classId: 11, subjectId: 8, startTime: '10:00', endTime: '08:00', effectiveFrom: '2026-10-15' });
     page.save();
     expect(page.error()).toContain('Vérifiez chaque créneau'); http.expectNone(`${environment.apiUrl}/teacher-work/schools/1/teachers`);
@@ -64,11 +62,33 @@ describe('Teacher creation and initial compensation', () => {
 
   it('preserves salary and slots when the server rejects the request', () => {
     const { page, http } = setup();
-    page.changeRateType('HOURLY'); page.form.hourlyRate = 2500;
+    page.changeRateType('HOURLY'); page.addSlot(); page.form.hourlyRate = 2500;
     Object.assign(page.slots[0], { classId: 11, subjectId: 8, effectiveFrom: '2026-10-15' });
     page.save();
     http.expectOne(`${environment.apiUrl}/teacher-work/schools/1/teachers`).flush({ message: 'Créneaux en conflit' }, { status: 400, statusText: 'Bad Request' });
     expect(page.error()).toBe('Créneaux en conflit'); expect(page.form.hourlyRate).toBe(2500);
     expect(page.slots).toHaveLength(1); expect(page.busy()).toBe(false); http.verify();
+  });
+
+  it('can create an hourly teacher with subjects but no class or schedule', () => {
+    const { page, http } = setup();
+    page.loadScheduleContext(); page.toggleSubject(8, true);
+    page.changeRateType('HOURLY'); page.form.hourlyRate = 2500;
+    page.save();
+    const request = http.expectOne(`${environment.apiUrl}/teacher-work/schools/1/teachers`);
+    expect(request.request.body).toMatchObject({ subjectIds: [8], classId: null, initialSlots: [], rateType: 'HOURLY' });
+    request.flush({ id: 9 }); http.verify();
+  });
+
+  it('requires subjects when an initial class is selected', () => {
+    const { page, http } = setup();
+    page.loadScheduleContext(); page.form.classId = 11; page.form.monthlySalary = 95000;
+    page.save();
+    expect(page.error()).toContain('au moins une matière');
+    http.expectNone(`${environment.apiUrl}/teacher-work/schools/1/teachers`);
+    page.toggleSubject(8, true); page.save();
+    const request = http.expectOne(`${environment.apiUrl}/teacher-work/schools/1/teachers`);
+    expect(request.request.body).toMatchObject({ subjectIds: [8], classId: 11 });
+    request.flush({ id: 9 }); http.verify();
   });
 });

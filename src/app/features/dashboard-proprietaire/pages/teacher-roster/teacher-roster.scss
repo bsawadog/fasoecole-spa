@@ -76,5 +76,10 @@
 .teacher-roster__badge--off { background: #e2e8f0; color: #475569; }
 .teacher-roster__row--inactive td { color: #64748b; }
 .teacher-roster__row--inactive .teacher-roster__avatar { background: #e2e8f0; color: #64748b; }
+.teacher-roster__subjects { grid-column: 1 / -1; min-width: 0; display: flex; flex-wrap: wrap; gap: .75rem 1rem; padding: 1rem; border: 1px solid #bfdbfe; border-radius: .5rem; }
+.teacher-roster__subjects legend { color: #1e3a8a; font-weight: 700; }
+.teacher-roster__subjects label { display: flex; flex-direction: row; align-items: center; gap: .4rem; }
+.teacher-roster__subjects p { flex-basis: 100%; margin: 0; font-size: .85rem; color: #475569; }
+.teacher-roster__subjects input { width: auto; }
 
 }

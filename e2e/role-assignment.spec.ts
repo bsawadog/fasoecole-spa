@@ -14,6 +14,7 @@ test('replaces a parent with an existing account for the selected child', async 
     return route.fulfill({ json: { ...student, parents: [owner] } });
   });
   await page.goto('/proprietaire/classes');
+  await expect(page.getByRole('button', { name: /Ajouter un (élève|étudiant)/ })).toHaveCount(0);
   await page.getByRole('button', { name: 'Modifier le parent : Ancien Parent', exact: true }).click();
   const form = page.locator('form').filter({ has: page.locator('input[name="pEmail"]') });
   await form.getByLabel('Courriel (facultatif)', { exact: true }).fill('demo@example.test');

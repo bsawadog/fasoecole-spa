@@ -18,6 +18,7 @@
         <label>Nombre prévu de classes<app-number-field name="expectedClassCount" min="1" max="2147483647" step="1" [(ngModel)]="form.expectedClassCount" required [readonly]="saving()" [ariaLabel]="(&quot;Nombre prévu de classes&quot;).trim()" /></label>
         <label>Nombre prévu d’enseignants<app-number-field name="expectedTeacherCount" min="0" max="2147483647" step="1" [(ngModel)]="form.expectedTeacherCount" required [readonly]="saving()" [ariaLabel]="(&quot;Nombre prévu d’enseignants&quot;).trim()" /></label>
         <p class="hint">Ces nombres sont des estimations. Il n’est pas nécessaire de saisir les classes, les enseignants ou les élèves pour envoyer la demande.</p>
+        <p class="hint">L’année scolaire en cours (du 1er octobre au 30 septembre) et une base de matières adaptée au type d’établissement seront créées automatiquement. Après approbation, vous pourrez modifier les dates, adapter les matières et en ajouter dans « Configuration de l’école ».</p>
         <div class="actions"><button pButton type="submit" [disabled]="saving()">{{ saving() ? 'Envoi…' : 'Envoyer pour approbation' }}</button></div>
       </form>
     } @else {

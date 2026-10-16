@@ -28,6 +28,7 @@
   } @else {
     <section class="class-roster__card class-roster__no-print" aria-label="Choix de la classe">
       <div class="class-roster__card-head"><h2>Classe sélectionnée</h2></div>
+      <p class="class-roster__state">La création individuelle et l’affectation des {{ learner().plural }} à une classe se font dans « Inscriptions ». Cette page permet de consulter et de suivre leurs dossiers.</p>
       <div class="class-roster__toolbar">
         <label class="class-roster__class-picker" for="class-select">Choisir une classe
           <app-select-field inputId="class-select" class="class-roster__select" [ngModel]="selectedClassId()" (change)="onClassChange($event)" [ariaLabel]="(&quot;Choisir une classe &quot;).trim()">
@@ -37,9 +38,6 @@
           </app-select-field>
         </label>
         <div class="class-roster__toolbar-actions">
-          @if (selectedClassId() && !addingStudent()) {
-            <button pButton type="button" class="class-roster__add-btn" (click)="openAddStudent()">+ Ajouter un {{ learner().singular }}</button>
-          }
           @if (selectedClassId() && rows().length > 0) {
             <button pButton type="button" class="class-roster__print-btn" (click)="printRoster()">🖨️ Imprimer / Enregistrer en PDF</button>
           }
@@ -51,36 +49,10 @@
       Liste des {{ learner().plural }} — {{ currentSchoolName() }} — {{ currentClassLabel() }}
     </h2>
 
-    @if (addingStudent()) {
-      <form class="class-roster__new-form class-roster__card class-roster__no-print" (ngSubmit)="submitNewStudent()">
-        <div class="class-roster__card-head"><h2>Ajouter un {{ learner().singular }} à cette classe</h2></div>
-        <div class="class-roster__edit-grid">
-          <label>Prénom <input pInputText name="nFirstName" [(ngModel)]="newStudentForm.firstName" required /></label>
-          <label>Nom <input pInputText name="nLastName" [(ngModel)]="newStudentForm.lastName" required /></label>
-          <label>Courriel (facultatif) <input pInputText type="email" email name="nEmail" [(ngModel)]="newStudentForm.email" /></label>
-          <p>Si un courriel est renseigné, un lien d’activation sera envoyé pour choisir le mot de passe.</p>
-          <label>Téléphone <input pInputText name="nPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="newStudentForm.phone" /></label>
-          <label>Matricule <input pInputText type="text" autocomplete="off" [name]="'matricule_' + selectedSchoolId() + '_nouveau'" maxlength="50" [(ngModel)]="newStudentForm.registrationNumber" placeholder="Généré automatiquement" /></label>
-          <label>Naissance <app-date-field mode="date" name="nBirthDate" [(ngModel)]="newStudentForm.birthDate" [ariaLabel]="(&quot;Naissance &quot;).trim()" /></label>
-          <label>Genre
-            <app-select-field name="nGender" [(ngModel)]="newStudentForm.gender" [ariaLabel]="(&quot;Genre &quot;).trim()">
-              <app-select-option [value]="&quot;&quot;" [label]="(&quot;—&quot;).trim()" />
-              <app-select-option [value]="&quot;M&quot;" [label]="(&quot;Masculin&quot;).trim()" />
-              <app-select-option [value]="&quot;F&quot;" [label]="(&quot;Féminin&quot;).trim()" />
-            </app-select-field>
-          </label>
-        </div>
-        <div class="class-roster__edit-actions">
-          <button pButton type="submit" [disabled]="saving()">Ajouter {{ learner().definite }}</button>
-          <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelAddStudent()">Annuler</button>
-        </div>
-      </form>
-    }
-
     @if (loadingRoster()) {
       <app-loading-state message="Chargement des {{ learner().plural }}…" />
     } @else if (rows().length === 0) {
-      <p class="class-roster__state">Aucun {{ learner().singular }} actif inscrit dans cette classe.</p>
+      <p class="class-roster__state">Aucun {{ learner().singular }} actif inscrit dans cette classe. Utilisez « Inscriptions » pour inscrire un nouvel {{ learner().singular }} et choisir sa classe d’accueil.</p>
     } @else {
       <section class="class-roster__card class-roster__list">
         <div class="class-roster__card-head class-roster__no-print">

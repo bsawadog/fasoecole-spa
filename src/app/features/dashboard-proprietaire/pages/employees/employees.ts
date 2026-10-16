@@ -55,11 +55,28 @@ interface InitialSlot {
           <p>Le salaire mensuel fixe est dû chaque mois. Vous pouvez aussi préparer son emploi du temps ci-dessous.</p>
         } @else {
           <label>Taux horaire (FCFA / heure)<app-number-field name="hourlyRate" min="0.01" max="9999999999.99" step="0.01" [(ngModel)]="form.hourlyRate" required ariaLabel="Taux horaire (FCFA / heure)" /></label>
-          <p>La paie horaire dépend des heures de présence pointées et des heures supplémentaires. Définissez au moins un créneau hebdomadaire.</p>
+          <p>La paie horaire dépend des heures de présence pointées et des heures supplémentaires. Vous pouvez préparer le planning maintenant ou après la création.</p>
         }
         <label>Date d’effet du tarif<app-date-field mode="date" name="rateEffectiveFrom" [(ngModel)]="form.rateEffectiveFrom" required ariaLabel="Date d’effet du tarif" /></label>
+        <section class="employee-schedule" aria-label="Matières et affectation facultatives">
+          <h3>Matières enseignées et classe (facultatif)</h3>
+          <p>Choisissez les matières de l’enseignant dans le catalogue de l’établissement. Vous pouvez laisser la classe vide et l’affecter plus tard depuis « Enseignants par classe ».</p>
+          <button pButton type="button" severity="secondary" variant="outlined" (click)="showAssignments = !showAssignments; showAssignments && loadScheduleContext()" [attr.aria-expanded]="showAssignments">{{ showAssignments ? 'Masquer les options d’affectation' : 'Choisir les matières et une classe' }}</button>
+          @if (showAssignments) {
+            @if (loadingSchedule()) { <p role="status">Chargement des matières et classes…</p> }
+            <label>Classe (facultative)<app-select-field name="initialClass" [(ngModel)]="form.classId" ariaLabel="Classe (facultative)" [disabled]="loadingSchedule()">
+              <app-select-option [value]="null" label="Affecter plus tard" />
+              @for (cls of classes(); track cls.id) { <app-select-option [value]="cls.id" [label]="classLabel(cls)" /> }
+            </app-select-field></label>
+            <fieldset><legend>Matières enseignées (plusieurs choix possibles)</legend>
+              @for (subject of subjects(); track subject.id) {
+                <label><span><input type="checkbox" [name]="'teachingSubject' + subject.id" [checked]="form.subjectIds.includes(subject.id)" (change)="toggleSubject(subject.id, $any($event.target).checked)"> {{ subject.name }}</span></label>
+              } @empty { <p>Aucune matière disponible. Ajoutez-en dans « Configuration de l’école ».</p> }
+            </fieldset>
+          }
+        </section>
         <section class="employee-schedule" aria-label="Créneaux hebdomadaires">
-          <h3>Créneaux hebdomadaires {{ form.rateType === 'HOURLY' ? '(obligatoires)' : '(facultatifs)' }}</h3>
+          <h3>Créneaux hebdomadaires (facultatifs)</h3>
           @if (loadingSchedule()) { <p role="status">Chargement des classes et matières…</p> }
           @if (scheduleError()) {
             <p-message severity="error" role="alert">{{ scheduleError() }}</p-message>
@@ -117,17 +134,20 @@ export class EmployeesPage {
   readonly weekdays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
   private scheduleLoaded = false;
   slots: InitialSlot[] = [];
+  showAssignments = false;
   form = this.emptyForm();
 
   private today(): string { return new Date().toLocaleDateString('en-CA'); }
   private emptyForm() {
     return { firstName: '', lastName: '', email: '', phone: '', employeeNumber: '', specialty: '', hireDate: '',
       rateType: 'FIXED_MONTHLY' as PayMode, monthlySalary: null as number | null, hourlyRate: null as number | null,
-      rateEffectiveFrom: this.today().slice(0, 7) + '-01' };
+      rateEffectiveFrom: this.today().slice(0, 7) + '-01', classId: null as number | null, subjectIds: [] as number[] };
   }
   changeRateType(mode: PayMode): void {
     this.form.rateType = mode;
-    if (mode === 'HOURLY' && !this.slots.length) this.addSlot();
+  }
+  toggleSubject(id: number, checked: boolean): void {
+    this.form.subjectIds = checked ? [...new Set([...this.form.subjectIds, id])] : this.form.subjectIds.filter(value => value !== id);
   }
   addSlot(): void {
     if (this.slots.length >= 100) return;
@@ -136,14 +156,14 @@ export class EmployeesPage {
   }
   removeSlot(index: number): void { this.slots = this.slots.filter((_, position) => position !== index); }
   loadScheduleContext(): void {
-    if (!this.schoolId || this.loadingSchedule()) return;
+    if (!this.schoolId || this.loadingSchedule() || this.scheduleLoaded) return;
     this.loadingSchedule.set(true); this.scheduleError.set('');
     forkJoin({ classes: this.management.getClasses(this.schoolId), subjects: this.management.getSubjects(this.schoolId), years: this.management.getAcademicYears(this.schoolId) }).subscribe({
       next: data => {
         this.years.set(data.years);
         this.classes.set(data.classes.filter(cls => data.years.some(year => year.id === cls.academicYearId && !(year as { closed?: boolean }).closed)));
         this.subjects.set(data.subjects); this.scheduleLoaded = true; this.loadingSchedule.set(false);
-        if (!this.classes().length || !data.subjects.length) this.scheduleError.set('Créez une classe dans une année scolaire ouverte et une matière dans Gestion de l’école pour préparer les créneaux.');
+        if (!data.subjects.length) this.scheduleError.set('Ajoutez des matières dans Configuration de l’école pour préparer les affectations et les créneaux.');
       },
       error: () => { this.loadingSchedule.set(false); this.scheduleError.set('Impossible de charger les classes et matières. Réessayez.'); },
     });
@@ -176,7 +196,10 @@ export class EmployeesPage {
     }
     const amount = this.form.rateType === 'HOURLY' ? this.form.hourlyRate : this.form.monthlySalary;
     if (amount == null || !Number.isFinite(amount) || amount <= 0) { this.error.set('Renseignez un montant de rémunération supérieur à zéro.'); return; }
-    if (this.form.rateType === 'HOURLY' && !this.slots.length) { this.error.set('Ajoutez au moins un créneau pour une rémunération horaire.'); return; }
+    if ((this.form.classId != null && (!this.classes().some(cls => cls.id === this.form.classId) || !this.form.subjectIds.length))
+        || this.form.subjectIds.some(id => !this.subjects().some(subject => subject.id === id))) {
+      this.error.set('Choisissez une classe disponible et au moins une matière, ou laissez la classe vide pour affecter l’enseignant plus tard.'); return;
+    }
     for (const slot of this.slots) {
       const year = this.slotYear(slot);
       if (this.loadingSchedule() || !this.classes().some(cls => cls.id === slot.classId) || !this.subjects().some(subject => subject.id === slot.subjectId)
@@ -197,7 +220,7 @@ export class EmployeesPage {
           : teacher.emailVerified ? 'Le compte existant est conservé. Le nouvel espace est accessible depuis le menu du profil.'
           : `Activation : ${teacher.invitationDeliveryStatus === 'SENT' ? 'lien envoyé' : 'consultez l’état de l’envoi dans la fiche enseignant'}.`;
         this.success.set(`Enseignant ajouté${teacher.employeeNumber ? ' : ' + teacher.employeeNumber : ''}. ${notice}`);
-        this.form = this.emptyForm(); this.slots = [];
+        this.form = this.emptyForm(); this.slots = []; this.showAssignments = false;
       },
       error: err => { this.busy.set(false); this.error.set(err?.error?.message ?? 'Impossible de créer cet enseignant.'); },
     });

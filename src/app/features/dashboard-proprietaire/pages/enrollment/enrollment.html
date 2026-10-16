@@ -81,7 +81,7 @@
             </label>
           </div>
           @if (!newStudentClassesLoading() && !newStudentClasses().length) {
-            <p class="enr__alert enr__alert--warn">Aucune classe dans cet établissement : créez-en une dans Gestion de l’école.</p>
+            <p class="enr__alert enr__alert--warn">Aucune classe dans cet établissement : créez-en une dans Configuration de l’école.</p>
           }
 
           <fieldset class="enr__fees">
@@ -300,7 +300,7 @@
             }
           </div>
         } @else {
-          <p class="enr__alert enr__alert--warn">Aucune classe n’existe encore pour {{ p.toYearLabel }} : créez-les (étape 1 ou Gestion de l’école) avant de réinscrire les élèves admis ou redoublants.</p>
+          <p class="enr__alert enr__alert--warn">Aucune classe n’existe encore pour {{ p.toYearLabel }} : créez-les (étape 1 ou Configuration de l’école) avant de réinscrire les élèves admis ou redoublants.</p>
         }
 
         @if (!p.classes.length) {

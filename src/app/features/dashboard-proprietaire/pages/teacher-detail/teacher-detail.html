@@ -44,7 +44,9 @@
         <div><span>Présentes</span><strong>{{ data.month.workedHours | number: '1.0-2' }} h</strong></div>
         <div><span>Absences</span><strong>{{ data.month.absenceHours | number: '1.0-2' }} h</strong></div>
         <div><span>Heures ajoutées</span><strong>{{ data.month.extraHours | number: '1.0-2' }} h</strong></div>
-        <div><span>À payer</span><strong>{{ data.month.amountDue | number: '1.0-0' }} FCFA</strong></div>
+        <div><span>Avant retenue</span><strong>{{ data.month.amountDue | number: '1.0-0' }} FCFA</strong></div>
+        <div><span>IUTS retenu</span><strong>{{ data.month.amountDue - data.month.paid - data.month.remaining | number: '1.0-0' }} FCFA</strong></div>
+        <div><span>Net à verser</span><strong>{{ data.month.paid + data.month.remaining | number: '1.0-0' }} FCFA</strong></div>
         <div><span>Déjà versé</span><strong>{{ data.month.paid | number: '1.0-0' }} FCFA</strong></div>
         <div><span>Reste à payer</span><strong>{{ data.month.remaining | number: '1.0-0' }} FCFA</strong></div>
       </div>

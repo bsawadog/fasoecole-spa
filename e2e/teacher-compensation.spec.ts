@@ -20,6 +20,7 @@ for (const hourly of [false, true]) {
     await page.getByRole('textbox', { name: 'Nom', exact: true }).fill('Diallo');
     if (hourly) {
       await select(page, 'Mode de rémunération', 'Taux horaire avec créneaux');
+      await page.getByRole('button', { name: 'Ajouter un créneau', exact: true }).click();
       await page.getByRole('spinbutton', { name: 'Taux horaire (FCFA / heure)', exact: true }).fill('2500');
       await select(page, 'Classe du créneau 1', 'CP1-A · 2026-2027');
       await select(page, 'Matière du créneau 1', 'Mathématiques');

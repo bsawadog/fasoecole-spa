@@ -1,7 +1,6 @@
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
 import { LucideEye, LucidePencil, LucidePower, LucideRotateCcw, LucideTrash2 } from '@lucide/angular';
-import { NumberField } from '../../../../shared/ui/number-field';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
 import { LoadingState } from '../../../../shared/ui/loading-state';
@@ -24,7 +23,7 @@ import { ConfirmationService } from '../../../../shared/confirmation/confirmatio
 @Component({
   selector: 'app-teacher-roster',
   standalone: true,
-  imports: [TooltipModule, LucideEye, LucidePencil, LucidePower, LucideRotateCcw, LucideTrash2, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, RosterImport, FormValidationDirective, FormsModule, RouterLink, NgTemplateOutlet],
+  imports: [TooltipModule, LucideEye, LucidePencil, LucidePower, LucideRotateCcw, LucideTrash2, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, RosterImport, FormValidationDirective, FormsModule, RouterLink, NgTemplateOutlet],
   templateUrl: './teacher-roster.html',
   styleUrl: './teacher-roster.scss',
 })
@@ -58,7 +57,6 @@ export class TeacherRoster implements OnInit, OnDestroy {
   readonly loading = signal(true);
   readonly loadingTeachers = signal(false);
   readonly saving = signal(false);
-  readonly addingTeacher = signal(false);
   readonly assigningTeacher = signal(false);
   readonly editingTeacher = signal<TeacherRecord | null>(null);
   readonly loadingEditor = signal(false);
@@ -67,9 +65,25 @@ export class TeacherRoster implements OnInit, OnDestroy {
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
 
-  newTeacher = { firstName: '', lastName: '', email: '', phone: '',
-    employeeNumber: '', specialty: '', hireDate: '', monthlySalary: null as number | null, subjectId: 0 };
   assignment = { teacherId: 0, subjectId: 0 };
+  assignmentSubjectIds: number[] = [];
+
+  teachingSubjectsLabel(teacher: TeacherCard): string {
+    return teacher.teachingSubjects?.map(subject => subject.name).join(', ') || teacher.subjects.join(', ');
+  }
+
+  toggleSubject(id: number, checked: boolean): void {
+    this.assignmentSubjectIds = checked ? [...new Set([...this.assignmentSubjectIds, id])]
+      : this.assignmentSubjectIds.filter(value => value !== id);
+  }
+
+  chooseAssignmentTeacher(id: number): void {
+    this.assignment.teacherId = id;
+    const teacher = this.candidates().find(item => item.id === id);
+    this.assignmentSubjectIds = this.subjects().filter(subject => teacher?.teachingSubjects?.some(item =>
+      (teacher.schoolId === this.selectedSchoolId() && item.id === subject.id) || item.name.localeCompare(subject.name, 'fr', { sensitivity: 'base' }) === 0))
+      .map(subject => subject.id);
+  }
 
   ngOnInit(): void {
     const ownerId = this.auth.user()?.id;
@@ -128,20 +142,11 @@ export class TeacherRoster implements OnInit, OnDestroy {
     return level ? `${level.name} · ${schoolClass.name}` : schoolClass.name;
   }
 
-  openAddTeacher(): void {
-    this.cancelForms();
-    this.assigningTeacher.set(false);
-    this.addingTeacher.set(true);
-    this.newTeacher = { firstName: '', lastName: '', email: '', phone: '',
-      employeeNumber: '', specialty: '', hireDate: '', monthlySalary: null as number | null, subjectId: this.subjects()[0]?.id ?? 0 };
-    this.error.set(null);
-  }
-
   openAssignment(): void {
     this.cancelForms();
-    this.addingTeacher.set(false);
     this.assigningTeacher.set(true);
-    this.assignment = { teacherId: this.candidates()[0]?.id ?? 0, subjectId: this.subjects()[0]?.id ?? 0 };
+    this.assignment = { teacherId: this.candidates()[0]?.id ?? 0, subjectId: 0 };
+    this.chooseAssignmentTeacher(this.assignment.teacherId);
     this.error.set(null);
   }
 
@@ -149,7 +154,6 @@ export class TeacherRoster implements OnInit, OnDestroy {
     this.editRequest?.unsubscribe();
     this.loadingEditor.set(false);
     this.editingTeacher.set(null);
-    this.addingTeacher.set(false);
     this.assigningTeacher.set(false);
   }
 
@@ -291,46 +295,6 @@ export class TeacherRoster implements OnInit, OnDestroy {
     });
   }
 
-  saveTeacher(): void {
-    if (this.saving()) return;
-    const classId = this.selectedClassId();
-    const form = this.newTeacher;
-    if (!classId || !form.firstName.trim() || !form.lastName.trim() ||
-        !this.subjects().some(subject => subject.id === form.subjectId)) {
-      this.error.set('Renseignez le prénom, le nom et une matière.');
-      return;
-    }
-    this.saving.set(true);
-    this.error.set(null);
-    this.teacherWork.createTeacher(classId, {
-      firstName: form.firstName.trim(), lastName: form.lastName.trim(),
-      email: form.email.trim(),
-      employeeNumber: form.employeeNumber.trim() || null,
-      phone: form.phone.trim() || null, specialty: form.specialty.trim() || null,
-      hireDate: form.hireDate || null, monthlySalary: form.monthlySalary, subjectId: form.subjectId,
-    }).subscribe({
-      next: teacher => {
-        this.saving.set(false);
-        this.cancelForms();
-        const identifier = teacher.employeeNumber ? ` Numéro d’employé : ${teacher.employeeNumber}.` : '';
-        const delivery = teacher.emailVerified === true
-          ? ' Le compte utilise son mot de passe existant.'
-          : teacher.invitationDeliveryStatus === 'SENT'
-            ? ' Invitation envoyée : l’enseignant choisira son mot de passe depuis le lien reçu.'
-            : teacher.invitationDeliveryStatus === 'FAILED'
-              ? ' L’envoi de l’invitation a échoué. Utilisez « Renvoyer le lien » dans la liste.'
-              : ' Vérifiez l’état de l’invitation dans la liste et renvoyez le lien si nécessaire.';
-        this.success.set(`Enseignant créé et affecté à la classe.${identifier}${delivery}`);
-        this.selectClass(classId);
-        this.refreshAllTeachers();
-      },
-      error: err => {
-        this.saving.set(false);
-        this.error.set(err?.error?.message ?? 'Impossible de créer et d’affecter cet enseignant.');
-      },
-    });
-  }
-
   resendInvitation(userId: number): void {
     if (this.saving()) return;
     this.saving.set(true);
@@ -350,15 +314,17 @@ export class TeacherRoster implements OnInit, OnDestroy {
   }
 
   saveAssignment(): void {
+    if (this.saving()) return;
     const classId = this.selectedClassId();
+    const subjectIds = this.assignmentSubjectIds.length ? this.assignmentSubjectIds : (this.assignment.subjectId ? [this.assignment.subjectId] : []);
     if (!classId || !this.candidates().some(teacher => teacher.id === this.assignment.teacherId) ||
-        !this.subjects().some(subject => subject.id === this.assignment.subjectId)) {
-      this.error.set('Sélectionnez un enseignant disponible et une matière de cet établissement.');
+        !subjectIds.length || subjectIds.some(id => !this.subjects().some(subject => subject.id === id))) {
+      this.error.set('Sélectionnez un enseignant disponible et au moins une matière de cet établissement.');
       return;
     }
     this.saving.set(true);
     this.error.set(null);
-    this.teacherWork.assignTeacher(classId, this.assignment.teacherId, this.assignment.subjectId).subscribe({
+    this.teacherWork.assignTeacher(classId, this.assignment.teacherId, subjectIds).subscribe({
       next: () => {
         this.saving.set(false);
         this.cancelForms();

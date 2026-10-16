@@ -15,7 +15,7 @@ test('prints every filtered answer without changing the screen accordion', async
   await expect(page.locator('html')).toHaveAttribute('data-print-requested', 'yes');
   await page.emulateMedia({ media: 'print' });
   await expect(page.locator('.help__answer')).toBeVisible();
-  await expect(page.locator('.help__answer')).toContainText('Au moins un créneau est obligatoire');
+  await expect(page.locator('.help__answer')).toContainText('La classe et les créneaux sont facultatifs');
   await expect(page.locator('.help__filters')).toBeHidden();
   await expect(page.locator('.shell__sidebar')).toBeHidden();
   await expect(page.locator('.shell__topbar')).toBeHidden();
