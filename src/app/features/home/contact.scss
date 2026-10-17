@@ -1,0 +1,59 @@
+@use './home-theme' as home;
+
+@layer legacy {
+  :host { display: block; min-height: 100vh; }
+  .contact {
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 1.25rem clamp(1.25rem, 5vw, 4.5rem) 4rem;
+    color: #f0f7ff;
+    background: home.$background;
+    color-scheme: dark;
+  }
+  .contact__header {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    max-width: 75rem; margin: 0 auto;
+    img { display: block; width: 6rem; height: 6rem; object-fit: contain; }
+  }
+  .contact__back { display: inline-flex; align-items: center; gap: .4rem; color: #a5e9f3; font-weight: 700; text-decoration: none; }
+  .contact__content { max-width: 60rem; margin: clamp(2rem, 6vh, 4rem) auto 0; }
+  .contact__eyebrow, .contact__service { color: #a5e9f3; font-size: .8rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+  h1 { margin: .75rem 0 1rem; font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.15; }
+  .contact__intro { max-width: 42rem; color: #c1d6e8; font-size: 1.1rem; line-height: 1.7; }
+  .contact__cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+  .contact__card { display: flex; flex-direction: column; align-items: flex-start; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid #2d5a78; border-radius: 1.1rem; background: #0d3154; box-shadow: 0 .6rem 2rem rgb(2 12 31 / 15%); }
+  .contact__card { transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, background-color 220ms ease; }
+  .contact__card:focus-within {
+    transform: translateY(-6px);
+    background: #103d5d;
+    border-color: #7dd3fc;
+    box-shadow: 0 1.2rem 2.5rem rgb(2 12 31 / 30%);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .contact__card:hover {
+      transform: translateY(-6px);
+      background: #103d5d;
+      border-color: #7dd3fc;
+      box-shadow: 0 1.2rem 2.5rem rgb(2 12 31 / 30%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .contact__card { transition: none; }
+    .contact__card:hover, .contact__card:focus-within { transform: none; }
+  }
+  .contact__service { margin: 0 0 1.5rem; }
+  .contact__portrait { display: block; width: 7rem; height: 7rem; object-fit: cover; object-position: center 25%; border-radius: 50%; border: 3px solid #5794b2; background: #14516b; }
+  h2 { margin: 1.25rem 0 .5rem; font-size: 1.4rem; }
+  .contact__role { margin: 0; font-weight: 650; line-height: 1.6; }
+  .contact__description { color: #c1d6e8; line-height: 1.7; }
+  .contact__whatsapp { display: inline-flex; align-items: center; gap: .75rem; margin-top: auto; padding: .85rem 1.1rem; border: 1px solid #3997ae; border-radius: .7rem; background: #0c6b83; color: #fff; text-decoration: none; font-weight: 700; }
+  .contact__whatsapp small { display: block; margin-top: .25rem; font-size: .85rem; font-weight: 500; }
+  .contact__whatsapp:hover { background: #0e8097; }
+  .contact__back:hover { color: #e0f7ff; }
+  a:focus-visible { outline: 3px solid #a5f3fc; outline-offset: 4px; }
+  @media (max-width: 640px) {
+    .contact__cards { grid-template-columns: 1fr; }
+    .contact__header img { width: 4.5rem; height: 4.5rem; }
+    .contact__back { font-size: .85rem; }
+  }
+}

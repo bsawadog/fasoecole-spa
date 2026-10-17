@@ -2,6 +2,11 @@ import { Routes } from '@angular/router';
 import { authGuard, roleGuard, roleHomeRedirectGuard } from './core/auth';
 
 export const routes: Routes = [
+  {
+    path: 'contact',
+    title: 'Contact | FasoEcole',
+    loadComponent: () => import('./features/home/contact').then((m) => m.Contact),
+  },
   { path:'ajouter-etablissement',
     loadComponent:()=>import('./features/auth/pages/owner-registration/owner-registration').then(m=>m.OwnerRegistration) },
   {
