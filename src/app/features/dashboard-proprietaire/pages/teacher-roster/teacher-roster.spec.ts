@@ -9,8 +9,14 @@ import { OwnerManagementService } from '../../owner-management.service';
 import { TeacherWorkService } from '../../teacher-work.service';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import { TeacherRoster } from './teacher-roster';
+import { PayrollService } from '../../payroll.service';
 
 describe('TeacherRoster', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [{ provide: PayrollService, useValue: {
+      overview: () => of({ employees: [{ contracts: [{ key: 'teacher:4', rate: 100000, due: 100000, net: 90000, paid: 20000, remaining: 70000 }] }] }),
+    } }] });
+  });
   it('finishes loading teachers when a live refresh arrives during the initial request', () => {
     const refresh = new Subject<void>();
     const pending = new Subject<never[]>();
@@ -72,6 +78,9 @@ describe('TeacherRoster', () => {
     fixture.detectChanges();
     expect(teachersByClass).toHaveBeenCalledWith(1);
     expect(fixture.nativeElement.textContent).toContain('Awa Traoré');
+    expect(fixture.nativeElement.textContent).toMatch(/90\s000 FCFA/);
+    expect(fixture.nativeElement.textContent).toMatch(/20\s000 FCFA/);
+    expect(fixture.nativeElement.textContent).toMatch(/70\s000 FCFA/);
     expect(fixture.nativeElement.textContent).toContain('Créer un employé');
     expect(Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>)
       .some(button => button.textContent?.includes('Ajouter un enseignant'))).toBe(false);

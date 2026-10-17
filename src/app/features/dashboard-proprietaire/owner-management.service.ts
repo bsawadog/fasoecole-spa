@@ -84,6 +84,8 @@ export interface TeacherRecord {
 }
 
 export interface RosterParent {
+  emailVerified?: boolean | null;
+  passwordSet?: boolean | null;
   parentId: number;
   userId: number;
   firstName: string;
@@ -94,6 +96,7 @@ export interface RosterParent {
 }
 
 export interface ClassRosterRow {
+  billingSummary?: { totalDue: number; totalPaid: number; totalBalance: number };
   emailVerified?: boolean;
   invitationDeliveryStatus?: string | null;
   studentId: number;
@@ -238,6 +241,13 @@ export interface CreateStudentPaymentPayload {
 
 @Injectable({ providedIn: 'root' })
 export class OwnerManagementService {
+  importRosterStudent(classId: number, payload: CreateRosterStudentPayload & {
+    parent?: { firstName: string; lastName: string; email: string | null; phone: string | null; relationship: string | null } | null;
+    feeTypeName: string | null; fees: number | null; paid: number | null;
+    dueDate: string | null; paymentDate: string | null; paymentMethod: string | null;
+  }): Observable<ClassRosterRow> {
+    return this.http.post<ClassRosterRow>(`${this.apiUrl}/classes/${classId}/roster/import`, payload);
+  }
   createSchool(payload: Omit<SchoolRecord, 'id'>): Observable<SchoolRecord> {
     return this.http.post<SchoolRecord>(`${environment.apiUrl}/schools`, payload);
   }

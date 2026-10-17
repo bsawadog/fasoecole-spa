@@ -1,0 +1,87 @@
+@layer application {
+  .import .import__confirm { background: #15803d; border-color: #15803d; color: #fff; }
+  .import .import__confirm:not(:disabled):hover { background: #166534; border-color: #166534; }
+  .import .import__result { font-weight: 700; }
+  .import .import__result--error { color: var(--theme-danger, #b91c1c); }
+  .import .import__result--success { color: var(--theme-success, #047857); }
+
+  .import__file { max-width: 100%; }
+  .import__file::file-selector-button {
+    margin-right: .75rem;
+    padding: .7rem 1rem;
+    border: 1px solid #2563eb;
+    border-radius: .5rem;
+    background: #2563eb;
+    color: #fff;
+    font: inherit;
+    font-weight: 650;
+    cursor: pointer;
+  }
+  .import__file:not(:disabled)::file-selector-button:hover { background: #1d4ed8; border-color: #1d4ed8; }
+  .import__file:disabled::file-selector-button { opacity: .5; cursor: not-allowed; }
+  .import__file:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
+
+  .import-dialog {
+    width: min(34rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    overflow: auto;
+    box-sizing: border-box;
+    padding: 1.5rem;
+    border: 1px solid var(--theme-border, #e2e8f0);
+    border-radius: .9rem;
+    background: var(--theme-surface, #fff);
+    color: var(--theme-ink, #1e293b);
+    box-shadow: 0 20px 50px rgb(15 23 42 / 25%);
+    &::backdrop { background: rgb(15 23 42 / 55%); }
+    h2 { margin: 1rem 0 .5rem; font-size: 1.3rem; }
+    p { margin: 0; line-height: 1.6; }
+    ul { padding-left: 1.3rem; overflow-wrap: anywhere; }
+    li + li { margin-top: .5rem; }
+  }
+  .import-dialog__icon {
+    display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%;
+    background: var(--theme-success-soft, #dcfce7); color: var(--theme-success, #047857); font-size: 1.5rem; font-weight: 800;
+  }
+  .import-dialog--error .import-dialog__icon { background: var(--theme-danger-soft, #fee2e2); color: var(--theme-danger, #b91c1c); }
+  .import-dialog--error :is(h2, p, ul, li) { color: var(--theme-danger, #b91c1c); }
+  .import-dialog__actions { display: flex; justify-content: flex-end; margin-top: 1.5rem; }
+
+  .import-progress {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgb(15 23 42 / 55%);
+    cursor: wait;
+  }
+  .import-progress__content {
+    display: grid;
+    justify-items: center;
+    gap: .75rem;
+    max-width: 25rem;
+    padding: 2rem;
+    border: 1px solid var(--theme-border, #e2e8f0);
+    border-radius: 1rem;
+    background: var(--theme-surface, #fff);
+    color: var(--theme-ink, #1e293b);
+    text-align: center;
+    box-shadow: 0 20px 50px rgb(15 23 42 / 25%);
+    p { margin: 0; font-size: 1.1rem; font-weight: 700; }
+    small { color: var(--theme-muted, #475569); }
+  }
+  .import-progress__spinner {
+    width: 3.5rem;
+    height: 3.5rem;
+    box-sizing: border-box;
+    border: 4px solid #bfdbfe;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: roster-import-spin 800ms linear infinite;
+  }
+  @keyframes roster-import-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .import-progress__spinner { animation: none; }
+  }
+}

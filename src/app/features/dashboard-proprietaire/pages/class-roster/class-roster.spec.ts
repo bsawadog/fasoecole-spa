@@ -32,13 +32,17 @@ describe('ClassRoster transfer', () => {
       updateRosterParent: vi.fn(() => of({ ...row })),
     };
     const confirmation = { confirm: vi.fn(() => Promise.resolve(true)) };
+    const auth = {
+      resendUserInvitation: vi.fn(() => of({ emailSent: true })),
+      requestPasswordReset: vi.fn(() => of({ message: 'Demande de réinitialisation prise en compte.' })),
+    };
     TestBed.configureTestingModule({
       imports: [ClassRoster],
       providers: [
         provideRouter([]),
         {
           provide: AuthService,
-          useValue: { user: () => ({ id: 10 }), selectSchoolContext: vi.fn(), selectedSchoolType: () => 'PRIMAIRE', getOwnedSchools: vi.fn(() => of([{ id: 1, name: 'École A', type: 'PRIMAIRE' }])) },
+          useValue: { ...auth, user: () => ({ id: 10 }), selectSchoolContext: vi.fn(), selectedSchoolType: () => 'PRIMAIRE', getOwnedSchools: vi.fn(() => of([{ id: 1, name: 'École A', type: 'PRIMAIRE' }])) },
         },
         { provide: OwnerManagementService, useValue: api },
         { provide: ConfirmationService, useValue: confirmation },
@@ -46,13 +50,75 @@ describe('ClassRoster transfer', () => {
     });
     const fixture = TestBed.createComponent(ClassRoster);
     fixture.detectChanges();
-    return { fixture, component: fixture.componentInstance, api, confirmation };
+    return { fixture, component: fixture.componentInstance, api, confirmation, auth };
   }
 
   it('offers every other class of the school, grouped by academic year', () => {
     const { component } = setup();
     expect(component.transferTargets().map((c) => c.id)).toEqual([101, 200]);
     expect(component.transferTargetGroups().map((g) => g.label)).toEqual(['2025-2026', '2026-2027']);
+  });
+
+  const parent = { parentId: 30, userId: 31, firstName: 'Mamadou', lastName: 'Traoré',
+    email: 'parent@example.test', phone: '+22670000000', relationship: 'Père', emailVerified: false, passwordSet: false };
+
+  it('uses contact icons and sends activation to the parent account', () => {
+    const { fixture, component, auth } = setup();
+    component.rows.set([{ ...row, userId: 9, parents: [parent] }]); fixture.detectChanges();
+    const email = fixture.nativeElement.querySelector('a[href="mailto:parent@example.test"]');
+    const phone = fixture.nativeElement.querySelector('a[href="tel:+22670000000"]');
+    expect(email.querySelector('svg')).not.toBeNull();
+    expect(phone.querySelector('svg')).not.toBeNull();
+    expect(email.getAttribute('aria-label')).toContain('Mamadou Traoré');
+    fixture.nativeElement.querySelector('button[aria-label^="Envoyer le lien d’activation"]').click();
+    expect(auth.resendUserInvitation).toHaveBeenCalledWith(31);
+    expect(auth.requestPasswordReset).not.toHaveBeenCalled();
+    expect(component.successMessage()).toContain('activation envoyé au parent');
+  });
+
+  it('requests password reset for an already activated parent', () => {
+    const { fixture, component, auth } = setup();
+    component.rows.set([{ ...row, userId: 9, parents: [{ ...parent, emailVerified: true, passwordSet: true }] }]); fixture.detectChanges();
+    fixture.nativeElement.querySelector('button[aria-label^="Réinitialiser le mot de passe"]').click();
+    expect(auth.requestPasswordReset).toHaveBeenCalledWith('parent@example.test');
+    expect(auth.resendUserInvitation).not.toHaveBeenCalled();
+    expect(component.successMessage()).toBe('Demande de réinitialisation prise en compte.');
+  });
+
+  it('keeps activation available until the parent has chosen a password and reports delivery failure', () => {
+    const { component, auth } = setup();
+    const unactivated = { ...parent, emailVerified: true, passwordSet: false };
+    component.rows.set([{ ...row, userId: 9, parents: [unactivated] }]);
+    auth.resendUserInvitation.mockReturnValue(of({ emailSent: false }));
+    component.sendParentAccountLink(unactivated);
+    expect(auth.resendUserInvitation).toHaveBeenCalledWith(31);
+    expect(component.errorMessage()).toContain('n’a pas pu être envoyé');
+    expect(component.successMessage()).toBeNull();
+    expect(component.saving()).toBe(false);
+  });
+
+  it('offers only calling when the parent has no email', () => {
+    const { fixture, component, auth } = setup();
+    const noEmail = { ...parent, email: null };
+    component.rows.set([{ ...row, userId: 9, parents: [noEmail] }]); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a[href^="tel:"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('a[href^="mailto:"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('button[aria-label^="Envoyer le lien d’activation"]')).toBeNull();
+    component.sendParentAccountLink(noEmail);
+    expect(auth.resendUserInvitation).not.toHaveBeenCalled();
+    expect(auth.requestPasswordReset).not.toHaveBeenCalled();
+  });
+
+  it('shows accounting totals and preserves them when a parent profile is edited', () => {
+    const { fixture, component } = setup();
+    component.rows.set([{ ...row, userId: 9, billingSummary: { totalDue: 50000, totalPaid: 20000, totalBalance: 30000 } }]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toMatch(/50\s000 FCFA/);
+    expect(fixture.nativeElement.textContent).toMatch(/20\s000 FCFA/);
+    expect(fixture.nativeElement.textContent).toMatch(/30\s000 FCFA/);
+    component.parentForm = { firstName: 'Parent', lastName: 'Test', email: 'parent@example.test', phone: '' };
+    component.saveParent(30, 7);
+    expect(component.rows()[0].billingSummary?.totalBalance).toBe(30000);
   });
 
   it('offers accessible icon actions with a student deletion action', () => {

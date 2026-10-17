@@ -166,7 +166,7 @@
       <section class="student-detail__card student-detail__card--wide">
         <div class="student-detail__card-head">
           <h2>
-            Frais de scolarité — Dû (frais actifs) : {{ d.billingSummary.totalDue | number:'1.0-0' }} ·
+            <span id="student-billing">Frais de scolarité</span> — Dû (frais actifs) : {{ d.billingSummary.totalDue | number:'1.0-0' }} ·
             Payé : {{ d.billingSummary.totalPaid | number:'1.0-0' }} ·
             Reste à payer : {{ d.billingSummary.totalBalance | number:'1.0-0' }}
           </h2>

@@ -34,10 +34,13 @@
 .class-roster__alert--error { background: var(--theme-danger-soft, #fef2f2); color: var(--theme-danger, #b91c1c); border: 1px solid var(--theme-danger-border, #fecaca); }
 .class-roster__alert--success { background: var(--theme-success-soft, #f0fdf4); color: var(--theme-success, #15803d); border: 1px solid var(--theme-success-border, #bbf7d0); }
 .class-roster__state { margin: 0; background: var(--theme-surface, #fff); border: 1px solid var(--theme-border, #e2e8f0); color: var(--theme-muted, #64748b); }
-.class-roster__table-wrap { overflow-x: auto; }
+.class-roster__table-wrap { max-height: 65vh; max-height: 65dvh; overflow: auto; scrollbar-gutter: stable; }
 .class-roster__table { width: 100%; border-collapse: collapse; color: var(--theme-ink, #1e293b); font-size: 0.95rem; line-height: 1.5; }
 .class-roster__table th, .class-roster__table td { padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--theme-border, #eef2f6); text-align: left; vertical-align: top; }
 .class-roster__table th { background: var(--theme-surface, #f8fafc); font-weight: 600; color: var(--theme-muted, #334155); text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.03em; white-space: nowrap; }
+@media screen {
+  .class-roster__table th { position: sticky; top: 0; z-index: 2; box-shadow: 0 1px 0 var(--theme-border, #e2e8f0); }
+}
 .class-roster__row { transition: background-color 0.15s ease; }
 .class-roster__row:nth-child(odd) { background-color: var(--theme-inset, #f1f5f9); }
 .class-roster__row:hover { background-color: var(--theme-soft, #dbeafe); }
@@ -82,7 +85,7 @@
   .class-roster { padding: 0; gap: 0.5rem; background: var(--theme-surface, #fff); }
   .class-roster__print-title { display: block; margin: 0 0 0.5rem; font-size: 1.1rem; }
   .class-roster__list { border: none; box-shadow: none; overflow: visible; }
-  .class-roster__table-wrap { overflow: visible; width: 100%; }
+  .class-roster__table-wrap { max-height: none; overflow: visible; width: 100%; scrollbar-gutter: auto; }
   .class-roster__table { font-size: 0.75rem; width: 100%; table-layout: fixed; word-break: break-word; }
   .class-roster__table th, .class-roster__table td { border: 1px solid var(--theme-control-border, #cbd5e1); padding: 0.35rem 0.4rem; }
   .class-roster__table th:last-child { display: none; }

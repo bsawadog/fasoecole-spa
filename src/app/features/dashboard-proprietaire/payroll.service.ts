@@ -27,6 +27,9 @@ export const SALARY_RATES:Record<string,string>={FIXED_MONTHLY:'Mensuel fixe',MO
 
 @Injectable({providedIn:'root'})
 export class PayrollService {
+  importTeacherSalary(school: number, teacher: number, value: {
+    month: string; salary: number; paid: number | null; paymentDate: string | null; paymentMethod: string | null;
+  }) { return this.http.post<void>(`${this.url(school)}/teachers/${teacher}/import`, value); }
   private readonly http=inject(HttpClient);
   private url(school:number){return `${environment.apiUrl}/owner/payroll/schools/${school}`;}
   overview(school:number,month:string){return this.http.get<PayrollOverview>(this.url(school),{params:{month}});}

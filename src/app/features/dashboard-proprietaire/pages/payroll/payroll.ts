@@ -1,6 +1,7 @@
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { ChangeDetectorRef, Component, computed, ElementRef, HostListener, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -62,7 +63,7 @@ export class PayrollPage implements OnInit,OnDestroy {
   readonly methodLabels=METHOD_LABELS;
   readonly currentDate=today();
   readonly currentMonth=this.currentDate.slice(0,7);
-  month=this.currentMonth;
+  month=inject(ActivatedRoute, {optional:true})?.snapshot.queryParamMap.get('month') ?? this.currentMonth;
   payment={amount:null as number|null,date:this.currentDate,method:'CASH' as PaymentMethod,reference:''};
   private paymentKey='';
   private paymentFingerprint='';

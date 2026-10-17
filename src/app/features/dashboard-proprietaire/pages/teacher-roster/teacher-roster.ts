@@ -11,7 +11,8 @@ import { MessageModule } from 'primeng/message';
 import { RosterImport } from '../../roster-import';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, effect, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
+import { PayrollOverview, PayrollService, SalaryContract } from '../../payroll.service';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin, Subscription } from 'rxjs';
@@ -29,6 +30,25 @@ import { ConfirmationService } from '../../../../shared/confirmation/confirmatio
   styleUrl: './teacher-roster.scss',
 })
 export class TeacherRoster implements OnInit, OnDestroy {
+  private readonly payroll = inject(PayrollService);
+  private payrollRequest?: Subscription;
+  readonly salaryMonth = signal(new Date().toLocaleDateString('en-CA').slice(0, 7));
+  readonly payrollOverview = signal<PayrollOverview | null>(null);
+  readonly payrollError = signal('');
+  constructor() { effect(() => this.refreshPayroll()); }
+  refreshPayroll(): void {
+    const school = this.selectedSchoolId(), month = this.salaryMonth();
+    this.payrollRequest?.unsubscribe(); this.payrollOverview.set(null); this.payrollError.set('');
+    if (!school || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return;
+    this.payrollRequest = this.payroll.overview(school, month).subscribe({
+      next: result => this.payrollOverview.set(result),
+      error: () => this.payrollError.set('Salaires indisponibles. Vérifiez votre accès au module Salaires ou réessayez.'),
+    });
+  }
+  salary(teacherId: number): SalaryContract | undefined {
+    return this.payrollOverview()?.employees.flatMap(employee => employee.contracts).find(contract => contract.key === `teacher:${teacherId}`);
+  }
+  money(value: number): string { return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(value) + ' FCFA'; }
   readonly scopeSchoolId = input<number | null>(null);
   private readonly sync = inject(SchoolDataSyncService);
   private syncSubscription?: Subscription;
@@ -114,11 +134,14 @@ export class TeacherRoster implements OnInit, OnDestroy {
   }
 
   importCompleted(): void {
+    this.refreshPayroll();
+    if (this.showAllTeachers()) this.refreshAllTeachers();
     const id = this.selectedClassId();
     if (id) this.selectClass(id);
   }
 
   ngOnDestroy(): void {
+    this.payrollRequest?.unsubscribe();
     this.editRequest?.unsubscribe();
     this.editSaveRequest?.unsubscribe();
     this.syncSubscription?.unsubscribe();
@@ -343,6 +366,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
   private selectSchool(schoolId: number): void {
     this.syncSubscription?.unsubscribe();
     this.syncSubscription = this.sync.watch(schoolId).subscribe(() => {
+      this.refreshPayroll();
       const id = this.selectedClassId();
       if (this.loading() || this.loadingTeachers() || !id) return;
       this.classRequest?.unsubscribe();

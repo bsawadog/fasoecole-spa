@@ -1,7 +1,7 @@
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
-import { LucidePencil, LucideEye, LucideArrowRightLeft, LucideTrash2 } from '@lucide/angular';
+import { LucidePencil, LucideEye, LucideArrowRightLeft, LucideTrash2, LucideMail, LucidePhone, LucideSend, LucideKeyRound } from '@lucide/angular';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
 import { LoadingState } from '../../../../shared/ui/loading-state';
@@ -45,11 +45,12 @@ interface ParentEditForm {
 @Component({
   selector: 'app-class-roster',
   standalone: true,
-  imports: [ModuleHelpButton, TooltipModule, LucidePencil, LucideEye, LucideArrowRightLeft, LucideTrash2, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, RosterImport, FormValidationDirective, FormsModule, RouterLink],
+  imports: [ModuleHelpButton, TooltipModule, LucidePencil, LucideEye, LucideArrowRightLeft, LucideTrash2, LucideMail, LucidePhone, LucideSend, LucideKeyRound, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, RosterImport, FormValidationDirective, FormsModule, RouterLink],
   templateUrl: './class-roster.html',
   styleUrl: './class-roster.scss',
 })
 export class ClassRoster implements OnInit, OnDestroy {
+  money(value: number): string { return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(value) + ' FCFA'; }
   readonly scopeSchoolId = input<number | null>(null);
   private readonly sync = inject(SchoolDataSyncService);
   private syncSubscription?: Subscription;
@@ -58,6 +59,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   private readonly confirmation = inject(ConfirmationService);
   private request?: Subscription;
   private classRequest?: Subscription;
+  private parentLinkRequest?: Subscription;
 
   readonly schools = signal<RegistrationSchool[]>([]);
   readonly selectedSchoolId = signal<number | null>(null);
@@ -126,6 +128,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.parentLinkRequest?.unsubscribe();
     this.syncSubscription?.unsubscribe();
     this.request?.unsubscribe();
     this.classRequest?.unsubscribe();
@@ -271,7 +274,7 @@ export class ClassRoster implements OnInit, OnDestroy {
       gender: this.studentForm.gender || null,
     }).subscribe({
       next: (updated) => {
-        this.rows.update((rows) => rows.map((row) => (row.studentId === studentId ? updated : row)));
+        this.rows.update((rows) => rows.map((row) => (row.studentId === studentId ? { ...updated, billingSummary: updated.billingSummary ?? row.billingSummary } : row)));
         this.saving.set(false);
         this.editingStudentId.set(null);
         this.successMessage.set(`Les informations de ${this.learner().definite} ont été mises à jour.`);
@@ -294,7 +297,7 @@ export class ClassRoster implements OnInit, OnDestroy {
       phone: this.parentForm.phone.trim() || null,
     }).subscribe({
       next: (updated) => {
-        this.rows.update((rows) => rows.map((row) => (row.studentId === studentId ? updated : row)));
+        this.rows.update((rows) => rows.map((row) => (row.studentId === studentId ? { ...updated, billingSummary: updated.billingSummary ?? row.billingSummary } : row)));
         this.saving.set(false);
         this.editingParentId.set(null);
         this.successMessage.set('Les informations du parent ont été mises à jour.');
@@ -346,6 +349,33 @@ export class ClassRoster implements OnInit, OnDestroy {
     });
   }
 
+  parentNeedsActivation(parent: RosterParent): boolean {
+    return parent.emailVerified !== true || parent.passwordSet !== true;
+  }
+
+  sendParentAccountLink(parent: RosterParent): void {
+    if (this.saving() || !parent.email || !this.rows().some(row => row.parents.some(p => p.userId === parent.userId))) return;
+    const school = this.selectedSchoolId(), classId = this.selectedClassId();
+    this.saving.set(true); this.errorMessage.set(null); this.successMessage.set(null);
+    const current = () => school === this.selectedSchoolId() && classId === this.selectedClassId();
+    if (this.parentNeedsActivation(parent)) {
+      this.parentLinkRequest = this.auth.resendUserInvitation(parent.userId).subscribe({
+        next: result => {
+          this.saving.set(false);
+          if (!current()) return;
+          if (result.emailSent) this.successMessage.set('Lien d’activation envoyé au parent.');
+          else this.errorMessage.set('Le lien d’activation n’a pas pu être envoyé. Réessayez ultérieurement.');
+        },
+        error: err => { this.saving.set(false); if (current()) this.errorMessage.set(err?.error?.message ?? 'Impossible d’envoyer le lien d’activation au parent.'); },
+      });
+    } else {
+      this.parentLinkRequest = this.auth.requestPasswordReset(parent.email).subscribe({
+        next: result => { this.saving.set(false); if (current()) this.successMessage.set(result.message); },
+        error: err => { this.saving.set(false); if (current()) this.errorMessage.set(err?.error?.message ?? 'Impossible de demander la réinitialisation du compte parent.'); },
+      });
+    }
+  }
+
   startAddParent(row: ClassRosterRow): void {
     if (this.saving()) return;
     this.cancelEdit();
@@ -368,7 +398,7 @@ export class ClassRoster implements OnInit, OnDestroy {
     }).subscribe({
       next: (updated) => {
         if (this.selectedClassId() === classId) {
-          this.rows.update(rows => rows.map(row => row.studentId === studentId ? updated : row));
+          this.rows.update(rows => rows.map(row => row.studentId === studentId ? { ...updated, billingSummary: updated.billingSummary ?? row.billingSummary } : row));
           this.addingParentStudentId.set(null);
           this.successMessage.set(`Le parent a été ajouté et associé à ${this.learner().definite}.`);
         }

@@ -1,3 +1,22 @@
+@layer application {
+  .teacher-detail__error-dialog {
+    width: min(30rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    overflow: auto;
+    padding: 1.5rem;
+    border: 1px solid var(--theme-danger-border, #fecaca);
+    border-radius: .9rem;
+    background: var(--theme-surface, #fff);
+    box-shadow: 0 20px 50px rgb(15 23 42 / 25%);
+    &::backdrop { background: rgb(15 23 42 / 55%); }
+    h2, p { color: var(--theme-danger, #b91c1c); overflow-wrap: anywhere; }
+    h2 { margin: 0 0 .75rem; font-size: 1.3rem; }
+    p { line-height: 1.6; }
+  }
+  .teacher-detail__error-actions { display: flex; justify-content: flex-end; margin-top: 1.5rem; }
+  @media print { .teacher-detail__error-dialog { display: none !important; } }
+}
+
 @layer legacy {
 .teacher-detail { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; background: var(--theme-surface, #f8fafc); color: var(--theme-ink, #1e293b); line-height: 1.5; }
 .teacher-detail__header {

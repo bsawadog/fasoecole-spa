@@ -206,4 +206,11 @@
     @if (error()) { <p-message severity="error" class="teacher-detail__alert teacher-detail__alert--error" role="alert">{{ error() }}</p-message> }
     <a class="teacher-detail__action" routerLink="/proprietaire/enseignants">← Retour aux enseignants</a>
   }
+  <dialog #errorDialog class="teacher-detail__error-dialog" role="alertdialog" aria-modal="true"
+    aria-label="Erreur dans la fiche enseignant" aria-describedby="teacher-detail-error-message"
+    (cancel)="onErrorCancel($event)" (close)="dismissError()">
+    <h2>Une erreur est survenue</h2>
+    <p id="teacher-detail-error-message">{{ errorDialogMessage() }}</p>
+    <div class="teacher-detail__error-actions"><button pButton severity="danger" type="button" (click)="dismissError()" autofocus>OK</button></div>
+  </dialog>
 </main>
