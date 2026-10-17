@@ -85,7 +85,10 @@ describe('AppShell account readiness', () => {
     vi.spyOn(auth, 'ownerModules').mockReturnValue(new Set(['LIBRARY']));
     user.update(current => ({ ...current, approved: true, emailVerified: true, rawRoles: ['STAFF'] }));
     fixture.detectChanges();
-    expect(fixture.componentInstance.menuItems().map(item => item.routerLink)).toEqual(['/proprietaire/bibliotheque']);
+    expect(fixture.componentInstance.menuItems().map(item => item.routerLink)).toEqual([
+      '/proprietaire/bibliotheque',
+      '/proprietaire/aide',
+    ]);
     expect(fixture.componentInstance.messageNavigation()).toBeUndefined();
     fixture.destroy();
   });
