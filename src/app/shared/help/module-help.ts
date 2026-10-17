@@ -42,7 +42,9 @@ const ownerGuides:OwnerGuide[]=[
   ['export','Exporter mes données','export',['export'],null],
   ['incidents','Assistance et incidents','support',['support'],null],
 ];
-const personalRoutes:Partial<Record<Role,[string,string][]>>={
+type PersonalHelpRole = Exclude<Role, 'proprietaire'>;
+type PersonalHelpRoute = [slug: string, title: string];
+const personalRoutes: Record<PersonalHelpRole, PersonalHelpRoute[]> = {
   enseignant:[['','Accueil enseignant'],['classes','Mes classes'],['notes','Notes'],['emploi','Mon emploi du temps'],['presences','Présences et retards'],['signalements','Signalements des parents'],['devoirs','Devoirs'],['suivi-devoirs','Suivi des devoirs'],['documents','Documents de classe'],['annonces','Annonces de classe'],['rendez-vous','Rendez-vous parents'],['messages','Messages'],['calendrier','Calendrier scolaire'],['discipline','Discipline et vie scolaire'],['bibliotheque','Bibliothèque']],
   parent:[['','Accueil parent'],['enfants','Mes enfants'],['notes','Notes et bulletins'],['absences','Présences et retards'],['frais','Recouvrement'],['emploi','Emploi du temps'],['devoirs','Devoirs et évaluations'],['suivi-devoirs','Suivi des devoirs'],['annonces','Annonces de l’établissement'],['documents','Documents'],['rendez-vous','Rendez-vous'],['messages','Messages'],['calendrier','Calendrier scolaire'],['discipline','Discipline et vie scolaire'],['bibliotheque','Bibliothèque'],['demandes-administratives','Demandes administratives']],
   etudiant:[['','Accueil élève'],['notes','Notes et bulletins'],['emploi-du-temps','Emploi du temps'],['suivi-devoirs','Suivi des devoirs'],['messages','Messages'],['rendez-vous','Rendez-vous'],['calendrier','Calendrier scolaire'],['discipline','Discipline et vie scolaire'],['bibliotheque','Bibliothèque'],['demandes-administratives','Demandes administratives']],
