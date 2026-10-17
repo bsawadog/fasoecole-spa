@@ -1,22 +1,22 @@
 @layer legacy {
 :host { display: block; }
-.setup { padding: 1.5rem; background: #f8fafc; color: #0f172a; }
-header, form { background: #fff; padding: 1.25rem; border: 1px solid #e2e8f0; border-radius: .75rem; }
-h1, h2 { margin-top: 0; color: #14532d; }
-header p, .hint { color: #475569; }
+.setup { padding: 1.5rem; background: var(--theme-surface, #f8fafc); color: var(--theme-ink, #0f172a); }
+header, form { background: var(--theme-surface, #fff); padding: 1.25rem; border: 1px solid var(--theme-border, #e2e8f0); border-radius: .75rem; }
+h1, h2 { margin-top: 0; color: var(--theme-ink, #14532d); }
+header p, .hint { color: var(--theme-muted, #475569); }
 nav, .actions { display: flex; gap: .6rem; flex-wrap: wrap; margin: 1rem 0; }
-button { padding: .65rem .9rem; border: 1px solid #15803d; border-radius: .4rem; background: #fff; color: #166534; cursor: pointer; font: inherit; }
-button.active, button[type='submit'] { background: #15803d; color: #fff; }
+button { padding: .65rem .9rem; border: 1px solid var(--theme-success, #15803d); border-radius: .4rem; background: var(--theme-surface, #fff); color: var(--theme-success, #166534); cursor: pointer; font: inherit; }
+button.active, button[type='submit'] { background: var(--theme-success, #15803d); color: var(--theme-button-ink, #fff); }
 button:disabled { opacity: .5; cursor: not-allowed; }
 form { max-width: 46rem; display: grid; gap: 1rem; }
 label { display: grid; gap: .35rem; font-weight: 600; }
-input, select { padding: .65rem; border: 1px solid #cbd5e1; border-radius: .4rem; font: inherit; }
+input, select { padding: .65rem; border: 1px solid var(--theme-control-border, #cbd5e1); border-radius: .4rem; font: inherit; }
 header label { display: inline-grid; margin-right: .75rem; }
 .error, .success { padding: .8rem; border-radius: .4rem; }
-.error { background: #fef2f2; color: #b91c1c; }
-.success { background: #f0fdf4; color: #166534; }
-.success.success--pending { background: #b91c1c; color: #fff; font-weight: 600; }
-button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #86efac; outline-offset: 2px; }
+.error { background: var(--theme-danger-soft, #fef2f2); color: var(--theme-danger, #b91c1c); }
+.success { background: var(--theme-success-soft, #f0fdf4); color: var(--theme-success, #166534); }
+.success.success--pending { background: var(--theme-danger, #b91c1c); color: var(--theme-button-ink, #fff); font-weight: 600; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--theme-success-border, #86efac); outline-offset: 2px; }
 @media (max-width: 650px) { .setup { padding: .75rem; } nav button { flex: 1 1 45%; } }
 
 }

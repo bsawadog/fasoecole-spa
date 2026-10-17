@@ -1,5 +1,6 @@
 <div class="ss portal" [class.portal--receipt]="receipt()" [class.ui-academic-blue]="module() === 'notes'">
-  <header class="ss__header portal-no-print">
+  <header class="module-help-header ss__header portal-no-print">
+    <app-module-help />
     <div><h1>{{ title() }}</h1><p>Suivez les informations de votre enfant.</p></div>
     @if (children().length) {
       <label class="ss__picker">Enfant

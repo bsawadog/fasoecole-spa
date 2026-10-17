@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
 import { InputTextModule } from 'primeng/inputtext';
@@ -23,10 +24,11 @@ interface SchoolRow {
 interface SchoolPage { items: SchoolRow[]; total: number; page: number; size: number; }
 
 @Component({
-  selector: 'app-platform-schools', standalone: true, imports: [SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormsModule, DatePipe, AppointmentCounter],
+  selector: 'app-platform-schools', standalone: true, imports: [ModuleHelpButton, SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormsModule, DatePipe, AppointmentCounter],
   template: `
     <section class="platform">
-      <header class="ui-page-header"><div class="eyebrow">ADMINISTRATION DE LA PLATEFORME</div><h1>Établissements</h1>
+      <header class="module-help-header ui-page-header">
+    <app-module-help /><div class="eyebrow">ADMINISTRATION DE LA PLATEFORME</div><h1>Établissements</h1>
         <p>Gérez les accès des établissements et contactez leurs propriétaires.</p></header>
       <app-appointment-counter profile="personal" pageLink="/admin/mes-rendez-vous" />
       <div class="toolbar">
@@ -82,13 +84,13 @@ interface SchoolPage { items: SchoolRow[]; total: number; page: number; size: nu
     }
   `,
   styles: [`@layer legacy {
-    :host{display:block;color:#19352d}.platform{max-width:1500px;margin:auto;padding:12px}
-    header{margin-bottom:28px}.eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;color:#23815c}h1{font-size:30px;margin:8px 0}header p{color:#64756e}
-    .toolbar{display:flex;align-items:end;gap:16px;background:#fff;border:1px solid #e2eae5;border-radius:16px;padding:20px}.search{flex:1}
-    label{display:grid;gap:7px;font-size:13px;font-weight:600}input,select{padding:12px;border:1px solid #d7e3db;border-radius:9px;font:inherit;min-width:180px}input{width:100%;box-sizing:border-box}
-    button{background:#19764f;color:white;border:1px solid transparent;border-radius:9px;padding:10px 14px;cursor:pointer;font:inherit;font-size:13px;font-weight:600}button:disabled{opacity:.5;cursor:default}.secondary{background:#fff;border-color:#d7e3db;color:#274b3b}.danger{background:#fff3f1;color:#a5392d;border-color:#f2d2ce}
-    .summary{margin:22px 0 12px;color:#64756e;font-size:13px}.table-wrap{overflow:auto;background:white;border:1px solid #e2eae5;border-radius:14px}table{border-collapse:collapse;width:100%;font-size:13px}th{text-align:left;background:#f5f9f6;color:#62766b;font-size:12px}td,th{padding:17px 16px;border-bottom:1px solid #edf1ee}small{display:block;color:#718278;margin-top:5px}.actions{display:flex;gap:8px;white-space:nowrap}.badge{display:inline-block;padding:5px 10px;border-radius:20px;background:#f4eae6;color:#8a5141}.badge.active{background:#e4f4eb;color:#19764f}footer{display:flex;justify-content:space-between;align-items:center;margin-top:18px;font-size:13px}
-    .notice{background:#e4f4eb;padding:14px;border-radius:9px}.error{background:#fff0ed;color:#a5392d;padding:14px;border-radius:9px}.overlay{position:fixed;inset:0;background:#132b2355;display:grid;place-items:center;z-index:1000;padding:20px}.dialog{background:#fff;border-radius:18px;padding:28px;max-width:500px;width:100%;box-sizing:border-box;box-shadow:0 20px 60px #132b2333}.dialog h2{font-size:21px;margin-top:0}.dialog p{line-height:1.6}.contact-links{display:grid;gap:16px;margin:22px 0}.contact-links a{color:#19764f;overflow-wrap:anywhere} @media(max-width:700px){.toolbar{flex-direction:column;align-items:stretch}.platform{padding:0}footer{gap:12px;flex-wrap:wrap}}
+    :host{display:block;color:var(--theme-ink, #19352d)}.platform{max-width:1500px;margin:auto;padding:12px}
+    header{margin-bottom:28px}.eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--theme-accent, #23815c)}h1{font-size:30px;margin:8px 0}header p{color:var(--theme-muted, #64756e)}
+    .toolbar{display:flex;align-items:end;gap:16px;background:var(--theme-surface, #fff);border:1px solid var(--theme-border, #e2eae5);border-radius:16px;padding:20px}.search{flex:1}
+    label{display:grid;gap:7px;font-size:13px;font-weight:600}input,select{padding:12px;border:1px solid var(--theme-control-border, #d7e3db);border-radius:9px;font:inherit;min-width:180px}input{width:100%;box-sizing:border-box}
+    button{background:var(--theme-link, #19764f);color:var(--theme-button-ink, white);border:1px solid transparent;border-radius:9px;padding:10px 14px;cursor:pointer;font:inherit;font-size:13px;font-weight:600}button:disabled{opacity:.5;cursor:default}.secondary{background:var(--theme-surface, #fff);border-color:var(--theme-control-border, #d7e3db);color:var(--theme-ink, #274b3b)}.danger{background:var(--theme-danger-soft, #fff3f1);color:var(--theme-danger, #a5392d);border-color:var(--theme-danger-border, #f2d2ce)}
+    .summary{margin:22px 0 12px;color:var(--theme-muted, #64756e);font-size:13px}.table-wrap{overflow:auto;background:var(--theme-surface, white);border:1px solid var(--theme-border, #e2eae5);border-radius:14px}table{border-collapse:collapse;width:100%;font-size:13px}th{text-align:left;background:var(--theme-inset, #f5f9f6);color:var(--theme-muted, #62766b);font-size:12px}td,th{padding:17px 16px;border-bottom:1px solid var(--theme-border, #edf1ee)}small{display:block;color:var(--theme-muted, #718278);margin-top:5px}.actions{display:flex;gap:8px;white-space:nowrap}.badge{display:inline-block;padding:5px 10px;border-radius:20px;background:var(--theme-soft, #f4eae6);color:var(--theme-warning, #8a5141)}.badge.active{background:var(--theme-success-soft, #e4f4eb);color:var(--theme-link, #19764f)}footer{display:flex;justify-content:space-between;align-items:center;margin-top:18px;font-size:13px}
+    .notice{background:var(--theme-success-soft, #e4f4eb);padding:14px;border-radius:9px}.error{background:var(--theme-danger-soft, #fff0ed);color:var(--theme-danger, #a5392d);padding:14px;border-radius:9px}.overlay{position:fixed;inset:0;background:#132b2355;display:grid;place-items:center;z-index:1000;padding:20px}.dialog{background:var(--theme-surface, #fff);border-radius:18px;padding:28px;max-width:500px;width:100%;box-sizing:border-box;box-shadow:0 20px 60px #132b2333}.dialog h2{font-size:21px;margin-top:0}.dialog p{line-height:1.6}.contact-links{display:grid;gap:16px;margin:22px 0}.contact-links a{color:var(--theme-link, #19764f);overflow-wrap:anywhere} @media(max-width:700px){.toolbar{flex-direction:column;align-items:stretch}.platform{padding:0}footer{gap:12px;flex-wrap:wrap}}
    }`],
 })
 export class PlatformSchools {

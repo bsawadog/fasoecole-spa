@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
 import { NumberField } from '../../../../shared/ui/number-field';
@@ -48,7 +49,7 @@ interface EvaluationForm {
 @Component({
   selector: 'app-enseignant-notes',
   standalone: true,
-  imports: [TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, DecimalPipe, FormsModule],
+  imports: [ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, DecimalPipe, FormsModule],
   templateUrl: './notes.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

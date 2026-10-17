@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { Component, computed, DestroyRef, inject, OnDestroy, OnInit, signal } from '@angular/core';
@@ -33,7 +34,7 @@ import { DatedAppointment, pendingAppointmentCount } from '../../../../shared/ap
 @Component({
   selector: 'app-proprietaire-home',
   standalone: true,
-  imports: [ButtonModule, MessageModule,
+  imports: [ModuleHelpButton, ButtonModule, MessageModule,
     DatePipe,
     DecimalPipe,
     RouterLink,

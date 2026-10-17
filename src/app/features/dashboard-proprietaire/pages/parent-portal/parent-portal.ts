@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { DateField } from '../../../../shared/ui/date-field';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
@@ -23,7 +24,7 @@ import { ClassRecord, OwnerManagementService } from '../../owner-management.serv
 
 @Component({
   selector: 'app-owner-parent-portal', standalone: true,
-  imports: [DateField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, ConversationFiles, PortalPosts],
+  imports: [ModuleHelpButton, DateField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, ConversationFiles, PortalPosts],
   templateUrl: './parent-portal.html', styleUrl: '../../../../shared/self-space/self-space.scss',
 })
 export class OwnerParentPortal implements OnInit {

@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
 import { LucidePencil, LucideTrash2 } from '@lucide/angular';
@@ -51,7 +52,7 @@ interface AcademicForm {
 @Component({
   selector: 'app-owner-management',
   standalone: true,
-  imports: [TooltipModule, LucidePencil, LucideTrash2, DateField, NumberField, SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink, DatePipe, DecimalPipe],
+  imports: [ModuleHelpButton, TooltipModule, LucidePencil, LucideTrash2, DateField, NumberField, SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink, DatePipe, DecimalPipe],
   templateUrl: './management.html',
   styleUrl: './management.scss',
 })

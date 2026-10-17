@@ -39,8 +39,9 @@
 
 .home__brand-logo {
   display: block;
-  width: clamp(11rem, 19vw, 14rem);
-  height: auto;
+  width: 6rem;
+  height: 6rem;
+  object-fit: contain;
 }
 
 .home__brand-mark {
@@ -526,8 +527,9 @@
 
 .home__footer-logo {
   display: block;
-  width: 10rem;
-  height: auto;
+  width: 7rem;
+  height: 7rem;
+  object-fit: contain;
 }
 
 .home__footer p {
@@ -568,7 +570,8 @@
   }
 
   .home__brand-logo {
-    width: 10rem;
+    width: 5rem;
+    height: 5rem;
   }
 
   .home__nav {

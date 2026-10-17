@@ -1,5 +1,6 @@
 <main class="payroll ui-workspace" [class.payroll--document-print]="printMode() === 'document' && document()">
-  <header class="ui-page-header"><h1>Salaires</h1><p>Personnel et enseignants : rémunérations mensuelles, versements, fiches de paie et attestations de travail.</p></header>
+  <header class="module-help-header ui-page-header">
+    <app-module-help /><h1>Salaires</h1><p>Personnel et enseignants : rémunérations mensuelles, versements, fiches de paie et attestations de travail.</p></header>
   @if (error()) { <p-message severity="error" role="alert" class="payroll-controls">{{ error() }}</p-message> }
   @if (success()) { <p-message severity="success" role="status" class="payroll-controls">{{ success() }}</p-message> }
   <div class="payroll__toolbar payroll-controls">

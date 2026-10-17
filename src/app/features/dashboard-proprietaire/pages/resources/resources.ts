@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { Component, computed, HostListener, inject, OnDestroy, OnInit, signal, ChangeDetectorRef, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -25,7 +26,7 @@ const today = () => new Date().toLocaleDateString('en-CA');
 
 @Component({
   selector: 'app-school-resources', standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, ButtonModule, InputTextModule, MessageModule, TableModule, TooltipModule,
+  imports: [ModuleHelpButton, FormsModule, DatePipe, DecimalPipe, ButtonModule, InputTextModule, MessageModule, TableModule, TooltipModule,
     DateField, NumberField, SelectField, SelectOption, TableRow, LoadingState, FormValidationDirective],
   templateUrl: './resources.html', styleUrl: './resources.scss',
 })

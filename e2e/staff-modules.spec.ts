@@ -1,6 +1,36 @@
 import { test, expect } from '@playwright/test';
 import { mockSchool } from './ui-fixtures';
 
+test('module permission choices follow all six appearance themes', async ({page},testInfo) => {
+  await mockSchool(page);
+  for(const theme of ['night-violet','night-green','blue-black','light-gray','glossy-black','white']) {
+    await page.goto('/profil');
+    await page.evaluate(theme=>localStorage.setItem('fasoecole_theme_7',theme),theme);
+    await page.reload();
+    await page.goto('/proprietaire/personnel');
+    await page.getByRole('button',{name:'+ Ajouter un membre',exact:true}).click();
+    const permissions=page.locator('.stf__modules');
+    await expect(permissions).toBeVisible();
+    await expect(page.locator('body')).toHaveAttribute('data-app-theme',theme);
+    const initial=await permissions.locator('.stf__module').first().evaluate(node=>({background:getComputedStyle(node).backgroundColor,color:getComputedStyle(node.querySelector('strong')!).color}));
+    expect(initial.background).not.toBe(initial.color);
+    // Resolve the actual palette tokens to colors, including light themes.
+    expect(await permissions.evaluate(node=>{
+      const expected=document.createElement('span');expected.style.background='var(--theme-inset)';node.appendChild(expected);
+      const matches=getComputedStyle(expected).backgroundColor===getComputedStyle(node).backgroundColor;expected.remove();return matches;
+    })).toBe(true);
+    const choice=permissions.getByRole('checkbox').first();
+    await choice.check(); await page.mouse.move(0,0);
+    await expect(choice).toBeChecked();
+    expect(await choice.evaluate(node=>{
+      const label=node.closest('label')!, expected=document.createElement('span');expected.style.background='var(--theme-soft)';label.appendChild(expected);
+      const matches=getComputedStyle(expected).backgroundColor===getComputedStyle(label).backgroundColor;expected.remove();return matches;
+    })).toBe(true);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+    if(theme === 'white' || theme === 'night-violet') await permissions.screenshot({path:testInfo.outputPath(`permissions-${theme}.png`)});
+  }
+});
+
 test('personnel form offers twenty-one independent module permissions', async ({ page }) => {
   await mockSchool(page);
   await page.goto('/proprietaire/personnel');

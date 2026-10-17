@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth';
@@ -6,7 +7,7 @@ import { AppointmentCounter } from '../../../../shared/appointments/appointment-
 @Component({
   selector: 'app-parent-home',
   standalone: true,
-  imports: [RouterLink, AppointmentCounter],
+  imports: [ModuleHelpButton, RouterLink, AppointmentCounter],
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })

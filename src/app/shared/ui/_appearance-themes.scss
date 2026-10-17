@@ -1,0 +1,82 @@
+@use 'sass:map';
+
+$base: (
+  scheme: dark, background: linear-gradient(135deg, #061638 0%, #08375d 60%, #07556b 100%),
+  canvas: #061638, shell: #09243b, ink: #f0f7ff, muted: #c1d6e8, placeholder: #a8c2d5,
+  surface: #0d3154, raised: #103d5d, inset: #092643, field: #061f38,
+  border: #2d5a78, control-border: #49738f, hover: #164766,
+  accent: #7dd3fc, link: #a5e9f3, link-hover: #e0f7ff, focus: #a5f3fc,
+  soft: #153d60, button: #0c6b83, button-hover: #0e8097, button-border: #3997ae,
+  success: #6ee7b7, success-soft: #153f42, success-border: #398477,
+  danger: #fda4af, danger-soft: #482c3d, danger-border: #a45565,
+  warning: #fde68a, warning-soft: #414236, warning-border: #a68c46,
+  'violet': #c4b5fd, violet-soft: #30375b, shadow: 0 8px 24px rgb(0 10 30 / 15%),
+);
+
+$light: (
+  scheme: light, ink: #152c40, muted: #445c70, placeholder: #596f82,
+  surface: #fff, raised: #edf4f8, inset: #e5edf3, field: #fff,
+  border: #c4d1dd, control-border: #849bad, hover: #dcecf4,
+  accent: #075c78, link: #075c78, link-hover: #034258, focus: #087d9f,
+  soft: #dcecf4, button: #096780, button-hover: #075369, button-border: #096780,
+  success: #166044, success-soft: #e4f4ec, success-border: #6d9e85,
+  danger: #ae203b, danger-soft: #fce9ed, danger-border: #c37887,
+  warning: #754b08, warning-soft: #fff4d5, warning-border: #b18b38,
+  'violet': #6940a0, violet-soft: #eee7f8, shadow: 0 8px 24px rgb(26 48 68 / 7%),
+);
+
+$themes: (
+  classic-blue: map.merge($light, (background: linear-gradient(135deg, #f3f6fb, #eaf2fc),
+    canvas: #f3f6fb, shell: #09243b, accent: #1d4ed8, link: #1d4ed8, link-hover: #1e40af,
+    button: #2563eb, button-hover: #1d4ed8, button-border: #2563eb, soft: #dbeafe)),
+  night-violet: (background: linear-gradient(135deg, #17112e, #302046 60%, #43285d),
+    canvas: #17112e, shell: #1e1735, surface: #30234d, raised: #392b59, inset: #231b3c,
+    field: #1d1633, border: #5b4777, control-border: #8c73a6, hover: #493565,
+    ink: #f7f2ff, muted: #d8cce8, placeholder: #bdabcd, accent: #c4b5fd,
+    link: #ddccff, link-hover: #f4edff, focus: #ddccff, soft: #493565,
+    button: #754ca0, button-hover: #865ab4, button-border: #a88ac7),
+  night-green: (background: linear-gradient(135deg, #071f1c, #103d35 60%, #165345),
+    canvas: #071f1c, shell: #0b2a25, surface: #123d35, raised: #194b42, inset: #0e302a,
+    field: #09271f, border: #326456, control-border: #6e9a89, hover: #205e50,
+    ink: #effcf5, muted: #c0ddce, placeholder: #a0c2b1, accent: #6ee7b7,
+    link: #a7f3d0, link-hover: #e5fff0, focus: #a7f3d0, soft: #1c5545,
+    button: #14745b, button-hover: #19866a, button-border: #4aab8c),
+  light-gray: map.merge($light, (background: linear-gradient(135deg, #e8edf2, #e0e7ef 60%, #d5e1e9),
+    canvas: #e8edf2, shell: #e0e7ef, surface: #f8fafc, raised: #edf1f5, inset: #e5ebf1)),
+  glossy-black: (background: linear-gradient(135deg, #050608, #141820 55%, #292e38),
+    canvas: #050608, shell: #0b0e13, surface: #191d24, raised: #252b35, inset: #10141b,
+    field: #0a0e14, border: #3e4857, control-border: #7c899b, hover: #333d4b,
+    ink: #f5f7fb, muted: #c5cedb, placeholder: #a3afbf, accent: #b6d6f5,
+    link: #c9e3ff, link-hover: #f1f7ff, focus: #c9e3ff, soft: #303b4d,
+    button: #435d7d, button-hover: #526f92, button-border: #8da9ca,
+    shadow: (0 12px 28px rgb(0 0 0 / 35%), inset 0 1px 0 rgb(255 255 255 / 9%))),
+  'white': map.merge($light, (background: linear-gradient(135deg, #f5f8fc, #fff 60%, #f0f7fb),
+    canvas: #f5f8fc, shell: #fff)),
+);
+
+@mixin tokens($values) {
+  @each $name, $value in $values { --theme-#{$name}: #{$value}; }
+}
+
+@mixin apply {
+  @media screen {
+    body:has(.shell) { @include tokens($base); }
+    @each $id, $values in $themes {
+      body[data-app-theme='#{$id}']:has(.shell) { @include tokens($values); }
+    }
+    body[data-app-theme='classic-blue'] {
+      :is(.shell__sidebar, .shell__topbar) { @include tokens($base); }
+      .shell .shell__page :is(.module-help-header, .ui-page-header, .profile__heading) {
+        background: linear-gradient(135deg, #1e3a8a, #2563eb);
+        border-color: #1e3a8a;
+        color: #fff;
+        --school-eyebrow: #bfdbfe;
+        :is(h1, p, .student-detail__sub strong, .teacher-detail__back, .student-detail__back) { color: #fff; }
+        :is([class*='__eyebrow'], label) { color: #dbeafe; }
+      }
+    }
+    body[data-app-theme='glossy-black'] .shell__page :is(.ui-panel, [class$='__card'], [class$='__panel'], .profile__card) {
+      background-image: linear-gradient(145deg, rgb(255 255 255 / 5%), transparent 55%);
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
 import { LoadingState } from '../../../../shared/ui/loading-state';
@@ -20,7 +21,7 @@ import {
 @Component({
   selector: 'app-teacher-messages',
   standalone: true,
-  imports: [SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, RouterLink, ConversationFiles, MessageAttachments],
+  imports: [ModuleHelpButton, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, RouterLink, ConversationFiles, MessageAttachments],
   templateUrl: './messages.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

@@ -1,5 +1,6 @@
 <main class="taxes ui-workspace">
-  <header class="ui-page-header"><h1>Impôts et taxes</h1><p>Obligations fiscales, échéances, règlements et soldes de votre établissement.</p></header>
+  <header class="module-help-header ui-page-header">
+    <app-module-help /><h1>Impôts et taxes</h1><p>Obligations fiscales, échéances, règlements et soldes de votre établissement.</p></header>
   @if(error()){<p-message severity="error" role="alert" class="taxes-controls">{{ error() }}</p-message>}
   @if(success()){<p-message severity="success" role="status" class="taxes-controls">{{ success() }}</p-message>}
   <div class="taxes__toolbar taxes-controls">

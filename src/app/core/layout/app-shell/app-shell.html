@@ -2,7 +2,7 @@
   <app-navigation-activity />
   <aside id="modules-menu" class="shell__sidebar" [hidden]="!modulesOpen()">
     <div class="shell__brand">
-      <img src="assets/images/fasoecole-logo-alt.svg" alt="FasoEcole" />
+      <img src="assets/images/logofe.png" alt="FasoEcole" />
       <button class="shell__menu-close" type="button" aria-label="Fermer le menu des modules"
               title="Fermer le menu des modules" (click)="modulesOpen.set(false)">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -127,7 +127,7 @@
     @else if (previewPage()) {
       <section class="shell__status" [class.shell__status--pending]="schoolPreview()?.status === 'PENDING_APPROVAL'" role="status">
         <div>
-          <h1>{{ previewTitle() }}</h1>
+          <header class="ui-page-header module-help-header"><h1>{{ previewTitle() }}</h1><app-module-help /></header>
           <h2>{{ schoolPreview()?.schoolName }}</h2>
           <p>{{ previewDescription() }}</p>
           <strong>Les informations seront visibles et pourront être renseignées lorsque la demande de création d’établissement sera approuvée par le SUPER_ADMIN.</strong>

@@ -4,7 +4,8 @@
   @if (error()) {
     <p-message severity="error" class="ss__alert ss__alert--error" role="alert">{{ error() }}</p-message>
   } @else if (child(); as c) {
-    <header class="ss__header">
+    <header class="module-help-header ss__header">
+    @if (!embedded()) { <app-module-help /> }
       <div>
         <h1>{{ c.fullName }}</h1>
         <p>{{ c.schoolName }} · {{ c.className ? c.className + ' (' + c.academicYearLabel + ')' : 'Pas d’inscription en cours' }}

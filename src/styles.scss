@@ -1,5 +1,10 @@
 @use './app/shared/ui/application';
 @use './app/features/home/home-palette';
+@use './app/shared/ui/workspace-dark';
+@use './app/shared/ui/appearance-themes';
+@use './app/features/dashboard-proprietaire/pages/help/help-palette';
+@use './app/features/dashboard-proprietaire/pages/home/dashboard-palette';
+@use './app/shared/ui/school-dark-palette';
 
 @layer legacy, primeng, application;
 
@@ -247,96 +252,96 @@ body {
 // Academic modules share the blue identity of the class rosters.
 @media screen {
   .shell__page .ui-academic-blue {
-    --ui-primary: #2563eb;
-    --ui-primary-soft: #eff6ff;
-    --ui-border: #dbeafe;
-    --p-primary-color: #2563eb;
-    --p-primary-hover-color: #1d4ed8;
-    --p-primary-active-color: #1e40af;
+    --ui-primary: var(--theme-button, #2563eb);
+    --ui-primary-soft: var(--theme-soft, #eff6ff);
+    --ui-border: var(--theme-soft, #dbeafe);
+    --p-primary-color: var(--theme-button, #2563eb);
+    --p-primary-hover-color: var(--theme-link, #1d4ed8);
+    --p-primary-active-color: var(--theme-link, #1e40af);
     --p-primary-contrast-color: #fff;
-    --p-select-focus-border-color: #2563eb;
-    --p-inputtext-focus-border-color: #2563eb;
-    --p-textarea-focus-border-color: #2563eb;
-    --p-select-option-selected-background: #dbeafe;
-    --p-select-option-selected-color: #1e40af;
-    --p-select-option-selected-focus-background: #bfdbfe;
-    --p-select-option-selected-focus-color: #1e40af;
+    --p-select-focus-border-color: var(--theme-button, #2563eb);
+    --p-inputtext-focus-border-color: var(--theme-button, #2563eb);
+    --p-textarea-focus-border-color: var(--theme-button, #2563eb);
+    --p-select-option-selected-background: var(--theme-soft, #dbeafe);
+    --p-select-option-selected-color: var(--theme-link, #1e40af);
+    --p-select-option-selected-focus-background: var(--theme-control-border, #bfdbfe);
+    --p-select-option-selected-focus-color: var(--theme-link, #1e40af);
 
     :is(.gr__header, .ss__header) {
-      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      background: linear-gradient(135deg, var(--theme-inset, #1e3a8a), var(--theme-button, #2563eb));
       color: #fff;
       box-shadow: 0 2px 6px rgb(30 58 138 / 18%);
       h1 { color: #fff; }
-      p, .ss__picker { color: #dbeafe; }
+      p, .ss__picker { color: var(--theme-muted, #dbeafe); }
     }
 
-    .gr__header-icon { background: #dbeafe; color: #1e40af; }
+    .gr__header-icon { background: var(--theme-soft, #dbeafe); color: var(--theme-link, #1e40af); }
     :is(.gr__card-head, .ss__card-head) {
-      background: #eff6ff;
-      border-bottom: 3px solid #2563eb;
-      h2 { color: #1e40af; }
+      background: var(--theme-soft, #eff6ff);
+      border-bottom: 3px solid var(--theme-button, #2563eb);
+      h2 { color: var(--theme-link, #1e40af); }
     }
 
-    :is(.gr__count, .ss__chip, .ss__mini--selected) { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
-    .gr__tab { color: #1e40af; border-color: #bfdbfe; }
-    .gr__tab--on { background: #2563eb; border-color: #2563eb; color: #fff; }
-    .gr__toolbar { background: #f8faff; }
-    .gr__panel { background: #f8faff; border-color: #bfdbfe; }
+    :is(.gr__count, .ss__chip, .ss__mini--selected) { background: var(--theme-soft, #dbeafe); color: var(--theme-link, #1e40af); border-color: var(--theme-focus, #93c5fd); }
+    .gr__tab { color: var(--theme-link, #1e40af); border-color: var(--theme-control-border, #bfdbfe); }
+    .gr__tab--on { background: var(--theme-button, #2563eb); border-color: var(--theme-button, #2563eb); color: #fff; }
+    .gr__toolbar { background: var(--theme-inset, #f8faff); }
+    .gr__panel { background: var(--theme-inset, #f8faff); border-color: var(--theme-control-border, #bfdbfe); }
 
     :is(.gr__btn, .ss__btn):not([severity='danger']):not(.ui-row-action) {
-      background: #2563eb; border-color: #2563eb; color: #fff;
-      &:enabled:hover { background: #1d4ed8; border-color: #1d4ed8; }
+      background: var(--theme-button, #2563eb); border-color: var(--theme-button, #2563eb); color: #fff;
+      &:enabled:hover { background: var(--theme-link, #1d4ed8); border-color: var(--theme-link, #1d4ed8); }
     }
     :is(.gr__btn--ghost, .ss__btn--ghost):not(.ui-row-action) {
-      background: #fff; color: #1d4ed8; border-color: #93c5fd;
-      &:enabled:hover { background: #eff6ff; color: #1e40af; }
+      background: var(--theme-surface, #fff); color: var(--theme-link, #1d4ed8); border-color: var(--theme-focus, #93c5fd);
+      &:enabled:hover { background: var(--theme-soft, #eff6ff); color: var(--theme-link, #1e40af); }
     }
-    .ss__mini:not(.ui-row-action):not(.ss__mini--danger) { color: #1d4ed8; border-color: #bfdbfe; }
+    .ss__mini:not(.ui-row-action):not(.ss__mini--danger) { color: var(--theme-link, #1d4ed8); border-color: var(--theme-control-border, #bfdbfe); }
 
-    th { background: #eff6ff; color: #1e40af; }
-    tbody tr:nth-child(even) { background: #f3f7ff; }
-    tbody tr:hover { background: #dbeafe; }
-    td a:not(.ui-row-action) { color: #1d4ed8; }
-    :focus-visible { outline-color: #93c5fd; }
+    th { background: var(--theme-soft, #eff6ff); color: var(--theme-link, #1e40af); }
+    tbody tr:nth-child(even) { background: var(--theme-raised, #f3f7ff); }
+    tbody tr:hover { background: var(--theme-soft, #dbeafe); }
+    td a:not(.ui-row-action) { color: var(--theme-link, #1d4ed8); }
+    :focus-visible { outline-color: var(--theme-focus, #93c5fd); }
   }
 }
 
 // Explicit action colors override the shared button theme, including on hover.
 .shell__page :is(.ui-row-action, .owner-management__icon-action) {
-  --action-color: #1d4ed8;
-  --action-background: #eff6ff;
-  --action-border: #bfdbfe;
-  --action-hover: #dbeafe;
+  --action-color: var(--theme-link, #1d4ed8);
+  --action-background: var(--theme-soft, #eff6ff);
+  --action-border: var(--theme-control-border, #bfdbfe);
+  --action-hover: var(--theme-hover, #dbeafe);
   color: var(--action-color);
   background: var(--action-background);
   border-color: var(--action-border);
 
   &.ui-row-action--danger {
-    --action-color: #b91c1c;
-    --action-background: #fef2f2;
-    --action-border: #fecaca;
-    --action-hover: #fee2e2;
+    --action-color: var(--theme-danger, #b91c1c);
+    --action-background: var(--theme-danger-soft, #fef2f2);
+    --action-border: var(--theme-danger-border, #fecaca);
+    --action-hover: var(--theme-danger-soft, #fee2e2);
   }
 
   &.ui-row-action--success {
-    --action-color: #15803d;
-    --action-background: #f0fdf4;
-    --action-border: #bbf7d0;
-    --action-hover: #dcfce7;
+    --action-color: var(--theme-success, #15803d);
+    --action-background: var(--theme-success-soft, #f0fdf4);
+    --action-border: var(--theme-success-border, #bbf7d0);
+    --action-hover: var(--theme-success-soft, #dcfce7);
   }
 
   &.ui-row-action--warning {
-    --action-color: #92400e;
-    --action-background: #fffbeb;
-    --action-border: #fde68a;
-    --action-hover: #fef3c7;
+    --action-color: var(--theme-warning, #92400e);
+    --action-background: var(--theme-warning-soft, #fffbeb);
+    --action-border: var(--theme-warning-border, #fde68a);
+    --action-hover: var(--theme-warning-soft, #fef3c7);
   }
 
   &.ui-row-action--info {
-    --action-color: #6d28d9;
-    --action-background: #f5f3ff;
-    --action-border: #ddd6fe;
-    --action-hover: #ede9fe;
+    --action-color: var(--theme-violet, #6d28d9);
+    --action-background: var(--theme-violet-soft, #f5f3ff);
+    --action-border: var(--theme-control-border, #ddd6fe);
+    --action-hover: var(--theme-violet-soft, #ede9fe);
   }
 
   &:enabled:hover,
@@ -350,4 +355,18 @@ body {
 
 #p-license-host {
   display: none!important;
+}
+
+@include workspace-dark.apply;
+@include appearance-themes.apply;
+
+@media screen and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  img[src$='/logofe.png'] {
+    transform-origin: center;
+    transition: transform 320ms ease;
+
+    &:hover {
+      transform: translateY(-2px) scale(1.045) rotate(-1deg);
+    }
+  }
 }

@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
 import { LucidePencil, LucideEye, LucideArrowRightLeft, LucideTrash2 } from '@lucide/angular';
@@ -44,7 +45,7 @@ interface ParentEditForm {
 @Component({
   selector: 'app-class-roster',
   standalone: true,
-  imports: [TooltipModule, LucidePencil, LucideEye, LucideArrowRightLeft, LucideTrash2, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, RosterImport, FormValidationDirective, FormsModule, RouterLink],
+  imports: [ModuleHelpButton, TooltipModule, LucidePencil, LucideEye, LucideArrowRightLeft, LucideTrash2, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, RosterImport, FormValidationDirective, FormsModule, RouterLink],
   templateUrl: './class-roster.html',
   styleUrl: './class-roster.scss',
 })

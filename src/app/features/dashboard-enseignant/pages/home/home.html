@@ -1,6 +1,6 @@
 <div class="dashboard-home">
-  <h1>Bienvenue, {{ user()?.firstName }} 👋</h1>
-  <p class="dashboard-home__subtitle">Espace Enseignant</p>
+  <header class="ui-page-header module-help-header"><app-module-help /><h1>Bienvenue, {{ user()?.firstName }} 👋</h1>
+  <p class="dashboard-home__subtitle">Espace Enseignant</p></header>
 
   <div class="dashboard-home__grid">
     <app-appointment-counter profile="teacher" pageLink="/enseignant/rendez-vous" />

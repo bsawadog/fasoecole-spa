@@ -36,6 +36,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
+        path:'aide',
+        loadComponent:()=>import('./features/dashboard-proprietaire/pages/help/help').then(m=>m.OwnerHelp),
+      },
+      {
         path: 'profil',
         loadComponent: () => import('./features/profile/profile').then((m) => m.ProfilePage),
       },

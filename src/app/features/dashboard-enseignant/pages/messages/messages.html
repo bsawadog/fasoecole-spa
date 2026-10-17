@@ -1,6 +1,7 @@
 <div class="ss">
   <a class="ss__back" routerLink="/enseignant">← Retour à l’espace enseignant</a>
-  <header class="ss__header">
+  <header class="module-help-header ss__header">
+    <app-module-help />
     <div><h1>Messages</h1><p>Échangez avec vos élèves, leurs parents et le propriétaire de l’établissement.</p></div>
     <button pButton class="ss__btn" type="button" (click)="composing.set(!composing())">Nouvelle conversation</button>
   </header>

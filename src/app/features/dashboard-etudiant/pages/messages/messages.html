@@ -1,5 +1,6 @@
 <div class="ss">
-  <header class="ss__header"><div><h1>Messages</h1><p>Lisez les messages de votre établissement et répondez aux conversations.</p></div></header>
+  <header class="module-help-header ss__header">
+    <app-module-help /><div><h1>Messages</h1><p>Lisez les messages de votre établissement et répondez aux conversations.</p></div></header>
   @if (error()) { <p-message severity="error" class="ss__alert ss__alert--error" role="alert">{{ error() }}</p-message> }
   <div class="ss__split">
     <aside class="ss__card" aria-label="Conversations">

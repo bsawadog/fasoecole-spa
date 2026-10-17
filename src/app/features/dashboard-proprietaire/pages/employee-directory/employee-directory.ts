@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { LoadingState } from '../../../../shared/ui/loading-state';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
@@ -11,10 +12,10 @@ import { TeacherWorkService } from '../../teacher-work.service';
 
 interface Employee { key: string; name: string; job: string; email: string; phone: string | null; route: string; staffId?: number; }
 @Component({
-  selector: 'app-employee-directory', standalone: true, imports: [LoadingState, InputTextModule, MessageModule, FormsModule, RouterLink],
+  selector: 'app-employee-directory', standalone: true, imports: [ModuleHelpButton, LoadingState, InputTextModule, MessageModule, FormsModule, RouterLink],
   template: `
-    <h1>Tous les employés de l’école</h1>
-    <p>Enseignants et personnel : consultez leur fiche.</p>
+    <header class="ui-page-header module-help-header"><app-module-help /><h1>Tous les employés de l’école</h1>
+    <p>Enseignants et personnel : consultez leur fiche.</p></header>
 
     <label>Rechercher <input pInputText [(ngModel)]="search" placeholder="Nom, fonction ou courriel"></label>
     @if (error()) { <p-message severity="error" role="alert">{{ error() }}</p-message> }
@@ -27,7 +28,7 @@ interface Employee { key: string; name: string; job: string; email: string; phon
       </tbody></table></div>
     }
   `,
-  styles: [`@layer legacy { :host{display:block}label{display:inline-flex;gap:10px;align-items:center;margin:12px 20px 12px 0}input,select{padding:10px;border:1px solid #cbd5e1;border-radius:8px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;background:white}th,td{text-align:left;padding:16px;border-bottom:1px solid #e2e8f0}a{color:#15803d} }`],
+  styles: [`@layer legacy { :host{display:block}label{display:inline-flex;gap:10px;align-items:center;margin:12px 20px 12px 0}input,select{padding:10px;border:1px solid var(--theme-control-border, #cbd5e1);border-radius:8px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;background:var(--theme-surface, white)}th,td{text-align:left;padding:16px;border-bottom:1px solid var(--theme-border, #e2e8f0)}a{color:var(--theme-success, #15803d)} }`],
 })
 export class EmployeeDirectory implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);

@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
 import { LoadingState } from '../../../../shared/ui/loading-state';
@@ -9,11 +10,12 @@ import { StudentGradesView } from '../../../../shared/self-space/student-grades-
 @Component({
   selector: 'app-etudiant-notes',
   standalone: true,
-  imports: [SelectField, SelectOption, LoadingState, FormsModule, StudentGradesView],
+  imports: [ModuleHelpButton, SelectField, SelectOption, LoadingState, FormsModule, StudentGradesView],
   providers: [MyStudentsState],
   template: `
     <div class="ss ui-academic-blue">
-      <header class="ss__header">
+      <header class="module-help-header ss__header">
+    <app-module-help />
         <div>
           <h1>Mes notes</h1>
           <p>Vos notes par période et vos bulletins publiés.</p>

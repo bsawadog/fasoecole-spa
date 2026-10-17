@@ -26,8 +26,8 @@ import { RouterLink } from '@angular/router';
       .unauthorized__link {
         padding: 0.7rem 1rem;
         border-radius: 0.6rem;
-        color: #fff;
-        background: #1f765e;
+        color: var(--theme-button-ink, #fff);
+        background: var(--theme-success, #1f765e);
         font-weight: 600;
         text-decoration: none;
       }

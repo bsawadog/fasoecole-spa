@@ -126,7 +126,7 @@ async function readWorkbook(file: File): Promise<string[][]> {
         <p>L’import s’effectue ligne par ligne. Les lignes enregistrées sont conservées si une autre ligne échoue. Gardez cette page ouverte pendant l’import.</p>
       }
     </details>`,
-  styles: [`@layer legacy { .import{margin:1rem 0;padding:1rem;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc}summary{cursor:pointer;font-weight:600}p{font-size:.9rem}button{padding:.6rem;margin:.4rem;border-radius:8px;border:1px solid #94a3b8;cursor:pointer}button:disabled{opacity:.5;cursor:default}.scroll{max-height:340px;overflow:auto}table{width:100%;border-collapse:collapse;font-size:.85rem}th,td{padding:.6rem;text-align:left;border-bottom:1px solid #cbd5e1} }`],
+  styles: [`@layer legacy { .import{margin:1rem 0;padding:1rem;border:1px solid var(--theme-control-border, #cbd5e1);border-radius:12px;background:var(--theme-surface, #f8fafc)}summary{cursor:pointer;font-weight:600}p{font-size:.9rem}button{padding:.6rem;margin:.4rem;border-radius:8px;border:1px solid var(--theme-control-border, #94a3b8);cursor:pointer}button:disabled{opacity:.5;cursor:default}.scroll{max-height:340px;overflow:auto}table{width:100%;border-collapse:collapse;font-size:.85rem}th,td{padding:.6rem;text-align:left;border-bottom:1px solid var(--theme-control-border, #cbd5e1)} }`],
 })
 export class RosterImport {
   readonly schoolId = input.required<number>();

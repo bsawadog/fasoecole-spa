@@ -1,3 +1,5 @@
+import { ModuleHelpButton } from '../../shared/help/module-help-button';
+import { AppearancePicker } from '../../shared/ui/appearance-picker';
 import { SelectField } from '../../shared/ui/select-field';
 import { SelectOption } from '../../shared/ui/select-field';
 import { LoadingState } from '../../shared/ui/loading-state';
@@ -45,7 +47,7 @@ function apiMessage(error: unknown, fallback: string): string {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule],
+  imports: [AppearancePicker, ModuleHelpButton, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })

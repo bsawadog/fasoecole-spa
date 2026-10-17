@@ -30,7 +30,7 @@ export const PROPRIETAIRE_ROUTES: Routes = [
     loadComponent: () => import('../../shared/school-life/school-life').then(m => m.SchoolLifePage),
   })),
  { path: 'incidents', canActivate: [ownerModuleGuard(null)], loadComponent: () => import('../../shared/support-incidents').then(m => m.SupportIncidents) },
-  { path: 'aide', canActivate: [ownerModuleGuard(null)],
+  { path: 'aide',
     loadComponent: () => import('./pages/help/help').then(m => m.OwnerHelp) },
   { path: 'export', canActivate: [ownerModuleGuard(null)],
     loadComponent: () => import('./pages/data-export/data-export').then(m => m.SchoolDataExport) },

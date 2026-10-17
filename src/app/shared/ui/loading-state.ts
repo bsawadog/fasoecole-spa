@@ -17,7 +17,7 @@ import { SkeletonModule } from 'primeng/skeleton';
   `,
   styles: `
     :host { display: block; }
-    .loading-state { min-height: 18rem; padding: 1.4rem; border: 1px solid var(--ui-border, #e0e8e4); border-radius: 1rem; background: #fff; animation: loading-reveal 160ms 120ms both; }
+    .loading-state { min-height: 18rem; padding: 1.4rem; border: 1px solid var(--ui-border, #e0e8e4); border-radius: 1rem; background: var(--theme-surface, #fff); animation: loading-reveal 160ms 120ms both; }
     .loading-state > span { display: block; margin-bottom: 1.2rem; color: var(--ui-muted, #62776d); font-size: .9rem; }
     .loading-state__lines { display: grid; gap: .8rem; }
     @keyframes loading-reveal { from { opacity: 0; } to { opacity: 1; } }

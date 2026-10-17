@@ -7,13 +7,13 @@
 
   &__heading {
     h1 { margin: 0; }
-    p { margin: 0.4rem 0 0; color: #4b5563; }
+    p { margin: 0.4rem 0 0; color: var(--theme-muted, #4b5563); }
   }
 
   &__card {
     padding: 1.5rem 2rem;
     border-radius: 12px;
-    background: #fff;
+    background: var(--theme-surface, #fff);
 
     h2 { margin: 0 0 1rem; font-size: 1.15rem; }
     h3 { margin: 1.5rem 0 0.75rem; font-size: 1rem; }
@@ -31,36 +31,36 @@
   select {
     padding: 0.7rem;
     margin-bottom: 0.6rem;
-    border: 1px solid #9ca3af;
+    border: 1px solid var(--theme-control-border, #9ca3af);
     border-radius: 6px;
-    background: #fff;
+    background: var(--theme-surface, #fff);
     font: inherit;
 
-    &:focus-visible { outline: 2px solid #2563eb; }
-    &[readonly] { background: #f3f4f6; }
+    &:focus-visible { outline: 2px solid var(--theme-link, #2563eb); }
+    &[readonly] { background: var(--theme-inset, #f3f4f6); }
   }
 
   button[type='submit'] {
     padding: 0.8rem;
     border: 0;
     border-radius: 6px;
-    background: #1d4ed8;
-    color: #fff;
+    background: var(--theme-link, #1d4ed8);
+    color: var(--theme-button-ink, #fff);
     font: inherit;
     cursor: pointer;
 
     &:disabled { opacity: 0.6; cursor: not-allowed; }
-    &:focus-visible { outline: 2px solid #1e3a8a; outline-offset: 2px; }
+    &:focus-visible { outline: 2px solid var(--theme-ink, #1e3a8a); outline-offset: 2px; }
   }
 
   &__hint {
     margin: -0.6rem 0 0.4rem;
-    color: #4b5563;
+    color: var(--theme-muted, #4b5563);
   }
 
-  &__muted { color: #4b5563; }
-  &__error { color: #991b1b; }
-  &__success { color: #166534; }
+  &__muted { color: var(--theme-muted, #4b5563); }
+  &__error { color: var(--theme-danger, #991b1b); }
+  &__success { color: var(--theme-success, #166534); }
 
   &__verify {
     display: flex;
@@ -68,10 +68,10 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 0.85rem 1rem;
-    border: 1px solid #fcd34d;
+    border: 1px solid var(--theme-warning, #fcd34d);
     border-radius: 0.75rem;
-    background: #fffbeb;
-    color: #92400e;
+    background: var(--theme-warning-soft, #fffbeb);
+    color: var(--theme-warning, #92400e);
 
     div { display: flex; flex-direction: column; gap: 0.2rem; }
   }
@@ -103,7 +103,7 @@
       align-items: center;
       gap: 0.75rem;
       padding: 0.75rem 1rem;
-      border: 1px solid #e5e7eb;
+      border: 1px solid var(--theme-border, #e5e7eb);
       border-radius: 8px;
 
       > div {
@@ -113,7 +113,7 @@
         min-width: 0;
       }
 
-      small { color: #4b5563; }
+      small { color: var(--theme-muted, #4b5563); }
     }
   }
 
@@ -123,24 +123,24 @@
     font-size: 0.8rem;
     font-weight: 600;
 
-    &--pending { color: #92400e; background: #fef3c7; }
-    &--approved { color: #166534; background: #dcfce7; }
-    &--rejected { color: #991b1b; background: #fee2e2; }
-    &--auto_approved { color: #166534; background: #dcfce7; }
-    &--revoked { color: #991b1b; background: #fee2e2; }
+    &--pending { color: var(--theme-warning, #92400e); background: var(--theme-warning-soft, #fef3c7); }
+    &--approved { color: var(--theme-success, #166534); background: var(--theme-success-soft, #dcfce7); }
+    &--rejected { color: var(--theme-danger, #991b1b); background: var(--theme-danger-soft, #fee2e2); }
+    &--auto_approved { color: var(--theme-success, #166534); background: var(--theme-success-soft, #dcfce7); }
+    &--revoked { color: var(--theme-danger, #991b1b); background: var(--theme-danger-soft, #fee2e2); }
   }
 
   &__link-button {
     padding: 0.35rem 0.6rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--theme-border, #d1d5db);
     border-radius: 6px;
-    color: #374151;
-    background: #fff;
+    color: var(--theme-muted, #374151);
+    background: var(--theme-surface, #fff);
     font: inherit;
     font-size: 0.85rem;
     cursor: pointer;
 
-    &:hover { border-color: #991b1b; color: #991b1b; }
+    &:hover { border-color: var(--theme-danger, #991b1b); color: var(--theme-danger, #991b1b); }
     &:disabled { opacity: 0.6; cursor: not-allowed; }
   }
 }

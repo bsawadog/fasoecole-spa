@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
 import { NumberField } from '../../../../shared/ui/number-field';
@@ -48,7 +49,7 @@ interface PaymentForm {
 @Component({
   selector: 'app-student-detail',
   standalone: true,
-  imports: [TooltipModule, DateField, NumberField, SelectField, SelectOption, TagModule, LoadingState, InputTextModule, ButtonModule, FormValidationDirective, DecimalPipe, FormsModule, NgClass],
+  imports: [ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, TagModule, LoadingState, InputTextModule, ButtonModule, FormValidationDirective, DecimalPipe, FormsModule, NgClass],
   templateUrl: './student-detail.html',
   styleUrl: './student-detail.scss',
 })

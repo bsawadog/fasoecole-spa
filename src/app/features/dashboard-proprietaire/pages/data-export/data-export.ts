@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { LoadingState } from '../../../../shared/ui/loading-state';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
@@ -9,10 +10,11 @@ import { environment } from '../../../../../environments/environment';
 
 interface SchoolChoice { id:number;name:string;status:string; }
 @Component({
-  selector:'app-school-data-export',standalone:true,imports:[LoadingState, ButtonModule, MessageModule, FormsModule],
+  selector:'app-school-data-export',standalone:true,imports: [ModuleHelpButton, LoadingState, ButtonModule, MessageModule, FormsModule],
   template:`
     <main class="export ui-workspace">
-      <header class="ui-page-header"><p class="eyebrow">VOS DONNÉES</p><h1>Exporter les données de mon établissement</h1>
+      <header class="module-help-header ui-page-header">
+    <app-module-help /><p class="eyebrow">VOS DONNÉES</p><h1>Exporter les données de mon établissement</h1>
         <p>Conservez une copie de vos dossiers et de vos activités, consultable sans FasoEcole.</p></header>
       @if (error()) { <p-message severity="error" class="error" role="alert">{{ error() }}</p-message> }
       @if (loading()) { <app-loading-state message="Chargement de vos établissements…" /> }
@@ -46,7 +48,7 @@ interface SchoolChoice { id:number;name:string;status:string; }
     </main>
   `,
   styles:[`@layer legacy {
-    :host{display:block;color:#213e32}.export{max-width:1150px;margin:auto;padding:12px}header{margin-bottom:28px}.eyebrow{color:#19764f;font-size:11px;letter-spacing:.15em;font-weight:700}h1{font-size:29px;margin:8px 0 12px}header p{color:#697c70;line-height:1.6}.card{background:white;border:1px solid #e0e9e2;border-radius:18px;padding:28px}label{display:grid;gap:8px;max-width:520px;font-size:13px;font-weight:600}select{font:inherit;padding:12px;border:1px solid #cfded3;border-radius:9px;background:white}.scope{background:#eff7f2;border-radius:12px;padding:18px;margin:24px 0}.scope p{margin-bottom:0;font-size:13px;line-height:1.6}h2{font-size:20px}h3{font-size:15px}.categories{display:grid;grid-template-columns:1fr 1fr;gap:12px 28px;margin:20px 0}.categories p,.download p{font-size:13px;line-height:1.7;color:#6b7c70}.downloads{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:24px 0}.download{border:1px solid #e0e9e2;border-radius:14px;padding:22px}.recommended{border-color:#a5ceb5;background:#f8fcf9}button{font:inherit;font-size:13px;font-weight:600;background:#19764f;color:white;border:0;border-radius:9px;padding:12px 18px;cursor:pointer}button:disabled{opacity:.55;cursor:default}.details{font-size:12px;color:#697c70;line-height:1.7}.progress,.success,.error{padding:15px;border-radius:10px;font-size:13px;line-height:1.6}.progress{background:#f0f5ff;color:#39577b}.success{background:#eaf7ef;color:#19764f}.error{background:#fff0ed;color:#a23f31}@media(max-width:700px){.categories,.downloads{grid-template-columns:1fr}.card{padding:20px}.export{padding:0}h1{font-size:24px}}
+    :host{display:block;color:var(--theme-ink, #213e32)}.export{max-width:1150px;margin:auto;padding:12px}header{margin-bottom:28px}.eyebrow{color:var(--theme-link, #19764f);font-size:11px;letter-spacing:.15em;font-weight:700}h1{font-size:29px;margin:8px 0 12px}header p{color:var(--theme-muted, #697c70);line-height:1.6}.card{background:var(--theme-surface, white);border:1px solid var(--theme-border, #e0e9e2);border-radius:18px;padding:28px}label{display:grid;gap:8px;max-width:520px;font-size:13px;font-weight:600}select{font:inherit;padding:12px;border:1px solid var(--theme-control-border, #cfded3);border-radius:9px;background:var(--theme-surface, white)}.scope{background:var(--theme-success-soft, #eff7f2);border-radius:12px;padding:18px;margin:24px 0}.scope p{margin-bottom:0;font-size:13px;line-height:1.6}h2{font-size:20px}h3{font-size:15px}.categories{display:grid;grid-template-columns:1fr 1fr;gap:12px 28px;margin:20px 0}.categories p,.download p{font-size:13px;line-height:1.7;color:var(--theme-muted, #6b7c70)}.downloads{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:24px 0}.download{border:1px solid var(--theme-border, #e0e9e2);border-radius:14px;padding:22px}.recommended{border-color:var(--theme-success-border, #a5ceb5);background:var(--theme-success-soft, #f8fcf9)}button{font:inherit;font-size:13px;font-weight:600;background:var(--theme-link, #19764f);color:var(--theme-button-ink, white);border:0;border-radius:9px;padding:12px 18px;cursor:pointer}button:disabled{opacity:.55;cursor:default}.details{font-size:12px;color:var(--theme-muted, #697c70);line-height:1.7}.progress,.success,.error{padding:15px;border-radius:10px;font-size:13px;line-height:1.6}.progress{background:var(--theme-soft, #f0f5ff);color:var(--theme-link, #39577b)}.success{background:var(--theme-success-soft, #eaf7ef);color:var(--theme-link, #19764f)}.error{background:var(--theme-danger-soft, #fff0ed);color:var(--theme-danger, #a23f31)}@media(max-width:700px){.categories,.downloads{grid-template-columns:1fr}.card{padding:20px}.export{padding:0}h1{font-size:24px}}
    }`],
 })
 export class SchoolDataExport {

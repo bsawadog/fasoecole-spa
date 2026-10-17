@@ -13,8 +13,8 @@
     flex: 0 0 auto;
     display: flex;
     flex-direction: column;
-    background: #111827;
-    color: #f9fafb;
+    background: var(--theme-ink, #111827);
+    color: var(--theme-ink, #f9fafb);
     padding: 1.25rem 1rem;
     overflow-y: auto;
   }
@@ -33,7 +33,7 @@
       min-width: 0;
       width: 0;
       max-width: 13rem;
-      height: 3.25rem;
+      height: 5.5rem;
       object-fit: contain;
       object-position: left center;
     }
@@ -47,14 +47,14 @@
     width: 2.75rem;
     height: 2.75rem;
     padding: 0;
-    border: 1px solid #4b5563;
+    border: 1px solid var(--theme-muted, #4b5563);
     border-radius: 8px;
     background: transparent;
-    color: #f9fafb;
+    color: var(--theme-ink, #f9fafb);
     cursor: pointer;
 
-    &:hover { background: #374151; }
-    &:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
+    &:hover { background: var(--theme-muted, #374151); }
+    &:focus-visible { outline: 2px solid var(--theme-focus, #93c5fd); outline-offset: 2px; }
   }
 
   &__nav {
@@ -69,7 +69,7 @@
     gap: 0.6rem;
     padding: 0.6rem 0.75rem;
     border-radius: 8px;
-    color: #d1d5db;
+    color: var(--theme-border, #d1d5db);
     font-size: 0.9rem;
     font-weight: 500;
     line-height: 1.45;
@@ -85,8 +85,8 @@
     }
 
     &--active {
-      background: #3b82f6;
-      color: white;
+      background: var(--theme-accent, #3b82f6);
+      color: var(--theme-button-ink, white);
     }
   }
 
@@ -95,7 +95,7 @@
     .shell__nav-link { margin: 0.25rem 0 0.25rem 0.85rem; }
 
     &[open] > .shell__nav-heading {
-      border-left-color: #60a5fa;
+      border-left-color: var(--theme-accent, #60a5fa);
     }
   }
 
@@ -125,19 +125,19 @@
 
   &__nav-heading {
     padding: 0.8rem 0.75rem;
-    border-left: 3px solid #3b82f6;
+    border-left: 3px solid var(--theme-accent, #3b82f6);
     border-radius: 8px;
     background: transparent;
-    color: #dbeafe;
+    color: var(--theme-soft, #dbeafe);
     font-size: 1rem;
     font-weight: 800;
     line-height: 1.4;
     cursor: pointer;
     transition: background-color 180ms ease, border-color 180ms ease;
 
-    &::marker { color: #93c5fd; font-size: 0.8em; }
+    &::marker { color: var(--theme-focus, #93c5fd); font-size: 0.8em; }
     &:hover { background: rgba(255, 255, 255, 0.06); }
-    &:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
+    &:focus-visible { outline: 2px solid var(--theme-focus, #93c5fd); outline-offset: 2px; }
   }
 
   &__badge {
@@ -149,8 +149,8 @@
     margin-left: auto;
     padding: 0 0.32rem;
     border-radius: 999px;
-    color: #fff;
-    background: #dc2626;
+    color: var(--theme-button-ink, #fff);
+    background: var(--theme-danger, #dc2626);
     font-size: 0.72rem;
     font-weight: 800;
     line-height: 1;
@@ -161,7 +161,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    background: #f3f4f6;
+    background: var(--theme-inset, #f3f4f6);
     overflow-y: auto;
   }
 
@@ -176,22 +176,22 @@
     justify-content: flex-start;
     gap: 0.5rem;
     padding: 0.65rem var(--shell-gutter);
-    border-bottom: 1px solid #e5e7eb;
-    background: #fff;
+    border-bottom: 1px solid var(--theme-border, #e5e7eb);
+    background: var(--theme-surface, #fff);
   }
 
   &__breadcrumbs {
     flex: 1 0 100%;
     min-width: 0;
     font-size: .8rem;
-    color: #62776d;
+    color: var(--theme-muted, #62776d);
 
     ol { display: flex; flex-wrap: wrap; gap: .5rem; list-style: none; padding: .15rem 0; margin: 0; }
     li { display: flex; gap: .5rem; align-items: center; overflow-wrap: anywhere; }
-    a { color: #047857; text-decoration: none; }
+    a { color: var(--theme-accent, #047857); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    a:focus-visible { outline: 2px solid #047857; outline-offset: 3px; }
-    [aria-current] { color: #24392f; font-weight: 600; }
+    a:focus-visible { outline: 2px solid var(--theme-accent, #047857); outline-offset: 3px; }
+    [aria-current] { color: var(--theme-ink, #24392f); font-weight: 600; }
   }
 
   &__school-context {
@@ -217,10 +217,10 @@
     gap: 0.4rem;
     flex: 0 0 auto;
     padding: 0.5rem 0.8rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--theme-border, #d1d5db);
     border-radius: 8px;
-    color: #1f2937;
-    background: #fff;
+    color: var(--theme-ink, #1f2937);
+    background: var(--theme-surface, #fff);
     font: inherit;
     font-size: 0.85rem;
     font-weight: 600;
@@ -229,24 +229,24 @@
 
     &:hover,
     &--active {
-      border-color: #2563eb;
-      color: #1d4ed8;
-      background: #eff6ff;
+      border-color: var(--theme-link, #2563eb);
+      color: var(--theme-link, #1d4ed8);
+      background: var(--theme-soft, #eff6ff);
     }
 
     &:focus-visible {
-      outline: 2px solid #2563eb;
+      outline: 2px solid var(--theme-link, #2563eb);
       outline-offset: 2px;
     }
 
     &--logout {
-      border-color: #fecaca;
-      color: #b91c1c;
+      border-color: var(--theme-danger-border, #fecaca);
+      color: var(--theme-danger, #b91c1c);
 
       &:hover {
-        border-color: #b91c1c;
-        color: #991b1b;
-        background: #fef2f2;
+        border-color: var(--theme-danger, #b91c1c);
+        color: var(--theme-danger, #991b1b);
+        background: var(--theme-danger-soft, #fef2f2);
       }
     }
   }
@@ -265,28 +265,29 @@
     width: 2.25rem;
     height: 2.25rem;
     padding: 0;
-    border: 1px solid #16a34a;
+    border: 1px solid var(--theme-success, #16a34a);
     border-radius: 50%;
-    color: #fff;
-    background: #16a34a;
+    color: var(--theme-button-ink, #fff);
+    background: var(--theme-success, #16a34a);
     box-shadow: 0 2px 6px rgba(22, 163, 74, .12);
     transition: background .15s ease, box-shadow .15s ease;
 
-    svg { color: #86efac; }
+    svg { color: var(--theme-success-border, #86efac); }
 
     &:hover {
-      border-color: #15803d;
-      color: #fff;
-      background: #15803d;
+      border-color: var(--theme-success, #15803d);
+      color: var(--theme-button-ink, #fff);
+      background: var(--theme-success, #15803d);
       box-shadow: 0 3px 10px rgba(22, 163, 74, .2);
     }
 
     &.shell__action--active {
-      border-color: #166534;
-      color: #fff;
-      background: #166534;
+      border-color: var(--theme-success, #166534);
+      color: var(--theme-button-ink, #fff);
+      background: var(--theme-success, #166534);
     }
   }
+
 
   &__message-count {
     position: absolute;
@@ -298,11 +299,11 @@
     height: 1.25rem;
     padding: 0 .2rem;
     border-radius: 999px;
-    background: #dc2626;
-    color: #fff;
+    background: var(--theme-danger, #dc2626);
+    color: var(--theme-button-ink, #fff);
     font-size: .65rem;
     font-weight: 700;
-    border: 2px solid #fff;
+    border: 2px solid var(--theme-surface, #fff);
   }
 
   &__page {
@@ -321,10 +322,10 @@
     gap: 0.85rem;
     margin-bottom: 1.5rem;
     padding: 1rem 1.15rem;
-    border: 1px solid #f3d18a;
+    border: 1px solid var(--theme-warning-border, #f3d18a);
     border-radius: 0.85rem;
-    color: #704c12;
-    background: #fff8e8;
+    color: var(--theme-warning, #704c12);
+    background: var(--theme-warning-soft, #fff8e8);
 
     svg {
       flex: 0 0 auto;
@@ -337,23 +338,23 @@
     }
 
     small {
-      color: #806b47;
+      color: var(--theme-muted, #806b47);
     }
 
     &--pending {
-      border-color: #991b1b;
-      color: #fff;
-      background: #b91c1c;
+      border-color: var(--theme-danger, #991b1b);
+      color: var(--theme-button-ink, #fff);
+      background: var(--theme-danger, #b91c1c);
 
-      small, a { color: #fff; }
+      small, a { color: var(--theme-button-ink, #fff); }
       a { text-decoration: underline; }
     }
 
     &--error {
       display: block;
-      border-color: #f1b9b2;
-      color: #963c35;
-      background: #fff0ed;
+      border-color: var(--theme-danger-border, #f1b9b2);
+      color: var(--theme-danger, #963c35);
+      background: var(--theme-danger-soft, #fff0ed);
     }
   }
 }
@@ -425,7 +426,7 @@
 
   .shell__content {
     overflow: visible;
-    background: #fff;
+    background: var(--theme-surface, #fff);
   }
 
   .shell__page {

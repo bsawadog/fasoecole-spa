@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
 import { ButtonModule } from 'primeng/button';
@@ -14,7 +15,7 @@ interface ApprovalSelection {
 }
 
 @Component({
-  imports: [SelectField, SelectOption, ButtonModule, MessageModule],
+  imports: [ModuleHelpButton, SelectField, SelectOption, ButtonModule, MessageModule],
   selector: 'app-approvals',
   standalone: true,
   templateUrl: './approvals.html',

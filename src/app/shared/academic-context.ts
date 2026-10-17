@@ -54,9 +54,9 @@ export const ACADEMIC_CONTEXT_RELOAD = new InjectionToken<() => void>('Academic 
   styles: [`@layer legacy {
     :host{display:flex;gap:12px;flex-wrap:wrap;min-width:0;width:100%}
     label{display:flex;flex:1 1 220px;min-width:0;max-width:360px;flex-direction:column;font-size:13px;font-weight:600;gap:5px}
-    select{box-sizing:border-box;width:100%;min-width:0;max-width:100%;padding:7px;border:1px solid #d1d5db;border-radius:8px;background:white}
+    select{box-sizing:border-box;width:100%;min-width:0;max-width:100%;padding:7px;border:1px solid var(--theme-border, #d1d5db);border-radius:8px;background:var(--theme-surface, white)}
     small{flex-basis:100%;overflow-wrap:anywhere}
-    button{align-self:flex-end;padding:7px;border:1px solid #d1d5db;border-radius:8px;background:white;cursor:pointer}
+    button{align-self:flex-end;padding:7px;border:1px solid var(--theme-border, #d1d5db);border-radius:8px;background:var(--theme-surface, white);cursor:pointer}
     @media(max-width:700px){:host{flex-direction:column;gap:8px}label{flex:0 0 auto;width:100%;max-width:none}select{min-height:44px;font-size:16px}button{align-self:flex-start;min-height:44px}}
    }`],
 })

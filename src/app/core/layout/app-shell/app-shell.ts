@@ -1,6 +1,7 @@
 import { LoadingState } from '../../../shared/ui/loading-state';
 import { AccountActions } from './account-actions';
 import { NavigationActivity } from '../../../shared/ui/navigation-activity';
+import { ModuleHelpButton } from '../../../shared/help/module-help-button';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { Component, computed, effect, untracked, DestroyRef, inject, OnInit, signal } from '@angular/core';
@@ -133,7 +134,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [AccountActions, NavigationActivity, LoadingState, ButtonModule, MessageModule,
+  imports: [AccountActions, NavigationActivity, LoadingState, ButtonModule, MessageModule, ModuleHelpButton,
     NgTemplateOutlet,
     RouterOutlet,
     AcademicContextPicker,
@@ -209,7 +210,7 @@ export class AppShell implements OnInit {
         ? { ...item, badge: this.familyMessages.unreadCount() } : item);
     }
     const allowed = this.auth.ownerModules();
-    return MENU_BY_ROLE[role].filter((item) => !!item.module && allowed.has(item.module))
+    return MENU_BY_ROLE[role].filter((item) => item.routerLink==='/proprietaire/aide'||!!item.module && allowed.has(item.module))
       .map((item) => item.routerLink === '/proprietaire/messages'
         ? { ...item, badge: this.familyMessages.unreadCount() } : item);
   });
@@ -227,6 +228,7 @@ export class AppShell implements OnInit {
     const crumbs: { label: string; url: string }[] = [{ label: 'Accueil', url: home }];
     if (route === home) return crumbs;
     if (route === '/profil') return [...crumbs, { label: 'Mon profil', url: route }];
+    if (route === '/aide') return [...crumbs, { label: 'Aide', url: route }];
     const parent = this.accessibleNavigation().filter(item => item.icon !== 'home' && (route === item.routerLink || route.startsWith(item.routerLink + '/')))
       .sort((a, b) => b.routerLink.length - a.routerLink.length)[0];
     if (parent) {

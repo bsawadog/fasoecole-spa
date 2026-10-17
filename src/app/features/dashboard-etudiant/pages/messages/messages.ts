@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { LoadingState } from '../../../../shared/ui/loading-state';
 import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
@@ -14,7 +15,7 @@ import { ConversationFiles, MessageAttachments } from '../../../../shared/self-s
 @Component({
   selector: 'app-student-messages',
   standalone: true,
-  imports: [LoadingState, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DatePipe, ConversationFiles, MessageAttachments],
+  imports: [ModuleHelpButton, LoadingState, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DatePipe, ConversationFiles, MessageAttachments],
   templateUrl: './messages.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

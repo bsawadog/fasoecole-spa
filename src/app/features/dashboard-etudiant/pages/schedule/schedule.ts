@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
 import { LoadingState } from '../../../../shared/ui/loading-state';
@@ -11,11 +12,12 @@ import { apiError, ScheduleEntry, SelfSpaceService } from '../../../../shared/se
 @Component({
   selector: 'app-etudiant-schedule',
   standalone: true,
-  imports: [SelectField, SelectOption, LoadingState, FormsModule, ScheduleView],
+  imports: [ModuleHelpButton, SelectField, SelectOption, LoadingState, FormsModule, ScheduleView],
   providers: [MyStudentsState],
   template: `
     <div class="ss">
-      <header class="ss__header">
+      <header class="module-help-header ss__header">
+    <app-module-help />
         <div>
           <h1>Emploi du temps</h1>
           <p>Les cours de votre classe cette semaine.</p>

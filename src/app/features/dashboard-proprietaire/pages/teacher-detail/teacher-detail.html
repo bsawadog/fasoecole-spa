@@ -3,7 +3,8 @@
     <app-loading-state message="Chargement de la fiche enseignant…" />
     @if (error()) { <p-message severity="error" class="teacher-detail__alert teacher-detail__alert--error" role="alert">{{ error() }}</p-message> }
   } @else if (detail(); as data) {
-    <header class="teacher-detail__header">
+    <header class="module-help-header teacher-detail__header">
+    <app-module-help />
       <div class="teacher-detail__header-top">
         <a class="teacher-detail__back" routerLink="/proprietaire/enseignants">← Retour aux enseignants</a>
         <div class="teacher-detail__header-actions">

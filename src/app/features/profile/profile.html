@@ -1,8 +1,11 @@
 <div class="profile">
-  <header class="profile__heading">
+  <header class="module-help-header profile__heading">
+    <app-module-help />
     <h1>Mon profil</h1>
     <p>Consultez et modifiez vos informations personnelles et la sécurité de votre compte.</p>
   </header>
+
+  <app-appearance-picker />
 
   @if (user()?.mustChangePassword) {
     <section class="profile__verify" role="alert">

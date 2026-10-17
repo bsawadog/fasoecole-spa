@@ -1,7 +1,7 @@
 @layer legacy {
 :host { display: block; min-height: 100vh; }
 .school-directory { min-height: 100vh; padding: 1.25rem clamp(1.25rem, 5vw, 4.5rem) 4rem; box-sizing: border-box; color: #18342c; background: radial-gradient(ellipse at 15% 10%, #e4f0e3, transparent 32rem), #f8faf7; }
-.school-directory__header { display: flex; align-items: center; justify-content: space-between; max-width: 75rem; margin: 0 auto; img { display: block; width: 12rem; height: 3.5rem; object-fit: contain; object-position: left center; } }
+.school-directory__header { display: flex; align-items: center; justify-content: space-between; max-width: 75rem; margin: 0 auto; img { display: block; width: 6rem; height: 6rem; object-fit: contain; object-position: left center; } }
 .school-directory__back, .school-profile__all { color: #26704f; font-weight: 700; text-decoration: none; }
 .school-directory__hero { width: min(100%, 75rem); margin: clamp(3rem, 9vh, 6rem) auto 2rem; }
 .school-directory__eyebrow, .school-profile__eyebrow { color: #26704f; font-size: 0.85rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; }

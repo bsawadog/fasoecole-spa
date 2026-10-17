@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
 import { LucideEye, LucidePencil, LucidePower, LucideRotateCcw, LucideTrash2 } from '@lucide/angular';
@@ -23,7 +24,7 @@ import { ConfirmationService } from '../../../../shared/confirmation/confirmatio
 @Component({
   selector: 'app-teacher-roster',
   standalone: true,
-  imports: [TooltipModule, LucideEye, LucidePencil, LucidePower, LucideRotateCcw, LucideTrash2, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, RosterImport, FormValidationDirective, FormsModule, RouterLink, NgTemplateOutlet],
+  imports: [ModuleHelpButton, TooltipModule, LucideEye, LucidePencil, LucidePower, LucideRotateCcw, LucideTrash2, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, RosterImport, FormValidationDirective, FormsModule, RouterLink, NgTemplateOutlet],
   templateUrl: './teacher-roster.html',
   styleUrl: './teacher-roster.scss',
 })

@@ -1,5 +1,6 @@
 <div class="ss">
-  <header class="ss__header"><div><h1>{{ title() }}</h1><p>Informations et actions pour vos classes affectées.</p></div>
+  <header class="module-help-header ss__header">
+    <app-module-help /><div><h1>{{ title() }}</h1><p>Informations et actions pour vos classes affectées.</p></div>
     @if (module() !== 'emploi' && classes().length) {
       <label class="ss__picker">Classe<app-select-field [value]="classId()" [disabled]="saving()" (change)="choose($any($event.target).value)" [ariaLabel]="(&quot;Classe&quot;).trim()">
         @for (item of classes(); track item.classId) { <app-select-option [value]="item.classId" [label]="((&quot;&quot; + ((item.schoolName)) + &quot; · &quot; + ((item.className)) + &quot; · &quot; + ((item.academicYearLabel)) + &quot;&quot;)).trim()" /> }

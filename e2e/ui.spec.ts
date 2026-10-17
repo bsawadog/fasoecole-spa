@@ -76,22 +76,33 @@ const spaces: { profile: Profile; paths: string[] }[] = [
   { profile: 'etudiant', paths: ['', 'notes', 'messages', 'emploi-du-temps', 'rendez-vous', 'calendrier', 'discipline', 'demandes-administratives', 'bibliotheque', 'suivi-devoirs'] },
   { profile: 'parent', paths: ['', 'enfants', 'messages', 'notes', 'absences', 'frais', 'emploi', 'devoirs', 'annonces', 'documents', 'rendez-vous', 'calendrier', 'discipline', 'demandes-administratives', 'bibliotheque', 'suivi-devoirs'] },
 ];
+for (const theme of ['blue-black','white']) {
 for (const { profile, paths } of spaces) {
-  test(`${profile}: every page renders on this viewport`, async ({ page }, testInfo) => {
+  test(`${profile}/${theme}: every page renders on this viewport`, async ({ page }, testInfo) => {
     await mockSchool(page, profile);
+    await page.addInitScript(theme => localStorage.setItem('fasoecole_theme_7',theme),theme);
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
     for (const path of paths) {
       await page.goto(`/${profile}/${path}`);
       await expect(page.locator('.shell__page h1').first(), `${profile}/${path}`).toBeVisible();
+      expect(await page.locator('.shell__content').evaluate(node => getComputedStyle(node).backgroundImage)).toContain('linear-gradient');
       await expect(page.locator('app-loading-state')).toHaveCount(0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), `${profile}/${path}`).toBe(true);
       expect(errors, `${profile}/${path}`).toEqual([]);
+      const lightSurfaces = await page.locator('.shell__page *').evaluateAll(nodes => nodes.flatMap(node => {
+        const bounds = node.getBoundingClientRect();
+        const rgb = getComputedStyle(node).backgroundColor.match(/^rgb\((\d+), (\d+), (\d+)\)$/);
+        return bounds.width > 150 && bounds.height > 45 && rgb && rgb.slice(1).every(c => +c > 220)
+          ? [`${node.tagName}.${node.className}`] : [];
+      }));
+      if(theme === 'blue-black') expect.soft(lightSurfaces, `${profile}/${path}: light panels`).toEqual([]);
     }
     await page.goto('/profil');
     await expect(page.locator('.profile h1')).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath(`${profile}-profile.png`), fullPage: true });
   });
+}
 }
 
 test('enrollment starts at zero and updates the debt when receiving money', async ({ page }, testInfo) => {
@@ -126,7 +137,8 @@ test('finance paginates long lists and preserves actions', async ({ page }, test
 test('navigation and printable pages remain usable', async ({ page }, testInfo) => {
   await mockSchool(page);
   await page.goto('/proprietaire');
-  await page.getByRole('button', { name: 'Ouvrir le menu des modules', exact: true }).click();
+  const openMenu = page.getByRole('button', { name: 'Ouvrir le menu des modules', exact: true });
+  if (await openMenu.isVisible()) await openMenu.click();
   await expect(page.locator('#modules-menu')).toBeVisible();
   const inscriptions = page.locator('#modules-menu a[href="/proprietaire/inscriptions"]');
   const group = page.locator('#modules-menu details').filter({ has: page.locator('a[href="/proprietaire/inscriptions"]') });

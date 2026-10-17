@@ -1,5 +1,6 @@
 <div class="ss life ui-academic-blue">
-  <header class="ss__header">
+  <header class="module-help-header ss__header">
+    <app-module-help />
     <div><h1>{{ title() }}</h1><p>Les informations de votre établissement, de votre classe ou de votre enfant.</p></div>
     <button pButton severity="secondary" variant="outlined" class="ss__btn ss__btn--ghost" type="button" (click)="reload()" [disabled]="loading() || saving() || contextId() === null">Actualiser</button>
   </header>

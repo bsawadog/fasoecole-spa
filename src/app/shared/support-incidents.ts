@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from './help/module-help-button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
@@ -14,10 +15,10 @@ import { environment } from '../../environments/environment';
 interface IncidentEvent { action:string; note:string; created_at:string; first_name:string; last_name:string; }
 interface Incident { id:number; school_id:number; school_name:string; title:string; page_title:string; description:string; status:string; has_image:boolean; updated_at:string; events?:IncidentEvent[]; }
 @Component({
- selector:'app-support-incidents', standalone:true, imports:[InputTextModule, TextareaModule, ButtonModule, MessageModule, FormsModule,DatePipe],
- styles:[`@layer legacy {  :host{display:block} section{background:white;padding:24px;border-radius:16px;margin-bottom:20px} h1,h2{margin-top:0} label{display:block;margin:12px 0} input,select,textarea{display:block;padding:10px;border:1px solid #ccd8d1;border-radius:8px;width:100%;box-sizing:border-box} textarea{min-height:100px} button{padding:9px 14px;margin:5px;border:1px solid #cbd5d1;border-radius:8px;background:#eff7f2;cursor:pointer} button:disabled{opacity:.5;cursor:default} .layout{display:grid;grid-template-columns:minmax(260px,1fr) minmax(300px,1.5fr);gap:20px}.incident{display:block;width:100%;text-align:left}.selected{border-color:#13834b}small{display:block;color:#58685f}img{max-width:100%;max-height:450px} .error{color:#b42318}.event{border-left:3px solid #c5e4d1;padding:10px;margin:12px 0;white-space:pre-wrap}.description{white-space:pre-wrap}@media(max-width:800px){.layout{display:block}} }`],
+ selector:'app-support-incidents', standalone:true, imports: [ModuleHelpButton, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormsModule,DatePipe],
+ styles:[`@layer legacy {  :host{display:block} section{background:var(--theme-surface, white);padding:24px;border-radius:16px;margin-bottom:20px} h1,h2{margin-top:0} label{display:block;margin:12px 0} input,select,textarea{display:block;padding:10px;border:1px solid var(--theme-control-border, #ccd8d1);border-radius:8px;width:100%;box-sizing:border-box} textarea{min-height:100px} button{padding:9px 14px;margin:5px;border:1px solid var(--theme-control-border, #cbd5d1);border-radius:8px;background:var(--theme-success-soft, #eff7f2);cursor:pointer} button:disabled{opacity:.5;cursor:default} .layout{display:grid;grid-template-columns:minmax(260px,1fr) minmax(300px,1.5fr);gap:20px}.incident{display:block;width:100%;text-align:left}.selected{border-color:var(--theme-success, #13834b)}small{display:block;color:var(--theme-muted, #58685f)}img{max-width:100%;max-height:450px} .error{color:var(--theme-danger, #b42318)}.event{border-left:3px solid var(--theme-success-border, #c5e4d1);padding:10px;margin:12px 0;white-space:pre-wrap}.description{white-space:pre-wrap}@media(max-width:800px){.layout{display:block}} }`],
  template:`
- <h1>Incidents et assistance</h1><p>Déclarez un problème, suivez sa prise en charge et confirmez le résultat du nouveau test. Mise à jour toutes les 10 secondes.</p>
+ <header class="ui-page-header module-help-header"><app-module-help /><h1>Incidents et assistance</h1><p>Déclarez un problème, suivez sa prise en charge et confirmez le résultat du nouveau test. Mise à jour toutes les 10 secondes.</p></header>
  @if(error()){<p-message severity="error" class="error" role="alert">{{error()}}</p-message>} @if(notice()){<p-message severity="success" role="status">{{notice()}}</p-message>}
  @if(!admin){<section><button pButton (click)="creating=!creating">{{creating?'Annuler':'Ouvrir un incident'}}</button>
  @if(creating){<form (ngSubmit)="create()" #form="ngForm">

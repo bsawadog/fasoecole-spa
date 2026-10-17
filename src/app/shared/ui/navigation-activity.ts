@@ -12,8 +12,8 @@ import { filter, map, of, switchMap, timer } from 'rxjs';
     }
   `,
   styles: `
-    .navigation-activity { position: fixed; inset: 0 0 auto; height: 3px; z-index: 1000; pointer-events: none; background: #dbeafe; overflow: hidden; }
-    .navigation-activity::after { content: ''; display: block; width: 35%; height: 100%; background: #2563eb; animation: module-progress 1.2s ease-in-out infinite; }
+    .navigation-activity { position: fixed; inset: 0 0 auto; height: 3px; z-index: 1000; pointer-events: none; background: var(--theme-soft, #dbeafe); overflow: hidden; }
+    .navigation-activity::after { content: ''; display: block; width: 35%; height: 100%; background: var(--theme-link, #2563eb); animation: module-progress 1.2s ease-in-out infinite; }
     @keyframes module-progress { from { transform: translateX(-100%); } to { transform: translateX(390%); } }
     @media (prefers-reduced-motion: reduce) { .navigation-activity::after { animation: none; width: 100%; } }
     @media print { .navigation-activity { display: none; } }

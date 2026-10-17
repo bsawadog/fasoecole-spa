@@ -1,5 +1,6 @@
 <main class="resources ui-workspace">
-  <header class="ui-page-header"><h1>{{ title }}</h1>
+  <header class="module-help-header ui-page-header">
+    <app-module-help /><h1>{{ title }}</h1>
     <p>{{ mode === 'assets' ? 'Inventoriez les bâtiments, salles, tables-bancs et équipements, puis suivez leur état et leur emplacement.' : 'Suivez les réceptions, les consommations et les comptages des fournitures de votre établissement.' }}</p>
   </header>
   <p class="resources__intro resource-controls">{{ mode === 'assets' ? 'Un bien durable en service se suit ici. Pour des biens identiques au même emplacement et dans le même état, utilisez une fiche de lot avec sa quantité. Séparez les fiches si leur état ou leur emplacement diffère.' : 'La craie, les chiffons et les produits d’entretien se suivent ici. Les chaises et autres équipements déjà en service se suivent dans Patrimoine et mobilier ; leur réserve peut être suivie comme petit matériel.' }}</p>

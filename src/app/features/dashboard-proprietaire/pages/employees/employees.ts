@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { DateField } from '../../../../shared/ui/date-field';
 import { NumberField } from '../../../../shared/ui/number-field';
 import { SelectField } from '../../../../shared/ui/select-field';
@@ -22,10 +23,11 @@ interface InitialSlot {
 }
 
 @Component({
-  selector: 'app-employees', standalone: true, imports: [DateField, NumberField, SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, StaffPage],
+  selector: 'app-employees', standalone: true, imports: [ModuleHelpButton, DateField, NumberField, SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, StaffPage],
   template: `
     <main class="employees ui-workspace">
-    <header class="ui-page-header">
+    <header class="module-help-header ui-page-header">
+    <app-module-help />
     <h1>Créer un employé</h1>
     <p>Ajoutez une fonction d’enseignant ou de personnel. Utilisez le même courriel pour cumuler plusieurs rôles sur un seul compte. Le rôle propriétaire ne s’attribue pas ici.</p>
     </header>
@@ -114,7 +116,7 @@ interface InitialSlot {
     }
     </main>
   `,
-  styles: [`@layer legacy { :host{display:block}form{max-width:900px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:16px;padding:24px;background:white;border-radius:16px;margin-top:16px}label{display:flex;min-width:0;flex-direction:column;gap:6px}input,select{padding:10px;border:1px solid #cbd5e1;border-radius:8px}button{cursor:pointer}button:disabled{opacity:.5}form p,.employee-schedule{grid-column:1/-1}.employee-schedule{min-width:0;padding:16px;border:1px solid #bfdbfe;border-radius:12px;background:#f8faff}.employee-schedule h3{margin-top:0;color:#1e3a8a}.employee-slot{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;min-width:0;margin:0 0 16px;padding:16px;border:1px solid #cbd5e1;border-radius:8px;background:white}.employee-slot legend{font-weight:600;color:#1e40af} }`],
+  styles: [`@layer legacy { :host{display:block}form{max-width:900px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:16px;padding:24px;background:var(--theme-surface, white);border-radius:16px;margin-top:16px}label{display:flex;min-width:0;flex-direction:column;gap:6px}input,select{padding:10px;border:1px solid var(--theme-control-border, #cbd5e1);border-radius:8px}button{cursor:pointer}button:disabled{opacity:.5}form p,.employee-schedule{grid-column:1/-1}.employee-schedule{min-width:0;padding:16px;border:1px solid var(--theme-soft, #bfdbfe);border-radius:12px;background:var(--theme-inset, #f8faff)}.employee-schedule h3{margin-top:0;color:var(--theme-ink, #1e3a8a)}.employee-slot{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;min-width:0;margin:0 0 16px;padding:16px;border:1px solid var(--theme-control-border, #cbd5e1);border-radius:8px;background:var(--theme-surface, white)}.employee-slot legend{font-weight:600;color:var(--theme-link-hover, #1e40af)} }`],
 })
 export class EmployeesPage {
   private readonly auth = inject(AuthService);

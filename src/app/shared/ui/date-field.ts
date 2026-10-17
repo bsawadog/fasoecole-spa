@@ -49,7 +49,7 @@ export function formatLocalDate(value: Date, mode: DateFieldMode): string {
     @if (invalidText) { <small class="form-validation-error" role="alert">Saisissez une date valide.</small> }
     @else if (errorMessage) { <small class="form-validation-error" role="alert">{{ errorMessage }}</small> }
   `,
-  styles: `:host { display: inline-block; min-width: 0; max-width: 100%; width: 100%; } small { display: block; color: #b42318; font-size: .8rem; margin-top: .3rem; }`,
+  styles: `:host { display: inline-block; min-width: 0; max-width: 100%; width: 100%; } small { display: block; color: var(--theme-danger, #b42318); font-size: .8rem; margin-top: .3rem; }`,
 })
 export class DateField extends FormField<string> implements OnChanges {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);

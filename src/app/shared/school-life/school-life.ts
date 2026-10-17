@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../help/module-help-button';
 import { DateField } from '../ui/date-field';
 import { NumberField } from '../ui/number-field';
 import { SelectField } from '../ui/select-field';
@@ -24,7 +25,7 @@ const empty = (): LifeOverview => ({ students: [], events: [], observations: [],
 
 @Component({
   selector: 'app-school-life', standalone: true,
-  imports: [DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, DatePipe, FormsModule, RouterLink, FormValidationDirective],
+  imports: [ModuleHelpButton, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, DatePipe, FormsModule, RouterLink, FormValidationDirective],
   templateUrl: './school-life.html', styleUrls: ['../self-space/self-space.scss', './school-life.scss'],
 })
 export class SchoolLifePage implements OnInit {

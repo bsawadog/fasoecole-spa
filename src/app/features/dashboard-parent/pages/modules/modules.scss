@@ -1,6 +1,6 @@
 @layer legacy {
-.portal-appointment { border-bottom: 1px solid #e2e8f0; padding: 1rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-.portal-receipt { border: 2px solid #16a34a; }
+.portal-appointment { border-bottom: 1px solid var(--theme-border, #e2e8f0); padding: 1rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.portal-receipt { border: 2px solid var(--theme-success, #16a34a); }
 @media print {
   .portal--receipt > :not(.portal-receipt), .portal-no-print { display: none !important; }
   .portal-receipt { border: 0; box-shadow: none; }

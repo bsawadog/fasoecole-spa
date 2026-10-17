@@ -3,274 +3,13 @@ import { SelectOption } from '../../../../shared/ui/select-field';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { afterRenderEffect, Component, computed, effect, ElementRef, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth';
-
-interface HelpQuestion {
-  id: string;
-  category: string;
-  question: string;
-  steps: string[];
-  note?: string;
-  route: string;
-  linkLabel: string;
-}
-
-const QUESTIONS: HelpQuestion[] = [
-  { id: 'tax-obligations', category: 'Finance et comptabilité', question: 'Comment suivre les impôts, taxes et règlements de mon établissement ?', steps: [
-    'Ouvrez « Impôts et taxes » dans « Finance et comptabilité », puis choisissez l’année fiscale.',
-    'Ajoutez une obligation applicable : TVA, IUTS, TPA, patente, impôt sur le revenu, taxe foncière ou autre taxe. Renseignez la période, le montant confirmé par votre comptable, l’échéance, l’organisme et la référence de déclaration.',
-    'Pour l’IUTS et la TPA déjà saisis dans les salaires, utilisez « Reprendre IUTS / TPA des salaires », choisissez le mois et vérifiez les totaux. Les montants positifs sont repris sans créer de doublons ; les règlements existants sont conservés lors d’une actualisation.',
-    'Ouvrez la fiche de l’obligation pour enregistrer un règlement partiel ou complet avec son mode et sa référence de quittance. Ne ressaisissez pas ce règlement dans les dépenses.',
-    'Consultez le reste à payer, les échéances en retard et les anciens soldes. Filtrez le registre par type ou statut, puis exportez-le en CSV ou imprimez-le.',
-  ], note: 'Aucun calcul fiscal ni déclaration automatique. Une paie versée à un employé ne règle pas l’IUTS à l’administration. Les paiements fiscaux utilisent les dépenses et la caisse existantes. Une obligation manuelle peut être corrigée ou annulée avant son premier règlement, avec un motif conservé. Les anciens paiements saisis directement dans les dépenses ne sont pas rapprochés automatiquement. Ce module se délègue séparément dans Personnel & accès.', route: '/proprietaire/impots-taxes', linkLabel: 'Ouvrir les impôts et taxes' },
-  { id: 'payroll-taxes', category: 'Finance et comptabilité', question: 'Comment renseigner manuellement l’IUTS et la TPA ?', steps: [
-    'Préparez les salaires du mois, puis ouvrez la fiche de l’employé dans « Salaires ».',
-    'Avant le premier versement de la rémunération concernée, cliquez sur « Saisir IUTS / TPA ».',
-    'Indiquez les montants calculés par votre comptable, en FCFA, avec un motif ou une référence. Laissez zéro si le montant est nul ou non renseigné.',
-    'L’IUTS est déduit du net à verser à l’employé. La TPA est affichée séparément, à la charge de l’employeur ; elle ne réduit pas le net.',
-    'Vérifiez le registre, puis enregistrez les versements et éditez la fiche de paie. Les montants fiscaux sont verrouillés après le premier versement.',
-  ], note: 'La saisie s’applique à une rémunération pour un mois précis et ne se reporte pas automatiquement au mois suivant. Elle est historisée. Reprenez ces montants dans « Impôts et taxes » pour suivre le règlement à l’administration. Aucun calcul de barème ni déclaration automatique. Les fiches déjà éditées restent inchangées.', route: '/proprietaire/salaires', linkLabel: 'Saisir les montants fiscaux' },
-  { id: 'payroll', category: 'Finance et comptabilité', question: 'Comment suivre les salaires et les mois payés de tous les employés ?', steps: [
-    'Ouvrez « Salaires », en première position dans « Finance et comptabilité », puis choisissez le mois de paie.',
-    'Consultez les enseignants et le personnel, avec leur rémunération et leurs matières. Une personne ayant plusieurs fonctions apparaît sur une seule ligne ; chaque rémunération reste détaillée.',
-    'Cliquez sur « Préparer les salaires du mois » pour préparer les rémunérations configurées, sans enregistrer de versement.',
-    'Ouvrez la fiche de l’employé et enregistrez les versements sur la fonction concernée. Un paiement partiel est possible ; le dépassement du reste à payer est refusé.',
-    'Consultez les mois enregistrés pour distinguer les mois payés, partiellement payés ou encore à payer.',
-  ], note: 'Les versements utilisent la même paie que « Dépenses & budget » et la caisse : ne les ressaisissez pas. Les salaires à définir restent visibles. Pour un enseignant horaire, le montant dû reprend les présences et heures supplémentaires enregistrées.', route: '/proprietaire/salaires', linkLabel: 'Ouvrir les salaires' },
-  { id: 'payroll-documents', category: 'Finance et comptabilité', question: 'Comment éditer une fiche de paie ou une attestation de travail ?', steps: [
-    'Dans « Salaires », choisissez le mois et ouvrez la fiche de l’employé.',
-    'Après préparation du mois, utilisez « Éditer la fiche de paie ». Le document indique les rémunérations et les versements enregistrés, y compris lorsque le mois n’est pas encore entièrement payé.',
-    'Pour un employé actif ayant commencé son emploi, utilisez « Éditer une attestation de travail ». Les fonctions et les matières renseignées sont reprises, sans montants de salaire.',
-    'Vérifiez l’aperçu, puis utilisez « Imprimer / PDF le document ». La signature et le cachet relèvent de l’établissement.',
-    'Retrouvez les éditions conservées dans la fiche. Une correction de données nécessite une nouvelle édition ; les documents antérieurs restent inchangés.',
-  ], note: 'La fiche reprend les rémunérations et versements enregistrés ; elle ne calcule pas de retenues ou cotisations non renseignées. Le module Salaires se délègue séparément dans « Personnel & accès ».', route: '/proprietaire/salaires', linkLabel: 'Consulter les fiches et attestations' },
-  { id: 'assets', category: 'Finances', question: 'Comment gérer les bâtiments et le mobilier de mon établissement ?', steps: [
-    'Ouvrez « Patrimoine et mobilier » dans la rubrique Finances.',
-    'Ajoutez un bien avec une référence unique : bâtiment, salle, table-banc, chaise, armoire ou équipement.',
-    'Renseignez son emplacement, son responsable, son état et son mode de détention. Pour un lot homogène, indiquez sa quantité.',
-    'Vous pouvez préciser la valeur d’acquisition unitaire et le prochain entretien.',
-    'Modifiez la fiche avec un motif pour suivre un déplacement, une réparation ou une sortie du patrimoine. L’historique reste consultable.',
-    'Filtrez les biens à surveiller, puis exportez le registre en CSV ou imprimez-le.',
-  ], note: 'Les biens durables en service se suivent ici. La valeur indiquée est une valeur d’acquisition renseignée, sans amortissement. Les achats et paiements se saisissent dans « Dépenses & budget ».', route: '/proprietaire/patrimoine', linkLabel: 'Ouvrir le patrimoine et le mobilier' },
-  { id: 'stock', category: 'Finances', question: 'Comment gérer la craie, les produits d’entretien et les autres fournitures ?', steps: [
-    'Ouvrez « Stocks et fournitures » et ajoutez un article avec sa référence, son unité, son emplacement et son seuil minimum.',
-    'Enregistrez une entrée pour le stock initial ou une réception. Utilisez toujours la même unité pour cet article.',
-    'Pour une consommation ou une distribution, enregistrez une sortie avec la quantité, le motif et le destinataire ou service.',
-    'Lors d’un inventaire physique, saisissez la quantité totale réellement comptée : l’écart est calculé et conservé dans le journal.',
-    'Consultez les articles à réapprovisionner et l’historique des mouvements. Une sortie supérieure au disponible est refusée.',
-    'Archivez les articles inutilisés après avoir ramené leur stock à zéro. Les mouvements restent consultables.',
-  ], note: 'Pour corriger une erreur, ajoutez un mouvement inverse ou un inventaire motivé ; ne supprimez pas l’historique. Les deux modules peuvent être délégués séparément dans « Personnel & accès », avec le profil proposé « Intendant / gestionnaire de matériel ».', route: '/proprietaire/stocks', linkLabel: 'Ouvrir les stocks et fournitures' },
-  { id: 'profiles', category: 'Compte et accès', question: 'Comment passer du profil propriétaire au profil enseignant ou parent ?', steps: [
-    'Ouvrez le menu de votre profil en haut de la page, près de votre nom.',
-    'Dans « Changer d’espace », choisissez le profil que vous souhaitez utiliser.',
-    'Le menu et les informations affichés correspondent alors au profil sélectionné.',
-    'Pour revenir à la gestion de votre établissement, choisissez de nouveau l’espace propriétaire.',
-  ], note: 'Seuls les rôles déjà attribués à votre compte sont proposés. Changer d’espace ne donne pas de nouvelles autorisations.', route: '/proprietaire', linkLabel: 'Retourner à mon espace' },
-  { id: 'shared-account', category: 'Compte et accès', question: 'Comment donner plusieurs rôles à une même personne ?', steps: [
-    'Utilisez toujours le même courriel pour cette personne.',
-    'Pour ajouter le rôle parent, associez ce courriel à un enfant depuis « Élèves par classe ». Pour ajouter une fonction d’enseignant ou de personnel, utilisez « Créer un employé ».',
-    'Le compte existant conserve son identité et son mot de passe ; la nouvelle fonction lui est ajoutée.',
-    'Un compte déjà activé reçoit une notification. Un compte qui doit encore être activé reçoit un lien pour terminer cette action.',
-    'La personne peut ensuite choisir son espace depuis le menu de son profil.',
-  ], note: 'Un propriétaire peut aussi être parent, enseignant ou employé. Le rôle propriétaire ne peut pas être attribué depuis la création d’un employé.', route: '/proprietaire/employes', linkLabel: 'Ajouter une fonction' },
-  { id: 'permissions', category: 'Personnel', question: 'Comment autoriser les modules d’un employé ?', steps: [
-    'Ouvrez « Personnel & accès » et sélectionnez l’établissement concerné.',
-    'Ajoutez ou modifiez l’employé, puis choisissez ses modules autorisés.',
-    'Utilisez un profil proposé, par exemple comptable ou secrétaire, comme point de départ puis ajustez les cases selon ses missions.',
-    'Vérifiez les trois groupes : administration et enseignement, vie scolaire et familles, finances.',
-    'Enregistrez et vérifiez que son accès à la gestion est actif.',
-  ], note: 'Les modules sont indépendants : autoriser les élèves ne donne pas automatiquement accès au portail parents ou à la messagerie. Aucun module signifie aucun accès à la gestion. Les opérations réservées au propriétaire restent protégées.', route: '/proprietaire/personnel', linkLabel: 'Gérer le personnel et les accès' },
-  { id: 'teacher-pay', category: 'Personnel', question: 'Comment fixer le salaire ou le taux horaire d’un nouvel enseignant ?', steps: [
-    'Ouvrez « Créer un employé » et choisissez la fonction « Enseignant ».',
-    'Renseignez son identité, ses coordonnées et les informations d’embauche.',
-    'Choisissez « Salaire mensuel fixe » et saisissez le montant en FCFA, ou « Taux horaire avec créneaux » et saisissez le montant par heure.',
-    'Indiquez la date d’effet du tarif.',
-    'Si vous le souhaitez, choisissez plusieurs matières enseignées et une classe. Sans classe, les matières restent dans le dossier pour une affectation ultérieure.',
-    'Préparez les créneaux hebdomadaires maintenant ou plus tard : classe, matière, jour, heure de début, heure de fin et date de début.',
-    'Enregistrez : les affectations aux classes et matières ainsi que le planning sont créés avec l’enseignant.',
-  ], note: 'La classe et les créneaux sont facultatifs à la création, y compris pour le taux horaire. Une classe sélectionnée nécessite au moins une matière. Les chevauchements de créneaux sont refusés. La paie horaire dépend ensuite des heures pointées et des heures supplémentaires.', route: '/proprietaire/employes', linkLabel: 'Créer un enseignant et sa rémunération' },
-  { id: 'calendar', category: 'Vie scolaire et familles', question: 'Où consulter et organiser le calendrier scolaire ?', steps: [
-    'Sélectionnez le bon établissement et ouvrez « Calendrier scolaire ».',
-    'Consultez les événements de la période souhaitée.',
-    'Si vous êtes autorisé à les gérer, renseignez les dates et les informations des examens, réunions ou vacances.',
-    'Vérifiez les informations enregistrées dans le calendrier.',
-  ], route: '/proprietaire/calendrier', linkLabel: 'Ouvrir le calendrier scolaire' },
-  { id: 'discipline', category: 'Vie scolaire et familles', question: 'Où suivre les observations et incidents de vie scolaire ?', steps: [
-    'Ouvrez « Discipline et vie scolaire » pour l’établissement concerné.',
-    'Consultez les observations et incidents concernant les élèves.',
-    'Renseignez les faits et les informations de suivi dans les actions disponibles selon vos droits.',
-    'Consultez régulièrement le suivi pour accompagner les élèves concernés.',
-  ], route: '/proprietaire/discipline', linkLabel: 'Ouvrir la discipline et la vie scolaire' },
-  { id: 'library', category: 'Vie scolaire et familles', question: 'Comment suivre les livres et les prêts ?', steps: [
-    'Ouvrez « Bibliothèque » et consultez le catalogue de l’établissement.',
-    'Ajoutez les ouvrages avec les actions de gestion disponibles selon vos droits.',
-    'Enregistrez les prêts et les retours pour tenir la disponibilité des livres à jour.',
-  ], route: '/proprietaire/bibliotheque', linkLabel: 'Ouvrir la bibliothèque' },
-  { id: 'homework', category: 'Suivi scolaire', question: 'Où suivre les remises et corrections des devoirs ?', steps: [
-    'Ouvrez « Suivi des devoirs » pour l’établissement concerné.',
-    'Consultez les devoirs et les remises des élèves.',
-    'Vérifiez les corrections et commentaires disponibles ; effectuez les actions correspondant à vos droits.',
-  ], route: '/proprietaire/suivi-devoirs', linkLabel: 'Ouvrir le suivi des devoirs' },
-  { id: 'parent-portal', category: 'Vie scolaire et familles', question: 'À quoi sert le portail parents ?', steps: [
-    'Ouvrez « Portail parents » pour l’établissement sélectionné.',
-    'Consultez et gérez les annonces, documents et devoirs destinés aux familles selon vos autorisations.',
-    'Utilisez les fonctions de rendez-vous pour organiser les échanges avec les familles.',
-    'Pour une conversation individuelle ou groupée, ouvrez le module « Messages ».',
-  ], note: 'L’accès au portail parents et l’accès à la messagerie se règlent séparément dans « Personnel & accès ».', route: '/proprietaire/portail-parents', linkLabel: 'Ouvrir le portail parents' },
-  { id: 'administrative-requests', category: 'Vie scolaire et familles', question: 'Où traiter les demandes de certificats et attestations ?', steps: [
-    'Ouvrez « Demandes administratives ».',
-    'Consultez la demande, son bénéficiaire et les informations fournies.',
-    'Effectuez le traitement proposé selon vos autorisations et vérifiez son état.',
-  ], note: 'Ce module est distinct des « Demandes de compte », qui servent à approuver les accès des utilisateurs.', route: '/proprietaire/demandes-administratives', linkLabel: 'Ouvrir les demandes administratives' },
-  { id: 'financial-tools', category: 'Finances', question: 'Comment distinguer dépenses, caisse et états financiers ?', steps: [
-    'Utilisez « Dépenses & budget » pour suivre les charges, salaires, versements et budgets.',
-    'Utilisez « Brouillard de caisse » pour les ouvertures, mouvements et clôtures de caisse.',
-    'Utilisez « États financiers » pour consulter, exporter ou imprimer les états proposés.',
-    'Dans « Personnel & accès », attribuez séparément les modules nécessaires à chaque employé.',
-  ], route: '/proprietaire/etats-financiers', linkLabel: 'Consulter les états financiers' },
-  { id: 'request', category: 'Établissement', question: 'Comment demander la création d’un établissement ?', steps: [
-    'Ouvrez « Créer une école » dans le menu.',
-    'Renseignez le nom, le type et l’adresse de l’établissement.',
-    'Indiquez les nombres prévus d’élèves ou étudiants, de classes et d’enseignants. Ces nombres sont des estimations.',
-    'Cliquez sur « Envoyer pour approbation », puis confirmez dans la fenêtre de confirmation.',
-    'Attendez l’approbation du SUPER_ADMIN. Vous pouvez découvrir les modules pendant cette attente.',
-  ], route: '/proprietaire/creer-ecole', linkLabel: 'Ouvrir la demande d’établissement' },
-  { id: 'pending', category: 'Établissement', question: 'Pourquoi les informations des modules ne sont-elles pas encore visibles ?', steps: [
-    'Vérifiez si la demande est en brouillon ou en attente d’approbation.',
-    'Si elle est en brouillon, complétez les informations et envoyez la demande depuis « Créer une école ».',
-    'Si elle est en attente, ouvrez la demande et cliquez sur « Vérifier l’approbation ».',
-    'Après activation par le SUPER_ADMIN, commencez la configuration réelle depuis « Configuration de l’école ».',
-  ], note: 'L’aperçu des modules présente les fonctionnalités sans vous demander de saisir les élèves ou les enseignants avant approbation.', route: '/proprietaire/creer-ecole', linkLabel: 'Consulter ma demande' },
-  { id: 'setup', category: 'Établissement', question: 'Par où commencer après l’approbation de mon établissement ?', steps: [
-    'Sélectionnez le bon établissement dans l’espace propriétaire.',
-    'Ouvrez « Configuration de l’école » et vérifiez l’année scolaire et les matières créées automatiquement. Adaptez leurs dates et leur contenu à votre établissement.',
-    'Ajoutez les niveaux, puis les classes et les matières.',
-    'Ajoutez les enseignants et leurs affectations, puis les élèves ou étudiants dans les classes.',
-    'Configurez les frais scolaires et les accès des autres employés selon vos besoins.',
-  ], route: '/proprietaire/gestion', linkLabel: 'Configurer mon établissement' },
-  { id: 'year', category: 'Établissement', question: 'Comment consulter une autre école ou une année antérieure ?', steps: [
-    'Choisissez l’établissement dans le sélecteur en haut de l’espace propriétaire.',
-    'Choisissez ensuite l’année scolaire à consulter.',
-    'Ouvrez le module souhaité pour consulter les informations de cette année.',
-    'Pour reprendre le travail courant, sélectionnez de nouveau l’année indiquée « en cours ».',
-  ], note: 'Une année clôturée est consultable comme archive ; ses données scolaires ne doivent plus être modifiées.', route: '/proprietaire', linkLabel: 'Retourner à l’accueil' },
-  { id: 'classes', category: 'Établissement', question: 'Comment créer les classes et les matières ?', steps: [
-    'Ouvrez « Configuration de l’école » pour l’établissement sélectionné.',
-    'Créez l’année scolaire et les niveaux avant les classes.',
-    'Ajoutez chaque classe avec son niveau, son année scolaire et sa capacité.',
-    'Ajoutez les matières de l’établissement avant d’affecter les enseignants.',
-  ], route: '/proprietaire/gestion', linkLabel: 'Gérer les classes et matières' },
-  { id: 'student', category: 'Élèves et parents', question: 'Comment ajouter un élève ou un étudiant dans une classe ?', steps: [
-    'Ouvrez le module « Inscriptions » pour l’établissement concerné.',
-    'Cliquez sur « Nouvel élève », puis choisissez sa classe d’accueil dans l’année scolaire souhaitée.',
-    'Renseignez l’identité, les coordonnées et le matricule, ou laissez le matricule vide pour une génération automatique.',
-    'Complétez les responsables et les frais scolaires applicables, puis confirmez l’inscription.',
-    'Consultez ensuite son dossier depuis « Élèves par classe » ou « Étudiants par classe » pour une université.',
-  ], note: 'L’élève est créé et rattaché à sa classe lors de l’inscription. La liste par classe sert ensuite au suivi du dossier, des parents et des transferts.', route: '/proprietaire/inscriptions', linkLabel: 'Ouvrir les inscriptions' },
-  { id: 'parent', category: 'Élèves et parents', question: 'Comment associer un parent à un élève ?', steps: [
-    'Ouvrez la liste des élèves ou étudiants de la classe.',
-    'Repérez la ligne de l’enfant concerné.',
-    'Cliquez sur le bouton d’ajout du parent sur cette ligne.',
-    'Renseignez son identité, ses coordonnées et son lien avec l’enfant. Si son compte existe déjà, utilisez son courriel habituel, puis enregistrez.',
-    'Vérifiez que le parent figure maintenant sur la ligne de l’enfant.',
-  ], note: 'Lorsqu’un parent demande lui-même un compte, il fournit les matricules de ses enfants. Vérifiez son identité et les correspondances avant d’approuver sa demande.', route: '/proprietaire/classes', linkLabel: 'Associer un parent' },
-  { id: 'approval', category: 'Élèves et parents', question: 'Comment approuver une demande de compte ?', steps: [
-    'Ouvrez « Demandes de compte ».',
-    'Consultez le rôle demandé et l’établissement concerné.',
-    'Pour un élève, vérifiez le matricule ; pour un enseignant, vérifiez le numéro d’employé ; pour un parent, vérifiez les enfants indiqués.',
-    'Vérifiez que l’identité et les associations correspondent à vos dossiers.',
-    'Approuvez la demande conforme ou refusez-la si les informations ne correspondent pas.',
-  ], route: '/proprietaire/demandes', linkLabel: 'Consulter les demandes' },
-  { id: 'teacher', category: 'Personnel', question: 'Comment créer un enseignant et l’affecter à une classe ?', steps: [
-    'Ouvrez « Créer un employé » et choisissez la fonction « Enseignant ».',
-    'Renseignez son identité, ses coordonnées et sa rémunération, puis enregistrez.',
-    'Vous pouvez choisir plusieurs matières et une classe à la création, ou préparer cette affectation plus tard.',
-    'Dans « Enseignants par classe », choisissez la classe puis « Affecter un enseignant existant » et cochez les matières concernées.',
-    'Vérifiez l’enseignant dans la liste et consultez l’état de son invitation.',
-    'Pour d’autres classes ou matières, utilisez l’affectation d’un enseignant existant.',
-  ], route: '/proprietaire/employes', linkLabel: 'Créer un enseignant' },
-  { id: 'existing-teacher', category: 'Personnel', question: 'Comment affecter un enseignant déjà enregistré ?', steps: [
-    'Ouvrez « Enseignants par classe » et choisissez la classe d’accueil.',
-    'Cliquez sur « Affecter un enseignant existant ».',
-    'Choisissez un enseignant disponible dans les établissements que vous possédez.',
-    'Cochez une ou plusieurs matières de cette classe, par exemple Français et Mathématiques, puis enregistrez l’affectation.',
-  ], note: 'Le catalogue des enseignants d’un autre propriétaire ne doit pas être accessible depuis votre compte.', route: '/proprietaire/enseignants', linkLabel: 'Affecter un enseignant' },
-  { id: 'employee', category: 'Personnel', question: 'Comment ajouter un comptable, une secrétaire ou un autre employé ?', steps: [
-    'Ouvrez « Créer un employé ».',
-    'Sélectionnez l’établissement et renseignez l’identité, les coordonnées et la fonction.',
-    'Enregistrez l’employé.',
-    'Depuis « Personnel & accès », attribuez uniquement les modules nécessaires à son travail et vérifiez que son accès est actif.',
-  ], route: '/proprietaire/employes', linkLabel: 'Créer un employé' },
-  { id: 'import', category: 'Import et export', question: 'Comment importer les enseignants ou les élèves depuis Excel ?', steps: [
-    'Ouvrez « Enseignants par classe » ou « Élèves / Étudiants par classe ».',
-    'Sélectionnez l’établissement et l’année scolaire. Les classes et les matières doivent déjà être créées.',
-    'Ouvrez « Importer depuis un fichier » et téléchargez le modèle CSV.',
-    'Conservez les noms des colonnes. Utilisez les noms exacts des classes et matières, des dates AAAA-MM-JJ et des identifiants au format texte.',
-    'Enregistrez en CSV UTF-8 ou en Excel .xlsx, puis sélectionnez le fichier.',
-    'Consultez la prévisualisation et corrigez les erreurs avant de confirmer l’import.',
-    'Vérifiez le résultat de chaque ligne et l’état des invitations dans les listes.',
-  ], note: 'Maximum : 500 lignes et 2 Mo. Seule la première feuille Excel est lue. Remplacez les formules par leurs valeurs. Répétez un enseignant avec le même courriel pour ses différentes affectations.', route: '/proprietaire/classes', linkLabel: 'Ouvrir la rubrique d’import des élèves' },
-  { id: 'import-error', category: 'Import et export', question: 'Que faire si certaines lignes d’un import échouent ?', steps: [
-    'Consultez la colonne « Résultat » pour identifier les lignes enregistrées et les erreurs.',
-    'Gardez la page ouverte : les lignes réussies restent enregistrées.',
-    'Si le problème peut être résolu sans changer le fichier, corrigez sa cause puis utilisez « Confirmer / reprendre l’import ».',
-    'Si le fichier doit être corrigé, préparez un nouveau fichier avec uniquement les lignes restant à ajouter.',
-    'Si l’élève a été créé mais pas son parent, ajoutez le parent depuis la liste des élèves ou reprenez cette étape sur la page d’import encore ouverte.',
-  ], note: 'Ne réimportez pas les lignes réussies après avoir rechargé la page : la progression conservée en mémoire est alors perdue.', route: '/proprietaire/classes', linkLabel: 'Consulter les élèves enregistrés' },
-  { id: 'export', category: 'Import et export', question: 'Comment récupérer toutes les données de mon établissement ?', steps: [
-    'Ouvrez « Exporter mes données ».',
-    'Sélectionnez l’établissement concerné.',
-    'Téléchargez le fichier Excel pour conserver les informations de l’établissement.',
-    'Téléchargez également les documents proposés si vous souhaitez conserver les pièces jointes.',
-    'Conservez les fichiers dans un emplacement sécurisé et accessible uniquement aux personnes autorisées.',
-  ], route: '/proprietaire/export', linkLabel: 'Exporter mes données' },
-  { id: 'invitation', category: 'Personnel', question: 'Que faire si une invitation de compte n’arrive pas ?', steps: [
-    'Vérifiez l’adresse de courriel saisie pour la personne.',
-    'Consultez l’état de l’invitation dans la liste concernée.',
-    'Demandez au destinataire de vérifier ses courriels indésirables.',
-    'Utilisez « Renvoyer le lien » lorsque cette action est proposée.',
-    'Si l’envoi échoue à nouveau, contactez l’administrateur de la plateforme pour vérifier le service de messagerie.',
-  ], route: '/proprietaire/enseignants', linkLabel: 'Consulter les invitations des enseignants' },
-  { id: 'attendance', category: 'Suivi scolaire', question: 'Comment traiter un retard ou une absence signalés par un parent ?', steps: [
-    'Ouvrez l’accueil et consultez les signalements en attente.',
-    'Vérifiez l’enfant, la date et le motif du signalement.',
-    'Utilisez l’action d’enregistrement si vous êtes autorisé à traiter ce signalement.',
-    'Vérifiez la mise à jour des présences du jour pour la date concernée.',
-    'Pour retrouver un signalement déjà enregistré, ouvrez l’historique.',
-  ], route: '/proprietaire', linkLabel: 'Consulter les présences et signalements' },
-  { id: 'grades', category: 'Suivi scolaire', question: 'Comment consulter les notes et les bulletins ?', steps: [
-    'Sélectionnez l’établissement et l’année scolaire.',
-    'Ouvrez « Notes & bulletins ».',
-    'À l’étape 1, créez les périodes (trimestres ou semestres). À l’étape 2, créez les évaluations de la classe.',
-    'À l’étape 3, choisissez une évaluation et entrez les notes. À l’étape 4, vérifiez les moyennes, le classement et les appréciations.',
-    'À l’étape 5, générez les bulletins, vérifiez leur aperçu puis imprimez-les ou enregistrez-les en PDF. Publiez la période pour les rendre définitifs.',
-    'Utilisez les outils complémentaires pour la synthèse de l’établissement, les coefficients des matières ou l’historique des notes.',
-  ], route: '/proprietaire/notes', linkLabel: 'Ouvrir les notes et bulletins' },
-  { id: 'fees', category: 'Finances', question: 'Comment préparer les frais scolaires et suivre les paiements ?', steps: [
-    'Configurez les types de frais et les tarifs depuis « Configuration de l’école ».',
-    'Lors d’une inscription, sélectionnez les frais applicables à l’élève ou étudiant.',
-    'Ouvrez « Recouvrement » pour consulter les factures et les soldes.',
-    'Enregistrez les paiements avec leur date, leur montant et leur mode de règlement.',
-    'Vérifiez le solde après chaque enregistrement.',
-  ], route: '/proprietaire/frais', linkLabel: 'Consulter le recouvrement' },
-  { id: 'message', category: 'Communication', question: 'Comment envoyer un message à plusieurs destinataires ?', steps: [
-    'Ouvrez la messagerie depuis l’icône près de votre profil.',
-    'Créez un nouveau message pour l’établissement concerné.',
-    'Recherchez les destinataires ou sélectionnez les groupes proposés : enseignants, élèves / étudiants ou parents.',
-    'Vérifiez le nombre de destinataires sélectionnés et rédigez votre message.',
-    'Ajoutez les documents souhaités, puis envoyez le message.',
-  ], route: '/proprietaire/messages', linkLabel: 'Ouvrir la messagerie' },
-  { id: 'closure', category: 'Suivi scolaire', question: 'Comment clôturer une année et préparer la suivante ?', steps: [
-    'Ouvrez « Clôturer année » pour l’établissement et l’année concernés.',
-    'Vérifiez les inscriptions, les résultats et les soldes avant de continuer.',
-    'Préparez la nouvelle année et renseignez les passages ou redoublements avec les classes d’accueil.',
-    'Vérifiez les informations et les soldes à transférer.',
-    'Confirmez la clôture uniquement lorsque les décisions et les transferts sont corrects.',
-    'Sélectionnez ensuite la nouvelle année pour poursuivre les activités.',
-  ], note: 'Les notes ne sont pas recopiées dans la nouvelle année. L’ancienne année reste consultable comme archive.', route: '/proprietaire/cloture', linkLabel: 'Ouvrir la clôture annuelle' },
-];
+import { HELP_MODULES } from '../../../../shared/help/module-help';
+import { ACCOUNT_HELP,PROFILE_HELP_QUESTIONS } from '../../../../shared/help/profile-help-content';
+import { OWNER_HELP_QUESTIONS } from './owner-help-content';
 
 @Component({
   selector: 'app-owner-help', standalone: true, imports: [SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, RouterLink],
@@ -278,11 +17,36 @@ const QUESTIONS: HelpQuestion[] = [
 })
 export class OwnerHelp {
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly host:ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly params=toSignal(this.route.queryParamMap,{initialValue:this.route.snapshot.queryParamMap});
+  private readonly fragment=toSignal(this.route.fragment,{initialValue:this.route.snapshot.fragment});
   readonly search = signal('');
   readonly category = signal('Toutes');
   readonly selected = signal<string | null>(null);
-  readonly categories = ['Toutes', ...new Set(QUESTIONS.map(item => item.category))];
+  readonly moduleFilter=signal<string|null>(null);
+  private readonly focusTarget=signal<string|null>(null);
+  readonly availableModules=computed(()=>HELP_MODULES.filter(module=>{
+    const role=this.auth.role();
+    if(module.role==='common')return true;
+    if(module.role!==role && !(role==='admin'&&module.role==='proprietaire'))return false;
+    if(module.role==='proprietaire'&&role!=='admin'&&!this.auth.isSchoolOwner())return !!module.access&&this.auth.ownerModules().has(module.access);
+    return true;
+  }));
+  readonly context=computed(()=>this.availableModules().find(module=>module.key===this.moduleFilter())??null);
+  private readonly articles=computed(()=>{
+    const role=this.auth.role(),modules=this.availableModules(),ids=new Set(modules.flatMap(module=>module.topics));
+    const owner=role==='proprietaire'||role==='admin'?OWNER_HELP_QUESTIONS.filter(item=>ids.has(item.id)).map(item=>({...item,
+      category:item.category==='Finances'?'Finance et comptabilité':item.category,
+      route:role==='admin'&&!this.context()?.route.startsWith('/proprietaire')?item.route.replace('/proprietaire','/admin'):item.route,
+    })):[];
+    return [...owner,...PROFILE_HELP_QUESTIONS.filter(item=>ids.has(item.id)),ACCOUNT_HELP];
+  });
+  readonly categories=computed(()=>['Toutes',...new Set(this.articles().filter(item=>!this.context()||this.context()!.topics.includes(item.id)).map(item=>item.category))]);
+  readonly guideTitle=computed(()=>({proprietaire:'Guide du propriétaire et du personnel',enseignant:'Guide enseignant',parent:'Guide parent',etudiant:'Guide élève',admin:'Guide administrateur'}[this.auth.role()??'proprietaire']));
   readonly waitingApproval = computed(() => {
+    if(this.auth.role()!=='proprietaire')return false;
     const schools = this.auth.ownerAccess() ?? [];
     const school = schools.find(item => item.schoolId === this.auth.schoolContextId()) ?? schools[0];
     return school && ['DRAFT', 'PENDING_APPROVAL'].includes(school.status ?? '');
@@ -290,10 +54,32 @@ export class OwnerHelp {
   readonly questions = computed(() => {
     const normalize = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
     const words = normalize(this.search()).trim().split(/\s+/).filter(Boolean);
-    return QUESTIONS.filter(item => (this.category() === 'Toutes' || item.category === this.category())
+    const context=this.context();
+    const questions=this.articles().filter(item => (!context||context.topics.includes(item.id)) && (this.category() === 'Toutes' || item.category === this.category())
       && words.every(word => normalize([item.question, item.category, ...item.steps, item.note ?? ''].join(' ')).includes(word)));
+    const primary=this.focusTarget();
+    return context?questions.sort((a,b)=>Number(b.id===primary)-Number(a.id===primary)):questions;
   });
+  constructor(){
+    effect(()=>{
+      const requested=this.params().get('module'),fragment=this.fragment();
+      const module=this.availableModules().find(item=>item.key===requested);
+      this.moduleFilter.set(module?.key??null);this.search.set('');this.category.set('Toutes');
+      const candidate=fragment?.startsWith('question-')?fragment.slice('question-'.length):undefined;
+      const target=candidate&&(module?module.topics.includes(candidate):this.articles().some(item=>item.id===candidate))?candidate:module?.primary;
+      this.selected.set(target??null);this.focusTarget.set(target??null);
+    });
+    afterRenderEffect(()=>{
+      const target=this.focusTarget();if(!target)return;
+      const heading=this.host.nativeElement.querySelector<HTMLButtonElement>(`#question-${target}`);
+      if(heading){heading.focus({preventScroll:true});heading.scrollIntoView({block:'center',behavior:'instant'});}
+    });
+  }
   choose(id: string): void { this.selected.update(value => value === id ? null : id); }
   print(): void { window.print(); }
   reset(): void { this.search.set(''); this.category.set('Toutes'); this.selected.set(null); }
+  showAll():void {
+    this.moduleFilter.set(null);this.reset();this.focusTarget.set(null);
+    void this.router.navigate([],{relativeTo:this.route,queryParams:{module:null},queryParamsHandling:'merge',replaceUrl:true});
+  }
 }

@@ -5,7 +5,8 @@
     <div class="student-detail__alert">{{ errorMessage() }}</div>
     <button pButton type="button" (click)="goBack()">← Retour</button>
   } @else if (detail(); as d) {
-    <header class="student-detail__header">
+    <header class="module-help-header student-detail__header">
+    <app-module-help />
       <div class="student-detail__header-top student-detail__no-print">
         <button pButton severity="secondary" variant="text" type="button" class="student-detail__back" (click)="goBack()">← Retour aux élèves</button>
         <button pButton type="button" class="student-detail__print-btn" (click)="printPage()">🖨️ Imprimer / Enregistrer en PDF</button>

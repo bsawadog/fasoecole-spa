@@ -1,5 +1,6 @@
 <div class="ss ui-academic-blue">
-  <header class="ss__header"><div><h1>Portail parents</h1><p>Publiez les informations et traitez les demandes de rendez-vous.</p></div>
+  <header class="module-help-header ss__header">
+    <app-module-help /><div><h1>Portail parents</h1><p>Publiez les informations et traitez les demandes de rendez-vous.</p></div>
     @if (schools().length) {
 
       <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" [disabled]="loading() || saving()" (click)="reload()">Actualiser</button>

@@ -1,0 +1,51 @@
+@use '../../../home/home-theme' as home;
+
+@media screen {
+  .shell__content:has(app-owner-help) { background: var(--theme-background, #{home.$background}); }
+
+  .shell__page .help {
+    color: var(--theme-ink, #f0f7ff);
+    --p-button-primary-background: var(--theme-button, #0c6b83);
+    --p-button-primary-border-color: var(--theme-button-border, #3997ae);
+    --p-button-primary-color: #fff;
+    --p-button-primary-hover-background: var(--theme-button-hover, #0e8097);
+    --p-button-primary-hover-border-color: var(--theme-accent, #7dd3fc);
+    --p-button-primary-hover-color: #fff;
+
+    > header {
+      background: var(--theme-background, #{home.$background});
+      border-color: var(--theme-border, #2d5a78);
+      color: var(--theme-ink, #f0f7ff);
+    }
+
+    h1, h2, label, strong { color: var(--theme-ink, #f0f7ff); }
+    header p, .help__count, .help__question small, .help__context p, .help__empty { color: var(--theme-muted, #c1d6e8); }
+    .help__eyebrow, .help__question > span:last-child, a { color: var(--theme-link, #a5e9f3); }
+    a:hover { color: var(--theme-link-hover, #e0f7ff); }
+
+    .help__filters, .help__item, .help__context, .help__notice, .help__note {
+      background: var(--theme-surface, #0d3154);
+      border-color: var(--theme-border, #2d5a78);
+      color: var(--theme-ink, #f0f7ff);
+    }
+    .help__item--open { border-color: var(--theme-accent, #7dd3fc); }
+    .help__question { color: var(--theme-ink, #f0f7ff); }
+    .help__question:hover { background: var(--theme-raised, #103d5d); }
+    .help__note, .help__notice { background: var(--theme-raised, #103d5d); }
+    .help__answer li::marker { color: var(--theme-accent, #7dd3fc); }
+
+    input, .p-select {
+      background: var(--theme-inset, #092643);
+      border-color: var(--theme-control-border, #49738f);
+      color: var(--theme-ink, #f0f7ff);
+      --p-select-color: var(--theme-ink, #f0f7ff);
+      --p-select-dropdown-color: var(--theme-link, #a5e9f3);
+    }
+    input::placeholder { color: var(--theme-placeholder, #b9cfe0); }
+    .help__reset { background: var(--theme-button, #0c6b83); border-color: var(--theme-button-border, #3997ae); color: #fff; }
+    .help__reset:hover { background: var(--theme-button-hover, #0e8097); }
+    .help__context .p-button { background: transparent; border-color: var(--theme-control-border, #49738f); color: var(--theme-link, #a5e9f3); }
+    .help__context .p-button:hover { background: var(--theme-raised, #103d5d); border-color: var(--theme-accent, #7dd3fc); color: var(--theme-link-hover, #e0f7ff); }
+    :focus-visible { outline-color: var(--theme-focus, #a5f3fc); }
+  }
+}

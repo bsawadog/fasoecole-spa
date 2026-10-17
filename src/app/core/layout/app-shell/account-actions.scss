@@ -1,34 +1,63 @@
 :host { display: flex; align-items: center; gap: .65rem; }
 .account-control { position: relative; }
-.account-trigger { display: flex; align-items: center; gap: .4rem; min-height: 2.65rem; padding: .5rem .75rem; border: 1px solid #dce5e1; border-radius: .65rem; background: #fff; color: #24392f; font: inherit; font-size: .83rem; font-weight: 600; cursor: pointer; }
-.account-trigger:hover, .account-trigger[aria-expanded='true'] { background: #ecf7f1; border-color: #9ac7af; }
-button:focus-visible, a:focus-visible { outline: 2px solid #047857; outline-offset: 3px; }
-.account-count { border-radius: 1rem; background: #b91c1c; color: #fff; padding: .15rem .35rem; font-size: .7rem; }
-.account-panel { position: absolute; top: calc(100% + .6rem); right: 0; width: 15rem; max-width: calc(100vw - 2rem); border: 1px solid #dce5e1; border-radius: .8rem; background: #fff; box-shadow: 0 8px 30px #162b2226; padding: .5rem; z-index: 30; }
-.account-panel > a, .account-panel > button { display: flex; align-items: center; gap: .6rem; box-sizing: border-box; width: 100%; border: 0; border-radius: .4rem; background: #fff; padding: .75rem; color: #24392f; text-decoration: none; font: inherit; font-size: .85rem; text-align: left; cursor: pointer; }
-.account-panel > a:hover, .account-panel > button:hover { background: #f0f5f2; }
-.account-panel > .account-logout { color: #b91c1c; }
-.account-name { margin: 0; padding: .75rem; border-bottom: 1px solid #e0e8e4; font-weight: 650; overflow-wrap: anywhere; }
+.account-trigger { display: flex; align-items: center; gap: .4rem; min-height: 2.65rem; padding: .5rem .75rem; border: 1px solid var(--theme-border, #dce5e1); border-radius: .65rem; background: var(--theme-surface, #fff); color: var(--theme-ink, #24392f); font: inherit; font-size: .83rem; font-weight: 600; cursor: pointer; }
+.account-trigger:hover, .account-trigger[aria-expanded='true'] { background: var(--theme-success-soft, #ecf7f1); border-color: var(--theme-success-border, #9ac7af); }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--theme-accent, #047857); outline-offset: 3px; }
+.account-count { border-radius: 1rem; background: var(--theme-danger, #b91c1c); color: var(--theme-button-ink, #fff); padding: .15rem .35rem; font-size: .7rem; }
+.account-panel { position: absolute; top: calc(100% + .6rem); right: 0; width: 15rem; max-width: calc(100vw - 2rem); border: 1px solid var(--theme-border, #dce5e1); border-radius: .8rem; background: var(--theme-surface, #fff); box-shadow: 0 8px 30px #162b2226; padding: .5rem; z-index: 30; }
+.account-panel > a, .account-panel > button { display: flex; align-items: center; gap: .6rem; box-sizing: border-box; width: 100%; border: 0; border-radius: .4rem; background: var(--theme-surface, #fff); padding: .75rem; color: var(--theme-ink, #24392f); text-decoration: none; font: inherit; font-size: .85rem; text-align: left; cursor: pointer; }
+.account-panel > a:hover, .account-panel > button:hover { background: var(--theme-success-soft, #f0f5f2); }
+.account-panel > .account-logout { color: var(--theme-danger, #b91c1c); }
+.account-name { margin: 0; padding: .75rem; border-bottom: 1px solid var(--theme-border, #e0e8e4); font-weight: 650; overflow-wrap: anywhere; }
 .account-panel--notifications { width: 24rem; max-height: min(70dvh, 34rem); overflow-y: auto; }
 h2 { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; margin: 0; padding: .75rem; font-size: 1rem; }
-h2 span { font-size: .8rem; font-weight: 500; color: #62776d; }
+h2 span { font-size: .8rem; font-weight: 500; color: var(--theme-muted, #62776d); }
 ul { list-style: none; padding: 0; margin: 0; }
-li { padding: .85rem; border-top: 1px solid #e0e8e4; border-left: 3px solid transparent; overflow-wrap: anywhere; }
-li.unread { background: #f0f8f3; border-left-color: #047857; }
+li { padding: .85rem; border-top: 1px solid var(--theme-border, #e0e8e4); border-left: 3px solid transparent; overflow-wrap: anywhere; }
+li.unread { background: var(--theme-success-soft, #f0f8f3); border-left-color: var(--theme-accent, #047857); }
 p { margin: .5rem .75rem; font-size: .85rem; line-height: 1.5; }
 li p { margin: .4rem 0; white-space: pre-line; }
 li strong { font-size: .9rem; }
-time, .account-read { color: #62776d; font-size: .75rem; }
-li button { display: block; margin-top: .5rem; border: 1px solid #cce7d9; border-radius: .4rem; padding: .45rem .6rem; background: #fff; color: #065f46; cursor: pointer; }
+time, .account-read { color: var(--theme-muted, #62776d); font-size: .75rem; }
+li button { display: block; margin-top: .5rem; border: 1px solid var(--theme-success-border, #cce7d9); border-radius: .4rem; padding: .45rem .6rem; background: var(--theme-surface, #fff); color: var(--theme-link, #065f46); cursor: pointer; }
 li button:disabled { opacity: .6; cursor: wait; }
 .account-read { margin-left: .65rem; }
 @media (max-width: 700px) { .account-panel--notifications { position: fixed; top: auto; right: 1rem; margin-top: .6rem; width: calc(100vw - 2rem); box-sizing: border-box; } }
 :host .account-identity { display: flex; flex-direction: column; text-align: left; gap: 3px; }
 :host .account-identity small { font-size: .72rem; font-weight: 400; opacity: .8; }
-.account-spaces { padding: .5rem 0; margin-bottom: .5rem; border-bottom: 1px solid #e2e8f0; }
-.account-spaces > p { margin: 0 0 .4rem; font-size: .75rem; color: #64748b; }
-.account-spaces button { display: flex; align-items: center; justify-content: space-between; gap: .5rem; width: 100%; padding: .65rem .5rem; border: 0; border-radius: .5rem; background: transparent; color: #334155; text-align: left; cursor: pointer; }
-.account-spaces button:hover, .account-spaces button[aria-pressed="true"] { background: #eff6ff; color: #1d4ed8; }
-.account-spaces button:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.account-spaces { padding: .5rem 0; margin-bottom: .5rem; border-bottom: 1px solid var(--theme-border, #e2e8f0); }
+.account-spaces > p { margin: 0 0 .4rem; font-size: .75rem; color: var(--theme-muted, #64748b); }
+.account-spaces button { display: flex; align-items: center; justify-content: space-between; gap: .5rem; width: 100%; padding: .65rem .5rem; border: 0; border-radius: .5rem; background: transparent; color: var(--theme-muted, #334155); text-align: left; cursor: pointer; }
+.account-spaces button:hover, .account-spaces button[aria-pressed="true"] { background: var(--theme-soft, #eff6ff); color: var(--theme-link, #1d4ed8); }
+.account-spaces button:focus-visible { outline: 2px solid var(--theme-link, #2563eb); outline-offset: 2px; }
 .account-spaces button:disabled { opacity: .6; cursor: wait; }
 .account-space-current { font-size: .7rem; font-weight: 600; }
+
+@media screen {
+  .account-trigger:hover, .account-trigger[aria-expanded='true'] {
+    background: var(--theme-hover, #ecf7f1);
+    color: var(--theme-ink, #24392f);
+    border-color: var(--theme-accent, #9ac7af);
+  }
+  .account-panel {
+    background: var(--theme-surface, #fff);
+    color: var(--theme-ink, #24392f);
+    border-color: var(--theme-control-border, #dce5e1);
+    box-shadow: var(--theme-shadow, 0 8px 30px #162b2226);
+  }
+  .account-panel > a, .account-panel > button, .account-spaces button {
+    background: transparent;
+    color: var(--theme-link, #24392f);
+  }
+  .account-panel > a:hover, .account-panel > button:hover,
+  .account-spaces button:hover, .account-spaces button[aria-pressed='true'] {
+    background: var(--theme-hover, #f0f5f2);
+    color: var(--theme-ink, #24392f);
+  }
+  .account-panel > .account-logout { color: var(--theme-danger, #b91c1c); }
+  .account-name, .account-spaces, li { border-color: var(--theme-border, #e0e8e4); }
+  .account-spaces > p, h2 span, time, .account-read { color: var(--theme-muted, #62776d); }
+  li.unread { background: var(--theme-raised, #f0f8f3); border-left-color: var(--theme-accent, #047857); }
+  li button { background: var(--theme-soft, #fff); color: var(--theme-link, #065f46); border-color: var(--theme-control-border, #cce7d9); }
+  button:focus-visible, a:focus-visible { outline-color: var(--theme-focus, #047857); }
+}

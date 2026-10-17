@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { DateField } from '../../../../shared/ui/date-field';
 import { LoadingState } from '../../../../shared/ui/loading-state';
 import { InputTextModule } from 'primeng/inputtext';
@@ -28,7 +29,7 @@ import {
 @Component({
   selector: 'app-enseignant-classes',
   standalone: true,
-  imports: [DateField, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, RouterLink, ScheduleView],
+  imports: [ModuleHelpButton, DateField, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, RouterLink, ScheduleView],
   templateUrl: './classes.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

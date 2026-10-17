@@ -1,5 +1,6 @@
 <main class="setup ui-workspace">
-  <header class="ui-page-header"><h1>Demander un nouvel établissement</h1><p>Présentez votre établissement en quelques informations. Vous organiserez les classes et ajouterez les personnes après approbation.</p></header>
+  <header class="module-help-header ui-page-header">
+    <app-module-help /><h1>Demander un nouvel établissement</h1><p>Présentez votre établissement en quelques informations. Vous organiserez les classes et ajouterez les personnes après approbation.</p></header>
   @if (error()) { <p-message severity="error" class="error" role="alert">{{ error() }}</p-message> }
   @if (success()) { <p-message severity="warn" class="success" [class.success--pending]="finalized() && !active()" role="status">{{ success() }}</p-message> }
   @if (loading()) { <app-loading-state message="Chargement de la demande…" /> }

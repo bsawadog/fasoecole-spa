@@ -1,3 +1,4 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { LoadingState } from '../../../../shared/ui/loading-state';
 import { DecimalPipe } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
@@ -7,11 +8,12 @@ import { MyStudentsState } from '../../../../shared/self-space/my-students.state
 @Component({
   selector: 'app-parent-children',
   standalone: true,
-  imports: [LoadingState, DecimalPipe, RouterLink],
+  imports: [ModuleHelpButton, LoadingState, DecimalPipe, RouterLink],
   providers: [MyStudentsState],
   template: `
     <div class="ss">
-      <header class="ss__header">
+      <header class="module-help-header ss__header">
+    <app-module-help />
         <div>
           <h1>Mes enfants</h1>
           <p>Suivez la scolarité, les notes, les absences et les frais de vos enfants.</p>

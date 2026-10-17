@@ -1,15 +1,17 @@
+@use './home-theme' as home;
+
 // Shared public-page palette; preserve the existing geometry and content.
 @media screen {
   .school-directory,
   .service-detail {
-    background: linear-gradient(135deg, #061638 0%, #08375d 60%, #07556b 100%);
+    background: home.$background;
     color: #f0f7ff;
     --ui-muted: #c1d6e8;
     --ui-border: #2d5a78;
     --p-skeleton-background: #16415e;
     --p-skeleton-animation-background: rgb(125 211 252 / 12%);
 
-    header img { background: #fff; border-radius: .5rem; }
+    header img { background: transparent; }
     h1, h2, strong { color: #f0f7ff; }
     a { color: #a5e9f3; }
     a:hover { color: #e0f7ff; }
@@ -47,7 +49,7 @@
   }
 
   .public-onboarding {
-    background: linear-gradient(135deg, #061638 0%, #08375d 60%, #07556b 100%);
+    background: home.$background;
     color: #f0f7ff;
     color-scheme: dark;
     --p-inputtext-focus-border-color: #7dd3fc;
@@ -58,7 +60,7 @@
     --p-button-primary-hover-border-color: #7dd3fc;
     --p-button-primary-hover-color: #fff;
 
-    .brand img { background: #fff; border-radius: .5rem; }
+    .brand img { background: transparent; }
     .eyebrow { color: #a5e9f3; }
     h1, h2, label, li strong { color: #f0f7ff; }
     p, li span, small { color: #c1d6e8; }
@@ -82,11 +84,11 @@
     --green: #7dd3fc;
     --ink: #f0f7ff;
     --muted: #c1d6e8;
-    background: linear-gradient(135deg, #061638 0%, #08375d 60%, #07556b 100%);
+    background: home.$background;
     color: var(--ink);
 
     .home__brand-logo,
-    .home__footer-logo { background: #fff; border-radius: .5rem; }
+    .home__footer-logo { background: transparent; }
 
     .home__nav-link { color: #d7e9f6; }
     .home__nav-link:hover,
