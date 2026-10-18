@@ -370,3 +370,51 @@ body {
     }
   }
 }
+
+// Emphasize the selected school and year without changing other dropdowns.
+@media screen {
+  .shell__topbar .shell__school-context app-academic-context .p-select-label {
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.35;
+  }
+}
+
+// The PDF viewer fills the dialog vertically, including its maximized state.
+.portal-pdf-dialog.p-dialog {
+  height: 92vh;
+  height: 92dvh;
+  max-height: 92vh;
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+
+  &.p-dialog-maximized {
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+  }
+
+  .p-dialog-header { flex: 0 0 auto; }
+  .p-dialog-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .portal-pdf-frame {
+    display: block;
+    flex: 1 1 0;
+    min-height: 0;
+    width: 100%;
+    border: 0;
+  }
+  .portal-pdf-hint {
+    flex: 0 0 auto;
+    margin: .5rem 0 0;
+    font-size: .8rem;
+    line-height: 1.35;
+  }
+}

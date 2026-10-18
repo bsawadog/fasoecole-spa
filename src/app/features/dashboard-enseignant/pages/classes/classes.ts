@@ -1,3 +1,4 @@
+import { TeacherDailyTools } from '../../../../shared/self-space/teacher-daily-tools';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { DateField } from '../../../../shared/ui/date-field';
 import { LoadingState } from '../../../../shared/ui/loading-state';
@@ -29,7 +30,7 @@ import {
 @Component({
   selector: 'app-enseignant-classes',
   standalone: true,
-  imports: [ModuleHelpButton, DateField, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, RouterLink, ScheduleView],
+  imports: [TeacherDailyTools, ModuleHelpButton, DateField, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, RouterLink, ScheduleView],
   templateUrl: './classes.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })
@@ -39,6 +40,7 @@ export class EnseignantClasses implements OnInit {
   private readonly sync = inject(SchoolDataSyncService);
   private syncSubscription?: Subscription;
 
+  readonly supportOpen=signal(false);
   readonly classes = signal<TeacherClass[]>([]);
   readonly schedule = signal<ScheduleEntry[]>([]);
   readonly loading = signal(true);

@@ -25,7 +25,7 @@
       <ng-template #navigationLinks let-items>
       @for (item of items; track item.routerLink) {
         <a [routerLink]="item.routerLink" class="shell__nav-link" routerLinkActive="shell__nav-link--active"
-           [routerLinkActiveOptions]="{ exact: item.icon === 'home' }">
+           [attr.data-icon]="item.icon" [routerLinkActiveOptions]="{ exact: item.icon === 'home' }">
           @switch (item.icon) {
             @case ('home') { <svg lucideHouse [size]="19" aria-hidden="true"></svg> }
             @case ('building') { <svg lucideBuilding2 [size]="19" aria-hidden="true"></svg> }

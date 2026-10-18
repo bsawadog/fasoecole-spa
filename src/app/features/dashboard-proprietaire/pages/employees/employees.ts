@@ -63,7 +63,7 @@ interface InitialSlot {
         <section class="employee-schedule" aria-label="Matières et affectation facultatives">
           <h3>Matières enseignées et classe (facultatif)</h3>
           <p>Choisissez les matières de l’enseignant dans le catalogue de l’établissement. Vous pouvez laisser la classe vide et l’affecter plus tard depuis « Enseignants par classe ».</p>
-          <button pButton type="button" severity="secondary" variant="outlined" (click)="showAssignments = !showAssignments; showAssignments && loadScheduleContext()" [attr.aria-expanded]="showAssignments">{{ showAssignments ? 'Masquer les options d’affectation' : 'Choisir les matières et une classe' }}</button>
+          <button pButton type="button" class="employee-action employee-action--blue" (click)="showAssignments = !showAssignments; showAssignments && loadScheduleContext()" [attr.aria-expanded]="showAssignments">{{ showAssignments ? 'Masquer les options d’affectation' : 'Choisir les matières et une classe' }}</button>
           @if (showAssignments) {
             @if (loadingSchedule()) { <p role="status">Chargement des matières et classes…</p> }
             <label>Classe (facultative)<app-select-field name="initialClass" [(ngModel)]="form.classId" ariaLabel="Classe (facultative)" [disabled]="loadingSchedule()">
@@ -82,7 +82,7 @@ interface InitialSlot {
           @if (loadingSchedule()) { <p role="status">Chargement des classes et matières…</p> }
           @if (scheduleError()) {
             <p-message severity="error" role="alert">{{ scheduleError() }}</p-message>
-            <button pButton type="button" (click)="loadScheduleContext()" [disabled]="loadingSchedule()">Réessayer le chargement</button>
+            <button pButton class="employee-action employee-action--blue" type="button" (click)="loadScheduleContext()" [disabled]="loadingSchedule()">Réessayer le chargement</button>
           }
           @for (slot of slots; track slot; let index = $index) {
             <fieldset class="employee-slot">
@@ -101,14 +101,14 @@ interface InitialSlot {
               <label>Début<app-date-field mode="time" [name]="'slotStart' + index" [(ngModel)]="slot.startTime" required [ariaLabel]="'Début du créneau ' + (index + 1)" /></label>
               <label>Fin<app-date-field mode="time" [name]="'slotEnd' + index" [(ngModel)]="slot.endTime" required [ariaLabel]="'Fin du créneau ' + (index + 1)" /></label>
               <label>À partir du<app-date-field mode="date" [name]="'slotFrom' + index" [(ngModel)]="slot.effectiveFrom" [min]="slotYear(slot)?.startDate" [max]="slotYear(slot)?.endDate" required [ariaLabel]="'Date du créneau ' + (index + 1)" /></label>
-              <button pButton severity="danger" variant="outlined" type="button" (click)="removeSlot(index)" [disabled]="busy()" [attr.aria-label]="'Retirer le créneau ' + (index + 1)">Retirer</button>
+              <button pButton severity="danger" class="employee-action employee-action--red" type="button" (click)="removeSlot(index)" [disabled]="busy()" [attr.aria-label]="'Retirer le créneau ' + (index + 1)">Retirer</button>
             </fieldset>
           }
-          <button pButton severity="secondary" variant="outlined" type="button" (click)="addSlot()" [disabled]="busy() || slots.length >= 100">Ajouter un créneau</button>
+          <button pButton class="employee-action employee-action--blue" type="button" (click)="addSlot()" [disabled]="busy() || slots.length >= 100">Ajouter un créneau</button>
           @if (slots.length) { <p>{{ weeklyHours() }} heure(s) prévue(s) par semaine. Les affectations aux classes et matières seront créées automatiquement.</p> }
         </section>
         <p>Un compte existant conserve son identité et son mot de passe et reçoit une notification. Un nouveau compte reçoit un lien d’activation, sans approbation supplémentaire.</p>
-        <button pButton type="submit" [disabled]="busy()">Ajouter l’enseignant</button>
+        <button pButton severity="success" class="employee-action employee-action--green" type="submit" [disabled]="busy()">Ajouter l’enseignant</button>
       </form>
       @if (error()) { <p-message severity="error" role="alert">{{ error() }}</p-message> }
       @if (success()) { <p-message severity="success" role="status">{{ success() }}</p-message> }
@@ -116,7 +116,16 @@ interface InitialSlot {
     }
     </main>
   `,
-  styles: [`@layer legacy { :host{display:block}form{max-width:900px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:16px;padding:24px;background:var(--theme-surface, white);border-radius:16px;margin-top:16px}label{display:flex;min-width:0;flex-direction:column;gap:6px}input,select{padding:10px;border:1px solid var(--theme-control-border, #cbd5e1);border-radius:8px}button{cursor:pointer}button:disabled{opacity:.5}form p,.employee-schedule{grid-column:1/-1}.employee-schedule{min-width:0;padding:16px;border:1px solid var(--theme-soft, #bfdbfe);border-radius:12px;background:var(--theme-inset, #f8faff)}.employee-schedule h3{margin-top:0;color:var(--theme-ink, #1e3a8a)}.employee-slot{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;min-width:0;margin:0 0 16px;padding:16px;border:1px solid var(--theme-control-border, #cbd5e1);border-radius:8px;background:var(--theme-surface, white)}.employee-slot legend{font-weight:600;color:var(--theme-link-hover, #1e40af)} }`],
+  styles: [`@layer application {
+    :host .employees button.employee-action {background:#1d4ed8;border:1px solid #60a5fa;color:#fff;font-weight:650;padding:.7rem 1rem;border-radius:.5rem;min-height:44px;white-space:normal;text-align:center}
+    :host .employees button.employee-action:hover:not(:disabled){background:#1e40af;border-color:#93c5fd}
+    :host .employees button.employee-action--red{background:#b91c1c;border-color:#fca5a5}
+    :host .employees button.employee-action--red:hover:not(:disabled){background:#991b1b}
+    :host .employees button.employee-action--green{background:#15803d;border-color:#86efac}
+    :host .employees button.employee-action--green:hover:not(:disabled){background:#166534}
+    :host .employees button.employee-action:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}
+    :host .employees button.employee-action:disabled{opacity:.65;cursor:not-allowed}
+  }`, `@layer legacy { :host{display:block}form{max-width:900px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:16px;padding:24px;background:var(--theme-surface, white);border-radius:16px;margin-top:16px}label{display:flex;min-width:0;flex-direction:column;gap:6px}input,select{padding:10px;border:1px solid var(--theme-control-border, #cbd5e1);border-radius:8px}button{cursor:pointer}button:disabled{opacity:.5}form p,.employee-schedule{grid-column:1/-1}.employee-schedule{min-width:0;padding:16px;border:1px solid var(--theme-soft, #bfdbfe);border-radius:12px;background:var(--theme-inset, #f8faff)}.employee-schedule h3{margin-top:0;color:var(--theme-ink, #1e3a8a)}.employee-slot{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;min-width:0;margin:0 0 16px;padding:16px;border:1px solid var(--theme-control-border, #cbd5e1);border-radius:8px;background:var(--theme-surface, white)}.employee-slot legend{font-weight:600;color:var(--theme-link-hover, #1e40af)} }`],
 })
 export class EmployeesPage {
   private readonly auth = inject(AuthService);

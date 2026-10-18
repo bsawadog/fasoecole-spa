@@ -1,3 +1,5 @@
+import { TeacherToday } from '../../../../shared/self-space/teacher-today';
+import { TeacherDashboardCharts } from './teacher-dashboard-charts';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -7,7 +9,7 @@ import { AppointmentCounter } from '../../../../shared/appointments/appointment-
 @Component({
   selector: 'app-enseignant-home',
   standalone: true,
-  imports: [ModuleHelpButton, RouterLink, AppointmentCounter],
+  imports: [TeacherToday, ModuleHelpButton, RouterLink, AppointmentCounter, TeacherDashboardCharts],
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })

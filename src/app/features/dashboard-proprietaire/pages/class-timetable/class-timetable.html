@@ -16,11 +16,12 @@
       @if (!schedule.classes.length) {<p>Aucune classe pour l’année sélectionnée.</p>}
       @else if (!schedule.lessons.length) {<p role="status">Aucun créneau enseignant pour cette classe durant cette semaine.</p>}
       @else {
+        <div class="subject-legend" aria-label="Couleurs des matières">@for (subject of subjectLegend(); track subject) {<span [style.--lesson-bg]="subjectTheme(subject).background" [style.--lesson-border]="subjectTheme(subject).border">{{ subject }}</span>}</div>
         <div class="grid-wrap" tabindex="0" aria-label="Planning hebdomadaire, défilement horizontal"><div class="week-grid">
           @for (day of columns(); track day.name) {
             <section class="day"><h3>{{ day.name }}<small>{{ day.date | date:'dd/MM' }}</small></h3>
               @for (lesson of day.lessons; track lesson.id) {
-                <article class="lesson" [class.lesson-conflict]="conflicts().has(lesson.id)"><strong>{{ lesson.startTime.slice(0,5) }} – {{ lesson.endTime.slice(0,5) }}</strong><p>{{ lesson.subjects || 'Matière non renseignée' }}</p><span>{{ lesson.teacherName }}</span>@if (conflicts().has(lesson.id)) {<small>Chevauchement à vérifier</small>}</article>
+                <article class="lesson" [style.--lesson-bg]="subjectTheme(lesson.subjects).background" [style.--lesson-border]="subjectTheme(lesson.subjects).border" [class.lesson-conflict]="conflicts().has(lesson.id)"><strong>{{ lesson.startTime.slice(0,5) }} – {{ lesson.endTime.slice(0,5) }}</strong><p>{{ lesson.subjects || 'Matière non renseignée' }}</p><span>{{ lesson.teacherName }}</span>@if (conflicts().has(lesson.id)) {<small>Chevauchement à vérifier</small>}</article>
               } @empty {<p class="empty-day">Aucun créneau</p>}
             </section>
           }

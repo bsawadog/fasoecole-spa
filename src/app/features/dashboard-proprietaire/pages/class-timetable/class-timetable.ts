@@ -17,6 +17,13 @@ export class ClassTimetablePage implements OnInit {
   private request?:Subscription;
   readonly schools=signal<{id:number;name:string}[]>([]); readonly data=signal<Overview|null>(null); readonly loading=signal(true); readonly error=signal('');
   schoolId:number|null=null; classId:number|null=null; date='';
+  readonly subjectLegend=computed(()=>[...new Set((this.data()?.lessons??[]).map(l=>l.subjects?.trim()||'Matière non renseignée'))].sort((a,b)=>a.localeCompare(b,'fr')));
+  subjectTheme(subject:string|null):{background:string;border:string} {
+    if(!subject || subject==='Matière non renseignée')return {background:'#e2e8f0',border:'#475569'};
+    const key=subject.trim().toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    let hash=2166136261;for(const char of key)hash=Math.imul(hash^char.charCodeAt(0),16777619);
+    const hue=(hash>>>0)%360;return {background:'hsl('+hue+' 75% 86%)',border:'hsl('+hue+' 65% 35%)'};
+  }
   readonly days=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
   readonly conflicts=computed(()=>{const lessons=this.data()?.lessons??[];return new Set(lessons.filter(a=>lessons.some(b=>a.id!==b.id&&a.dayOfWeek===b.dayOfWeek&&a.startTime<b.endTime&&b.startTime<a.endTime)).map(a=>a.id));});
   readonly columns=computed(()=>this.days.map((name,i)=>({name,date:this.dayDate(i),lessons:this.data()?.lessons.filter(l=>l.dayOfWeek===i+1)??[]})));

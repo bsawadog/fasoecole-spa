@@ -29,6 +29,7 @@
     </div>
 
     @if (selected(); as c) {
+      <details (toggle)="supportOpen.set($any($event.target).open)"><summary>Élèves à accompagner</summary>@if(supportOpen()){<app-teacher-daily-tools mode="support" [classId]="c.classId"/>}</details>
       <section class="ss__card" aria-labelledby="roster-title">
         <header class="ss__card-head">
           <h2 id="roster-title">Élèves de {{ c.className }}</h2>

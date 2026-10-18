@@ -320,6 +320,10 @@ export class SelfSpaceService {
     return this.http.put<void>(`${this.teacherUrl}/classes/${classId}/students/${studentId}/attendance`, payload);
   }
 
+  saveTeacherAttendanceBatch(classId:number,payload:{date:string;entries:{studentId:number;status:AttendanceItem['status'];justification:string|null;expectedStatus:AttendanceItem['status']|null}[]}):Observable<TeacherAttendanceItem[]> {
+    return this.http.put<TeacherAttendanceItem[]>(`${this.teacherUrl}/classes/${classId}/attendance`,payload);
+  }
+
   teacherFamilyReports(classId: number, date: string): Observable<AbsenceReport[]> {
     return this.http.get<AbsenceReport[]>(`${this.teacherUrl}/classes/${classId}/family-reports`, { params: { date } });
   }

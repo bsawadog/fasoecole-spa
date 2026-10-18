@@ -78,6 +78,22 @@
 
     svg {
       flex: 0 0 auto;
+      color: var(--menu-icon-color, var(--theme-accent, #7dd3fc));
+    }
+
+    // Theme-aware colors without changing the 19px icons or their spacing.
+    $icon-tones: (
+      home: accent, building: violet, users: success, notes: warning,
+      calendar: danger, star: warning, book: violet, graduation: accent,
+      wallet: success, chart: link, shield: danger, message: link,
+    );
+    @each $icon, $tone in $icon-tones {
+      &[data-icon='#{$icon}'] { --menu-icon-color: var(--theme-#{$tone}); }
+    }
+
+    &--active svg { color: inherit; }
+    @media (forced-colors: active) {
+      svg { color: inherit; }
     }
 
     &:hover {

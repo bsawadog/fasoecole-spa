@@ -19,11 +19,13 @@
     @if (loading()) { <app-loading-state message="Chargement…" /> }
     @else {
       @switch (module()) {
-        @case ('emploi') { <app-schedule-view [entries]="schedule()" /> }
+        @case ('emploi') { <app-schedule-view [entries]="schedule()" /><details (toggle)="availabilityOpen.set($any($event.target).open)"><summary>Disponibilités et absences</summary>@if(availabilityOpen()){<app-teacher-daily-tools mode="availability"/>}</details> }
         @case ('presences') {
           <section class="ss__card ss__body">
             <label class="ss__field">Rechercher un élève<input pInputText type="search" [value]="filter()" (input)="filter.set($any($event.target).value)" placeholder="Nom ou matricule" /></label>
-            <p class="ss__muted">{{ filteredAttendance().length }} / {{ attendance().length }} élève(s). Une ligne sans statut n’a pas encore été renseignée.</p>
+            <p class="ss__muted">{{ filteredAttendance().length }} / {{ attendance().length }} élève(s). Les élèves sans saisie sont proposés présents. Corrigez les absences ou retards, puis enregistrez l’appel. Les statuts déjà enregistrés sont conservés.</p>
+            <p class="ss__muted">La recherche filtre uniquement l’affichage : l’enregistrement concerne toute la classe. Rien n’est enregistré automatiquement.</p>
+            <button pButton type="button" severity="success" [disabled]="saving() || loading() || !attendance().length" (click)="saveCall()">{{ saving() ? 'Enregistrement…' : 'Enregistrer l’appel de la classe' }}</button>
             <div class="ss__table-wrap"><table class="ss__table"><thead><tr><th>Élève</th><th>Matricule</th><th>Statut</th><th>Motif</th><th></th></tr></thead><tbody>
               @for (row of filteredAttendance(); track row.studentId) {
                 <tr><td>{{ row.fullName }}</td><td>{{ row.registrationNumber }}</td>
@@ -51,8 +53,10 @@
           <app-appointments [showHeading]="false" [legacyRequests]="appointments()" legacyKind="teacher" [teacherClassId]="classId()" (changed)="reload(true)" />
         }
       }
+      @if (module() === 'documents' && selected(); as selectedClass) { <details (toggle)="lessonsOpen.set($any($event.target).open)"><summary>Cahier de textes — consigner une séance</summary>@if(lessonsOpen()){<app-teacher-daily-tools mode="lessons" [classId]="classId()" [subjects]="selectedClass.subjects"/>}</details> }
+      @if (module() === 'documents') { <p class="ss__muted">Ajoutez un support de cours, des exercices ou un corrigé. Pour un travail avec une date de remise et un suivi, utilisez Devoirs de maison.</p> }
       @if (kind(); as postKind) {
-        <form class="ss__card ss__body" (ngSubmit)="publish()"><h2>Publier pour les parents de la classe</h2>
+        <form class="ss__card ss__body"  #publicationForm="ngForm" (ngSubmit)="publish(publicationForm)"><h2>Publier pour les élèves et les parents de la classe</h2>
           <label class="ss__field">Titre<input pInputText name="title" [(ngModel)]="postTitle" maxlength="160" required /></label>
           <label class="ss__field">Contenu / consignes<textarea pTextarea name="content" [(ngModel)]="content" rows="4" maxlength="4000" required></textarea></label>
           @if (postKind === 'HOMEWORK') { <label class="ss__field">Date de remise<app-date-field mode="date" name="dueDate" [(ngModel)]="dueDate" [min]="today" required [ariaLabel]="(&quot;Date de remise&quot;).trim()" /></label> }
@@ -64,6 +68,7 @@
             @if (post.mine && post.classId === classId()) { <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" [disabled]="saving()" (click)="remove(post)">Retirer ma publication</button> }
           </div>
         } @empty { <p class="ss__state">Aucune publication disponible.</p> }
+        @if (postKind === 'HOMEWORK') { <app-homework-tracking scope="classes" [contextId]="classId()!" [revision]="posts()" /> }
       }
     }
   }

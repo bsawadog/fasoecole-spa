@@ -55,6 +55,7 @@ export async function mockSchool(page: Page, profile: Profile = 'proprietaire', 
       if (page.isClosed()) return;
       data = { revision: 1, date: '2026-10-14T08:00:00' };
     }
+    else if (api === '/me/teacher/dashboard') data = {classes:[],classId:null,yearLabel:null,asOf:'2026-10-18',weeks:[],marks:{evaluationId:null,evaluations:[],buckets:[],count:0,average:null},homework:{todo:0,submitted:0,corrected:0,overdue:0}};
     else if (api === '/owner/dashboard') data = { schoolId: 1, schoolName: school.name, schoolType: school.type, generatedDate: '2026-10-14', students: 24, teachers: 4, classes: 1, levels: 1, parents: 24,
       pendingAccountApprovals: 0, pendingInvoices: 48, outstandingAmount: 1080000, receivedAmount: 480000, expectedAmount: 1560000,
       attendanceRecorded: 24, presentToday: 23, absentToday: 1, lateToday: 0, excusedToday: 0, validatedReportCards: 0, schoolAverage: 13.5,

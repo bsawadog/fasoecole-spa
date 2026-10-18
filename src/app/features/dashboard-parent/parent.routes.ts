@@ -1,12 +1,15 @@
 import { Routes } from '@angular/router';
 
 export const PARENT_ROUTES: Routes = [
-  ...["calendrier","discipline","demandes-administratives","bibliotheque","suivi-devoirs"].map(lifeModule => ({
+  { path: 'suivi-devoirs', redirectTo: 'devoirs', pathMatch: 'full' },
+  ...['devoirs', 'documents'].map(path => ({ path, data: { resourceKind: path === 'devoirs' ? 'HOMEWORK' : 'DOCUMENT' }, loadComponent: () => import('../../shared/self-space/learning-resources-page').then(m => m.LearningResourcesPage) })),
+
+  ...["calendrier","discipline","demandes-administratives","bibliotheque"].map(lifeModule => ({
     path: lifeModule, data: { lifeModule, lifeScope: 'students' },
 
     loadComponent: () => import('../../shared/school-life/school-life').then(m => m.SchoolLifePage),
   })),
-  ...['notes', 'absences', 'frais', 'emploi', 'devoirs', 'annonces', 'documents', 'rendez-vous'].map(module => ({
+  ...['notes', 'absences', 'frais', 'emploi', 'annonces', 'rendez-vous'].map(module => ({
     path: module,
     data: { module },
     loadComponent: () => import('./pages/modules/modules').then(m => m.ParentModule),
