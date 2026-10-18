@@ -1,0 +1,45 @@
+<section class="monthly-finance" aria-label="Encaissements et dépenses mensuels">
+  <header>
+    <div><p class="monthly-finance__eyebrow">Suivi financier · {{ data().yearLabel }}</p><h2>Encaissements et dépenses</h2></div>
+    <p class="monthly-finance__period">{{ data().startDate | date:'dd/MM/yyyy' }} — {{ data().endDate | date:'dd/MM/yyyy' }}</p>
+  </header>
+  <div class="monthly-finance__totals">
+    <div><span>Total encaissé</span><strong class="monthly-finance__received">{{ data().receivedAmount | number:'1.0-2' }} <small>FCFA</small></strong></div>
+    <div><span>Total dépensé</span><strong class="monthly-finance__spent">{{ data().spentAmount | number:'1.0-2' }} <small>FCFA</small></strong></div>
+    <div><span>Différence sur la période</span><strong [class.monthly-finance__negative]="data().difference < 0">{{ data().difference | number:'1.0-2' }} <small>FCFA</small></strong></div>
+  </div>
+  <div class="monthly-finance__legend"><span><i class="monthly-finance__dot--received"></i> Encaissements</span><span><i class="monthly-finance__dot--spent"></i> Dépenses payées</span><small>Montants en FCFA</small></div>
+  @if (empty()) { <p class="monthly-finance__empty" role="status">Aucun encaissement ni dépense enregistré sur cette période.</p> }
+  <div class="monthly-finance__scroll">
+    <svg class="monthly-finance__chart" [attr.viewBox]="'0 0 ' + width() + ' 255'" [style.min-width.px]="width()" role="group" aria-label="Comparaison mensuelle. Survolez ou sélectionnez un mois pour consulter ses montants.">
+      @for (tick of ticks(); track $index) {
+        <line x1="72" [attr.x2]="width() - 10" [attr.y1]="210 - height(tick)" [attr.y2]="210 - height(tick)" class="monthly-finance__grid" />
+        <text x="62" [attr.y]="214 - height(tick)" text-anchor="end" class="monthly-finance__axis">{{ compact(tick) }}</text>
+      }
+      @for (month of data().months; track month.month; let i = $index) {
+        <g tabindex="0" role="button" [attr.aria-label]="description(month)" [attr.aria-pressed]="active()?.month === month.month"
+          (mouseenter)="select(month.month)" (focus)="select(month.month)" (click)="select(month.month)" (keydown.enter)="select(month.month)" (keydown.space)="$event.preventDefault(); select(month.month)">
+          <title>{{ description(month) }}</title>
+          <rect [attr.x]="74 + i * step()" y="12" [attr.width]="step() - 3" height="228" rx="6" class="monthly-finance__highlight" [class.monthly-finance__highlight--active]="active()?.month === month.month" />
+          <rect [attr.x]="80 + i * step()" [attr.y]="210 - height(month.receivedAmount)" [attr.width]="(step() - 18) / 2" [attr.height]="height(month.receivedAmount)" rx="4" class="monthly-finance__bar--received" />
+          <rect [attr.x]="82 + i * step() + (step() - 18) / 2" [attr.y]="210 - height(month.spentAmount)" [attr.width]="(step() - 18) / 2" [attr.height]="height(month.spentAmount)" rx="4" class="monthly-finance__bar--spent" />
+          <text [attr.x]="74 + i * step() + step() / 2" y="232" text-anchor="middle" class="monthly-finance__axis">{{ monthLabel(month.month) }}</text>
+        </g>
+      }
+    </svg>
+  </div>
+  @if (active(); as month) {
+    <div class="monthly-finance__detail" aria-live="polite" aria-atomic="true">
+      <strong>{{ monthLabel(month.month, true) }}</strong>
+      <span>Encaissé : <b class="monthly-finance__received">{{ amount(month.receivedAmount) }}</b></span>
+      <span>Dépensé : <b class="monthly-finance__spent">{{ amount(month.spentAmount) }}</b></span>
+      <span>Différence : <b [class.monthly-finance__negative]="month.receivedAmount < month.spentAmount">{{ amount(month.receivedAmount - month.spentAmount) }}</b></span>
+    </div>
+  }
+  <p class="monthly-finance__note">Paiements scolaires reçus et dépenses réellement payées, salaires compris, selon leur date de paiement. La différence indique les mouvements de trésorerie sur la période, pas le bénéfice ni le solde bancaire.</p>
+  <details class="monthly-finance__table"><summary>Consulter les montants par mois</summary><div class="monthly-finance__scroll"><table>
+    <caption>Année scolaire {{ data().yearLabel }} · FCFA</caption>
+    <thead><tr><th>Mois</th><th>Encaissements</th><th>Dépenses payées</th><th>Différence</th></tr></thead>
+    <tbody>@for (month of data().months; track month.month) { <tr><th scope="row">{{ monthLabel(month.month, true) }}</th><td>{{ amount(month.receivedAmount) }}</td><td>{{ amount(month.spentAmount) }}</td><td>{{ amount(month.receivedAmount - month.spentAmount) }}</td></tr> }</tbody>
+  </table></div></details>
+</section>

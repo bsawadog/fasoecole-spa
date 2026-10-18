@@ -1,3 +1,22 @@
+@layer application {
+  .class-roster__error-dialog {
+    width: min(26rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    overflow: auto;
+    padding: 1.25rem;
+    border: 1px solid var(--theme-danger-border, #fecaca);
+    border-radius: .75rem;
+    background: var(--theme-surface, #fff);
+    box-shadow: 0 20px 50px rgb(15 23 42 / 25%);
+    &::backdrop { background: rgb(15 23 42 / 55%); }
+    h2, p { color: var(--theme-danger, #b91c1c); overflow-wrap: anywhere; }
+    h2 { margin: 0 0 .75rem; font-size: 1.2rem; }
+    p { line-height: 1.6; }
+  }
+  .class-roster__error-actions { display: flex; justify-content: flex-end; margin-top: 1.25rem; }
+  @media print { .class-roster__error-dialog { display: none !important; } }
+}
+
 @layer legacy {
 .class-roster { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; background: var(--theme-surface, #f8fafc); }
 .class-roster__search { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; padding: .8rem 1rem; }

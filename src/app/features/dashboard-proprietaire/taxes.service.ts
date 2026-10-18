@@ -11,7 +11,7 @@ export interface TaxEvent {id:number;action:string;amount:number;dueDate:string;
 export interface TaxDetail {tax:TaxRow;payments:PayablePayment[];events:TaxEvent[];}
 export interface TaxInput {requestId:string;code:TaxCode;label:string;periodStart:string;periodEnd:string;amount:number;dueDate:string;creditor:string;declarationReference:string|null;notes:string|null;}
 export interface TaxEdit {version:number;amount:number;dueDate:string;creditor:string;declarationReference:string|null;notes:string|null;reason:string;}
-export interface TaxPayrollPreview {month:string;iuts:number;tpa:number;remunerations:number;}
+export interface TaxPayrollPreview {month:string;iuts:number;tpa:number;remunerations:number;vacationWithholding?:number;}
 export interface TaxPayrollInput {month:string;dueDate:string;creditor:string;declarationReference:string|null;reason:string;}
 @Injectable({providedIn:'root'})
 export class SchoolTaxesService {

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { OwnerModule } from '../../core/auth';
 
@@ -22,6 +22,16 @@ export interface StaffMember {
   createdAt: string;
 }
 
+export interface EmployeeTeacherProfile {id:number;employeeNumber:string;specialty:string|null;hireDate:string|null;rateType:string|null;rate:number|null;rateEffectiveFrom:string|null;}
+export interface EmployeeMember extends Omit<StaffMember,'id'|'email'> {
+  id:number|null;email:string|null;teacher:EmployeeTeacherProfile|null;administrativeEmployment:boolean;owner:boolean;identityEditable:boolean;emailEditable:boolean;accountActive:boolean;
+}
+interface DirectoryRow {staff:StaffMember;teacher:EmployeeTeacherProfile|null;administrativeEmployment:boolean;owner:boolean;identityEditable:boolean;emailEditable:boolean;accountActive:boolean;}
+export interface EmployeeUpdate {
+  profile:StaffPayload;employeeNumber:string|null;specialty:string|null;hireDate:string|null;administrativeEmployment:boolean;
+  teacherRate:{type:string;amount:number;effectiveFrom:string}|null;
+}
+const directoryMember=(row:DirectoryRow):EmployeeMember=>({...row.staff,teacher:row.teacher,administrativeEmployment:row.administrativeEmployment,owner:row.owner,identityEditable:row.identityEditable,emailEditable:row.emailEditable,accountActive:row.accountActive});
 export interface StaffPayload {
   firstName: string;
   lastName: string;
@@ -53,6 +63,9 @@ export class StaffService {
     return this.http.get<StaffMember[]>(`${this.base}/schools/${schoolId}`);
   }
 
+  directory(schoolId:number):Observable<EmployeeMember[]> {return this.http.get<DirectoryRow[]>(`${this.base}/schools/${schoolId}/employees`).pipe(map(rows=>rows.map(directoryMember)));}
+  updateEmployee(schoolId:number,userId:number,payload:EmployeeUpdate):Observable<EmployeeMember> {return this.http.put<DirectoryRow>(`${this.base}/schools/${schoolId}/employees/${userId}`,payload).pipe(map(directoryMember));}
+  sendEmployeeLink(schoolId:number,userId:number):Observable<StaffPasswordReset> {return this.http.post<StaffPasswordReset>(`${this.base}/schools/${schoolId}/employees/${userId}/send-link`,{});}
   create(schoolId: number, payload: StaffPayload): Observable<StaffCreated> {
     return this.http.post<StaffCreated>(`${this.base}/schools/${schoolId}`, payload);
   }

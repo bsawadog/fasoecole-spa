@@ -154,6 +154,10 @@
     gap: 1rem;
   }
 
+  &__overview {
+    margin-bottom: 1rem;
+  }
+
   &__panel {
     min-width: 0;
     padding: 1.2rem;
@@ -477,4 +481,14 @@
 
 .owner-dashboard__school-picker, .owner-dashboard__school-picker select { font-weight: 700; }
 
+}
+
+@layer application {
+.owner-dashboard__treasury{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:1rem;margin-bottom:1.25rem}
+.owner-dashboard__balance{padding:1.4rem;border:1px solid var(--theme-border,#2d5a78);border-radius:1rem;background:var(--theme-surface,#0d3154);color:var(--theme-ink,#f0f7ff)}
+.owner-dashboard__balance h2{font-size:1.1rem;margin:0 0 1rem;color:inherit}.owner-dashboard__balance a{color:var(--theme-link,#a5e9f3)}
+.owner-dashboard__balance-value{display:block;font-size:clamp(1.5rem,3vw,2rem);overflow-wrap:anywhere;color:var(--theme-success,#6ee7b7)}
+.owner-dashboard__balance p,.owner-dashboard__balance small{color:var(--theme-muted,#c1d6e8);line-height:1.6}.owner-dashboard__balance small{display:block}
+.owner-dashboard__balance .owner-dashboard__bank-unverified{display:inline-block;color:var(--theme-warning,#fdba74);font-weight:600;margin-top:.7rem}
+.owner-dashboard__balance .owner-dashboard__balance-negative{color:var(--theme-danger,#fda4af)}
 }

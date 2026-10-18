@@ -70,6 +70,43 @@ test('prepares salaries, records a partial payment and prints preserved payroll 
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
 
+test('calculates and validates the employee net with employer TPA kept separate',async({page},info)=>{
+  await mockSchool(page);
+  const month=new Date().toISOString().slice(0,7);
+  const school={id:1,name:'École La Réussite',address:'Ouagadougou',phone:null,email:null};
+  const contract={key:'teacher:9',kind:'TEACHER',jobTitle:'Enseignant',employeeNumber:'EMP-9',active:true,hireDate:null,rateType:'FIXED_MONTHLY',rate:100000,eligible:true,prepared:true,payableId:7,due:100000,paid:0,remaining:100000,workedHours:0,extraHours:0,payments:[],iuts:0,tpa:0,net:100000,taxVersion:0,deductions:0,calculation:null as unknown};
+  const employee={userId:20,firstName:'Awa',lastName:'Diallo',email:null,phone:null,active:true,subjects:[],contracts:[contract],due:100000,paid:0,remaining:100000,status:'UNPAID'};
+  let calculationInput:Record<string,unknown>|null=null;
+  await page.route('**/api/owner/payroll/**',route=>{
+    const req=route.request(),url=new URL(req.url());
+    if(url.pathname.endsWith('/calculation/preview')) {
+      calculationInput=req.postDataJSON();
+      return route.fulfill({json:{result:{ruleVersion:'BF-CGI-2026-v1',month,input:calculationInput,gross:100000,pensionDeductible:0,professionalAllowance:25000,exemptions:0,taxableBase:75000,brackets:[],grossIuts:5895,familyReduction:0,iuts:5895,vacationWithholding:0,deductions:0,net:94105,tpaBase:100000,tpa:3000,employerCost:103000},versions:{'7':0},grossByPayable:{'7':100000}}});
+    }
+    if(url.pathname.endsWith('/calculation')) {
+      if(req.method()==='GET')return route.fulfill({json:null});
+      const input=req.postDataJSON();expect(input.input).toEqual(calculationInput);expect(input.versions).toEqual({'7':0});
+      Object.assign(contract,{iuts:5895,tpa:3000,net:94105,remaining:94105,taxVersion:1});employee.remaining=94105;
+      return route.fulfill({status:200,body:''});
+    }
+    if(url.pathname.includes('/employees/'))return route.fulfill({json:{school,month,employee,history:[],documents:[]}});
+    return route.fulfill({json:{school,month,employees:[employee],due:100000,paid:0,remaining:employee.remaining}});
+  });
+  await page.goto('/proprietaire/salaires');
+  await page.getByRole('button',{name:'Ouvrir la paie : Awa Diallo',exact:true}).click();
+  await page.getByRole('button',{name:'Calculer la paie — IUTS et TPA',exact:true}).click();
+  const calculator=page.getByRole('region',{name:'Calcul automatique de la paie',exact:true});
+  await calculator.getByLabel('Statut TPA de l’établissement',{exact:true}).selectOption({label:'Assujetti — taux de 3 %'});
+  await calculator.getByLabel('Motif et justificatifs du calcul',{exact:true}).fill('Justificatifs et statut fiscal vérifiés');
+  await calculator.getByRole('button',{name:'Calculer l’aperçu',exact:true}).click();
+  const result=calculator.getByRole('region',{name:'Aperçu du net à payer',exact:true});await expect(result).toContainText(/94[\s,]?105/);await expect(result).toContainText(/3[\s,]?000/);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  await calculator.screenshot({path:`test-results/payroll-calculation-${info.project.name}.png`});
+  await result.getByRole('button',{name:'Valider le calcul et le net à payer',exact:true}).click();
+  await expect(page.getByRole('status').filter({hasText:'Calcul de paie validé'})).toBeVisible();
+  await expect(page.locator('.payroll__kpis')).toContainText(/94[\s,]?105/);
+});
+
 test('payroll-only staff can open salaries without other finance modules',async({page})=>{
   await mockSchool(page,'proprietaire',[],['PAYROLL']);
   await page.route('**/api/owner/payroll/**',route=>route.fulfill({json:{school:{id:1,name:'École'},month:'2026-10',employees:[],due:0,paid:0,remaining:0}}));

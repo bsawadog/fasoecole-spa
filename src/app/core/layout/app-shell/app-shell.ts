@@ -1,3 +1,4 @@
+import { MessageActivityService } from '../../../shared/message-activity.service';
 import { LoadingState } from '../../../shared/ui/loading-state';
 import { AccountActions } from './account-actions';
 import { NavigationActivity } from '../../../shared/ui/navigation-activity';
@@ -28,7 +29,7 @@ import { OwnerFamilyMessagesService } from '../../../features/dashboard-propriet
 import { SelfSpaceService } from '../../../shared/self-space/self-space.service';
 import { AcademicContextPicker } from '../../../shared/academic-context';
 import { Role } from '../../models';
-import { catchError, EMPTY, exhaustMap, filter, timer, take, map, Subscription } from 'rxjs';
+import { catchError, EMPTY, switchMap, exhaustMap, filter, timer, take, map, Subscription } from 'rxjs';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 
 interface NavigationItem {
@@ -54,6 +55,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
   ],
   proprietaire: [
     { label: 'Salaires', icon: 'wallet', routerLink: '/proprietaire/salaires', module: 'PAYROLL' },
+    { label: 'Emplois du temps des classes', icon: 'calendar', routerLink: '/proprietaire/emplois-du-temps', module: 'CALENDAR' },
     { label: 'Calendrier scolaire', icon: 'calendar', routerLink: '/proprietaire/calendrier', module: 'CALENDAR' },
     { label: 'Discipline et vie scolaire', icon: 'shield', routerLink: '/proprietaire/discipline', module: 'DISCIPLINE' },
     { label: 'Bibliothèque', icon: 'book', routerLink: '/proprietaire/bibliotheque', module: 'LIBRARY' },
@@ -163,6 +165,7 @@ export class AppShell implements OnInit {
   readonly incidentsAttention = signal(0);
   private readonly familyMessages = inject(OwnerFamilyMessagesService);
   private readonly selfSpace = inject(SelfSpaceService);
+  private readonly messageActivity = inject(MessageActivityService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly routeUrl = toSignal(this.router.events.pipe(filter(event => event instanceof NavigationEnd), map(() => this.router.url)), { initialValue: this.router.url });
@@ -195,7 +198,7 @@ export class AppShell implements OnInit {
       return [];
     }
     if (role === 'admin' && this.routeUrl().startsWith('/proprietaire')) return [
-      { label: 'Administration plateforme', icon: 'shield', routerLink: '/admin' }, ...MENU_BY_ROLE.proprietaire
+      { label: 'Administration plateforme', icon: 'shield', routerLink: '/admin' }, ...MENU_BY_ROLE.proprietaire.map(item => item.routerLink === '/proprietaire/messages' ? {...item, badge:this.familyMessages.unreadCount()} : item)
     ];
     if (role === 'admin') return [
       { label: 'Incidents', icon: 'shield', routerLink: '/admin/incidents' },
@@ -257,7 +260,7 @@ export class AppShell implements OnInit {
       proprietaire: [
       { title: 'Administration', routes: ['creer-ecole', 'gestion', 'classes', 'enseignants', 'inscriptions', 'employes', 'personnel', 'notes', 'suivi-devoirs', 'demandes', 'cloture', 'export'] },
       { title: 'Finance et comptabilité', routes: ['salaires', 'impots-taxes', 'frais', 'depenses', 'caisse', 'etats-financiers', 'patrimoine', 'stocks'] },
-      { title: 'Vie scolaire et familles', routes: ['calendrier', 'discipline', 'bibliotheque', 'portail-parents', 'demandes-administratives'] },
+      { title: 'Vie scolaire et familles', routes: ['emplois-du-temps', 'calendrier', 'discipline', 'bibliotheque', 'portail-parents', 'demandes-administratives'] },
       { title: 'Assistance', routes: ['incidents', 'aide'] },
       ],
       enseignant: [
@@ -311,6 +314,7 @@ export class AppShell implements OnInit {
   constructor() {
     effect(onCleanup => {
       const role = this.auth.role();
+      const administrationView = role === 'admin' && this.routeUrl().startsWith('/proprietaire');
       const subscriptions = new Subscription();
       onCleanup(() => subscriptions.unsubscribe());
       untracked(() => {
@@ -330,10 +334,19 @@ export class AppShell implements OnInit {
             takeUntilDestroyed(this.destroyRef),
           ).subscribe());
         }
-        if (this.auth.role() === 'parent' || this.auth.role() === 'enseignant' || this.auth.role() === 'etudiant') {
-          subscriptions.add(timer(0, 20_000).pipe(
+        if (administrationView) {
+          subscriptions.add(this.messageActivity.refresh.pipe(
             filter(() => this.user()?.approved === true && this.user()?.emailVerified === true),
-            exhaustMap(() => this.selfSpace.unreadConversationCount().pipe(
+            exhaustMap(() => {
+              const school = this.auth.schoolContextId() ?? Number(localStorage.getItem('fasoecole_owner_school'));
+              return school > 0 ? this.familyMessages.refreshUnreadCount([school]).pipe(catchError(() => EMPTY)) : EMPTY;
+            }), takeUntilDestroyed(this.destroyRef),
+          ).subscribe());
+        }
+        if (this.auth.role() === 'parent' || this.auth.role() === 'enseignant' || this.auth.role() === 'etudiant') {
+          subscriptions.add(this.messageActivity.refresh.pipe(
+            filter(() => this.user()?.approved === true && this.user()?.emailVerified === true),
+            switchMap(() => this.selfSpace.unreadConversationCount().pipe(
               catchError(() => EMPTY),
             )),
             takeUntilDestroyed(this.destroyRef),
@@ -387,8 +400,8 @@ export class AppShell implements OnInit {
   }
 
   private watchSchoolUnread(schoolIds: number[]): Subscription {
-    return timer(0, 20_000).pipe(
-      exhaustMap(() => this.familyMessages.refreshUnreadCount(schoolIds).pipe(catchError(() => EMPTY))),
+    return this.messageActivity.refresh.pipe(
+      switchMap(() => this.familyMessages.refreshUnreadCount(schoolIds).pipe(catchError(() => EMPTY))),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe();
   }

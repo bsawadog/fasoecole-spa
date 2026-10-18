@@ -102,6 +102,10 @@ export interface SchoolAccess {
 }
 
 export interface OwnerDashboard {
+  classReceivables?: import('../models/dashboard-charts.model').ClassReceivables | null;
+  weeklyAttendance?: import('../models/dashboard-charts.model').WeeklyAttendance | null;
+  bankPosition?: { yearLabel: string; fromDate: string; asOf: string; openingBalance: number | null; receipts: number; payments: number; balance: number } | null;
+  monthlyFinance?: import('../models/monthly-finance.model').MonthlyFinance | null;
   schoolId: number;
   schoolName: string;
   schoolType: string;

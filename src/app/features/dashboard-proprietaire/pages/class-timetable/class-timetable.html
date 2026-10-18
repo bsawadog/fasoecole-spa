@@ -1,0 +1,32 @@
+<main class="timetable">
+  <header class="controls"><div><p class="eyebrow">Vie scolaire et familles</p><h1>Emplois du temps des classes</h1><p>Planning construit à partir des créneaux des enseignants.</p></div><button pButton type="button" [disabled]="loading() || !data()?.lessons?.length || !!error()" (click)="print()">Imprimer / PDF</button></header>
+  <div class="filters controls">
+    <label>Établissement<select [(ngModel)]="schoolId" (ngModelChange)="changeSchool()">@for (school of schools(); track school.id) {<option [ngValue]="school.id">{{ school.name }}</option>}</select></label>
+    <label>Classe<select [(ngModel)]="classId" (ngModelChange)="load()" [disabled]="loading() || !data()?.classes?.length">@for (choice of data()?.classes ?? []; track choice.id) {<option [ngValue]="choice.id">{{ choice.name }}</option>}</select></label>
+    <label>Date dans la semaine<input type="date" [(ngModel)]="date" [min]="data()?.yearStart ?? ''" [max]="data()?.yearEnd ?? ''" (change)="load()" [disabled]="loading()" /></label>
+    <button pButton type="button" (click)="load()" [disabled]="loading() || !schoolId">Actualiser</button>
+  </div>
+  @if (loading()) {<p role="status">Chargement de l’emploi du temps…</p>}
+  @if (error()) {<p-message severity="error" role="alert">{{ error() }}</p-message>}
+  @if (!loading() && !schools().length && !error()) {<p>Aucun établissement accessible.</p>}
+  @if (data(); as schedule) {
+    <section class="sheet" aria-label="Emploi du temps de la classe">
+      <div class="sheet-heading"><p>{{ schedule.schoolName }} · Année scolaire {{ schedule.yearLabel }}</p><h2>Emploi du temps · {{ schedule.className || 'Aucune classe' }}</h2><p>Semaine du {{ schedule.weekStart | date:'dd/MM/yyyy' }}</p></div>
+      @if (conflicts().size) {<p class="conflict-warning" role="alert">Attention : {{ conflicts().size }} créneaux se chevauchent dans cette classe. Vérifiez les plannings des enseignants avant diffusion.</p>}
+      @if (!schedule.classes.length) {<p>Aucune classe pour l’année sélectionnée.</p>}
+      @else if (!schedule.lessons.length) {<p role="status">Aucun créneau enseignant pour cette classe durant cette semaine.</p>}
+      @else {
+        <div class="grid-wrap" tabindex="0" aria-label="Planning hebdomadaire, défilement horizontal"><div class="week-grid">
+          @for (day of columns(); track day.name) {
+            <section class="day"><h3>{{ day.name }}<small>{{ day.date | date:'dd/MM' }}</small></h3>
+              @for (lesson of day.lessons; track lesson.id) {
+                <article class="lesson" [class.lesson-conflict]="conflicts().has(lesson.id)"><strong>{{ lesson.startTime.slice(0,5) }} – {{ lesson.endTime.slice(0,5) }}</strong><p>{{ lesson.subjects || 'Matière non renseignée' }}</p><span>{{ lesson.teacherName }}</span>@if (conflicts().has(lesson.id)) {<small>Chevauchement à vérifier</small>}</article>
+              } @empty {<p class="empty-day">Aucun créneau</p>}
+            </section>
+          }
+        </div></div>
+      }
+      <p class="note">Horaires issus des créneaux enseignants valables aux dates affichées. Les matières affichées sont les affectations actuelles de l’enseignant dans cette classe ; un créneau n’identifie pas une matière unique. Les vacances et annulations ponctuelles sont à consulter dans le calendrier scolaire.</p>
+    </section>
+  }
+</main>

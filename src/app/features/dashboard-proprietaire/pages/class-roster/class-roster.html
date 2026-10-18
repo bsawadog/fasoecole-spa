@@ -256,4 +256,11 @@
       </section>
     }
   }
+  <dialog #errorDialog class="class-roster__error-dialog" role="alertdialog" aria-modal="true"
+    aria-label="Action échouée" aria-describedby="class-roster-error-message"
+    (cancel)="onErrorCancel($event)" (close)="dismissError()">
+    <h2>Action échouée</h2>
+    <p id="class-roster-error-message">{{ errorDialogMessage() }}</p>
+    <div class="class-roster__error-actions"><button pButton severity="danger" type="button" (click)="dismissError()" autofocus>OK</button></div>
+  </dialog>
 </section>

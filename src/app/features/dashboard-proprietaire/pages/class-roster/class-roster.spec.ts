@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AuthService } from '../../../../core/auth';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import { OwnerManagementService } from '../../owner-management.service';
@@ -49,6 +49,9 @@ describe('ClassRoster transfer', () => {
       ],
     });
     const fixture = TestBed.createComponent(ClassRoster);
+    const dialog = fixture.nativeElement.querySelector('.class-roster__error-dialog') as HTMLDialogElement;
+    dialog.showModal = () => dialog.setAttribute('open', '');
+    dialog.close = () => { dialog.removeAttribute('open'); dialog.dispatchEvent(new Event('close')); };
     fixture.detectChanges();
     return { fixture, component: fixture.componentInstance, api, confirmation, auth };
   }
@@ -61,6 +64,32 @@ describe('ClassRoster transfer', () => {
 
   const parent = { parentId: 30, userId: 31, firstName: 'Mamadou', lastName: 'Traoré',
     email: 'parent@example.test', phone: '+22670000000', relationship: 'Père', emailVerified: false, passwordSet: false };
+
+  it('opens a small error dialog for a failed activation and closes it on OK', async () => {
+    const { fixture, component, auth } = setup();
+    component.rows.set([{ ...row, userId: 9, parents: [parent] }]);
+    auth.resendUserInvitation.mockReturnValue(of({ emailSent: false }));
+    component.sendParentAccountLink(parent);
+    fixture.detectChanges(); await fixture.whenStable();
+    const dialog = fixture.nativeElement.querySelector('.class-roster__error-dialog') as HTMLDialogElement;
+    expect(dialog.open).toBe(true);
+    expect(dialog.textContent).toContain('Le lien d’activation n’a pas pu être envoyé. Réessayez ultérieurement.');
+    (dialog.querySelector('button') as HTMLButtonElement).click();
+    expect(dialog.open).toBe(false);
+    expect(component.errorMessage()).toContain('n’a pas pu être envoyé');
+    expect(component.saving()).toBe(false);
+  });
+
+  it('shows server errors from a failed student action in the same dialog', async () => {
+    const { fixture, component, auth } = setup();
+    auth.resendUserInvitation.mockReturnValue(throwError(() => ({ error: { message: 'Service de courriel indisponible.' } })));
+    component.resendInvitation(9);
+    fixture.detectChanges(); await fixture.whenStable();
+    const dialog = fixture.nativeElement.querySelector('.class-roster__error-dialog') as HTMLDialogElement;
+    expect(dialog.open).toBe(true);
+    expect(dialog.textContent).toContain('Service de courriel indisponible.');
+    expect(component.saving()).toBe(false);
+  });
 
   it('uses contact icons and sends activation to the parent account', () => {
     const { fixture, component, auth } = setup();

@@ -1,3 +1,4 @@
+import { MessageActivityService } from '../../../shared/message-activity.service';
 import { Component, computed, input, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -19,7 +20,7 @@ describe('AppShell account readiness', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  function setup(role: 'parent' | 'proprietaire') {
+  function setup(role: 'parent' | 'proprietaire' | 'enseignant' | 'etudiant' | 'admin') {
     const ownerAccess = signal<SchoolAccess[]>([]);
     const schoolContextId = signal<number | null>(null);
     const user = signal({ id: 7, firstName: 'Awa', lastName: 'Diallo', email: 'awa@test.bf', role,
@@ -34,7 +35,7 @@ describe('AppShell account readiness', () => {
     };
     const self = { unreadConversationCount: vi.fn(() => of(5)) };
     const messages = { unreadCount: () => 0, refreshUnreadCount: vi.fn(() => of(0)) };
-    TestBed.configureTestingModule({ imports: [AppShell], providers: [provideRouter([{ path: 'profil', component: AcademicContextStub }]),
+    TestBed.configureTestingModule({ imports: [AppShell], providers: [provideRouter([{ path: 'profil', component: AcademicContextStub },{path:'proprietaire',component:AcademicContextStub}]),
       { provide: AuthService, useValue: auth }, { provide: SelfSpaceService, useValue: self },
       { provide: OwnerFamilyMessagesService, useValue: messages },
     ] });
@@ -42,6 +43,32 @@ describe('AppShell account readiness', () => {
     const fixture = TestBed.createComponent(AppShell); fixture.detectChanges(); vi.advanceTimersByTime(1);
     return { fixture, user, auth, self, messages };
   }
+
+  it.each(['parent', 'enseignant', 'etudiant'] as const)('refreshes the %s badge after reading, on focus and when a new message arrives', role => {
+    const {fixture,user,self}=setup(role);
+    user.update(u=>({...u,approved:true,emailVerified:true}));fixture.detectChanges();vi.advanceTimersByTime(20_001);
+    expect(fixture.componentInstance.unreadMessages()).toBe(5);
+    self.unreadConversationCount.mockReturnValue(of(0));
+    TestBed.inject(MessageActivityService).changed();
+    expect(fixture.componentInstance.unreadMessages()).toBe(0);
+    self.unreadConversationCount.mockReturnValue(of(2));
+    window.dispatchEvent(new Event('focus'));
+    expect(fixture.componentInstance.unreadMessages()).toBe(2);
+    self.unreadConversationCount.mockReturnValue(of(3));vi.advanceTimersByTime(20_000);
+    expect(fixture.componentInstance.unreadMessages()).toBe(3);
+    fixture.destroy();
+  });
+
+  it('refreshes the administrator indicator when viewing an establishment', async () => {
+    const {fixture,user,messages,auth}=setup('admin');
+    user.update(u=>({...u,approved:true,emailVerified:true,rawRoles:['SUPER_ADMIN']}));
+    auth.schoolContextId.set(2);
+    await TestBed.inject(Router).navigateByUrl('/proprietaire');
+    fixture.detectChanges();vi.advanceTimersByTime(1);
+    TestBed.inject(MessageActivityService).changed();
+    expect(messages.refreshUnreadCount).toHaveBeenCalled();
+    fixture.destroy();
+  });
 
   it('hides business menus and delays parent calls until both security gates are complete', () => {
     const { fixture, user, self, auth } = setup('parent');

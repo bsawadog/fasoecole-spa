@@ -9,7 +9,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { RosterImport } from '../../roster-import';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
-import { Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, input, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { catchError, EMPTY, forkJoin, of, Subscription, switchMap } from 'rxjs';
@@ -50,6 +50,30 @@ interface ParentEditForm {
   styleUrl: './class-roster.scss',
 })
 export class ClassRoster implements OnInit, OnDestroy {
+  readonly errorDialogMessage = signal<string | null>(null);
+  private readonly errorDialog = viewChild.required<ElementRef<HTMLDialogElement>>('errorDialog');
+
+  constructor() {
+    effect(() => {
+      const message = this.errorDialogMessage(), dialog = this.errorDialog().nativeElement;
+      if (message && !dialog.open) dialog.showModal();
+      if (!message && dialog.open) dialog.close();
+    });
+  }
+
+  private reportError(message: string): void {
+    this.errorMessage.set(message);
+    this.successMessage.set(null);
+    this.errorDialogMessage.set(message);
+  }
+
+  dismissError(): void {
+    this.errorDialogMessage.set(null);
+    if (this.errorDialog().nativeElement.open) this.errorDialog().nativeElement.close();
+  }
+
+  onErrorCancel(event: Event): void { event.preventDefault(); this.dismissError(); }
+
   money(value: number): string { return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(value) + ' FCFA'; }
   readonly scopeSchoolId = input<number | null>(null);
   private readonly sync = inject(SchoolDataSyncService);
@@ -99,7 +123,7 @@ export class ClassRoster implements OnInit, OnDestroy {
     const ownerId = this.auth.user()?.id;
     if (!ownerId) {
       this.loading.set(false);
-      this.errorMessage.set('Impossible d’identifier votre compte propriétaire.');
+      this.reportError('Impossible d’identifier votre compte propriétaire.');
       return;
     }
 
@@ -117,7 +141,7 @@ export class ClassRoster implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading.set(false);
-        this.errorMessage.set('Impossible de charger vos établissements.');
+        this.reportError('Impossible de charger vos établissements.');
       },
     });
   }
@@ -236,7 +260,7 @@ export class ClassRoster implements OnInit, OnDestroy {
     const classId = this.selectedClassId();
     const target = this.transferTargets().find((c) => c.id === Number(this.transferTargetId));
     if (!classId || !target) {
-      this.errorMessage.set('Veuillez choisir la classe de destination.');
+      this.reportError('Veuillez choisir la classe de destination.');
       return;
     }
     const targetLabel = this.transferLabel(target);
@@ -343,7 +367,7 @@ export class ClassRoster implements OnInit, OnDestroy {
         this.rows.update(rows => rows.map(row => row.userId === userId
           ? { ...row, invitationDeliveryStatus: result.emailSent ? 'SENT' : 'FAILED' } : row));
         if (result.emailSent) this.successMessage.set('Lien envoyé au titulaire du compte.');
-        else this.errorMessage.set('L’envoi du courriel a échoué. Réessayez ultérieurement.');
+        else this.reportError('L’envoi du courriel a échoué. Réessayez ultérieurement.');
       },
       error: err => this.fail(err?.error?.message ?? 'Impossible de renvoyer le lien.'),
     });
@@ -364,14 +388,14 @@ export class ClassRoster implements OnInit, OnDestroy {
           this.saving.set(false);
           if (!current()) return;
           if (result.emailSent) this.successMessage.set('Lien d’activation envoyé au parent.');
-          else this.errorMessage.set('Le lien d’activation n’a pas pu être envoyé. Réessayez ultérieurement.');
+          else this.reportError('Le lien d’activation n’a pas pu être envoyé. Réessayez ultérieurement.');
         },
-        error: err => { this.saving.set(false); if (current()) this.errorMessage.set(err?.error?.message ?? 'Impossible d’envoyer le lien d’activation au parent.'); },
+        error: err => { this.saving.set(false); if (current()) this.reportError(err?.error?.message ?? 'Impossible d’envoyer le lien d’activation au parent.'); },
       });
     } else {
       this.parentLinkRequest = this.auth.requestPasswordReset(parent.email).subscribe({
         next: result => { this.saving.set(false); if (current()) this.successMessage.set(result.message); },
-        error: err => { this.saving.set(false); if (current()) this.errorMessage.set(err?.error?.message ?? 'Impossible de demander la réinitialisation du compte parent.'); },
+        error: err => { this.saving.set(false); if (current()) this.reportError(err?.error?.message ?? 'Impossible de demander la réinitialisation du compte parent.'); },
       });
     }
   }
@@ -440,7 +464,7 @@ export class ClassRoster implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading.set(false);
-        this.errorMessage.set('Impossible de charger les classes de cet établissement.');
+        this.reportError('Impossible de charger les classes de cet établissement.');
       },
     });
   }
@@ -463,7 +487,7 @@ export class ClassRoster implements OnInit, OnDestroy {
       },
       error: () => {
         this.loadingRoster.set(false);
-        this.errorMessage.set(`Impossible de charger les ${this.learner().plural} de cette classe.`);
+        this.reportError(`Impossible de charger les ${this.learner().plural} de cette classe.`);
       },
     });
   }
@@ -478,6 +502,6 @@ export class ClassRoster implements OnInit, OnDestroy {
 
   private fail(message: string): void {
     this.saving.set(false);
-    this.errorMessage.set(message);
+    this.reportError(message);
   }
 }

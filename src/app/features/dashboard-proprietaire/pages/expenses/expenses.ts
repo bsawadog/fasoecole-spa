@@ -21,7 +21,7 @@ import {
 import { Payables } from '../../shared/payables/payables';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 
-type Tab = 'summary' | 'expenses' | 'budget' | 'categories' | 'payables' | 'salaries';
+type Tab = 'summary' | 'expenses' | 'budget' | 'categories' | 'payables';
 
 const isoDate = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -45,8 +45,7 @@ export class ExpensesPage implements OnInit, OnDestroy {
   readonly todayIso = today();
   readonly methods = Object.keys(METHOD_LABELS) as PaymentMethod[];
   readonly tabs: { id: Tab; label: string }[] = [
-    { id: 'salaries', label: 'Salaires' },
-    { id: 'payables', label: 'À payer' },
+    { id: 'payables', label: 'Dépenses à payer' },
     { id: 'summary', label: 'Bilan' },
     { id: 'expenses', label: 'Paiements enregistrés' },
     { id: 'budget', label: 'Budget annuel' },
@@ -279,7 +278,6 @@ export class ExpensesPage implements OnInit, OnDestroy {
 
   loadTab(): void {
     switch (this.tab()) {
-      case 'salaries':
       case 'payables': this.loading.set(false); break;
       case 'summary':
       case 'budget':

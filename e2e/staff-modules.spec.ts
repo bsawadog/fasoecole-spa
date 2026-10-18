@@ -1,14 +1,22 @@
 import { test, expect } from '@playwright/test';
 import { mockSchool } from './ui-fixtures';
 
+async function mockEmployee(page: import('@playwright/test').Page) {
+  await page.route('**/api/owner/staff/schools/1/employees', route=>route.fulfill({json:[{
+    staff:{id:3,userId:40,firstName:'Awa',lastName:'Traoré',email:null,phone:null,jobTitle:'Comptable',monthlySalary:100000,modules:[],active:true,managedAccount:true,createdAt:'2026-10-01T08:00:00'},
+    teacher:null,administrativeEmployment:true,owner:false,identityEditable:true,emailEditable:true,accountActive:true,
+  }]}));
+}
+
 test('module permission choices follow all six appearance themes', async ({page},testInfo) => {
   await mockSchool(page);
+  await mockEmployee(page);
   for(const theme of ['night-violet','night-green','blue-black','light-gray','glossy-black','white']) {
     await page.goto('/profil');
     await page.evaluate(theme=>localStorage.setItem('fasoecole_theme_7',theme),theme);
     await page.reload();
     await page.goto('/proprietaire/personnel');
-    await page.getByRole('button',{name:'+ Ajouter un membre',exact:true}).click();
+    await page.getByRole('button',{name:'Modifier',exact:true}).click();
     const permissions=page.locator('.stf__modules');
     await expect(permissions).toBeVisible();
     await expect(page.locator('body')).toHaveAttribute('data-app-theme',theme);
@@ -33,8 +41,9 @@ test('module permission choices follow all six appearance themes', async ({page}
 
 test('personnel form offers twenty-one independent module permissions', async ({ page }) => {
   await mockSchool(page);
+  await mockEmployee(page);
   await page.goto('/proprietaire/personnel');
-  await page.getByRole('button', { name: '+ Ajouter un membre', exact: true }).click();
+  await page.getByRole('button', { name: 'Modifier', exact: true }).click();
   const permissions = page.locator('.stf__modules');
   await expect(permissions.getByRole('checkbox')).toHaveCount(21);
   await expect(permissions.getByRole('group', { name: 'Vie scolaire et familles', exact: true })).toBeVisible();

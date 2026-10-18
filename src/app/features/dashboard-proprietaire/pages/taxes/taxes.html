@@ -55,9 +55,9 @@
   @if(payrollOpen()){
     <section class="taxes__panel taxes-controls" aria-label="Reprise des montants des salaires">
       <h2>Reprendre ou actualiser l’IUTS et la TPA</h2>
-      <p>Les montants proviennent des saisies manuelles des rémunérations préparées pour le mois. Un salaire versé à un employé n’est pas un règlement aux impôts. La TPA reste une charge patronale.</p>
+      <p>Les montants proviennent des calculs validés et des saisies de paie des rémunérations préparées pour le mois. Un salaire versé à un employé n’est pas un règlement aux impôts. La TPA reste une charge patronale.</p>
       @if(previewLoading()){<app-loading-state message="Lecture des montants des salaires…" />}
-      @if(preview();as p){<p><strong>IUTS : {{ p.iuts | number:'1.0-2' }} FCFA · TPA : {{ p.tpa | number:'1.0-2' }} FCFA</strong> · {{ p.remunerations }} rémunération(s) préparée(s).</p>}
+      @if(preview();as p){<p><strong>IUTS : {{ p.iuts | number:'1.0-2' }} FCFA · TPA : {{ p.tpa | number:'1.0-2' }} FCFA · Retenues sur vacations : {{ (p.vacationWithholding ?? 0) | number:'1.0-2' }} FCFA</strong> · {{ p.remunerations }} rémunération(s) préparée(s).</p>}
       <form #importForm="ngForm" (ngSubmit)="importForm.valid && importPayroll()">
         <fieldset [disabled]="busy()" class="taxes__form">
           <label>Mois des salaires<app-date-field mode="month" name="payrollMonth" [(ngModel)]="payroll.month" (ngModelChange)="loadPreview()" [max]="currentMonth" required ariaLabel="Mois des salaires" /></label>
@@ -67,7 +67,7 @@
           <label>Motif / référence du contrôle<input pInputText name="payrollReason" [(ngModel)]="payroll.reason" maxlength="300" required /></label>
         </fieldset>
         <div class="taxes__toolbar"><button pButton type="submit" [disabled]="busy() || previewLoading() || !preview() || payroll.month > currentMonth">Reprendre / actualiser les montants</button><button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy()" (click)="closePanels()">Fermer la reprise</button></div>
-        <p class="taxes__muted">Une reprise crée au plus une obligation IUTS et une obligation TPA pour le mois, uniquement pour les montants positifs. Une actualisation conserve les paiements et l’échéance déjà enregistrés. Si une obligation IUTS ou TPA a déjà été saisie manuellement sur une période qui recouvre ce mois, la reprise est refusée pour éviter un doublon. Actualisez à nouveau après toute correction des salaires.</p>
+        <p class="taxes__muted">Une reprise crée au plus une obligation IUTS, une obligation TPA et une obligation « Autres » pour les retenues sur vacations pour le mois, uniquement pour les montants positifs. Une actualisation conserve les paiements et l’échéance déjà enregistrés. Si une obligation IUTS ou TPA a déjà été saisie manuellement sur une période qui recouvre ce mois, la reprise est refusée pour éviter un doublon. Actualisez à nouveau après toute correction des salaires.</p>
       </form>
     </section>
   }

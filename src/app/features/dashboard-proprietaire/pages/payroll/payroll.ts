@@ -1,3 +1,4 @@
+import { PayrollCalculator } from './payroll-calculator';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { ChangeDetectorRef, Component, computed, ElementRef, HostListener, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -25,7 +26,7 @@ const normalize=(value:string)=>value.normalize('NFD').replace(/\p{M}/gu,'').toL
 
 @Component({
   selector:'app-payroll',standalone:true,
-  imports: [ModuleHelpButton, FormsModule,DatePipe,DecimalPipe,ButtonModule,InputTextModule,MessageModule,TableModule,TooltipModule,
+  imports: [PayrollCalculator, ModuleHelpButton, FormsModule,DatePipe,DecimalPipe,ButtonModule,InputTextModule,MessageModule,TableModule,TooltipModule,
     DateField,NumberField,SelectField,SelectOption,LoadingState,TableRow,FormValidationDirective],
   templateUrl:'./payroll.html',styleUrl:'./payroll.scss',
 })
@@ -47,6 +48,7 @@ export class PayrollPage implements OnInit,OnDestroy {
   readonly detailLoading=signal(false);
   readonly selectedUser=signal<number|null>(null);
   readonly paymentContract=signal<SalaryContract|null>(null);
+  readonly calculatorOpen=signal(false);
   readonly taxContract=signal<SalaryContract|null>(null);
   taxForm={iuts:0 as number|null,tpa:0 as number|null,reason:''};
   readonly loading=signal(true);
@@ -106,19 +108,30 @@ export class PayrollPage implements OnInit,OnDestroy {
   }
   openDetail(user:number):void {
     if(this.busy())return;
-    this.detailRequest?.unsubscribe();this.selectedUser.set(user);this.detail.set(null);this.paymentContract.set(null);this.taxContract.set(null);this.detailLoading.set(true);this.error.set('');
+    this.detailRequest?.unsubscribe();this.selectedUser.set(user);this.detail.set(null);this.paymentContract.set(null);this.taxContract.set(null);this.calculatorOpen.set(false);this.detailLoading.set(true);this.error.set('');
     this.focus('.payroll__detail-title');
     this.detailRequest=this.api.detail(this.schoolId()!,user,this.month).subscribe({next:value=>{this.detail.set(value);this.detailLoading.set(false);},error:err=>{this.detailLoading.set(false);this.fail(err,'Impossible de charger la fiche de l’employé.');}});
   }
-  closeDetail():void {if(this.busy())return;this.detailRequest?.unsubscribe();this.selectedUser.set(null);this.detail.set(null);this.detailLoading.set(false);this.paymentContract.set(null);this.taxContract.set(null);}
+  closeDetail():void {if(this.busy())return;this.detailRequest?.unsubscribe();this.selectedUser.set(null);this.detail.set(null);this.detailLoading.set(false);this.paymentContract.set(null);this.taxContract.set(null);this.calculatorOpen.set(false);}
+  canCalculate():boolean {
+    const employee=this.detail()?.employee;
+    return !!employee && this.month<=this.currentMonth && employee.contracts.some(c=>c.due>0) && employee.contracts.filter(c=>c.due>0).every(c=>c.prepared) && employee.contracts.every(c=>c.paid===0);
+  }
+  openCalculator():void {if(!this.canCalculate()||this.busy())return;this.taxContract.set(null);this.paymentContract.set(null);this.calculatorOpen.set(true);}
+  calculationSaved():void {
+    this.calculatorOpen.set(false);this.success.set('Calcul de paie validé. Le net à payer et la TPA sont actualisés ; aucun versement enregistré.');
+    const user=this.selectedUser();this.load();if(user)this.openDetail(user);
+  }
+  registerNet():number {return (this.data()?.employees??[]).reduce((sum,e)=>sum+this.net(e),0);}
+  calculation(employee:PayrollEmployee){return employee.contracts.find(c=>c.calculation)?.calculation;}
   openTaxes(contract:SalaryContract):void {
-    if(this.busy()||!contract.payableId||contract.paid>0||this.month>this.currentMonth)return;
+    if(this.busy()||!contract.payableId||contract.paid>0||contract.calculation||this.month>this.currentMonth)return;
     this.paymentContract.set(null);this.taxContract.set(contract);this.taxForm={iuts:contract.iuts??0,tpa:contract.tpa??0,reason:''};this.error.set('');this.focus('.payroll__tax-title');
   }
   saveTaxes():void {
     const contract=this.taxContract(),{iuts,tpa,reason}=this.taxForm;
     if(!contract?.payableId||this.busy())return;
-    if(iuts==null||tpa==null||!Number.isFinite(iuts)||!Number.isFinite(tpa)||iuts<0||tpa<0||iuts>contract.due||!reason.trim()){
+    if(iuts==null||tpa==null||!Number.isFinite(iuts)||!Number.isFinite(tpa)||iuts<0||tpa<0||iuts>contract.due-(contract.deductions??0)||!reason.trim()){
       this.error.set('Renseignez des montants positifs ou nuls et un motif. L’IUTS ne peut pas dépasser la rémunération du mois.');return;
     }
     this.busy.set(true);this.error.set('');this.success.set('');
@@ -127,12 +140,12 @@ export class PayrollPage implements OnInit,OnDestroy {
       const user=this.selectedUser();this.load();if(user)this.openDetail(user);
     },error:err=>this.fail(err,'Impossible d’enregistrer les montants. Actualisez la fiche si elle a changé.')}));
   }
-  sumTax(employee:PayrollEmployee,field:'iuts'|'tpa'):number {return employee.contracts.reduce((sum,c)=>sum+(c[field]??0),0);}
+  sumTax(employee:PayrollEmployee,field:'iuts'|'tpa'|'deductions'):number {return employee.contracts.reduce((sum,c)=>sum+(c[field]??0),0);}
   net(employee:PayrollEmployee):number {return employee.contracts.reduce((sum,c)=>sum+(c.net??c.due),0);}
-  registerTax(field:'iuts'|'tpa'):number {return (this.data()?.employees??[]).reduce((sum,e)=>sum+this.sumTax(e,field),0);}
+  registerTax(field:'iuts'|'tpa'|'deductions'):number {return (this.data()?.employees??[]).reduce((sum,e)=>sum+this.sumTax(e,field),0);}
   openPayment(contract:SalaryContract):void {
     if(this.busy()||!contract.payableId||contract.remaining<=0)return;
-    this.taxContract.set(null);
+    this.taxContract.set(null);this.calculatorOpen.set(false);
     this.paymentContract.set(contract);this.payment={amount:contract.remaining,date:this.currentDate,method:'CASH',reference:''};
     this.paymentKey='';this.paymentFingerprint='';this.error.set('');this.focus('.payroll__payment-title');
   }
@@ -173,8 +186,8 @@ export class PayrollPage implements OnInit,OnDestroy {
   @HostListener('window:beforeprint') beforePrint():void {this.printing.set(true);this.changes.detectChanges();}
   @HostListener('window:afterprint') afterPrint():void {this.printing.set(false);}
   exportCsv():void {
-    const rows:unknown[][]=[['Employé','Fonctions','Matières','Rémunérations','Mois','Avant retenue FCFA','IUTS FCFA','Net à verser FCFA','TPA patronale FCFA','Versé FCFA','Reste FCFA','Statut'],...this.employees().map(e=>[
-      this.personName(e),this.jobs(e),e.subjects.join(', '),e.contracts.map(c=>`${c.jobTitle}: ${c.rate??'Non défini'} ${this.rates[c.rateType??'']??''}`).join(' / '),this.month,e.due,this.sumTax(e,'iuts'),this.net(e),this.sumTax(e,'tpa'),e.paid,e.remaining,this.statuses[e.status]??e.status])];
+    const rows:unknown[][]=[['Employé','Fonctions','Matières','Rémunérations','Mois','Avant retenue FCFA','IUTS FCFA','Autres retenues FCFA','Net à verser FCFA','TPA patronale FCFA','Versé FCFA','Reste FCFA','Statut'],...this.employees().map(e=>[
+      this.personName(e),this.jobs(e),e.subjects.join(', '),e.contracts.map(c=>`${c.jobTitle}: ${c.rate??'Non défini'} ${this.rates[c.rateType??'']??''}`).join(' / '),this.month,e.due,this.sumTax(e,'iuts'),this.sumTax(e,'deductions'),this.net(e),this.sumTax(e,'tpa'),e.paid,e.remaining,this.statuses[e.status]??e.status])];
     const cell=(value:unknown)=>{let text=String(value??'');if(/^[\s]*[=+@-]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"';};
     const url=URL.createObjectURL(new Blob(['\uFEFF'+rows.map(row=>row.map(cell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8;'}));
     const link=document.createElement('a');link.href=url;link.download=`salaires-${this.schoolId()}-${this.month}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);

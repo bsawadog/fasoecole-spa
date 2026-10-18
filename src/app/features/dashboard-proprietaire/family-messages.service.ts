@@ -1,3 +1,4 @@
+import { MessageActivityService } from '../../shared/message-activity.service';
 import { HttpClient } from '@angular/common/http';
 import { conversationBody } from '../../shared/self-space/message-attachments';
 import { inject, Injectable, signal } from '@angular/core';
@@ -12,6 +13,7 @@ export interface FamilyInboxSummary {
 
 @Injectable({ providedIn: 'root' })
 export class OwnerFamilyMessagesService {
+  private readonly activity = inject(MessageActivityService);
   private readonly http = inject(HttpClient);
   private readonly api = `${environment.apiUrl}/owner/family`;
   private readonly conversationApi = `${environment.apiUrl}/conversations`;
@@ -37,15 +39,15 @@ export class OwnerFamilyMessagesService {
   }
 
   start(payload: NewConversationPayload, files: File[] = []): Observable<ConversationThread> {
-    return this.http.post<ConversationThread>(this.conversationApi, conversationBody(payload, files));
+    return this.http.post<ConversationThread>(this.conversationApi, conversationBody(payload, files)).pipe(tap(() => this.activity.changed()));
   }
 
   conversation(conversationId: number): Observable<ConversationThread> {
-    return this.http.get<ConversationThread>(`${this.conversationApi}/${conversationId}`);
+    return this.http.get<ConversationThread>(`${this.conversationApi}/${conversationId}`).pipe(tap(() => this.activity.changed()));
   }
 
   reply(conversationId: number, content: string, files: File[] = []): Observable<ConversationThread> {
-    return this.http.post<ConversationThread>(`${this.conversationApi}/${conversationId}/messages`, conversationBody({ content }, files));
+    return this.http.post<ConversationThread>(`${this.conversationApi}/${conversationId}/messages`, conversationBody({ content }, files)).pipe(tap(() => this.activity.changed()));
   }
 
   refreshUnreadCount(schoolIds: number[]): Observable<number> {

@@ -1,0 +1,54 @@
+<section class="calculator" aria-label="Calcul automatique de la paie" [attr.aria-busy]="busy() || loading()">
+  <h3>Calculer et valider la paie — {{ month() }}</h3>
+  <p>Brut en espèces déjà enregistré : <strong>{{ employee().due | number:'1.0-2' }} FCFA</strong>. Renseignez sa composition ; les indemnités ne sont pas ajoutées une deuxième fois. Pour modifier le brut, corrigez d’abord la rémunération dans la fiche de l’employé.</p>
+  @if(error()){<p class="calculator__error" role="alert">{{ error() }}</p>}
+  @if(loading()){<p role="status">Chargement des paramètres précédents…</p>}
+  <form #calculation="ngForm" (ngSubmit)="calculation.valid && calculate()">
+    <fieldset [disabled]="busy() || loading()">
+      <label>Régime de rémunération<select name="regime" [(ngModel)]="form.regime" (ngModelChange)="regimeChanged()"><option value="SALARIED">Salarié — IUTS progressif</option><option value="TEACHING_VACATION">Vacations d’enseignement — retenue spécifique de 2 %</option></select></label>
+      @for(field of fields;track field[0]) {
+        @if(form.regime === 'SALARIED' || field[0] === 'otherDeductions' || field[0] === 'employerContributions') {
+          <label>{{ field[1] }} (FCFA)<app-number-field [name]="field[0]" [(ngModel)]="form[field[0]]" (ngModelChange)="changed()" min="0" max="9999999999.99" step="0.01" required [ariaLabel]="field[1] + ' (FCFA)'" /></label>
+        }
+      }
+      @if(form.regime === 'SALARIED') {
+        <label>Catégorie professionnelle<select name="category" [(ngModel)]="form.upperCategory" (ngModelChange)="changed()"><option [ngValue]="false">Catégorie ordinaire — abattement de 25 % du salaire de base</option><option [ngValue]="true">Catégorie supérieure — abattement de 20 % du salaire de base</option></select></label>
+        <label>Charges familiales admissibles<select name="charges" [(ngModel)]="form.familyCharges" (ngModelChange)="changed()">@for(n of [0,1,2,3,4];track n){<option [ngValue]="n">{{ n }}</option>}</select></label>
+      }
+      <label>Statut TPA de l’établissement<select name="tpa" aria-label="Statut TPA de l’établissement" [(ngModel)]="form.tpaExempt" (ngModelChange)="changed()" required><option [ngValue]="null" disabled>Choisir le statut fiscal</option><option [ngValue]="true">Exonéré — notamment entreprise privée d’enseignement éligible</option><option [ngValue]="false">Assujetti — taux de 3 %</option></select></label>
+      <label>Centre de gestion agréé<select name="cga" [(ngModel)]="form.approvedManagementCenter" (ngModelChange)="changed()"><option [ngValue]="false">Aucun abattement TPA au titre d’un CGA</option><option [ngValue]="true">Adhérent éligible — abattement TPA de 20 %</option></select></label>
+      <label class="calculator__wide">Motif et justificatifs du calcul<input name="reason" [(ngModel)]="form.reason" (ngModelChange)="changed()" maxlength="300" required placeholder="Catégorie, charges familiales, cotisations et justification du statut TPA" /></label>
+    </fieldset>
+    <p>Les cotisations sont les montants effectivement retenus ; le calcul limite seulement leur déductibilité fiscale. Les charges familiales doivent être justifiées et ne pas être comptées deux fois entre conjoints. Vérifiez la qualification salarié/vacataire et le statut fiscal de l’établissement avant validation.</p>
+    <div class="calculator__actions"><button pButton type="submit" [disabled]="busy() || loading() || !calculation.valid" [loading]="busy()">Calculer l’aperçu</button><button pButton type="button" severity="secondary" variant="outlined" [disabled]="busy()" (click)="cancelled.emit()">Fermer le calcul</button></div>
+  </form>
+  @if(preview();as preview){
+    @let result = preview.result;
+    <div class="calculator__result" role="region" aria-label="Aperçu du net à payer">
+      <h4>Aperçu avant validation</h4>
+      <dl>
+        <div><dt>Brut en espèces</dt><dd>{{ result.gross | number:'1.0-2' }} FCFA</dd></div>
+        <div><dt>Retraite fiscalement déductible</dt><dd>{{ result.pensionDeductible | number:'1.0-2' }} FCFA</dd></div>
+        <div><dt>Abattement professionnel</dt><dd>{{ result.professionalAllowance | number:'1.0-2' }} FCFA</dd></div>
+        <div><dt>Indemnités exonérées</dt><dd>{{ result.exemptions | number:'1.0-2' }} FCFA</dd></div>
+        <div><dt>Base imposable</dt><dd>{{ result.taxableBase | number:'1.0-2' }} FCFA</dd></div>
+        <div><dt>IUTS avant réduction familiale</dt><dd>{{ result.grossIuts | number:'1.0-2' }} FCFA</dd></div>
+        <div><dt>Réduction familiale</dt><dd>{{ result.familyReduction }} %</dd></div>
+        <div><dt>IUTS retenu</dt><dd>{{ result.iuts | number:'1.0-2' }} FCFA</dd></div>
+        <div><dt>Retenue sur vacations</dt><dd>{{ result.vacationWithholding | number:'1.0-2' }} FCFA</dd></div>
+        <div><dt>Retraite, autres cotisations, avances et retenue sur vacations</dt><dd>{{ result.deductions | number:'1.0-2' }} FCFA</dd></div>
+        <div class="calculator__net"><dt>Net à payer à l’employé</dt><dd>{{ result.net | number:'1.0-2' }} FCFA</dd></div>
+        <div><dt>Base TPA {{ result.input.tpaExempt ? '(établissement exonéré)' : '' }}</dt><dd>{{ result.tpaBase | number:'1.0-2' }} FCFA</dd></div>
+        <div><dt>TPA à la charge de l’établissement</dt><dd>{{ result.tpa | number:'1.0-2' }} FCFA</dd></div>
+        <div><dt>Coût total de l’établissement, avantages et cotisations renseignés compris</dt><dd>{{ result.employerCost | number:'1.0-2' }} FCFA</dd></div>
+      </dl>
+      <details><summary>Détail du barème et des retenues</summary>
+        @for(bracket of result.brackets;track bracket.from){<p>Au-delà de {{ bracket.from | number }} jusqu’à {{ bracket.to == null ? 'sans plafond' : (bracket.to | number) }} : {{ bracket.rate }} % → {{ bracket.amount | number:'1.0-2' }} FCFA</p>}
+        <p>Retraite : {{ result.input.pension | number:'1.0-2' }} · Autres cotisations salariales : {{ result.input.otherSocial | number:'1.0-2' }} · Avances et autres retenues : {{ result.input.otherDeductions | number:'1.0-2' }} · Cotisations patronales : {{ result.input.employerContributions | number:'1.0-2' }} FCFA.</p>
+        <p>Barème : {{ result.ruleVersion }}. Les impôts sont arrondis au franc le plus proche. Les avantages en nature entrent dans les bases fiscales, sans être ajoutés au net en espèces.</p>
+      </details>
+      <p>La validation enregistre ces retenues et ce net pour toutes les rémunérations de cet employé du mois. Aucun versement ni règlement fiscal n’est créé. La TPA est reprise séparément dans « Impôts et taxes ».</p>
+      <button pButton type="button" severity="success" [disabled]="busy()" [loading]="busy()" (click)="save()">Valider le calcul et le net à payer</button>
+    </div>
+  }
+</section>

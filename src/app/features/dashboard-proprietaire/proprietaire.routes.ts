@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { ownerModuleGuard, OWNER_LIFE_MODULES } from '../../core/auth';
 
 export const PROPRIETAIRE_ROUTES: Routes = [
+  { path: 'emplois-du-temps', canActivate: [ownerModuleGuard('CALENDAR')], loadComponent: () => import('./pages/class-timetable/class-timetable').then(m => m.ClassTimetablePage) },
   { path: 'impots-taxes', canActivate: [ownerModuleGuard('TAXES')],
     loadComponent: () => import('./pages/taxes/taxes').then(m => m.SchoolTaxesPage) },
   { path: 'salaires', canActivate: [ownerModuleGuard('PAYROLL')],

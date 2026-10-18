@@ -9,8 +9,19 @@ export interface SalaryContract {
   key:string;kind:'STAFF'|'TEACHER';jobTitle:string;employeeNumber:string|null;active:boolean;hireDate:string|null;
   rateType:string|null;rate:number|null;eligible:boolean;prepared:boolean;payableId:number|null;
   due:number;paid:number;remaining:number;workedHours:number;extraHours:number;payments:SalaryPayment[];
-  iuts?:number|null;tpa?:number|null;net?:number|null;taxVersion?:number;
+  iuts?:number|null;tpa?:number|null;net?:number|null;taxVersion?:number;deductions?:number;calculation?:PayrollCalculation|null;
 }
+export interface PayrollCalculationInput {
+  regime:'SALARIED'|'TEACHING_VACATION';baseSalary:number;housing:number;functionAllowance:number;transport:number;benefitsInKind:number;
+  pension:number;otherSocial:number;otherDeductions:number;employerContributions:number;upperCategory:boolean;familyCharges:number;
+  tpaExempt:boolean|null;approvedManagementCenter:boolean;reason:string;
+}
+export interface PayrollCalculation {
+  ruleVersion:string;month:string;input:PayrollCalculationInput;gross:number;pensionDeductible:number;professionalAllowance:number;
+  exemptions:number;taxableBase:number;brackets:{from:number;to:number|null;rate:number;amount:number}[];grossIuts:number;familyReduction:number;
+  iuts:number;vacationWithholding:number;deductions:number;net:number;tpaBase:number;tpa:number;employerCost:number;
+}
+export interface PayrollCalculationPreview {result:PayrollCalculation;versions:Record<string,number>;grossByPayable:Record<string,number>;}
 export interface PayrollEmployee {
   userId:number;firstName:string;lastName:string;email:string|null;phone:string|null;active:boolean;subjects:string[];
   contracts:SalaryContract[];due:number;paid:number;remaining:number;status:string;
@@ -37,6 +48,9 @@ export class PayrollService {
   detail(school:number,user:number,month:string){return this.http.get<PayrollDetail>(`${this.url(school)}/employees/${user}`,{params:{month}});}
   pay(school:number,id:number,value:SalaryPaymentInput){return this.http.post(`${this.url(school)}/payments/${id}`,value);}
   taxes(school:number,id:number,value:{iuts:number;tpa:number;version:number;reason:string}){return this.http.put<void>(`${this.url(school)}/payments/${id}/taxes`,value);}
+  calculationDefaults(school:number,user:number,month:string){return this.http.get<PayrollCalculationInput|null>(`${this.url(school)}/employees/${user}/calculation`,{params:{month}});}
+  previewCalculation(school:number,user:number,month:string,input:PayrollCalculationInput){return this.http.post<PayrollCalculationPreview>(`${this.url(school)}/employees/${user}/calculation/preview`,input,{params:{month}});}
+  applyCalculation(school:number,user:number,month:string,value:{input:PayrollCalculationInput;requestId:string;versions:Record<string,number>;grossByPayable:Record<string,number>}){return this.http.post<void>(`${this.url(school)}/employees/${user}/calculation`,value,{params:{month}});}
   issue(school:number,userId:number,kind:PayrollDocumentKind,month:string|null,requestId:string){return this.http.post<PayrollDocument>(`${this.url(school)}/documents`,{userId,kind,month,requestId});}
   document(school:number,id:number){return this.http.get<PayrollDocument>(`${this.url(school)}/documents/${id}`);}
 }
