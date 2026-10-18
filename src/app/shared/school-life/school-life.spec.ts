@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { AuthService } from '../../core/auth';
 import { SelfSpaceService } from '../self-space/self-space.service';
@@ -11,8 +11,8 @@ const data: LifeOverview = { students: [{ id: 4, name: 'Awa', classId: 2, classN
 
 describe('School life modules', () => {
   afterEach(() => localStorage.removeItem('fasoecole_owner_school'));
-  function setup(scope = 'schools', module = 'calendrier', schools = [{ id: 1, name: 'School' }]) {
-    const route = { data: of({ lifeScope: scope, lifeModule: module }) };
+  function setup(scope = 'schools', module = 'calendrier', schools = [{ id: 1, name: 'School' }], queryParams: Record<string, string> = {}) {
+    const route = { data: of({ lifeScope: scope, lifeModule: module }), snapshot: { queryParamMap: convertToParamMap(queryParams) } };
     const api = { overview: vi.fn(() => of(data)), create: vi.fn(() => of(undefined)), update: vi.fn(() => of(undefined)) };
     const self = { teacherClasses: vi.fn(() => of([])), myStudents: vi.fn(() => of([{ studentId: 4, fullName: 'Awa', schoolName: 'School' }])) };
     TestBed.configureTestingModule({ imports: [SchoolLifePage], providers: [provideRouter([]),
@@ -21,7 +21,7 @@ describe('School life modules', () => {
       { provide: AuthService, useValue: { user: () => ({ id: 7, role: 'parent' }), getOwnedSchools: () => of(schools) } },
     ] });
     const fixture = TestBed.createComponent(SchoolLifePage); fixture.detectChanges();
-    return { fixture, page: fixture.componentInstance, api };
+    return { fixture, page: fixture.componentInstance, api, self };
   }
 
   it('shows the calendar creation form to authorized school staff', () => {
@@ -42,6 +42,22 @@ describe('School life modules', () => {
     page.document.reason = 'Application'; page.requestDocument();
     expect(api.create).toHaveBeenCalledWith('students', 4, 'requests', { kind: 'SCHOOL_CERTIFICATE', reason: 'Application' });
     expect(page.document.reason).toBe('');
+  });
+  it('opens the child requested by a dashboard link', () => {
+    const { page, api, self } = setup('students', 'demandes-administratives', undefined, { studentId: '5' });
+    self.myStudents.mockReturnValue(of([
+      { studentId: 4, fullName: 'Awa', schoolName: 'School' },
+      { studentId: 5, fullName: 'Ali', schoolName: 'School' },
+    ]));
+    page.ngOnInit();
+    expect(page.contextId()).toBe(5);
+    expect(api.overview).toHaveBeenLastCalledWith('students', 5, 'demandes-administratives');
+  });
+  it('ignores a dashboard child identifier outside accessible contexts', () => {
+    const { page, api } = setup('students', 'demandes-administratives', undefined, { studentId: '999' });
+    expect(page.contextId()).toBe(4);
+    expect(api.overview).toHaveBeenCalledWith('students', 4, 'demandes-administratives');
+    expect(api.overview).not.toHaveBeenCalledWith('students', 999, 'demandes-administratives');
   });
   it('preserves form input when an operation fails so it can be retried', () => {
     const { page, api } = setup();

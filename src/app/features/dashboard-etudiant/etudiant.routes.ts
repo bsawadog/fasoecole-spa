@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 export const ETUDIANT_ROUTES: Routes = [
+  ...['presences','annonces','accompagnement','dossier','organisation'].map(studentModule=>({path:studentModule,data:{studentModule},loadComponent:()=>import('./pages/home/study-module').then(m=>m.StudentStudyModule)})),
   { path: 'suivi-devoirs', redirectTo: 'devoirs', pathMatch: 'full' },
   ...['devoirs', 'documents'].map(path => ({ path, data: { resourceKind: path === 'devoirs' ? 'HOMEWORK' : 'DOCUMENT' }, loadComponent: () => import('../../shared/self-space/learning-resources-page').then(m => m.LearningResourcesPage) })),
 

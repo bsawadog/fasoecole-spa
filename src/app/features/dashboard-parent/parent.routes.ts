@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 export const PARENT_ROUTES: Routes = [
+  {path:'accompagnement',loadComponent:()=>import('./pages/home/accompaniment').then(m=>m.ParentAccompaniment)},
   { path: 'suivi-devoirs', redirectTo: 'devoirs', pathMatch: 'full' },
   ...['devoirs', 'documents'].map(path => ({ path, data: { resourceKind: path === 'devoirs' ? 'HOMEWORK' : 'DOCUMENT' }, loadComponent: () => import('../../shared/self-space/learning-resources-page').then(m => m.LearningResourcesPage) })),
 

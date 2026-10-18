@@ -1,32 +1,63 @@
-<div class="dashboard-home">
-  <header class="ui-page-header module-help-header"><app-module-help /><h1>Bienvenue, {{ user()?.firstName }} 👋</h1>
-  <p class="dashboard-home__subtitle">Espace Parent</p></header>
-
-  <div class="dashboard-home__grid">
-    <app-appointment-counter profile="parent" pageLink="/parent/rendez-vous" />
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/profil" fragment="school-access">
-      <h2>Ajouter un établissement</h2>
-      <p>Demandez l’accès à une autre école avec les matricules de vos enfants, pour approbation.</p>
-    </a>
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/parent/notes"><h2>Notes et bulletins</h2><p>Consultez les résultats et bulletins de vos enfants.</p></a>
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/parent/absences"><h2>Présences et retards</h2><p>Suivez les présences et signalez une absence ou un retard.</p></a>
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/parent/frais"><h2>Recouvrement</h2><p>Échéances, paiements enregistrés et reçus.</p></a>
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/parent/emploi"><h2>Emploi du temps</h2><p>Consultez les horaires de cours.</p></a>
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/parent/devoirs"><h2>Devoirs de maison</h2><p>Consignes, dates de remise, pièces jointes et suivi des corrections.</p></a>
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/parent/annonces"><h2>Annonces</h2><p>Informations et événements de l’établissement.</p></a>
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/parent/documents"><h2>Cours et ressources</h2><p>Téléchargez les documents partagés par l’établissement.</p></a>
-
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/parent/enfants">
-      <h2>Mes enfants</h2>
-      <p>Fiche, notes, bulletins, emploi du temps, absences et frais scolaires.</p>
-    </a>
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/parent/enfants">
-      <h2>Signaler une absence</h2>
-      <p>Prévenez l’école d’une absence de votre enfant depuis sa fiche (onglet Absences).</p>
-    </a>
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/parent/messages">
-      <h2>Contacter l’école</h2>
-      <p>Écrivez à l’établissement et suivez ses réponses.</p>
-    </a>
-  </div>
+<div class="dashboard-home parent-home">
+ <header class="ui-page-header module-help-header"><app-module-help/><div><p class="parent-home__eyebrow">Espace parent</p><h1>Bienvenue, {{user()?.firstName}}</h1><p>Une vue claire pour accompagner chaque enfant, jour après jour.</p></div></header>
+ @if(childrenError()){<p-message severity="error" role="alert">{{childrenError()}}</p-message><button pButton type="button" (click)="loadChildren()">Réessayer le chargement des enfants</button>}
+ @if(loadingChildren()){<app-loading-state message="Chargement de vos enfants…"/>}
+ @else if(!children().length&&!childrenError()){
+  <section class="parent-home__panel"><h2>Commençons par le rattachement de vos enfants</h2><p>Aucun enfant accessible dans l’établissement sélectionné. Choisissez un autre établissement ou demandez le rattachement depuis votre profil.</p><a routerLink="/profil" fragment="school-access">Demander un accès à un établissement</a></section>
+ }
+ @if(children().length){
+ <section class="parent-home__context" aria-label="Enfant suivi">
+  <label>Enfant<app-select-field [ngModel]="selectedId()" (ngModelChange)="choose(+$event)" ariaLabel="Enfant suivi">@for(child of children();track child.studentId){<app-select-option [value]="child.studentId" [label]="child.fullName+' · '+child.schoolName"/>}</app-select-field></label>
+  @if(selected();as child){<div><strong>{{child.className||'Classe non renseignée'}}</strong><span>{{child.schoolName}} · {{child.academicYearLabel||'Année non renseignée'}}</span></div>}
+  <button pButton type="button" severity="secondary" variant="outlined" (click)="reload()" [disabled]="loading()">Actualiser le suivi</button>
+ </section>
+ }
+ @if(error()){<p-message severity="error" role="alert">{{error()}} @if(data()){Les dernières informations chargées restent affichées.}</p-message>}
+ @if(loading()){<app-loading-state message="Chargement du suivi scolaire…"/>}
+ @if(data();as d){
+ <section class="parent-home__metrics" aria-label="Points à suivre">
+  <a routerLink="/parent/absences" [queryParams]="params()"><span>Absences enregistrées</span><strong>{{d.attendance.absent+d.attendance.excused}}</strong><small>dont {{d.attendance.excused}} excusée(s)</small></a>
+  <a routerLink="/parent/absences" [queryParams]="params()"><span>Retards enregistrés</span><strong>{{d.attendance.late}}</strong><small>sur l’année consultée</small></a>
+  <a routerLink="/parent/devoirs" [queryParams]="params()" [class.parent-home__attention]="d.homework.overdue>0"><span>Devoirs à vérifier</span><strong>{{d.homework.overdue}}</strong><small>échéance dépassée, non remis</small></a>
+  <a routerLink="/parent/accompagnement" [queryParams]="params()"><span>Accompagnements partagés</span><strong>{{d.sharedSupport}}</strong><small>suivis en cours avec la famille</small></a>
+ </section>
+ }
+ <section aria-labelledby="education-title"><h2 id="education-title" class="parent-home__section-title">Le suivi scolaire</h2><div class="parent-home__shortcuts">
+  @for(item of education;track item.route){<a class="parent-home__shortcut" [routerLink]="link(item)" [queryParams]="params()"><ng-container [ngTemplateOutlet]="shortcutIcon" [ngTemplateOutletContext]="{icon:item.icon}"/><div><h3>{{item.title}}</h3><p>{{item.description}}</p></div></a>}
+ </div></section>
+ @if(data();as d){
+ <section class="parent-home__charts" aria-label="Graphiques du suivi scolaire">
+  <article class="parent-home__panel"><h2>Résultats par période</h2><p class="parent-home__muted">Moyennes officielles des bulletins publiés, sur 20.</p>
+   @if(d.periods.length){<div class="parent-home__periods">@for(period of d.periods;track period.id){<div class="parent-home__period"><strong>{{period.average===null?'—':(period.average|number:'1.0-2')}}</strong><div class="parent-home__period-track" aria-hidden="true">@if(period.average!==null){<span [style.height.%]="percent(period.average)" [class.parent-home__below]="period.average<10"></span>}</div><span>{{period.name}}</span>@if(period.average===null){<small>{{period.published?'Résultat indisponible':'Non publié'}}</small>}</div>}</div>}@else{<p class="parent-home__empty">Aucune période disponible.</p>}
+   <a routerLink="/parent/notes" [queryParams]="params()">Voir les bulletins et appréciations</a>
+  </article>
+  <article class="parent-home__panel"><h2>Résultats par matière</h2><p class="parent-home__muted">{{d.subjectPeriod?'Dernier bulletin publié : '+d.subjectPeriod:'Aucun bulletin publié pour le moment.'}}</p>
+   <div class="parent-home__subjects">@for(subject of d.subjects;track $index){<div><div class="parent-home__bar-label"><span>{{subject.name}}</span><strong>{{subject.average===null?'Sans note':(subject.average|number:'1.0-2')+' / 20'}}</strong></div><div class="parent-home__subject-track" aria-hidden="true"><span [style.width.%]="percent(subject.average??0)" [class.parent-home__below]="subject.average!==null&&subject.average<10"></span></div></div>}@empty{<p class="parent-home__empty">Les matières s’afficheront après publication d’un bulletin.</p>}</div>
+  </article>
+  <article class="parent-home__panel"><h2>Présences des dernières semaines</h2><p class="parent-home__muted">Uniquement les appels enregistrés. Une absence de saisie ne signifie pas que l’enfant était absent.</p>
+   <div class="parent-home__legend"><span class="parent-home__present">Présent</span><span class="parent-home__absent">Absent</span><span class="parent-home__late">Retard</span><span class="parent-home__excused">Excusé</span></div>
+   @for(week of d.weeks;track week.start){<div class="parent-home__week"><span>{{week.start|date:'dd/MM'}}</span><div class="parent-home__week-track" aria-hidden="true"><span class="parent-home__present" [style.width.%]="percent(week.attendance.present,maxWeek())"></span><span class="parent-home__absent" [style.width.%]="percent(week.attendance.absent,maxWeek())"></span><span class="parent-home__late" [style.width.%]="percent(week.attendance.late,maxWeek())"></span><span class="parent-home__excused" [style.width.%]="percent(week.attendance.excused,maxWeek())"></span></div><small>{{total(week.attendance)||'Sans saisie'}}</small></div>}@empty{<p class="parent-home__empty">Aucun appel disponible dans cette période.</p>}
+   <details class="parent-home__details"><summary>Détail accessible des présences</summary><div class="parent-home__table"><table><thead><tr><th>Semaine</th><th>Présent</th><th>Absent</th><th>Retard</th><th>Excusé</th></tr></thead><tbody>@for(w of d.weeks;track w.start){<tr><td>{{w.start|date:'dd/MM'}}–{{w.end|date:'dd/MM'}}</td><td>{{w.attendance.present}}</td><td>{{w.attendance.absent}}</td><td>{{w.attendance.late}}</td><td>{{w.attendance.excused}}</td></tr>}</tbody></table></div></details>
+   <p class="parent-home__muted">{{recorded()}} appel(s) renseigné(s) sur l’année consultée.</p>
+  </article>
+  <article class="parent-home__panel"><h2>Suivi des devoirs de maison</h2><p class="parent-home__muted">Le statut est renseigné par le professeur lors de la remise et de la correction.</p>
+   @if(homeworkTotal()){<div class="parent-home__homework"><div class="parent-home__donut" [style.background]="donut()" aria-hidden="true"><div><strong>{{homeworkTotal()}}</strong><span>devoirs</span></div></div><dl><div><dt>À faire</dt><dd>{{d.homework.todo}}</dd></div><div><dt>Remis</dt><dd>{{d.homework.submitted}}</dd></div><div><dt>Corrigés</dt><dd>{{d.homework.corrected}}</dd></div></dl></div>}@else{<p class="parent-home__empty">Aucun devoir publié pour cette classe.</p>}
+   <a routerLink="/parent/devoirs" [queryParams]="params()">Consulter les consignes et retours</a>
+  </article>
+ </section>
+ <section class="parent-home__agenda" aria-label="À préparer et à lire">
+  <article class="parent-home__panel"><h2>Prochains devoirs à préparer</h2>@for(work of d.dueHomework;track work.id){<a class="parent-home__agenda-item" routerLink="/parent/devoirs" [queryParams]="params()"><strong>{{work.title}}</strong><span [class.parent-home__overdue]="work.overdue">{{work.overdue?'Échéance dépassée · ':''}}{{work.dueOn|date:'dd/MM/yyyy'}}</span></a>}@empty{<p class="parent-home__empty">Aucun devoir à faire signalé.</p>}</article>
+  <article class="parent-home__panel"><h2>Évaluations à venir</h2><p class="parent-home__muted">Les 14 prochains jours.</p>@for(e of d.evaluations;track $index){<p class="parent-home__agenda-item"><strong>{{e.title}}</strong><span>{{e.subject}} · {{e.date|date:'dd/MM/yyyy'}}</span></p>}@empty{<p class="parent-home__empty">Aucune évaluation annoncée sur cette période.</p>}</article>
+  <article class="parent-home__panel"><h2>Dernières annonces</h2>@for(a of d.announcements;track a.id){<a class="parent-home__agenda-item" routerLink="/parent/annonces" [queryParams]="params()"><strong>{{a.title}}</strong><span>{{a.createdAt|date:'dd/MM/yyyy'}}</span></a>}@empty{<p class="parent-home__empty">Aucune annonce dans l’année consultée.</p>}</article>
+  <article class="parent-home__panel"><h2>Dates importantes</h2>@for(e of d.events;track $index){<a class="parent-home__agenda-item" routerLink="/parent/calendrier" [queryParams]="params()"><strong>{{e.title}}</strong><span>{{e.startsOn|date:'dd/MM/yyyy'}}–{{e.endsOn|date:'dd/MM/yyyy'}}</span></a>}@empty{<p class="parent-home__empty">Aucun événement à venir.</p>}</article>
+ </section>
+ }
+ <section aria-labelledby="relations-title"><h2 id="relations-title" class="parent-home__section-title">Échanger avec l’école et suivre les démarches</h2><div class="parent-home__shortcuts">
+  <a class="parent-home__shortcut" routerLink="/parent/messages"><svg lucideMessageCircle [size]="24" aria-hidden="true"/><div><h3>Messages</h3><p>{{unread()===null?'Compteur indisponible':unread()+' message(s) non lu(s)'}}. Contactez les enseignants et l’administration.</p></div></a>
+  <app-appointment-counter profile="parent" pageLink="/parent/rendez-vous"/>
+  <a class="parent-home__shortcut" routerLink="/parent/frais" [queryParams]="params()"><svg lucideWallet [size]="24" aria-hidden="true"/><div><h3>Frais scolaires et reçus</h3>@if(data();as d){<p>{{d.child.fees.balance<0?'Crédit disponible : ':'Solde à régler : '}}{{(d.child.fees.balance<0?-d.child.fees.balance:d.child.fees.balance)|number:'1.0-0'}} F · {{d.child.fees.overdueCount}} échéance(s) dépassée(s).</p>}@else{<p>Échéances, paiements et justificatifs.</p>}</div></a>
+ </div></section>
+ <section aria-labelledby="life-title"><h2 id="life-title" class="parent-home__section-title">La vie de l’établissement</h2><div class="parent-home__shortcuts">@for(item of schoolLife;track item.route){<a class="parent-home__shortcut" [routerLink]="link(item)" [queryParams]="params()"><ng-container [ngTemplateOutlet]="shortcutIcon" [ngTemplateOutletContext]="{icon:item.icon}"/><div><h3>{{item.title}}</h3><p>{{item.description}}</p></div></a>}</div></section>
+ <footer class="parent-home__footer"><a routerLink="/profil" fragment="school-access">Ajouter un établissement ou rattacher un enfant</a>@if(data();as d){<span>Situation au {{d.asOf|date:'dd/MM/yyyy'}} · Actualisation automatique</span>}</footer>
 </div>
+<ng-template #shortcutIcon let-icon="icon">@switch(icon){@case('users'){<svg lucideUsers [size]="24" aria-hidden="true"/>}@case('notes'){<svg lucideNotebookPen [size]="24" aria-hidden="true"/>}@case('book'){<svg lucideBookOpen [size]="24" aria-hidden="true"/>}@case('calendar'){<svg lucideCalendarDays [size]="24" aria-hidden="true"/>}@case('shield'){<svg lucideShieldCheck [size]="24" aria-hidden="true"/>}}</ng-template>

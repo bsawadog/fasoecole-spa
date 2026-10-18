@@ -69,10 +69,12 @@ export class EtudiantSchedule implements OnInit {
     this.error.set(null);
     this.api.studentSchedule(studentId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (entries) => {
+        if(this.state.selectedId()!==studentId)return;
         this.entries.set(entries);
         this.loading.set(false);
       },
       error: (err) => {
+        if(this.state.selectedId()!==studentId)return;
         this.loading.set(false);
         this.error.set(apiError(err, 'Impossible de charger l’emploi du temps.'));
       },

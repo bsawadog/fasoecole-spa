@@ -1,0 +1,38 @@
+<div class="ss ui-academic-blue">
+ <header class="ss__header module-help-header"><app-module-help/><div><h1>{{title()}}</h1><p>Les informations et outils de mon espace élève.</p></div><a routerLink="/etudiant" [queryParams]="{studentId:studentId()}">Retour à mon accueil</a></header>
+ @if(error()){<p-message severity="error" role="alert">{{error()}}</p-message>@if(!profiles().length){<button pButton type="button" (click)="loadProfiles()">Réessayer le chargement du dossier</button>}}
+ @if(success()){<p-message severity="success" role="status">{{success()}}</p-message>}
+ @if(loadingProfiles()){<app-loading-state message="Chargement de mon dossier…"/>}
+ @else if(!profiles().length&&!error()){<p>Aucun dossier élève accessible dans cet établissement.</p>}
+ @if(profiles().length){<label class="ss__field">Mon établissement<app-select-field [ngModel]="studentId()" (ngModelChange)="choose(+$event)" ariaLabel="Mon dossier élève" [disabled]="saving()">@for(p of profiles();track p.studentId){<app-select-option [value]="p.studentId" [label]="p.schoolName+' · '+(p.className||'Classe non renseignée')"/>}</app-select-field></label><button pButton type="button" severity="secondary" variant="outlined" (click)="load()" [disabled]="loading()||saving()">Actualiser</button>}
+ @if(loading()){<app-loading-state message="Chargement…"/>}
+ @else if(studentId();as id){
+ @switch(mode()){
+ @case('annonces'){<app-portal-posts [posts]="posts()" [scopeId]="id"/>}
+ @case('accompagnement'){<p>Je consulte les conseils et les dates de bilan partagés par mes professeurs. Pour demander une précision, je peux utiliser Messages.</p><app-family-learning [studentId]="id" section="support"/>}
+ @case('presences'){
+  <p>Voici les absences, retards et absences excusées enregistrés. Les graphiques de mon accueil présentent aussi les présences renseignées.</p>
+  <div class="ss__card ss__body"><div class="ss__table-wrap"><table class="ss__table"><thead><tr><th>Date</th><th>Statut</th><th>Motif renseigné</th></tr></thead><tbody>@for(row of attendance();track row.id){<tr><td>{{row.date|date:'dd/MM/yyyy'}}</td><td>{{attendanceLabels[row.status]}}</td><td>{{row.justification||'Non renseigné'}}</td></tr>}@empty{<tr><td colspan="3">Aucune absence ni aucun retard enregistré dans l’année consultée.</td></tr>}</tbody></table></div></div>
+  <p><a routerLink="/etudiant/messages">Contacter l’administration pour une précision</a></p>
+ }
+ @case('dossier'){
+  @if(profile();as p){
+   <section class="ss__card ss__body" aria-label="Ma fiche élève en lecture seule"><h2>Ma fiche</h2><dl class="study-details"><dt>Nom</dt><dd>{{p.overview.fullName}}</dd><dt>Matricule</dt><dd>{{p.overview.registrationNumber}}</dd><dt>Établissement</dt><dd>{{p.school.name}}</dd><dt>Classe</dt><dd>{{p.overview.className||'Non renseignée'}}</dd><dt>Année scolaire</dt><dd>{{p.overview.academicYearLabel||'Non renseignée'}}</dd><dt>Date de naissance</dt><dd>{{p.overview.birthDate?(p.overview.birthDate|date:'dd/MM/yyyy'):'Non renseignée'}}</dd><dt>Courriel</dt><dd>{{p.email||'Non renseigné'}}</dd><dt>Téléphone</dt><dd>{{p.phone||'Non renseigné'}}</dd></dl><p>Pour une correction de ma fiche, je contacte l’administration.</p></section>
+   <section class="ss__card ss__body"><h2>Mes responsables</h2>@for(g of p.guardians;track $index){<p><strong>{{g.fullName}}</strong> · {{g.relationship||'Responsable'}} @if(g.phone){· <a [href]="'tel:'+g.phone">{{g.phone}}</a>} @if(g.email){· <a [href]="'mailto:'+g.email">{{g.email}}</a>}</p>}@empty{<p>Aucun responsable renseigné.</p>}</section>
+   <section class="ss__card ss__body"><h2>Mes enseignants</h2>@for(t of p.teachers;track $index){<p><strong>{{t.fullName}}</strong> · {{t.subjects}}</p>}@empty{<p>Aucun enseignant renseigné.</p>}<a routerLink="/etudiant/messages">Ouvrir Messages</a></section>
+  }
+ }
+ @case('organisation'){
+  <p>Mes révisions et rappels restent privés à mon compte. La remise et la correction des devoirs sont confirmées par le professeur dans Devoirs de maison.</p>
+  <form #taskForm="ngForm" (ngSubmit)="saveTask(taskForm)" class="ss__card ss__body">
+   <h2>{{editing?'Modifier mon rappel':'Ajouter une tâche ou une révision'}}</h2>
+   <label class="ss__field">Titre de mon rappel<input pInputText name="title" [(ngModel)]="draft.title" maxlength="160" required [disabled]="saving()"/></label>
+   <label class="ss__field">Détails<textarea pTextarea name="details" [(ngModel)]="draft.details" maxlength="2000" rows="3" [disabled]="saving()"></textarea></label>
+   <label class="ss__field">Date prévue<app-date-field name="dueOn" [(ngModel)]="draft.dueOn" ariaLabel="Date prévue" [disabled]="saving()"/></label>
+   <button pButton type="submit" [disabled]="saving()">{{editing?'Enregistrer mon rappel':'Ajouter mon rappel'}}</button>@if(editing){<button pButton type="button" severity="secondary" (click)="reset();taskForm.resetForm(draft)" [disabled]="saving()">Annuler la modification</button>}
+  </form>
+  <div class="study-list">@for(task of tasks();track task.id){<article class="ss__card ss__body"><h2>{{task.title}}</h2><p>{{task.done?'Terminé':overdue(task)?'À reprendre · date dépassée':'À faire'}} @if(task.dueOn){· {{task.dueOn|date:'dd/MM/yyyy'}}}</p><p class="study-text">{{task.details}}</p><div class="ss__actions"><button pButton type="button" (click)="toggle(task)" [disabled]="saving()">{{task.done?'Réouvrir':'Terminer'}}</button><button pButton type="button" severity="secondary" (click)="edit(task)" [disabled]="saving()">Modifier ce rappel</button><button pButton type="button" severity="danger" variant="outlined" (click)="remove(task)" [disabled]="saving()">Supprimer ce rappel</button></div></article>}@empty{<p>Aucune tâche personnelle. Je peux commencer par préparer ma prochaine révision.</p>}</div>
+ }
+ }
+ }
+</div>
