@@ -1,0 +1,55 @@
+<section class="dep">
+  <header class="module-help-header dep__header"><app-module-help /><div><h1>Brouillard de banque</h1><p>Entrées, sorties et report mensuel des mouvements bancaires.</p></div></header>
+  <p class="dep__alert" role="note"><strong>Solde avant rapprochement bancaire.</strong> Ce solde est calculé à partir des opérations enregistrées ; il n’est pas le solde vérifié du relevé bancaire.</p>
+  <div class="dep__toolbar cash-controls">
+    <label>Mois<app-date-field mode="month" [(ngModel)]="month" (ngModelChange)="load()" [min]="data()?.book?.openedOn?.slice(0,7)" [max]="currentMonth" [disabled]="busy()" ariaLabel="Mois" /></label>
+    <button pButton type="button" (click)="load()" [disabled]="busy()||loading()">Actualiser</button>
+    @if(data()?.book){<button pButton type="button" (click)="exportCsv()" [disabled]="busy()||loading()">Exporter CSV</button><button pButton type="button" (click)="print()" [disabled]="busy()||loading()">Imprimer / PDF</button>}
+  </div>
+  @if(error()){<p-message severity="error" role="alert">{{error()}}</p-message>}
+  @if(success()){<p-message severity="success" role="status">{{success()}}</p-message>}
+  @if(loading()){<app-loading-state message="Chargement de la banque…" />}
+  @else if(!schoolId()){<p>Aucun établissement accessible.</p>}
+  @else if(data();as d){
+    <h2>{{schoolName()}}</h2>
+    @if(!d.book){
+      <section class="dep__card cash-controls"><div class="dep__card-head"><h2>Ouvrir le brouillard de banque</h2></div>
+        <p class="dep__intro">Indiquez le solde juste avant les premières opérations de la date d’ouverture. Les virements enregistrés dans l’application à partir de cette date seront repris automatiquement. Un solde initial négatif représente un découvert.</p>
+        <form class="dep__form" (ngSubmit)="open()">
+          <label>Date d’ouverture<app-date-field name="openingDate" [(ngModel)]="opening.date" [max]="currentDate" required ariaLabel="Date d’ouverture" /></label>
+          <label>Solde initial (FCFA)<app-number-field name="openingAmount" [(ngModel)]="opening.amount" min="-999999999999.99" max="999999999999.99" step="0.01" required ariaLabel="Solde initial (FCFA)" /></label>
+          <button pButton type="submit" [disabled]="busy()">Ouvrir le brouillard de banque</button>
+        </form>
+      </section>
+    } @else {
+      <p>Ouverture : {{d.book.openedOn|date:'dd/MM/yyyy'}} · Mois : {{d.month}} · FCFA</p>
+      <p class="dep__muted">Les frais scolaires, dépenses et salaires payés par virement sont repris automatiquement une seule fois. Saisissez ici uniquement les mouvements non enregistrés ailleurs : frais bancaires, intérêts, dépôts et retraits. Les paiements par carte ou mobile money ne constituent pas un dépôt bancaire tant que leur versement n’est pas enregistré.</p>
+      <p class="dep__muted">Un versement de la caisse vers la banque est une entrée bancaire ; un retrait vers la caisse est une sortie bancaire. Chaque registre doit contenir son mouvement correspondant. Une saisie ici ne crée pas de recette scolaire ni de dépense budgétaire.</p>
+      <div class="dep__kpis">
+        <div class="dep__kpi"><span>Report du solde précédent</span><strong>{{d.openingBalance|number:'1.0-2'}} FCFA</strong></div>
+        <div class="dep__kpi dep__kpi--ok"><span>Entrées du mois</span><strong>{{d.receipts|number:'1.0-2'}} FCFA</strong></div>
+        <div class="dep__kpi dep__kpi--warn"><span>Sorties du mois</span><strong>{{d.payments|number:'1.0-2'}} FCFA</strong></div>
+        <div class="dep__kpi" [class.dep__kpi--bad]="d.closingBalance<0"><span>Solde avant rapprochement bancaire</span><strong>{{d.closingBalance|number:'1.0-2'}} FCFA</strong></div>
+      </div>
+      <section class="dep__card cash-controls"><div class="dep__card-head"><h2>Enregistrer un mouvement bancaire</h2></div>
+        <form class="dep__form" (ngSubmit)="saveEntry()">
+          <label>Date<app-date-field name="date" [(ngModel)]="entry.date" [min]="d.book.openedOn" [max]="currentDate" required ariaLabel="Date" /></label>
+          <label>Type<app-select-field name="direction" [(ngModel)]="entry.direction" ariaLabel="Type"><app-select-option value="IN" label="Entrée / dépôt"/><app-select-option value="OUT" label="Sortie / paiement / retrait"/></app-select-field></label>
+          <label>Montant (FCFA)<app-number-field name="amount" [(ngModel)]="entry.amount" min="0.01" max="9999999999.99" step="0.01" required ariaLabel="Montant (FCFA)" /></label>
+          <label>Libellé<input pInputText name="label" [(ngModel)]="entry.label" maxlength="150" required placeholder="Ex. Frais de tenue de compte" /></label>
+          <label>Pièce / référence<input pInputText name="reference" [(ngModel)]="entry.reference" maxlength="100" /></label>
+          <button pButton type="submit" [disabled]="busy()">Enregistrer</button>
+        </form>
+      </section>
+      <section class="dep__card"><div class="dep__card-head"><h2>Brouillard mensuel</h2><span>{{d.rows.length}} mouvement(s)</span></div>
+        <div class="dep__table-wrap"><table class="dep__table"><thead><tr><th>Date</th><th>Libellé / pièce</th><th>Origine</th><th>Entrées</th><th>Sorties</th><th>Solde avant rapprochement</th><th class="cash-controls">Actions</th></tr></thead>
+          <tbody><tr><td></td><td>Report du solde précédent</td><td></td><td></td><td></td><td>{{d.openingBalance|number:'1.0-2'}}</td><td class="cash-controls"></td></tr>
+            @for(row of rows();track row.source+row.id){<tr><td>{{row.date|date:'dd/MM/yyyy'}}</td><td>{{row.label}}<small class="cash-reference">{{row.reference}}</small></td><td>{{sourceLabels[row.source]}}</td><td>{{row.direction==='IN'?(row.amount|number:'1.0-2'):'—'}}</td><td>{{row.direction==='OUT'?(row.amount|number:'1.0-2'):'—'}}</td><td [class.dep__neg]="row.balance<0">{{row.balance|number:'1.0-2'}}</td><td class="cash-controls">@if(row.source==='MANUAL'){<button pButton severity="danger" variant="text" type="button" (click)="remove(row)" [disabled]="busy()">Supprimer</button>}</td></tr>}
+            @empty{<tr><td colspan="7">Aucun mouvement ce mois. Le solde précédent est conservé.</td></tr>}
+          </tbody><tfoot><tr><td></td><td>Total (FCFA)</td><td></td><td>{{d.receipts|number:'1.0-2'}}</td><td>{{d.payments|number:'1.0-2'}}</td><td>{{d.closingBalance|number:'1.0-2'}}</td><td class="cash-controls"></td></tr></tfoot>
+        </table></div>
+        @if(pageCount()>1){<div class="dep__toolbar cash-controls"><button pButton type="button" (click)="page.set(page()-1)" [disabled]="page()===0">Précédent</button><span>Page {{page()+1}} / {{pageCount()}}</span><button pButton type="button" (click)="page.set(page()+1)" [disabled]="page()+1===pageCount()">Suivant</button></div>}
+      </section>
+    }
+  }
+</section>

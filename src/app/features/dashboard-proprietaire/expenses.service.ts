@@ -19,7 +19,12 @@ export interface ExpenseCategoryPayload {
   active?: boolean;
 }
 
+export interface ExpenseInvoiceTax {code:'TVA'|'IUTS'|'TPA'|'PATENTE'|'INCOME'|'PROPERTY'|'OTHER';label:string;treatment:'INCLUDED'|'WITHHELD';amount:number;}
+export interface ExpenseInvoice {number:string;date:string;supplierIfu:string;excludingTax:number;total:number;taxDueDate:string|null;taxes:ExpenseInvoiceTax[];}
+export interface ExpenseTaxDetails {invoiceNumber:string|null;invoiceDate:string|null;supplierIfu:string|null;excludingTax:number;taxes:{label:string;amount:number}[];}
 export interface ExpenseRow {
+  taxDetails?:ExpenseTaxDetails|null;
+  invoice?:ExpenseInvoice|null;
   id: number;
   source: 'MANUAL' | 'PAYROLL' | 'PAYABLE';
   expenseDate: string;
@@ -35,6 +40,7 @@ export interface ExpenseRow {
 }
 
 export interface ExpensePayload {
+  invoice?:ExpenseInvoice|null;
   categoryId: number;
   expenseDate: string;
   amount: number;
@@ -80,6 +86,7 @@ export interface ExpenseSummary {
 
 @Injectable({ providedIn: 'root' })
 export class ExpensesService {
+  createInvoiceObligations(id:number){return this.http.post<void>(`${this.url}/expenses/${id}/tax-obligations`,null);}
   private readonly http = inject(HttpClient);
   private readonly url = `${environment.apiUrl}/owner/expenses`;
 

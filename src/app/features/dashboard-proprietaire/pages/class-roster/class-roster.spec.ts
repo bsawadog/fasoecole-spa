@@ -26,6 +26,7 @@ describe('ClassRoster transfer', () => {
         { id: 5, schoolId: 1, label: '2025-2026', startDate: '', endDate: '', isCurrent: true },
         { id: 6, schoolId: 1, label: '2026-2027', startDate: '', endDate: '', isCurrent: false },
       ])),
+      getClassTeachers: vi.fn(() => of([{ teacherId: 1, teacherName: "Professeur A", subjectName: "Mathématiques" }, { teacherId: 1, teacherName: "Professeur A", subjectName: "Français" }, { teacherId: 1, teacherName: "Professeur A", subjectName: "Français" }, { teacherId: 2, teacherName: "Professeur A", subjectName: "Histoire" }])),
       getClassRoster: vi.fn(() => of([row])),
       transferRosterStudent: vi.fn(() => of({ ...row })),
       deleteRosterStudent: vi.fn(() => of(undefined)),
@@ -55,6 +56,28 @@ describe('ClassRoster transfer', () => {
     fixture.detectChanges();
     return { fixture, component: fixture.componentInstance, api, confirmation, auth };
   }
+
+  it('groups the current class subjects by teacher identity without duplicates', () => {
+    const { component, api } = setup();
+    component.studentSearch.set('no matching pupil');
+    component.showTeachers();
+    expect(api.getClassTeachers).toHaveBeenCalledWith(100);
+    expect(component.classTeachers()).toEqual([
+      { teacherId: 1, name: 'Professeur A', subjects: ['Français', 'Mathématiques'] },
+      { teacherId: 2, name: 'Professeur A', subjects: ['Histoire'] },
+    ]);
+  });
+  it('shows a loading failure and allows teachers to be loaded again', () => {
+    const { component, api } = setup();
+    api.getClassTeachers.mockReturnValueOnce(throwError(() => new Error('offline')));
+    component.showTeachers();
+    expect(component.loadingTeachers()).toBe(false);
+    expect(component.teachersError()).toContain('Impossible');
+    expect(component.classTeachers()).toEqual([]);
+    component.showTeachers();
+    expect(component.teachersError()).toBeNull();
+    expect(component.classTeachers()).toHaveLength(2);
+  });
 
   it('offers every other class of the school, grouped by academic year', () => {
     const { component } = setup();

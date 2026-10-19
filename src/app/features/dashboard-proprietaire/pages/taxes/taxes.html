@@ -5,24 +5,42 @@
   @if(success()){<p-message severity="success" role="status" class="taxes-controls">{{ success() }}</p-message>}
   <div class="taxes__toolbar taxes-controls">
     <label>Année fiscale<app-number-field [(ngModel)]="year" (ngModelChange)="changeYear()" min="1900" max="2200" step="1" [disabled]="busy()" ariaLabel="Année fiscale" /></label>
+    <label>Afficher par<app-select-field [ngModel]="periodMode()" (ngModelChange)="periodMode.set($event); closePanels()" ariaLabel="Afficher par"><app-select-option value="YEAR" label="Année entière" /><app-select-option value="MONTH" label="Mois" /><app-select-option value="QUARTER" label="Trimestre" /></app-select-field></label>
+    @if(periodMode()==='MONTH'){<label>Mois<app-select-field [ngModel]="periodMonth()" (ngModelChange)="periodMonth.set($event); closePanels()" ariaLabel="Mois fiscal">@for(month of months;track month.value){<app-select-option [value]="month.value" [label]="month.label" />}</app-select-field></label>}
+    @if(periodMode()==='QUARTER'){<label>Trimestre<app-select-field [ngModel]="periodQuarter()" (ngModelChange)="periodQuarter.set($event); closePanels()" ariaLabel="Trimestre fiscal"><app-select-option [value]="1" label="1er trimestre · janvier à mars" /><app-select-option [value]="2" label="2e trimestre · avril à juin" /><app-select-option [value]="3" label="3e trimestre · juillet à septembre" /><app-select-option [value]="4" label="4e trimestre · octobre à décembre" /></app-select-field></label>}
     <button pButton type="button" [disabled]="busy() || !schoolId()" (click)="openCreate()">Ajouter un impôt ou une taxe</button>
     <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy() || !schoolId()" (click)="openPayroll()">Reprendre IUTS / TPA des salaires</button>
+    <button pButton type="button" [disabled]="busy() || !schoolId()" (click)="synchronizePayroll()">Calculer et synchroniser IUTS / TPA</button>
     <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy() || loading()" (click)="load()">Actualiser</button>
     <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy() || !data()" (click)="exportCsv()">Exporter CSV</button>
     <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy() || !data()" (click)="print()">Imprimer le registre</button>
   </div>
-  <p class="taxes__notice taxes-controls">Enregistrez uniquement les impôts applicables à votre établissement, selon les montants et échéances confirmés par votre comptable. Aucun taux, régime fiscal, exonération, déclaration ou paiement n’est calculé automatiquement. Le catalogue ne signifie pas que chaque taxe est due.</p>
+  <p class="taxes__notice taxes-controls">L’IUTS et la TPA sont calculés à la préparation des salaires. Pour reprendre les salaires existants, utilisez « Calculer et synchroniser ». Sans paramètres enregistrés : régime salarié, brut assimilé au salaire de base, aucune charge familiale ni exonération TPA. Corrigez ces paramètres dans Salaires si nécessaire. Les paiements déjà enregistrés sont conservés. Le catalogue ne signifie pas que chaque taxe est due.</p>
+  <p class="taxes__notice">Ce module distingue la TVA facturée par les fournisseurs des impôts à reverser et de leurs règlements. Le cumul fournisseurs est repris automatiquement depuis les dépenses, sans créer de dette fiscale.</p>
   @if(loading()){<app-loading-state message="Chargement des impôts et taxes…" />}
   @else if(!schools().length){<p>Aucun établissement accessible pour ce module.</p>}
   @if(data(); as d){
-    <h2>{{ schoolName() }} — Registre fiscal {{ d.year }}</h2>
+    <h2>{{ schoolName() }} — Registre fiscal {{ d.year }} · du {{ periodBounds().from | date:'dd/MM/yyyy' }} au {{ periodBounds().to | date:'dd/MM/yyyy' }}</h2>
     <div class="taxes__kpis">
-      <div><span>Total des obligations</span><strong>{{ d.due | number:'1.0-2' }} FCFA</strong></div>
-      <div><span>Règlements enregistrés</span><strong>{{ d.paid | number:'1.0-2' }} FCFA</strong></div>
-      <div><span>Reste à payer</span><strong>{{ d.remaining | number:'1.0-2' }} FCFA</strong></div>
-      <div><span>Solde en retard</span><strong>{{ d.overdue | number:'1.0-2' }} FCFA</strong></div>
+      <div><span>Total des obligations</span><strong>{{ periodTotals().due | number:'1.0-2' }} FCFA</strong></div>
+      <div><span>Règlements enregistrés</span><strong>{{ periodTotals().paid | number:'1.0-2' }} FCFA</strong></div>
+      <div><span>Reste à payer</span><strong>{{ periodTotals().remaining | number:'1.0-2' }} FCFA</strong></div>
+      <div><span>Solde en retard</span><strong>{{ periodTotals().overdue | number:'1.0-2' }} FCFA</strong></div>
     </div>
-    <p class="taxes__muted">Périodes fiscales recouvrant {{ d.year }} et anciennes obligations non soldées. Les totaux portent sur ces obligations et leurs règlements cumulés, quelle que soit la date de paiement ; les obligations annulées sont exclues.</p>
+    <p class="taxes__muted">Les obligations dont la période fiscale recouvre la sélection sont affichées avec leur montant entier, sans répartition au prorata. Les règlements sont cumulés, quelle que soit leur date ; les obligations annulées sont exclues des totaux. Les soldes des années antérieures sont inclus uniquement dans la vue annuelle.</p>
+    <section class="taxes__panel" aria-label="État de la TVA fournisseurs">
+      <h2>TVA facturée par les fournisseurs à l’établissement</h2>
+      <p><strong>{{ supplierVatTotal() | number:'1.0-2' }} FCFA</strong> · {{ supplierVatRows().length }} dépense(s) sur la période sélectionnée.</p>
+      <p>Ce montant correspond à la TVA des factures d’achat enregistrées, payées ou encore à payer. Les versements partiels ne sont pas recomptés ; les dépenses annulées et les retenues à reverser sont exclues.</p>
+      <p>Le solde de TVA correspond à la TVA facturée par l’établissement (collectée) moins la TVA sur achats admise en déduction : une différence positive est à payer au fisc, une différence négative constitue un crédit de TVA à reporter ou à rembourser selon les conditions applicables.</p>
+      <p class="taxes__muted">La déductibilité de la TVA fournisseurs doit être vérifiée. La TVA facturée par l’établissement et les crédits antérieurs ne sont pas repris ici : aucun solde fiscal net n’est calculé à partir des seuls achats.</p>
+      <button pButton severity="secondary" variant="outlined" type="button" class="taxes-controls" [disabled]="!supplierVatRows().length" (click)="exportSupplierVat()">Exporter la TVA fournisseurs</button>
+      <div class="taxes__table-wrap"><table><thead><tr><th>Date de facture</th><th>Fournisseur / IFU</th><th>Référence / dépense</th><th>TVA facturée (FCFA)</th></tr></thead><tbody>
+        @for(line of supplierVatRows();track line.key){<tr><td>{{line.date|date:'dd/MM/yyyy'}}@if(line.estimatedDate){<small>Date à préciser : échéance ou paiement utilisé</small>}</td><td>{{line.supplier||'Non renseigné'}}<small>{{line.supplierIfu}}</small></td><td>{{line.invoiceNumber||'Facture sans référence'}}<small>{{line.label}}</small></td><td>{{line.amount|number:'1.0-2'}}</td></tr>}
+        @empty{<tr><td colspan="4">Aucune TVA fournisseur enregistrée sur cette période. Renseignez la TVA dans la dépense et, si possible, la date de facture.</td></tr>}
+      </tbody></table></div>
+    </section>
+    <h2>Obligations fiscales à reverser</h2>
     <div class="taxes__catalog" aria-label="Synthèse par type d’impôt">
       @for(summary of summaries();track summary.code){
         <article><h3>{{ labels[summary.code] }}</h3>@if(summary.count){<p>Dû : {{ summary.due | number:'1.0-2' }} FCFA</p><p>Réglé : {{ summary.paid | number:'1.0-2' }} FCFA</p><strong>Reste : {{ summary.remaining | number:'1.0-2' }} FCFA</strong>}@else{<p>Aucune obligation enregistrée</p>}</article>
@@ -98,7 +116,7 @@
       <h3>Paiements enregistrés</h3>
       <div class="taxes__table-wrap"><table><thead><tr><th>Date</th><th>Montant</th><th>Mode</th><th>Référence / quittance</th></tr></thead><tbody>@for(p of detail.payments;track p.id){<tr><td>{{ p.date | date:'dd/MM/yyyy' }}</td><td>{{ p.amount | number:'1.0-2' }} FCFA</td><td>{{ p.method ? methodLabels[p.method] : 'Non renseigné' }}</td><td>{{ p.reference || '—' }}</td></tr>}@empty{<tr><td colspan="4">Aucun règlement enregistré.</td></tr>}</tbody></table></div>
       <details><summary>Historique de l’obligation</summary><div class="taxes__table-wrap"><table><thead><tr><th>Date</th><th>Action</th><th>Montant dû</th><th>Échéance</th><th>Motif / auteur</th></tr></thead><tbody>@for(event of detail.events;track event.id){<tr><td>{{ event.createdAt | date:'dd/MM/yyyy HH:mm' }}</td><td>{{ eventLabels[event.action] || event.action }}</td><td>{{ event.amount | number:'1.0-2' }}</td><td>{{ event.dueDate | date:'dd/MM/yyyy' }}</td><td>{{ event.reason }}<small>{{ event.author }}</small></td></tr>}</tbody></table></div></details>
-      @if(detail.tax.origin === 'MANUAL' && detail.tax.obligation.paid === 0 && detail.tax.obligation.status !== 'CANCELLED'){
+      @if(detail.tax.origin !== 'PAYROLL' && detail.tax.obligation.paid === 0 && detail.tax.obligation.status !== 'CANCELLED'){
         <div class="taxes__toolbar"><label>Motif d’annulation<input pInputText [(ngModel)]="cancelReason" maxlength="300" [disabled]="busy()" /></label><button pButton severity="danger" variant="outlined" type="button" [disabled]="busy()" (click)="cancel()">Annuler cette obligation</button></div>
       }
     </section>
@@ -113,7 +131,7 @@
     <p>{{ rows().length }} obligation(s) dans le registre filtré · Montants en FCFA</p>
     <p-table [value]="rows()" dataKey="id" [paginator]="!printing() && rows().length > 25" [rows]="25" [rowsPerPageOptions]="[25,50,100]" [rowHover]="true">
       <ng-template #header><tr><th>Impôt / taxe</th><th>Période / origine</th><th>Échéance</th><th>Dû</th><th>Réglé</th><th>Reste</th><th>Suivi</th><th class="taxes-controls">Actions</th></tr></ng-template>
-      <ng-template #body [appTableRow]="rows()" let-row><tr><td><strong>{{ row.obligation.label }}</strong><small>{{ labels[row.code] }} · {{ row.obligation.supplier }}</small><small>{{ row.declarationReference }}</small></td><td>{{ row.periodStart | date:'dd/MM/yyyy' }}<small>au {{ row.periodEnd | date:'dd/MM/yyyy' }}</small><small>{{ row.origin === 'PAYROLL' ? 'Reprise des salaires' : 'Saisie manuelle' }}</small>@if(row.carryover){<strong>Solde antérieur</strong>}</td><td>{{ row.obligation.dueDate | date:'dd/MM/yyyy' }}</td><td>{{ row.obligation.amount | number:'1.0-2' }}</td><td>{{ row.obligation.paid | number:'1.0-2' }}</td><td>{{ row.obligation.remaining | number:'1.0-2' }}</td><td><span class="taxes__badge" [class.taxes__badge--paid]="row.obligation.status === 'PAID'">{{ statuses[row.obligation.status] }}</span>@if(row.obligation.overdue){<small class="taxes__late">En retard</small>}</td><td class="taxes-controls"><button pButton variant="text" type="button" class="ui-row-action ui-row-action--info" [disabled]="busy()" (click)="openDetail(row)" [attr.aria-label]="'Consulter : ' + row.obligation.label" pTooltip="Paiements, solde et historique" tooltipPosition="top" tooltipEvent="both" [showDelay]="500" appendTo="body"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h10l4 4v14H5ZM14 3v5h5M8 12h8M8 16h6" /></svg></button></td></tr></ng-template>
+      <ng-template #body [appTableRow]="rows()" let-row><tr><td><strong>{{ row.obligation.label }}</strong><small>{{ labels[row.code] }} · {{ row.obligation.supplier }}</small><small>{{ row.declarationReference }}</small></td><td>{{ row.periodStart | date:'dd/MM/yyyy' }}<small>au {{ row.periodEnd | date:'dd/MM/yyyy' }}</small><small>{{ row.origin === 'PAYROLL' ? 'Calcul des salaires' : row.origin === 'EXPENSE' ? 'Retenue sur facture' : 'Saisie manuelle' }}</small>@if(row.carryover){<strong>Solde antérieur</strong>}</td><td>{{ row.obligation.dueDate | date:'dd/MM/yyyy' }}</td><td>{{ row.obligation.amount | number:'1.0-2' }}</td><td>{{ row.obligation.paid | number:'1.0-2' }}</td><td>{{ row.obligation.remaining | number:'1.0-2' }}</td><td><span class="taxes__badge" [class.taxes__badge--paid]="row.obligation.status === 'PAID'">{{ statuses[row.obligation.status] }}</span>@if(row.obligation.overdue){<small class="taxes__late">En retard</small>}</td><td class="taxes-controls"><button pButton variant="text" type="button" class="ui-row-action ui-row-action--info" [disabled]="busy()" (click)="openDetail(row)" [attr.aria-label]="'Consulter : ' + row.obligation.label" pTooltip="Paiements, solde et historique" tooltipPosition="top" tooltipEvent="both" [showDelay]="500" appendTo="body"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h10l4 4v14H5ZM14 3v5h5M8 12h8M8 16h6" /></svg></button></td></tr></ng-template>
       <ng-template #emptymessage><tr><td colspan="8">Aucune obligation pour ces filtres. Ajoutez les taxes applicables ou reprenez les montants des salaires.</td></tr></ng-template>
     </p-table>
   }

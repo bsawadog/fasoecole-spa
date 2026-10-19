@@ -37,6 +37,7 @@ const MODULE_HINTS: Record<OwnerModule, string> = {
   PARENT_PORTAL: 'Annonces, documents, devoirs et rendez-vous avec les familles.',
   MESSAGES: 'Messagerie de l’établissement et échanges avec les familles.',
   CASH_BOOK: 'Ouverture de caisse, mouvements et clôture de caisse.',
+  BANK_BOOK: 'Entrées et sorties bancaires ; solde avant rapprochement bancaire.',
   FINANCIAL_STATEMENTS: 'Consultation, export et impression des états financiers.',
   ASSETS: 'Bâtiments, locaux, mobilier, équipements, état et historique des biens.',
   INVENTORY: 'Articles, entrées, sorties, inventaires physiques et alertes de réapprovisionnement.',
@@ -62,11 +63,11 @@ export class StaffPage implements OnInit {
   readonly moduleGroups = [
     { title: 'Administration et enseignement', codes: ['DASHBOARD', 'MANAGEMENT', 'STUDENTS', 'TEACHERS', 'GRADES', 'ENROLLMENT'] },
     { title: 'Vie scolaire et familles', codes: ['CALENDAR', 'DISCIPLINE', 'LIBRARY', 'HOMEWORK', 'REQUESTS', 'PARENT_PORTAL', 'MESSAGES'] },
-    { title: 'Finance et comptabilité', codes: ['PAYROLL', 'TAXES', 'FINANCE', 'EXPENSES', 'CASH_BOOK', 'FINANCIAL_STATEMENTS', 'ASSETS', 'INVENTORY'] },
+    { title: 'Finance et comptabilité', codes: ['PAYROLL', 'TAXES', 'FINANCE', 'EXPENSES', 'CASH_BOOK', 'BANK_BOOK', 'FINANCIAL_STATEMENTS', 'ASSETS', 'INVENTORY'] },
   ].map(group => ({ title: group.title, modules: this.modules.filter(module => group.codes.includes(module.code)) }));
   readonly presets: Preset[] = [
     { title: 'Directeur des études', modules: ['DASHBOARD', 'MANAGEMENT', 'STUDENTS', 'TEACHERS', 'GRADES', 'ENROLLMENT', 'CALENDAR', 'DISCIPLINE', 'LIBRARY', 'HOMEWORK', 'REQUESTS', 'PARENT_PORTAL', 'MESSAGES'] },
-    { title: 'Comptable', modules: ['DASHBOARD', 'PAYROLL', 'TAXES', 'FINANCE', 'EXPENSES', 'CASH_BOOK', 'FINANCIAL_STATEMENTS'] },
+    { title: 'Comptable', modules: ['DASHBOARD', 'PAYROLL', 'TAXES', 'FINANCE', 'EXPENSES', 'CASH_BOOK', 'BANK_BOOK', 'FINANCIAL_STATEMENTS'] },
     { title: 'Secrétaire', modules: ['STUDENTS', 'FINANCE', 'ENROLLMENT', 'CALENDAR', 'REQUESTS', 'PARENT_PORTAL', 'MESSAGES'] },
     { title: 'Surveillant général', modules: ['STUDENTS', 'DISCIPLINE', 'HOMEWORK', 'MESSAGES'] },
     { title: 'Gardien', modules: [] },

@@ -58,7 +58,7 @@ export type ApprovalRole = 'TEACHER' | 'PARENT' | 'STUDENT';
 
 /** Modules de l'espace propriétaire pouvant être délégués au personnel. */
 export type OwnerModule = 'DASHBOARD' | 'MANAGEMENT' | 'STUDENTS' | 'TEACHERS' | 'FINANCE' | 'EXPENSES' | 'GRADES' | 'ENROLLMENT'
-  | 'CALENDAR' | 'DISCIPLINE' | 'LIBRARY' | 'HOMEWORK' | 'REQUESTS' | 'PARENT_PORTAL' | 'MESSAGES' | 'CASH_BOOK' | 'FINANCIAL_STATEMENTS' | 'ASSETS' | 'INVENTORY' | 'PAYROLL' | 'TAXES';
+  | 'CALENDAR' | 'DISCIPLINE' | 'LIBRARY' | 'HOMEWORK' | 'REQUESTS' | 'PARENT_PORTAL' | 'MESSAGES' | 'CASH_BOOK' | 'BANK_BOOK' | 'FINANCIAL_STATEMENTS' | 'ASSETS' | 'INVENTORY' | 'PAYROLL' | 'TAXES';
 
 export const OWNER_MODULES: { code: OwnerModule; label: string; route: string }[] = [
   { code: 'DASHBOARD', label: 'Tableau de bord', route: '/proprietaire' },
@@ -79,6 +79,7 @@ export const OWNER_MODULES: { code: OwnerModule; label: string; route: string }[
   { code: 'PARENT_PORTAL', label: 'Portail parents', route: '/proprietaire/portail-parents' },
   { code: 'MESSAGES', label: 'Messages', route: '/proprietaire/messages' },
   { code: 'CASH_BOOK', label: 'Brouillard de caisse', route: '/proprietaire/caisse' },
+  { code: 'BANK_BOOK', label: 'Brouillard de banque', route: '/proprietaire/banque' },
   { code: 'FINANCIAL_STATEMENTS', label: 'États financiers', route: '/proprietaire/etats-financiers' },
   { code: 'ASSETS', label: 'Patrimoine et mobilier', route: '/proprietaire/patrimoine' },
   { code: 'INVENTORY', label: 'Stocks et fournitures', route: '/proprietaire/stocks' },

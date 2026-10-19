@@ -49,12 +49,18 @@ export const OWNER_HELP_QUESTIONS: HelpQuestion[] = [
   ],note:'Une personne peut cumuler plusieurs fonctions sans multiplier ses comptes.',route:'/proprietaire/tous-les-employes',linkLabel:'Revenir à l’annuaire du personnel'},
   {id:'expenses',category:'Finance et comptabilité',question:'Comment suivre les dépenses, charges fixes et budgets ?',steps:[
     'Vérifiez l’établissement et la période de suivi dans Dépenses et budget.',
-    'Dans les dépenses à payer, ajoutez une obligation ponctuelle ou une charge fixe avec sa catégorie, son montant et son échéance.',
-    'Ouvrez une obligation pour enregistrer un versement partiel ou complet et consulter les paiements déjà enregistrés.',
-    'Utilisez les rubriques du module pour consulter les dépenses réalisées, les catégories et les budgets disponibles.',
-    'Comparez les dépenses au budget et consultez le bilan de la période.',
+    'Ouvrez Saisir une dépense pour enregistrer un achat ou une facture avec sa catégorie, son montant TTC, ses taxes éventuelles et son échéance.',
+    'Dans Saisir une charge fixe, configurez les charges mensuelles et arrêtez ou réactivez celles déjà créées.',
+    'Dans Dépenses à payer, utilisez Payer / détails pour enregistrer un versement partiel ou complet. Retrouvez-le dans Paiements effectués ; une facture déjà réglée peut aussi être saisie directement dans cette rubrique.',
+    'Consultez le Bilan, définissez vos prévisions dans Budget annuel et organisez vos dépenses dans Catégories.',
     'Suivez les salaires détaillés dans Salaires et les règlements fiscaux dans Impôts et taxes.',
   ],note:'Un versement enregistré dans Salaires ou Impôts et taxes alimente les dépenses : ne le saisissez pas une seconde fois.',route:'/proprietaire/depenses',linkLabel:'Revenir aux dépenses et au budget'},
+  {id:'bank-book',category:'Finance et comptabilité',question:'Comment suivre les entrées et sorties en banque ?',steps:[
+    'Ouvrez Brouillard de banque et renseignez la date et le solde initial avant les premières opérations de cette date.',
+    'Les frais scolaires, dépenses et salaires payés par virement sont repris automatiquement.',
+    'Saisissez les autres entrées et sorties avec une date, un montant, un libellé et une référence. Ne ressaisissez pas les virements déjà présents.',
+    'Consultez les reports mensuels, exportez le CSV ou imprimez le registre.',
+  ],note:'Le solde est avant rapprochement bancaire : il ne correspond pas à un solde vérifié avec le relevé de banque. Les mouvements manuels ne créent pas de recettes scolaires ou de dépenses budgétaires.',route:'/proprietaire/banque',linkLabel:'Revenir au brouillard de banque'},
   {id:'cash-book',category:'Finance et comptabilité',question:'Comment ouvrir, suivre et clôturer la caisse ?',steps:[
     'Ouvrez Brouillard de caisse et choisissez le mois à consulter.',
     'À la première utilisation, indiquez la date d’ouverture et les espèces réellement présentes juste avant les premières opérations.',

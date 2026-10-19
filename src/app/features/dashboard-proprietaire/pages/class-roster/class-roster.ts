@@ -1,3 +1,4 @@
+import { DialogModule } from 'primeng/dialog';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
@@ -45,7 +46,7 @@ interface ParentEditForm {
 @Component({
   selector: 'app-class-roster',
   standalone: true,
-  imports: [ModuleHelpButton, TooltipModule, LucidePencil, LucideEye, LucideArrowRightLeft, LucideTrash2, LucideMail, LucidePhone, LucideSend, LucideKeyRound, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, RosterImport, FormValidationDirective, FormsModule, RouterLink],
+  imports: [DialogModule, ModuleHelpButton, TooltipModule, LucidePencil, LucideEye, LucideArrowRightLeft, LucideTrash2, LucideMail, LucidePhone, LucideSend, LucideKeyRound, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, RosterImport, FormValidationDirective, FormsModule, RouterLink],
   templateUrl: './class-roster.html',
   styleUrl: './class-roster.scss',
 })
@@ -95,6 +96,32 @@ export class ClassRoster implements OnInit, OnDestroy {
   readonly years = signal<AcademicYearRecord[]>([]);
   readonly selectedClassId = signal<number | null>(null);
   readonly rows = signal<ClassRosterRow[]>([]);
+  readonly teachersVisible = signal(false);
+  readonly classTeachers = signal<{ teacherId: number; name: string; subjects: string[] }[]>([]);
+  readonly loadingTeachers = signal(false);
+  readonly teachersError = signal<string | null>(null);
+  private teachersRequest?: Subscription;
+
+  showTeachers(): void {
+    const classId = this.selectedClassId();
+    if (classId === null) return;
+    this.teachersRequest?.unsubscribe();
+    this.teachersVisible.set(true); this.loadingTeachers.set(true); this.teachersError.set(null); this.classTeachers.set([]);
+    this.teachersRequest = this.api.getClassTeachers(classId).subscribe({
+      next: assignments => {
+        if (classId !== this.selectedClassId()) return;
+        const groups = new Map<number, { teacherId: number; name: string; subjects: string[] }>();
+        for (const a of assignments) {
+          const group = groups.get(a.teacherId) ?? { teacherId: a.teacherId, name: a.teacherName, subjects: [] };
+          if (!group.subjects.includes(a.subjectName)) group.subjects.push(a.subjectName);
+          groups.set(a.teacherId, group);
+        }
+        this.classTeachers.set([...groups.values()].map(g => ({ ...g, subjects: g.subjects.sort((a,b) => a.localeCompare(b,'fr')) })).sort((a,b) => a.name.localeCompare(b.name,'fr')));
+        this.loadingTeachers.set(false);
+      },
+      error: () => { if (classId === this.selectedClassId()) { this.loadingTeachers.set(false); this.teachersError.set('Impossible de charger les enseignants et leurs matières. Réessayez.'); } },
+    });
+  }
   readonly studentSearch = signal('');
   readonly filteredRows = computed(() => {
     const normalize = (value: string) => value.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase();
@@ -152,6 +179,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.teachersRequest?.unsubscribe();
     this.parentLinkRequest?.unsubscribe();
     this.syncSubscription?.unsubscribe();
     this.request?.unsubscribe();
@@ -433,6 +461,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   }
 
   private selectSchool(schoolId: number): void {
+    this.teachersRequest?.unsubscribe(); this.teachersVisible.set(false);
     this.classRequest?.unsubscribe();
     this.syncSubscription?.unsubscribe();
     this.syncSubscription = this.sync.watch(schoolId).pipe(switchMap(() => {
@@ -470,6 +499,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   }
 
   private selectClass(classId: number): void {
+    this.teachersRequest?.unsubscribe(); this.teachersVisible.set(false);
     const schoolId = this.selectedSchoolId();
     this.studentSearch.set('');
     this.classRequest?.unsubscribe();

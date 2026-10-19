@@ -1,0 +1,9 @@
+:host { display: block; }
+.cash-reference { display: block; color: var(--theme-muted, #64748b); }
+@media print {
+  .cash-controls { display: none !important; }
+  .dep { padding: 0; }
+  .dep__card, .dep__table-wrap { overflow: visible; max-height: none; box-shadow: none; }
+  tr { break-inside: avoid; }
+  thead { display: table-header-group; }
+}

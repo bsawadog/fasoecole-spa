@@ -100,6 +100,20 @@
           </div>
         }
 
+        @if(academicKind()==='subjects'){
+          <section class="owner-management__level-catalog" aria-label="Catalogues de matières">
+            <h3>Matières suggérées</h3><p>Ajoutez le secondaire général ou les filières techniques enseignées ici. Les matières, codes personnalisés et coefficients existants sont conservés. Les catégories ne modifient pas le calcul des moyennes.</p>
+            <button pButton type="button" (click)="showSubjectCatalog()" [disabled]="catalogBusy()||saving()">Afficher les catalogues</button>
+            @if(catalogBusy()){<p role="status">Chargement du catalogue…</p>}
+            @if(catalogError()){<p-message severity="error" role="alert">{{catalogError()}}</p-message>}
+            @if(catalogOpen()){@for(pack of subjectCatalog();track pack.id){<details><summary>{{pack.label}} · {{pack.subjects.length}} matières</summary>
+              <p>Coefficient initial : 1, modifiable par matière et par classe.</p>
+              <ul>@for(subject of pack.subjects;track subject.code){<li><strong>{{subject.code}}</strong> — {{subject.name}} · {{subject.category}}</li>}</ul>
+              <button pButton type="button" (click)="applySubjectCatalog(pack)" [disabled]="catalogBusy()||saving()">Ajouter : {{pack.label}}</button>
+            </details>}}
+            @if(catalogConflicts().length){<p-message severity="warn">Certaines matières n’ont pas été ajoutées :</p-message><ul>@for(conflict of catalogConflicts();track conflict){<li>{{conflict}}</li>}</ul>}
+          </section>
+        }
         @if (editorOpen()) {
           <form class="owner-management__editor" (ngSubmit)="saveAcademic()">
             <div class="owner-management__editor-heading">
@@ -140,6 +154,7 @@
             }
             @if (academicKind() === 'subjects') {
               <label>Nom de la matière<input pInputText name="subjectName" [(ngModel)]="academicForm.name" placeholder="Mathématiques" required maxlength="100"></label>
+              <label>Catégorie<input pInputText name="subjectCategory" [(ngModel)]="academicForm.category" maxlength="100" placeholder="Scientifique, Langue…" /></label>
               <label>Code<input pInputText name="subjectCode" [(ngModel)]="academicForm.code" placeholder="MATH" maxlength="30"></label>
               <label>Coefficient par défaut<app-number-field name="subjectCoefficient" min="0.25" max="20" step="0.25" [(ngModel)]="academicForm.coefficient" required [ariaLabel]="(&quot;Coefficient par défaut&quot;).trim()" /></label>
               <p class="owner-management__wide owner-management__hint">Appliqué à toutes les classes ; il reste ajustable par classe dans « Notes &amp; bulletins ».</p>

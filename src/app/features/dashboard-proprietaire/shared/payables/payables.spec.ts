@@ -41,6 +41,17 @@ describe('Payables', () => {
     expect(page.rows()).toHaveLength(0);
     page.filter = 'OVERDUE'; expect(page.rows()).toHaveLength(1);
   });
+  it('records VAT while creating an unpaid expense without increasing TTC',()=>{
+    const {page,http}=setup();page.openForm('manual');page.form.label='Fournitures';page.form.amount=118000;page.addTax();page.taxes[0].amount=18000;page.taxInvoice.invoiceNumber='F-001';page.save();
+    const request=http.expectOne(base);expect(request.request.body.amount).toBe(118000);expect(request.request.body.taxDetails).toMatchObject({invoiceNumber:'F-001',excludingTax:100000,taxes:[{label:'TVA',amount:18000}]});request.flush(null);http.expectOne(base+'/prepare?month=2026-10').flush(null);flushLoad(http);
+  });
+  it('blocks taxes exceeding TTC before submitting the expense',()=>{
+    const {page,http}=setup();page.openForm('manual');page.form.label='Fournitures';page.form.amount=1000;page.addTax();page.taxes[0].amount=1500;page.save();http.expectNone(base);expect(page.error()).toContain('Vérifiez les taxes');
+  });
+  it('stores recurring taxes without reusing a single invoice number every month',()=>{
+    const {page,http}=setup();page.openForm('fixed');page.form.label='Charge';page.form.amount=118000;page.addTax();page.taxes[0].amount=18000;page.taxInvoice.invoiceNumber='Must not repeat';page.save();
+    const request=http.expectOne(base+'/fixed');expect(request.request.body.taxDetails.invoiceNumber).toBeNull();expect(request.request.body.taxDetails.excludingTax).toBe(100000);request.flush(null);http.expectOne(base+'/prepare?month=2026-10').flush(null);flushLoad(http);
+  });
   it('records a partial payment and reuses its request ID after a network failure', () => {
     const {fixture,page,http} = setup();
     page.openDetail(row); http.expectOne(`${base}/1/payments`).flush([]);

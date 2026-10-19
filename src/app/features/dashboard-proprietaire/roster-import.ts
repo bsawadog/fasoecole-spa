@@ -115,7 +115,7 @@ async function readWorkbook(file: File): Promise<string[][]> {
       <button pButton type="button" (click)="download()">Télécharger le modèle CSV</button>
       <p>Colonnes obligatoires : <strong>{{ required().join(', ') }}</strong>.</p>
       <p>Colonnes facultatives : {{ optional().join(', ') }}. Dates : AAAA-MM-JJ. Matricules et numéros d’employé : cellules au format texte pour conserver les zéros.</p>
-      <p>Utilisez le nom exact d’une classe de l’année sélectionnée{{ kind() === 'teachers' ? ' et d’une matière de cet établissement. Répétez un enseignant avec le même numéro d’employé pour plusieurs affectations' : '. Une ligne représente un élève. Pour ajouter un parent ou tuteur, renseignez parent_prénom et parent_nom ; son courriel et son téléphone sont facultatifs. lien_parenté indique Père, Mère, Tuteur…' }}.</p>
+      <p>Utilisez le nom exact d’une classe de l’année sélectionnée{{ kind() === 'teachers' ? ' et du nom ou du code d’une matière de cet établissement. Répétez un enseignant avec le même numéro d’employé pour plusieurs affectations' : '. Une ligne représente un élève. Pour ajouter un parent ou tuteur, renseignez parent_prénom et parent_nom ; son courriel et son téléphone sont facultatifs. lien_parenté indique Père, Mère, Tuteur…' }}.</p>
       <p>Le courriel de l’élève ou de l’enseignant est facultatif : la colonne peut être absente ou vide. Le matricule ou le numéro d’employé identifie chaque personne. Aucun mot de passe à fournir ; une invitation est envoyée uniquement lorsqu’un courriel est disponible. Un courriel omis ne supprime pas celui d’un dossier existant.</p>
       <p>Classes disponibles : {{ classNames() }}.</p>
       <p>Les montants sont en FCFA, avec deux décimales maximum. Laissez une cellule vide pour conserver les paiements existants ; 0 signifie aucun paiement.</p>
@@ -188,7 +188,7 @@ export class RosterImport {
   readonly invalid = computed(() => this.rows().filter(r => r.errors.length).length);
   readonly remaining = computed(() => this.rows().filter(r => r.status !== 'Enregistré').length);
   readonly classNames = computed(() => this.classes().map(c => c.name).join(', ') || 'Créez une classe avant l’import');
-  readonly subjectNames = computed(() => this.subjects().map(s => s.name).join(', '));
+  readonly subjectNames = computed(() => this.subjects().map(s => s.code?s.code+' — '+s.name:s.name).join(', '));
   constructor() {
     inject(DestroyRef).onDestroy(() => { this.destroyed = true; this.generation++; });
     effect(() => { this.schoolId(); this.classes(); this.generation++; this.rows.set([]); this.teacherIds.clear(); this.message.set(''); this.outcome.set(null); });
@@ -263,8 +263,9 @@ export class RosterImport {
         for (const h of ['telephone', 'parent_telephone']) if (data[h] && (!/^[+\d\s().-]+$/.test(data[h]) || !/^\d{6,15}$/.test(data[h].replace(/\D/g, '')))) errors.push(`${h} invalide`);
         const matches = this.classes().filter(c => normalize(c.name) === normalize(data['classe']));
         if (matches.length !== 1) errors.push('Classe introuvable ou nom ambigu dans cette année');
-        const subject = this.subjects().filter(s => normalize(s.name) === normalize(data['matiere'] ?? ''));
-        if (this.kind() === 'teachers' && subject.length !== 1) errors.push('Matière introuvable ou ambiguë');
+        const subjectValue=normalize(data['matiere']??'');
+        const subject = this.subjects().filter(s => normalize(s.name)===subjectValue || !!s.code && normalize(s.code)===subjectValue);
+        if (this.kind() === 'teachers' && subject.length !== 1) errors.push('Matière introuvable ou ambiguë : utilisez un code ou un nom unique de cet établissement');
         if (this.kind() === 'students' && ['parent_prenom', 'parent_nom', 'parent_courriel', 'parent_telephone', 'lien_parente'].some(h => data[h]) && ['parent_prenom', 'parent_nom'].some(h => !data[h])) errors.push('Parent : prénom et nom obligatoires ; courriel facultatif');
         const email = (data['courriel'] ?? '').toLowerCase();
         if (email && data['parent_courriel']?.toLowerCase() === email) errors.push('Le parent doit avoir un courriel différent de celui de l’élève');

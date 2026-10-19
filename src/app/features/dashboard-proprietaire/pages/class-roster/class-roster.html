@@ -58,6 +58,7 @@
       <section class="class-roster__card class-roster__list">
         <div class="class-roster__card-head class-roster__no-print">
           <h2>Liste des {{ learner().plural }}</h2>
+          <button pButton type="button" class="class-roster__teachers-button" (click)="showTeachers()">Voir les enseignants</button>
           <span class="class-roster__count" role="status">{{ filteredRows().length }} / {{ rows().length }} {{ learner().plural }}</span>
         </div>
         <div class="class-roster__search class-roster__no-print">
@@ -80,18 +81,17 @@
               <th>Paiements reçus</th>
               <th>Reste à payer</th>
               <th>Parents</th>
-              <th>Enseignants</th>
               <th class="class-roster__no-print">Actions</th>
             </tr>
           </thead>
           <tbody>
             @if (!filteredRows().length) {
-              <tr><td colspan="9" class="class-roster__state">Aucun {{ learner().singular }} ne correspond à votre recherche.</td></tr>
+              <tr><td colspan="8" class="class-roster__state">Aucun {{ learner().singular }} ne correspond à votre recherche.</td></tr>
             }
             @for (row of filteredRows(); track row.studentId) {
               <tr class="class-roster__row">
                 @if (editingStudentId() === row.studentId) {
-                  <td colspan="9">
+                  <td colspan="8">
                     <form class="class-roster__edit-form" (ngSubmit)="saveStudent(row.studentId)">
                       <div class="class-roster__edit-grid">
                         <label>Prénom <input pInputText name="firstName" [(ngModel)]="studentForm.firstName" required /></label>
@@ -115,7 +115,7 @@
                     </form>
                   </td>
                 } @else if (transferringStudentId() === row.studentId) {
-                  <td colspan="9">
+                  <td colspan="8">
                     <form class="class-roster__transfer" (ngSubmit)="confirmTransfer(row)">
                       <p class="class-roster__transfer-title">
                         Transférer <strong>{{ row.lastName }} {{ row.firstName }}</strong> vers une autre classe
@@ -234,13 +234,6 @@
                       }
 
                   </td>
-                  <td>
-                    @if (row.teacherNames.length > 0) {
-                      {{ row.teacherNames.join(', ') }}
-                    } @else {
-                      <span class="class-roster__muted">Aucun enseignant assigné</span>
-                    }
-                  </td>
                   <td class="class-roster__actions class-roster__no-print">
                     <a class="class-roster__action ui-row-action" pTooltip="Voir la fiche" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Voir la fiche : ' + row.firstName + ' ' + row.lastName" [routerLink]="['/proprietaire/eleves', row.studentId]"><svg lucideEye [size]="18" aria-hidden="true"></svg></a>
                     <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__action ui-row-action ui-row-action--warning" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Modifier : ' + row.firstName + ' ' + row.lastName" (click)="startEditStudent(row)"><svg lucidePencil [size]="18" aria-hidden="true"></svg></button>
@@ -256,6 +249,25 @@
       </section>
     }
   }
+  <p-dialog header="Enseignants de la classe" [visible]="teachersVisible()" (visibleChange)="teachersVisible.set($event)"
+    [modal]="true" [draggable]="false" [style]="{ width: '34rem', maxWidth: '95vw' }" appendTo="body">
+    <p>{{ currentSchoolName() }} — {{ currentClassLabel() }}</p>
+    @if (loadingTeachers()) {
+      <app-loading-state message="Chargement des enseignants et matières…" />
+    } @else if (teachersError()) {
+      <p role="alert">{{ teachersError() }}</p>
+      <button pButton type="button" (click)="showTeachers()">Réessayer</button>
+    } @else {
+      <div class="class-roster__teachers-list">
+        <table class="class-roster__table"><thead><tr><th>Enseignant</th><th>Matière(s) dans cette classe</th></tr></thead><tbody>
+          @for (teacher of classTeachers(); track teacher.teacherId) {
+            <tr><td>{{ teacher.name }}</td><td>{{ teacher.subjects.join(', ') }}</td></tr>
+          } @empty { <tr><td colspan="2">Aucun enseignant assigné à cette classe.</td></tr> }
+        </tbody></table>
+      </div>
+    }
+    <ng-template #footer><button pButton type="button" (click)="teachersVisible.set(false)">Fermer</button></ng-template>
+  </p-dialog>
   <dialog #errorDialog class="class-roster__error-dialog" role="alertdialog" aria-modal="true"
     aria-label="Action échouée" aria-describedby="class-roster-error-message"
     (cancel)="onErrorCancel($event)" (close)="dismissError()">

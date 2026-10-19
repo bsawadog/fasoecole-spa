@@ -28,6 +28,7 @@ const ownerGuides:OwnerGuide[]=[
   ['frais','Recouvrement','fees',['fees'],'FINANCE'],
   ['depenses','Dépenses et budget','expenses',['expenses'],'EXPENSES'],
   ['caisse','Brouillard de caisse','cash-book',['cash-book'],'CASH_BOOK'],
+  ['banque','Brouillard de banque','bank-book',['bank-book'],'BANK_BOOK'],
   ['etats-financiers','États financiers','financial-tools',['financial-tools'],'FINANCIAL_STATEMENTS'],
   ['patrimoine','Patrimoine et mobilier','assets',['assets'],'ASSETS'],
   ['stocks','Stocks et fournitures','stock',['stock'],'INVENTORY'],

@@ -44,13 +44,42 @@ export class SchoolTaxesPage implements OnInit,OnDestroy {
   form=this.emptyForm();payment={amount:null as number|null,date:this.currentDate,method:'BANK_TRANSFER' as PaymentMethod,reference:''};
   payroll={month:this.currentMonth,dueDate:'',creditor:'Direction générale des impôts',declarationReference:'',reason:''};
   cancelReason='';private createKey='';private createFingerprint='';private paymentKey='';private paymentFingerprint='';
-  readonly rows=computed(()=> (this.data()?.rows??[]).filter(r=>{
+  readonly periodMode=signal<'YEAR'|'MONTH'|'QUARTER'>('YEAR');
+  readonly periodMonth=signal(new Date().getMonth()+1);
+  readonly periodQuarter=signal(Math.floor(new Date().getMonth()/3)+1);
+  readonly months=Array.from({length:12},(_,i)=>({value:i+1,label:new Date(2026,i,1).toLocaleDateString('fr-FR',{month:'long'})}));
+  readonly periodBounds=computed(()=>{
+    const year=this.data()?.year??Number(this.year),mode=this.periodMode();
+    const start=mode==='MONTH'?Number(this.periodMonth()):mode==='QUARTER'?(Number(this.periodQuarter())-1)*3+1:1;
+    const end=mode==='MONTH'?start:mode==='QUARTER'?start+2:12;
+    return {from:year+'-'+String(start).padStart(2,'0')+'-01',to:year+'-'+String(end).padStart(2,'0')+'-'+new Date(year,end,0).getDate()};
+  });
+  readonly periodRows=computed(()=>{
+    const rows=this.data()?.rows??[];
+    if(this.periodMode()==='YEAR')return rows;
+    const {from,to}=this.periodBounds();return rows.filter(r=>r.periodStart<=to&&r.periodEnd>=from);
+  });
+  readonly supplierVatRows=computed(()=>{
+    const {from,to}=this.periodBounds();return (this.data()?.supplierVat??[]).filter(r=>r.date>=from&&r.date<=to);
+  });
+  readonly supplierVatTotal=computed(()=>this.supplierVatRows().reduce((total,row)=>total+row.amount,0));
+  exportSupplierVat():void {
+    const lines:unknown[][]=[['Date','Date estimée','Fournisseur','IFU','Facture','Dépense','TVA facturée FCFA'],...this.supplierVatRows().map(r=>[r.date,r.estimatedDate?'Oui':'Non',r.supplier,r.supplierIfu,r.invoiceNumber,r.label,r.amount])];
+    const cell=(v:unknown)=>{let s=String(v??'');if(/^[\s]*[=+@-]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';};
+    const url=URL.createObjectURL(new Blob(['\uFEFF'+lines.map(r=>r.map(cell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8;'}));
+    const a=document.createElement('a');a.href=url;a.download='tva-fournisseurs-'+this.schoolId()+'-'+this.periodBounds().from+'-'+this.periodBounds().to+'.csv';a.click();URL.revokeObjectURL(url);
+  }
+  readonly periodTotals=computed(()=>this.periodRows().filter(r=>r.obligation.status!=='CANCELLED').reduce((total,r)=>({
+    due:total.due+r.obligation.amount,paid:total.paid+r.obligation.paid,remaining:total.remaining+r.obligation.remaining,
+    overdue:total.overdue+(r.obligation.overdue?r.obligation.remaining:0),
+  }),{due:0,paid:0,remaining:0,overdue:0}));
+  readonly rows=computed(()=> this.periodRows().filter(r=>{
     const p=r.obligation,status=this.statusFilter();
     return (this.codeFilter()==='ALL'||r.code===this.codeFilter()) && (status==='ALL'||status==='OPEN'&&p.remaining>0||status==='OVERDUE'&&p.overdue||status===p.status)
       && normalize(`${this.labels[r.code]} ${p.label} ${p.supplier??''} ${r.declarationReference??''} ${r.periodStart} ${r.periodEnd}`).includes(normalize(this.search().trim()));
   }));
   readonly summaries=computed(()=>this.codes.map(code=>{
-    const rows=(this.data()?.rows??[]).filter(r=>r.code===code&&r.obligation.status!=='CANCELLED');
+    const rows=this.periodRows().filter(r=>r.code===code&&r.obligation.status!=='CANCELLED');
     return {code,count:rows.length,due:rows.reduce((n,r)=>n+r.obligation.amount,0),paid:rows.reduce((n,r)=>n+r.obligation.paid,0),remaining:rows.reduce((n,r)=>n+r.obligation.remaining,0)};
   }));
   ngOnInit():void {
@@ -61,6 +90,10 @@ export class SchoolTaxesPage implements OnInit,OnDestroy {
     },error:err=>{this.loading.set(false);this.fail(err,'Impossible de charger les établissements.');}}));
   }
   ngOnDestroy():void{this.requests.unsubscribe();this.readRequest?.unsubscribe();this.detailRequest?.unsubscribe();this.previewRequest?.unsubscribe();}
+  synchronizePayroll():void {
+    if(!this.schoolId()||this.busy())return;
+    this.run(this.api.synchronizePayroll(this.schoolId()!,Number(this.year)), 'Salaires calculés et obligations IUTS / TPA synchronisées.',()=>this.load());
+  }
   changeYear():void {if(this.busy())return;this.data.set(null);this.closePanels();this.load();}
   load():void {
     if(!this.schoolId()||this.busy())return;
@@ -68,7 +101,7 @@ export class SchoolTaxesPage implements OnInit,OnDestroy {
     this.readRequest?.unsubscribe();this.loading.set(true);this.error.set('');
     this.readRequest=this.api.overview(this.schoolId()!,Number(this.year)).subscribe({next:value=>{this.data.set(value);this.loading.set(false);},error:err=>{this.loading.set(false);this.fail(err,'Impossible de charger les impôts et taxes.');}});
   }
-  openCreate():void {if(this.busy())return;this.closePanels();this.editing.set(null);this.form=this.emptyForm();this.form.periodStart=`${this.year}-01-01`;this.form.periodEnd=`${this.year}-12-31`;this.formOpen.set(true);this.createKey='';this.createFingerprint='';this.focus('.taxes__form-title');}
+  openCreate():void {if(this.busy())return;this.closePanels();this.editing.set(null);this.form=this.emptyForm();this.form.periodStart=this.periodBounds().from;this.form.periodEnd=this.periodBounds().to;this.formOpen.set(true);this.createKey='';this.createFingerprint='';this.focus('.taxes__form-title');}
   openEdit(row:TaxRow):void {
     if(this.busy()||row.obligation.paid>0||row.obligation.status==='CANCELLED')return;
     this.closePanels();this.editing.set(row);this.form={code:row.code,label:row.obligation.label,periodStart:row.periodStart,periodEnd:row.periodEnd,amount:row.obligation.amount,dueDate:row.obligation.dueDate,creditor:row.obligation.supplier??'',declarationReference:row.declarationReference??'',notes:row.obligation.notes??'',reason:''};
@@ -106,7 +139,7 @@ export class SchoolTaxesPage implements OnInit,OnDestroy {
     this.run(this.api.pay(this.schoolId()!,row.id,{...content,requestId:this.paymentKey}),'Règlement enregistré dans les dépenses, sans double saisie.',()=>{this.load();this.openDetail(row);});
   }
   async cancel():Promise<void>{
-    const row=this.detail()?.tax;if(!row||this.busy()||row.origin!=='MANUAL'||row.obligation.paid>0||row.obligation.status==='CANCELLED')return;
+    const row=this.detail()?.tax;if(!row||this.busy()||row.origin==='PAYROLL'||row.obligation.paid>0||row.obligation.status==='CANCELLED')return;
     if(!this.cancelReason.trim()){this.error.set('Renseignez le motif de l’annulation.');return;}
     if(!await this.confirmation.confirm({title:'Annuler cette obligation ?',message:'L’obligation restera visible avec son motif d’annulation. Aucun paiement ne sera supprimé.',confirmLabel:'Annuler l’obligation'}))return;
     if(this.busy())return;

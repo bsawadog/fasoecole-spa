@@ -119,3 +119,10 @@
 .class-roster__school-picker, .class-roster__school-picker .class-roster__select { font-weight: 700; }
 
 }
+
+.class-roster__card-head { flex-wrap: wrap; gap: .75rem; }
+.class-roster__teachers-button { margin-left: auto; }
+.class-roster__teachers-list { margin: 1rem 0; max-height: 55vh; overflow: auto; }
+.class-roster__teachers-list .class-roster__table { min-width: 0; width: 100%; }
+.class-roster__teachers-list td { white-space: normal; overflow-wrap: anywhere; }
+.class-roster__teachers-list li { padding: .5rem 0; overflow-wrap: anywhere; }

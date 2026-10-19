@@ -86,3 +86,7 @@
 }
 
 }
+
+.dep__guide { padding: 1rem 1.2rem; border: 1px solid var(--theme-border, #cbd5e1); border-left: 4px solid var(--theme-link, #2563eb); border-radius: .6rem; background: var(--theme-surface, #fff); color: var(--theme-ink, #1e293b); }
+.dep__guide h2 { margin: 0 0 .4rem; font-size: 1.05rem; }
+.dep__guide p { margin: 0; line-height: 1.6; }

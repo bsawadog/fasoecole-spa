@@ -10,6 +10,7 @@
     <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy() || !data()" (click)="exportCsv()">Exporter CSV</button>
     <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy() || !data()" (click)="print('register')">Imprimer le registre</button>
   </div>
+  <p class="payroll-controls">La préparation calcule l’IUTS et la TPA et alimente leurs obligations fiscales. Sans paramètres fiscaux enregistrés, le calcul utilise le régime salarié, le brut comme salaire de base, aucune charge familiale et aucune exonération TPA. Vérifiez les paramètres de chaque employé. Les paiements antérieurs sont conservés ; un versement supérieur au net recalculé doit être régularisé.</p>
   @if (loading()) { <app-loading-state message="Chargement des salaires…" /> }
   @else if (!schools().length) { <p>Aucun établissement accessible pour ce module.</p> }
   @if (data(); as d) {

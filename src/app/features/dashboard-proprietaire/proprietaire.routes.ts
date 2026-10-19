@@ -13,6 +13,8 @@ export const PROPRIETAIRE_ROUTES: Routes = [
     loadComponent: () => import('./pages/resources/resources').then(m => m.SchoolResourcesPage) },
   { path: 'caisse', canActivate: [ownerModuleGuard('CASH_BOOK')],
     loadComponent: () => import('./pages/cash-book/cash-book').then(m => m.CashBookPage) },
+  { path: 'banque', canActivate: [ownerModuleGuard('BANK_BOOK')],
+    loadComponent: () => import('./pages/bank-book/bank-book').then(m => m.BankBookPage) },
   { path: 'etats-financiers', canActivate: [ownerModuleGuard('FINANCIAL_STATEMENTS')],
     loadComponent: () => import('./pages/financial-statements/financial-statements').then(m => m.FinancialStatements) },
   { path: 'tous-les-employes', canActivate: [ownerModuleGuard(null)],

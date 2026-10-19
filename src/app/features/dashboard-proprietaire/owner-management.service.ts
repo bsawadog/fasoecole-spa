@@ -43,7 +43,10 @@ export interface ClassRecord {
   capacity: number;
 }
 
+export interface SubjectCatalogPack {id:string;label:string;subjects:{code:string;name:string;category:string}[];}
+export interface SubjectCatalogResult {created:number;completed:number;conflicts:string[];}
 export interface SubjectRecord {
+  category?: string|null;
   id: number;
   schoolId: number;
   name: string;
@@ -311,6 +314,8 @@ export class OwnerManagementService {
     return this.http.delete<void>(`${this.apiUrl}/classes/${id}`);
   }
 
+  subjectCatalog(schoolId:number){return this.http.get<SubjectCatalogPack[]>(this.apiUrl+'/subjects/catalog',{params:{schoolId}});}
+  applySubjectCatalog(schoolId:number,packId:string){return this.http.post<SubjectCatalogResult>(this.apiUrl+'/subjects/catalog/'+encodeURIComponent(packId),null,{params:{schoolId}});}
   getSubjects(schoolId: number): Observable<SubjectRecord[]> {
     return this.http.get<SubjectRecord[]>(`${this.apiUrl}/subjects`, { params: { schoolId } });
   }
@@ -348,6 +353,10 @@ export class OwnerManagementService {
 
   getTeachers(schoolId: number): Observable<TeacherRecord[]> {
     return this.http.get<TeacherRecord[]>(`${this.apiUrl}/teachers`, { params: { schoolId } });
+  }
+
+  getClassTeachers(classId: number): Observable<{ teacherId: number; teacherName: string; subjectName: string }[]> {
+    return this.http.get<{ teacherId: number; teacherName: string; subjectName: string }[]>(this.apiUrl + '/classes/' + classId + '/roster/teachers');
   }
 
   getClassRoster(classId: number): Observable<ClassRosterRow[]> {

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import { AuthService } from '../../../../core/auth';
+import { AuthService, OWNER_MODULES } from '../../../../core/auth';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import { EmployeeMember, StaffService } from '../../staff.service';
 import { StaffPage } from './staff';
@@ -86,7 +86,11 @@ describe('StaffPage', () => {
     const { fixture, api } = setup();
     const page = fixture.componentInstance;
     page.openCreate(); fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('.stf__module input').length).toBe(21);
+    const options=Array.from(fixture.nativeElement.querySelectorAll('.stf__module')) as HTMLElement[];
+    expect(options).toHaveLength(OWNER_MODULES.length);
+    for(const module of OWNER_MODULES){
+      expect(options.filter(option=>option.textContent?.includes(module.label))).toHaveLength(1);
+    }
     expect(fixture.nativeElement.querySelectorAll('.stf__module-group').length).toBe(3);
     Object.assign(page.form, { firstName: 'Ali', lastName: 'Sawadogo', jobTitle: 'Bibliothécaire' });
     page.toggleModule('LIBRARY', true);

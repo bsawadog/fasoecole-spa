@@ -24,15 +24,15 @@ test('creates fiscal obligations, pays partially and imports payroll taxes witho
   await page.getByRole('button',{name:'Ajouter un impôt ou une taxe',exact:true}).click();
   await page.getByLabel('Libellé',{exact:true}).fill('TVA déclarée');await page.getByRole('spinbutton',{name:'Montant dû (FCFA)',exact:true}).fill('100000');
   await page.getByLabel('Date limite de paiement',{exact:true}).fill(displayDate);
-  await page.getByRole('button',{name:'Enregistrer l’obligation',exact:true}).click();await expect(page.getByRole('status')).toContainText('Obligation fiscale enregistrée');
+  await page.getByRole('button',{name:'Enregistrer l’obligation',exact:true}).click();await expect(page.locator('p-message[severity="success"]')).toContainText('Obligation fiscale enregistrée');
   await page.getByRole('button',{name:'Consulter : TVA déclarée',exact:true}).click();await page.getByRole('button',{name:'Enregistrer un règlement',exact:true}).click();
   await page.getByRole('spinbutton',{name:'Montant du règlement (FCFA)',exact:true}).fill('40000');
   await page.getByLabel('Référence du reçu / quittance',{exact:true}).fill('QUITTANCE-1');await page.getByRole('button',{name:'Valider le règlement',exact:true}).click();
-  await expect(page.getByRole('status')).toContainText('Règlement enregistré');await expect(page.getByRole('region',{name:'Fiche de l’obligation fiscale',exact:true})).toContainText('Partiellement réglé');
+  await expect(page.locator('p-message[severity="success"]')).toContainText('Règlement enregistré');await expect(page.getByRole('region',{name:'Fiche de l’obligation fiscale',exact:true})).toContainText('Partiellement réglé');
   await page.getByRole('button',{name:'Reprendre IUTS / TPA des salaires',exact:true}).click();await expect(page.getByRole('region',{name:'Reprise des montants des salaires',exact:true})).toContainText('8');
   await page.getByLabel('Date limite de paiement',{exact:true}).fill(displayDate);await page.getByLabel('Motif / référence du contrôle',{exact:true}).fill('Contrôle comptable');
   await page.getByRole('button',{name:'Reprendre / actualiser les montants',exact:true}).click();
-  await expect(page.getByRole('status')).toContainText('IUTS / TPA repris');
+  await expect(page.locator('p-message[severity="success"]')).toContainText('IUTS / TPA repris');
   await expect(page.getByRole('button',{name:'Consulter : IUTS salaires',exact:true})).toHaveCount(1);
   await expect(page.getByRole('button',{name:'Consulter : TPA salaires',exact:true})).toHaveCount(1);
   await page.getByRole('button',{name:'Consulter : IUTS salaires',exact:true}).click();await page.getByRole('button',{name:'Enregistrer un règlement',exact:true}).click();
@@ -46,4 +46,23 @@ test('staff with only tax permission can work without access to salaries or othe
   await page.goto('/proprietaire');await expect(page).toHaveURL(/\/proprietaire\/impots-taxes$/);await expect(page.locator('#modules-menu a[href="/proprietaire/impots-taxes"]')).toBeVisible();
   await expect(page.locator('#modules-menu a[href="/proprietaire/salaires"]')).toHaveCount(0);
   await page.goto('/proprietaire/salaires');await expect(page).toHaveURL(/\/proprietaire\/impots-taxes$/);
+});
+
+test('filters the tax register by month, quarter and full year',async({page},info)=>{
+ await mockSchool(page);const year=new Date().getFullYear();
+ const rows=[1,4].map(month=>({id:month,code:'IUTS',periodStart:year+'-'+String(month).padStart(2,'0')+'-01',periodEnd:year+'-'+String(month).padStart(2,'0')+'-28',origin:'PAYROLL',declarationReference:null,version:0,carryover:false,obligation:{id:month,source:'TAX',period:year+'-01',dueDate:year+'-12-01',label:'IUTS période '+month,supplier:'DGI',categoryId:1,categoryName:'Impôts',amount:month*1000,paid:0,remaining:month*1000,status:'UNPAID',overdue:false,notes:null}}));
+ await page.route('**/api/owner/taxes/**',r=>r.fulfill({json:{year,rows,due:5000,paid:0,remaining:5000,overdue:0,supplierVat:[{key:'payable:1',date:year+'-01-15',estimatedDate:false,label:'Fournitures',supplier:'Librairie',invoiceNumber:'F001',supplierIfu:'IFU1',amount:18000},{key:'expense:2',date:year+'-04-15',estimatedDate:true,label:'Réparation',supplier:'Technicien',invoiceNumber:null,supplierIfu:null,amount:9000}]}}));
+ await page.goto('/proprietaire/impots-taxes');await expect(page.getByRole('heading',{name:'Impôts et taxes',exact:true})).toBeVisible({timeout:120000});
+ await page.getByRole('combobox',{name:'Afficher par',exact:true}).click();await page.getByRole('option',{name:'Trimestre',exact:true}).click();
+ await page.getByRole('combobox',{name:'Trimestre fiscal',exact:true}).click();await page.getByRole('option',{name:'1er trimestre · janvier à mars',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Consulter : IUTS période 1',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Consulter : IUTS période 4',exact:true})).toHaveCount(0);
+ await expect(page.locator('.taxes__kpis > div').first()).toContainText(/1[\s\u00a0\u202f]000/);
+ await expect(page.getByRole('region',{name:'État de la TVA fournisseurs'})).toContainText(/18[\s\u00a0\u202f]000 FCFA/);
+ await page.getByRole('combobox',{name:'Afficher par',exact:true}).click();await page.getByRole('option',{name:'Mois',exact:true}).click();await page.getByRole('combobox',{name:'Mois fiscal',exact:true}).click();await page.getByRole('option',{name:'avril',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Consulter : IUTS période 4',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Consulter : IUTS période 1',exact:true})).toHaveCount(0);
+ await expect(page.locator('.taxes__kpis > div').first()).toContainText(/4[\s\u00a0\u202f]000/);
+ const supplier=page.getByRole('region',{name:'État de la TVA fournisseurs'});await expect(supplier).toContainText(/9[\s\u00a0\u202f]000 FCFA/);await expect(supplier).toContainText('Date à préciser');
+ const download=page.waitForEvent('download');await page.getByRole('button',{name:'Exporter la TVA fournisseurs',exact:true}).click();expect((await download).suggestedFilename()).toContain('tva-fournisseurs-1-');
+ await page.getByRole('combobox',{name:'Afficher par',exact:true}).click();await page.getByRole('option',{name:'Année entière',exact:true}).click();await expect(page.getByRole('button',{name:/Consulter : IUTS période/})).toHaveCount(2);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.screenshot({path:info.outputPath('tax-periods.png'),fullPage:true});
 });

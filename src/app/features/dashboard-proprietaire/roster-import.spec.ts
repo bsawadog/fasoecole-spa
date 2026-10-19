@@ -71,6 +71,14 @@ describe('Roster accounting import', () => {
     expect(assignTeacher).toHaveBeenCalledWith(3, 8, 6);
     expect(importSalary).toHaveBeenCalledWith(1, 8, expect.objectContaining({ salary: 100000, paid: 30000, month: '2026-09' }));
   });
+  it('resolves teacher subjects from their catalog codes',async()=>{
+    const c=component('teachers');currentFixture.componentRef.setInput('subjects',[{id:6,name:'Mathématiques',code:'MAT'},{id:7,name:'Français',code:'FRA'}]);currentFixture.detectChanges();
+    await load(c,'prénom;nom;numéro_employé;classe;matière\nAwa;Traoré;E001;CP1;mat');expect(c.invalid()).toBe(0);await c.save();expect(assignTeacher).toHaveBeenCalledWith(3,8,6);
+  });
+  it('rejects a subject code matching more than one subject',async()=>{
+    const c=component('teachers');currentFixture.componentRef.setInput('subjects',[{id:6,name:'Matière A',code:'SEC'},{id:7,name:'Matière B',code:'SEC'}]);currentFixture.detectChanges();
+    await load(c,'prénom;nom;numéro_employé;classe;matière\nAwa;Traoré;E001;CP1;SEC');expect(c.invalid()).toBe(1);await c.save();expect(assignTeacher).not.toHaveBeenCalled();
+  });
   it('imports multiple students when the email column is absent', async () => {
     const c = component();
     await load(c, 'prénom;nom;matricule;classe\nAwa;Traoré;M001;CP1\nAli;Kaboré;M002;CP1');

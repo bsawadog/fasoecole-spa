@@ -74,6 +74,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Portail parents', icon: 'book', routerLink: '/proprietaire/portail-parents', module: 'PARENT_PORTAL' },
     { label: 'Configuration de l’école', icon: 'book', routerLink: '/proprietaire/gestion', module: 'MANAGEMENT' },
     { label: 'Brouillard de caisse', icon: 'wallet', routerLink: '/proprietaire/caisse', module: 'CASH_BOOK' },
+    { label: 'Brouillard de banque', icon: 'wallet', routerLink: '/proprietaire/banque', module: 'BANK_BOOK' },
     { label: 'États financiers', icon: 'chart', routerLink: '/proprietaire/etats-financiers', module: 'FINANCIAL_STATEMENTS' },
     { label: 'Patrimoine et mobilier', icon: 'building', routerLink: '/proprietaire/patrimoine', module: 'ASSETS' },
     { label: 'Stocks et fournitures', icon: 'book', routerLink: '/proprietaire/stocks', module: 'INVENTORY' },
@@ -265,7 +266,7 @@ export class AppShell implements OnInit {
     const groupsByRole: Record<Role, { title: string; routes: string[] }[]> = {
       proprietaire: [
       { title: 'Administration', routes: ['creer-ecole', 'gestion', 'classes', 'enseignants', 'inscriptions', 'employes', 'personnel', 'notes', 'suivi-devoirs', 'demandes', 'cloture', 'export'] },
-      { title: 'Finance et comptabilité', routes: ['salaires', 'impots-taxes', 'frais', 'depenses', 'caisse', 'etats-financiers', 'patrimoine', 'stocks'] },
+      { title: 'Finance et comptabilité', routes: ['salaires', 'impots-taxes', 'frais', 'depenses', 'caisse', 'banque', 'etats-financiers', 'patrimoine', 'stocks'] },
       { title: 'Vie scolaire et familles', routes: ['emplois-du-temps', 'calendrier', 'discipline', 'bibliotheque', 'portail-parents', 'demandes-administratives'] },
       { title: 'Assistance', routes: ['incidents', 'aide'] },
       ],

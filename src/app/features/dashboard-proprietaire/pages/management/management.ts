@@ -1,3 +1,4 @@
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
@@ -10,7 +11,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin, Observable, Subscription } from 'rxjs';
@@ -25,7 +26,7 @@ import {
   OwnerManagementService,
   SchoolRecord,
   StudentRecord,
-  SubjectRecord,
+  SubjectRecord, SubjectCatalogPack,
   TeacherRecord,
 } from '../../owner-management.service';
 
@@ -47,6 +48,7 @@ interface AcademicForm {
   capacity: number;
   code: string;
   coefficient: number;
+  category: string;
 }
 
 @Component({
@@ -62,6 +64,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
   readonly scopeSchoolId = input<number | null>(null);
   private readonly auth = inject(AuthService);
   private readonly api = inject(OwnerManagementService);
+  private readonly destroy = inject(DestroyRef);
   private readonly confirmation = inject(ConfirmationService);
   private dataRequest?: Subscription;
 
@@ -95,6 +98,22 @@ export class OwnerManagement implements OnDestroy, OnInit {
   readonly students = signal<StudentRecord[]>([]);
   readonly teachers = signal<TeacherRecord[]>([]);
   readonly academicKind = signal<AcademicKind>('years');
+  readonly subjectCatalog=signal<SubjectCatalogPack[]>([]);
+  readonly catalogOpen=signal(false);readonly catalogBusy=signal(false);readonly catalogError=signal<string|null>(null);readonly catalogConflicts=signal<string[]>([]);
+  showSubjectCatalog():void {
+    const id=this.selectedSchoolId();if(id===null||this.catalogBusy())return;
+    this.catalogOpen.set(true);this.catalogBusy.set(true);this.catalogError.set(null);this.subjectCatalog.set([]);this.catalogConflicts.set([]);
+    this.api.subjectCatalog(id).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:packs=>{this.catalogBusy.set(false);if(id===this.selectedSchoolId())this.subjectCatalog.set(packs);},error:()=>{this.catalogBusy.set(false);this.catalogError.set('Impossible de charger les catalogues de matières.');}});
+  }
+  applySubjectCatalog(pack:SubjectCatalogPack):void {
+    const id=this.selectedSchoolId();if(id===null||this.saving()||this.catalogBusy())return;
+    this.catalogBusy.set(true);this.saving.set(true);this.catalogError.set(null);this.catalogConflicts.set([]);
+    this.api.applySubjectCatalog(id,pack.id).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:result=>{
+      if(id!==this.selectedSchoolId()){this.saving.set(false);this.catalogBusy.set(false);return;}
+      this.catalogConflicts.set(result.conflicts);this.successMessage.set(result.created+' matière(s) ajoutée(s), '+result.completed+' matière(s) complétée(s).');
+      this.api.getSubjects(id).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:subjects=>{if(id===this.selectedSchoolId())this.subjects.set(subjects);this.saving.set(false);this.catalogBusy.set(false);},error:()=>{this.saving.set(false);this.catalogBusy.set(false);this.catalogError.set('Catalogue ajouté. Actualisez la page pour recharger les matières.');}});
+    },error:()=>{this.saving.set(false);this.catalogBusy.set(false);this.catalogError.set('Impossible d’ajouter ce catalogue. Réessayez.');}});
+  }
   readonly levelCatalog = LEVEL_CATALOG;
   readonly activatingLevel = signal(false);
   readonly loading = signal(true);
@@ -208,7 +227,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
       }
       case 'subjects': {
         const subject = row as SubjectRecord;
-        return `${subject.code || 'Aucun code'} · Coefficient ${subject.coefficient ?? 1}`;
+        return `${subject.code || 'Aucun code'}${subject.category?' · '+subject.category:''} · Coefficient ${subject.coefficient ?? 1}`;
       }
     }
   }
@@ -286,7 +305,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
         }
         case 'subjects': {
           const subject = row as SubjectRecord;
-          Object.assign(this.academicForm, { name: subject.name, code: subject.code, coefficient: subject.coefficient ?? 1 });
+          Object.assign(this.academicForm, { name: subject.name, code: subject.code??'', category:subject.category??'', coefficient: subject.coefficient ?? 1 });
           break;
         }
       }
@@ -343,6 +362,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
           schoolId,
           name: this.academicForm.name.trim(),
           code: this.academicForm.code.trim(),
+          category:this.academicForm.category.trim(),
           coefficient: Number(this.academicForm.coefficient),
         }, id ?? undefined);
         break;
@@ -492,6 +512,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
   }
 
   private selectSchool(schoolId: number): void {
+    this.catalogOpen.set(false);this.subjectCatalog.set([]);this.catalogConflicts.set([]);this.catalogError.set(null);
     this.dataRequest?.unsubscribe();
     this.selectedSchoolId.set(schoolId);
 
@@ -574,6 +595,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
       academicYearId: year?.id ?? null,
       levelId: null,
       capacity: 30,
+      category: '',
       code: '',
       coefficient: 1,
     };
