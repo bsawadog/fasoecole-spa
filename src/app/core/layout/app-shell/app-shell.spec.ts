@@ -162,7 +162,7 @@ describe('AppShell account readiness', () => {
     expect(fixture.nativeElement.querySelector('.shell__topbar > .shell__action--logout')).toBeNull();
     await TestBed.inject(Router).navigateByUrl('/profil');
     fixture.detectChanges();
-    expect(fixture.componentInstance.breadcrumbs().map(crumb => crumb.label)).toEqual(['Accueil', 'Mon profil']);
+    expect(fixture.componentInstance.breadcrumbs().map(crumb => crumb.label)).toEqual(['Tableau de bord', 'Mon profil']);
     expect(fixture.nativeElement.querySelector('.shell__breadcrumbs [aria-current="page"]').textContent).toContain('Mon profil');
     expect(fixture.componentInstance.modulesOpen()).toBe(true);
     fixture.destroy();

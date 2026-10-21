@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../error-alert';
 import { Component, DestroyRef, inject, input, OnChanges, SimpleChanges, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
@@ -11,13 +12,13 @@ import { HomeworkProgress, LIFE_LABELS, SchoolLifeService } from './school-life.
 
 @Component({
   selector: 'app-homework-tracking', standalone: true,
-  imports: [DatePipe, FormsModule, ButtonModule, MessageModule, TextareaModule, SelectField, SelectOption],
+  imports: [ErrorAlert, DatePipe, FormsModule, ButtonModule, MessageModule, TextareaModule, SelectField, SelectOption],
   styleUrl: '../self-space/self-space.scss',
   template: `
     <section aria-label="Suivi des devoirs">
       <h2>Remises et corrections</h2>
       <p class="ss__muted">Le professeur renseigne la remise et la correction en classe. Les parents et les élèves consultent le même suivi.</p>
-      @if (error()) { <p-message severity="error" role="alert">{{ error() }}</p-message> }
+      @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
       @if (success()) { <p-message severity="success" role="status">{{ success() }}</p-message> }
       <button pButton type="button" severity="secondary" variant="outlined" (click)="load()" [disabled]="loading() || saving()">Actualiser le suivi</button>
       @if (loading()) { <p role="status">Chargement du suivi…</p> }

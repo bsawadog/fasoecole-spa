@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { DateField } from '../../../../shared/ui/date-field';
 import { SelectField } from '../../../../shared/ui/select-field';
@@ -26,7 +27,7 @@ const TITLES: Record<Module, string> = { notes: 'Notes et bulletins', absences: 
 
 @Component({
   selector: 'app-parent-module', standalone: true,
-  imports: [ModuleHelpButton, DateField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, DecimalPipe, FormsModule, ParentChildDetail, PortalPosts, Appointments],
+  imports: [ErrorAlert, ModuleHelpButton, DateField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, DecimalPipe, FormsModule, ParentChildDetail, PortalPosts, Appointments],
   templateUrl: './modules.html', styleUrls: ['../../../../shared/self-space/self-space.scss', './modules.scss'],
 })
 export class ParentModule implements OnInit {

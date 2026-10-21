@@ -438,11 +438,7 @@ export class SelfSpaceService {
   }
 }
 
-/** Message d'erreur lisible renvoyé par l'API (ou message par défaut). */
-export function apiError(error: unknown, fallback: string): string {
-  const message = (error as { error?: { message?: unknown } } | null)?.error?.message;
-  return typeof message === 'string' && message ? message : fallback;
-}
+export { apiError } from '../api-error';
 
 export interface TeacherMessageRecipient {
   userId: number; fullName: string; email?: string | null; role: 'ELEVE' | 'PARENT' | 'PROPRIETAIRE';

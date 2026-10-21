@@ -9,7 +9,7 @@
       <button pButton type="button" class="dep__btn" (click)="print()" [disabled]="loading()">Imprimer / PDF</button>
     }
   </div>
-  @if (error()) { <p class="dep__alert dep__alert--error" role="alert">{{ error() }} <button pButton type="button" (click)="load()">Réessayer</button></p> }
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }} <button pButton type="button" (click)="load()">Réessayer</button></app-error-alert> }
   @if (loading()) { <app-loading-state message="Chargement des états…" /> }
   @else if (!schools().length) { <p>Aucun établissement accessible.</p> }
   @else if (summary(); as s) {

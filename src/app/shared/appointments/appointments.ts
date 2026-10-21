@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../error-alert';
 import { DateField } from '../ui/date-field';
 import { SelectField } from '../ui/select-field';
 import { SelectOption } from '../ui/select-field';
@@ -30,7 +31,7 @@ interface AppointmentEntry {
 }
 
 @Component({
-  selector: 'app-appointments', standalone: true, imports: [DateField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, DatePipe, FormsModule, RouterLink],
+  selector: 'app-appointments', standalone: true, imports: [ErrorAlert, DateField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, DatePipe, FormsModule, RouterLink],
   templateUrl: './appointments.html', styleUrl: './appointments.scss',
 })
 export class Appointments {

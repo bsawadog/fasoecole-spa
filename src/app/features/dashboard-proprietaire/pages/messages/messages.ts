@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
@@ -20,7 +21,7 @@ import { ConversationFiles, MessageAttachments } from '../../../../shared/self-s
 @Component({
   selector: 'app-owner-messages',
   standalone: true,
-  imports: [ModuleHelpButton, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, ConversationFiles, MessageAttachments],
+  imports: [ErrorAlert, ModuleHelpButton, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, ConversationFiles, MessageAttachments],
   templateUrl: './messages.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

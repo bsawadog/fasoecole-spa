@@ -8,6 +8,29 @@
 
 @layer legacy, primeng, application;
 
+// The actions menu is attached to body, outside the component's scoped styles.
+@layer application {
+  .teacher-roster-actions-menu.p-menu {
+    min-width: min(20rem, calc(100vw - 1rem));
+    max-width: calc(100vw - 1rem);
+    padding: .4rem;
+    background: var(--theme-surface, #fff);
+    background-image: none;
+    color: var(--theme-ink, #1e293b);
+    border: 1px solid var(--theme-border, #e2e8f0);
+    box-shadow: 0 8px 24px rgb(15 23 42 / 20%);
+    opacity: 1;
+    .p-menu-item-content { background: var(--theme-surface, #fff); }
+    .p-menu-list { padding: 0; }
+    .p-menu-item-link { padding: .65rem .85rem; color: inherit; border-radius: .35rem; white-space: normal; }
+    .p-menu-item:not(.p-disabled):is(:hover, .p-focus, :focus-within) > .p-menu-item-content,
+    .p-menu-item:not(.p-disabled):is(:hover, .p-focus, :focus-within) .p-menu-item-link {
+      background: var(--theme-soft, #dbeafe);
+      color: var(--theme-ink, #1e293b);
+    }
+  }
+}
+
 html,
 body {
   height: 100%;
@@ -131,9 +154,11 @@ body {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   place-items: center;
+  align-content: center;
+  gap: 1.25rem;
   min-height: 100vh;
   min-height: 100dvh;
-  padding: 6rem 1.25rem;
+  padding: 1.25rem 1.25rem 2rem;
   background: #e7eef5;
 
   .auth-card__visual--illustration {
@@ -156,8 +181,8 @@ body {
   }
 
   .auth-page__brand {
-    top: 1.25rem;
-    left: 1.25rem;
+    position: static;
+    justify-self: start;
     padding: .35rem .75rem;
     border-radius: .75rem;
     background: rgb(255 255 255 / 95%);
@@ -214,7 +239,15 @@ body {
 
   @media (min-width: 900px) {
     justify-items: start;
+    padding-block: 6rem;
     padding-inline: clamp(2rem, 6vw, 7rem);
+
+    .auth-page__brand {
+      position: absolute;
+      top: 1.25rem;
+      left: auto;
+      right: clamp(2rem, 6vw, 7rem);
+    }
 
     .auth-card { width: min(28rem, 40vw); }
     .auth-card__visual--illustration .auth-card__image { object-position: right center; }
@@ -222,7 +255,7 @@ body {
 }
 
 // Compact table actions retain a comfortable target and a visible keyboard focus.
-.shell__page :is(td, .p-datatable-tbody > tr > td) :is(.ui-row-action, .owner-management__icon-action) {
+.shell__page :is(td, .p-datatable-tbody > tr > td) :is(.ui-row-action, .owner-management__icon-action):not(.ui-actions-panel *) {
   display: inline-flex;
   align-items: center;
   justify-content: center;

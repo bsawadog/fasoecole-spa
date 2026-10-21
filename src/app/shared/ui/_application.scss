@@ -1,6 +1,43 @@
 @layer legacy, primeng, application;
 
 @layer application {
+  .shell__page .ui-actions-trigger {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .45rem .8rem; min-height: 2.5rem;
+    border: 1px solid var(--theme-link, #2563eb); border-radius: .5rem;
+    background: var(--theme-soft, #dbeafe); color: var(--theme-link, #1d4ed8);
+    font-weight: 600; white-space: nowrap; cursor: pointer;
+    &:hover, &[aria-expanded='true'] { background: var(--theme-link, #2563eb); color: var(--theme-button-ink, #fff); }
+  }
+  .ui-actions-panel[popover] {
+    position: fixed; inset: auto; margin: 0; padding: .4rem;
+    width: min(22rem, calc(100vw - 1rem)); max-width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem);
+    overflow: auto; border: 1px solid var(--theme-border, #e2e8f0); border-radius: .65rem;
+    background: var(--theme-surface, #fff); color: var(--theme-ink, #1e293b);
+    box-shadow: 0 8px 24px rgb(15 23 42 / 20%); line-height: 1.4;
+    &:popover-open { display: flex; flex-direction: column; gap: .15rem; }
+  }
+  .shell__page .ui-actions-panel.ui-actions-panel :is(button, a) {
+    display: flex; align-items: center; justify-content: flex-start; gap: .65rem;
+    width: 100%; min-width: 0; height: auto; min-height: 2.65rem; margin: 0; padding: .65rem .85rem;
+    border: 0; border-radius: .35rem; box-shadow: none;
+    background: var(--theme-surface, #fff); color: var(--theme-ink, #1e293b);
+    font-size: .875rem; font-weight: 500; text-align: left; text-decoration: none;
+    white-space: normal; cursor: pointer;
+    &:not(:disabled):not([aria-disabled='true']):is(:hover, :focus-visible) {
+      background: var(--theme-soft, #dbeafe); color: var(--theme-ink, #1e293b);
+    }
+    &:disabled, &[aria-disabled='true'] { opacity: .5; cursor: not-allowed; }
+    svg { flex: 0 0 auto; color: var(--theme-link, #2563eb); }
+    &.ui-row-action--warning svg { color: var(--theme-warning, #b45309); }
+    &.ui-row-action--danger svg, &[severity='danger'] svg { color: var(--theme-danger, #dc2626); }
+    &.ui-row-action--success svg, &[class*='--ok'] svg { color: var(--theme-success, #16a34a); }
+  }
+  .ui-actions-panel .ui-actions-label { overflow-wrap: anywhere; }
+  @media print { app-row-actions { display: none !important; } }
+}
+
+@layer application {
   :root {
     color-scheme: light;
     --ui-ink: var(--theme-ink, #192f27);

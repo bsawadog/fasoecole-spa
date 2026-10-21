@@ -225,7 +225,7 @@ export const OWNER_HELP_QUESTIONS: HelpQuestion[] = [
     'Choisissez ensuite l’année scolaire à consulter.',
     'Ouvrez le module souhaité pour consulter les informations de cette année.',
     'Pour reprendre le travail courant, sélectionnez de nouveau l’année indiquée « en cours ».',
-  ], note: 'Une année clôturée est consultable comme archive ; ses données scolaires ne doivent plus être modifiées.', route: '/proprietaire', linkLabel: 'Retourner à l’accueil' },
+  ], note: 'Une année clôturée est consultable comme archive ; ses données scolaires ne doivent plus être modifiées.', route: '/proprietaire', linkLabel: 'Retourner au tableau de bord' },
   { id: 'classes', category: 'Établissement', question: 'Comment créer les classes et les matières ?', steps: [
     'Ouvrez « Configuration de l’école » pour l’établissement sélectionné.',
     'Créez l’année scolaire et les niveaux avant les classes.',
@@ -304,7 +304,7 @@ export const OWNER_HELP_QUESTIONS: HelpQuestion[] = [
     'Si l’envoi échoue à nouveau, contactez l’administrateur de la plateforme pour vérifier le service de messagerie.',
   ], route: '/proprietaire/enseignants', linkLabel: 'Consulter les invitations des enseignants' },
   { id: 'attendance', category: 'Suivi scolaire', question: 'Comment traiter un retard ou une absence signalés par un parent ?', steps: [
-    'Ouvrez l’accueil et consultez les signalements en attente.',
+    'Ouvrez le tableau de bord et consultez les signalements en attente.',
     'Vérifiez l’enfant, la date et le motif du signalement.',
     'Utilisez l’action d’enregistrement si vous êtes autorisé à traiter ce signalement.',
     'Vérifiez la mise à jour des présences du jour pour la date concernée.',

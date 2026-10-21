@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../error-alert';
 import { Component, DestroyRef, inject, input, OnChanges, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
@@ -5,10 +6,10 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { apiError } from './self-space.service';
 import { FamilyLearning as Data, TeacherDailyToolsService } from './teacher-daily-tools.service';
-@Component({selector:'app-family-learning',standalone:true,imports:[DatePipe,ButtonModule,MessageModule],styleUrl:'./self-space.scss',template:`
+@Component({selector:'app-family-learning',standalone:true,imports:[ErrorAlert, DatePipe,ButtonModule,MessageModule],styleUrl:'./self-space.scss',template:`
  <section aria-label="Cahier de textes et accompagnement"><h2>{{section()==='support'?'Messages d’accompagnement':'Cahier de textes et accompagnement'}}</h2>
  <button pButton type="button" severity="secondary" variant="outlined" (click)="load()" [disabled]="loading()">{{section()==='support'?'Actualiser les messages':'Actualiser les séances'}}</button>
- @if(error()){<p-message severity="error" role="alert">{{error()}}</p-message>}
+ @if(error()){<app-error-alert [message]="error()" (dismissed)="error.set(null)">{{error()}}</app-error-alert>}
  @if(loading()){<p role="status">Chargement…</p>}
  @if(data();as value){
  @if(section()!=='lessons'){

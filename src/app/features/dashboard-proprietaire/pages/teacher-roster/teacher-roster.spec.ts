@@ -45,6 +45,8 @@ describe('TeacherRoster', () => {
     expect(fixture.componentInstance.loadingTeachers()).toBe(false);
   });
   it('shows teachers only for the selected class and links to their detail', () => {
+    const resendUserInvitation = vi.fn(() => of({ emailSent: true }));
+    const requestPasswordReset = vi.fn(() => of({ message: 'Demande prise en compte.' }));
     const teachersByClass = vi.fn((classId: number) => of(classId === 1
       ? [{ id: 4, schoolId: 5, firstName: 'Awa', lastName: 'Traoré', email: 'awa@example.test',
         phone: null, specialty: 'Mathématiques', subjects: ['Mathématiques'], activeInClass: false, classCount: 0 }]
@@ -55,7 +57,7 @@ describe('TeacherRoster', () => {
         provideRouter([]),
         { provide: ConfirmationService, useValue: { confirm: () => Promise.resolve(false) } },
         { provide: AuthService, useValue: {
-          user: () => ({ id: 7 }),
+          user: () => ({ id: 7 }), resendUserInvitation, requestPasswordReset,
           selectSchoolContext: vi.fn(), selectedSchoolType: () => 'PRIMAIRE', getOwnedSchools: () => of([{ id: 5, name: 'École', type: 'SECONDAIRE' }]),
         } },
         { provide: OwnerManagementService, useValue: {
@@ -85,12 +87,36 @@ describe('TeacherRoster', () => {
     expect(Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>)
       .some(button => button.textContent?.includes('Ajouter un enseignant'))).toBe(false);
     expect(fixture.nativeElement.querySelector('form input[name="firstName"]')).toBeNull();
-    const link = fixture.nativeElement.querySelector('a[href="/proprietaire/enseignants/4"]');
-    expect(link).not.toBeNull();
+    const actions = fixture.componentInstance.teacherActions(fixture.componentInstance.teachers()[0], true);
+    expect(actions.find(item => item.label === 'Voir la fiche')?.routerLink).toEqual(['/proprietaire/enseignants', 4]);
     expect(fixture.nativeElement.textContent).toContain('Désactivé');
-    const reactivate = fixture.nativeElement.querySelector('button[aria-label="Réactiver : Awa Traoré"]');
-    expect(reactivate).not.toBeNull();
-    expect(reactivate.querySelector('svg')).not.toBeNull();
+    expect(actions.some(item => item.label === 'Réactiver dans cette classe')).toBe(true);
+    expect(fixture.nativeElement.querySelector('button[aria-label="Actions : Awa Traoré"]')).not.toBeNull();
+    expect(fixture.componentInstance.teacherActions(fixture.componentInstance.teachers()[0], false)
+      .some(item => item.label === 'Supprimer de l’établissement')).toBe(false);
+
+    const search = fixture.nativeElement.querySelector('#roster-teacher-search') as HTMLInputElement;
+    search.value = 'traore';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.filteredTeachers()).toHaveLength(1);
+    expect(search.parentElement?.querySelector('[role="status"]')?.textContent).toContain('1 / 1');
+    search.value = 'introuvable';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.filteredTeachers()).toHaveLength(0);
+    expect(fixture.nativeElement.textContent).toContain('Aucun enseignant ne correspond');
+    fixture.componentInstance.teacherSearch.set('');
+    fixture.detectChanges();
+
+    const teacher = { ...fixture.componentInstance.teachers()[0], userId: 40, emailVerified: true, passwordSet: true };
+    fixture.componentInstance.sendTeacherAccountLink(teacher);
+    expect(requestPasswordReset).toHaveBeenCalledWith('awa@example.test');
+    expect(resendUserInvitation).not.toHaveBeenCalled();
+    fixture.componentInstance.sendTeacherAccountLink({ ...teacher, passwordSet: false });
+    expect(resendUserInvitation).toHaveBeenCalledWith(40);
+    fixture.componentInstance.sendTeacherAccountLink({ ...teacher, email: '' });
+    expect(requestPasswordReset).toHaveBeenCalledTimes(1);
 
     const select = fixture.debugElement.query(By.directive(SelectField)).componentInstance as SelectField;
     select.update(2);

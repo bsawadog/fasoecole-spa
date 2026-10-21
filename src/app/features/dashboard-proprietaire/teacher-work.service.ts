@@ -7,6 +7,7 @@ export interface TeacherCard {
   employeeNumber?: string;
   userId?: number;
   emailVerified?: boolean;
+  passwordSet?: boolean;
   invitationDeliveryStatus?: string | null;
   id: number;
   schoolId: number;

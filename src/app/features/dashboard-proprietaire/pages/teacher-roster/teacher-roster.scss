@@ -83,3 +83,60 @@
 .teacher-roster__subjects input { width: auto; }
 
 }
+
+
+
+@layer application {
+  .teacher-roster { padding: 1rem; gap: .65rem; }
+  .teacher-roster__header { padding: .65rem 1rem; }
+  .teacher-roster__header-icon { width: 2.3rem; height: 2.3rem; }
+  .teacher-roster__header h1 { font-size: 1.2rem; }
+  .teacher-roster__import {
+    border: 1px solid var(--theme-border, #e2e8f0); border-radius: .5rem;
+    background: var(--theme-surface, #fff);
+    > summary { padding: .55rem 1rem; cursor: pointer; font-size: .85rem; font-weight: 600; }
+  }
+  .teacher-roster__toolbar { padding: .65rem 1rem; justify-content: flex-start; }
+  .teacher-roster__payroll { padding: 0; align-items: center; }
+  .teacher-roster__payroll > label { display: flex; align-items: center; gap: .5rem; font-size: .85rem; }
+  .teacher-roster__payroll-hint { margin: 0; font-size: .8rem; color: var(--theme-muted, #475569); }
+  .teacher-roster__search { display: flex; flex: 1 1 25rem; align-items: center; gap: .4rem; min-width: 0; }
+  .teacher-roster__search input { flex: 1; min-width: 0; }
+  .teacher-roster__search .teacher-roster__count { flex: 0 0 auto; white-space: nowrap; }
+  .teacher-roster__table { font-size: .85rem; line-height: 1.35; }
+  .teacher-roster__table td { padding: .45rem .65rem; vertical-align: middle; }
+  .teacher-roster__table-wrap { max-height: 65dvh; overflow: auto; scrollbar-gutter: stable; }
+  .teacher-roster__table th { position: sticky; top: 0; z-index: 1; }
+  .teacher-roster__avatar { width: 1.65rem; height: 1.65rem; font-size: .75rem; }
+  .teacher-roster__contact { max-width: 16rem; overflow-wrap: anywhere; }
+  .teacher-roster__contact summary { cursor: pointer; }
+  .teacher-roster__contact details[open] > summary { margin-bottom: .4rem; }
+  .teacher-roster summary:focus-visible { outline: 2px solid var(--theme-link, #2563eb); outline-offset: 3px; }
+  .teacher-roster__actions > * { margin-bottom: 0; }
+  .teacher-roster__menu-button {
+    display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap;
+    padding: .45rem .8rem;
+    background: var(--theme-soft, #dbeafe);
+    color: var(--theme-link, #1d4ed8);
+    border: 1px solid var(--theme-link, #2563eb);
+    font-weight: 600;
+    &:hover, &[aria-expanded='true'] {
+      background: var(--theme-link, #2563eb);
+      color: var(--theme-button-ink, #fff);
+    }
+  }
+  .teacher-roster__menu-item { display: flex; align-items: center; gap: .6rem; }
+  .teacher-roster__menu-item svg { flex: 0 0 auto; }
+  .teacher-roster__menu-item[data-action='eye'] svg { color: var(--theme-link, #2563eb); }
+  .teacher-roster__menu-item[data-action='pencil'] svg { color: var(--theme-warning, #b45309); }
+  .teacher-roster__menu-item[data-action='send'] svg { color: #0284c7; }
+  .teacher-roster__menu-item[data-action='key'] svg { color: #8b5cf6; }
+  .teacher-roster__menu-item[data-action='restore'] svg { color: var(--theme-success, #16a34a); }
+  .teacher-roster__menu-item:is([data-action='power'], [data-action='trash']) svg { color: var(--theme-danger, #dc2626); }
+  @media (max-width: 650px) {
+    .teacher-roster { padding: .5rem; }
+    .teacher-roster__header p { display: none; }
+    .teacher-roster__search { flex-basis: 100%; }
+    .teacher-roster__payroll-hint { flex-basis: 100%; }
+  }
+}

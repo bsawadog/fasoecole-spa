@@ -1,6 +1,6 @@
 <div class="dashboard-home parent-home">
  <header class="ui-page-header module-help-header"><app-module-help/><div><p class="parent-home__eyebrow">Espace parent</p><h1>Bienvenue, {{user()?.firstName}}</h1><p>Une vue claire pour accompagner chaque enfant, jour après jour.</p></div></header>
- @if(childrenError()){<p-message severity="error" role="alert">{{childrenError()}}</p-message><button pButton type="button" (click)="loadChildren()">Réessayer le chargement des enfants</button>}
+ @if(childrenError()){<app-error-alert [message]="childrenError()" (dismissed)="childrenError.set(null)">{{childrenError()}}</app-error-alert><button pButton type="button" (click)="loadChildren()">Réessayer le chargement des enfants</button>}
  @if(loadingChildren()){<app-loading-state message="Chargement de vos enfants…"/>}
  @else if(!children().length&&!childrenError()){
   <section class="parent-home__panel"><h2>Commençons par le rattachement de vos enfants</h2><p>Aucun enfant accessible dans l’établissement sélectionné. Choisissez un autre établissement ou demandez le rattachement depuis votre profil.</p><a routerLink="/profil" fragment="school-access">Demander un accès à un établissement</a></section>
@@ -12,7 +12,7 @@
   <button pButton type="button" severity="secondary" variant="outlined" (click)="reload()" [disabled]="loading()">Actualiser le suivi</button>
  </section>
  }
- @if(error()){<p-message severity="error" role="alert">{{error()}} @if(data()){Les dernières informations chargées restent affichées.}</p-message>}
+ @if(error()){<app-error-alert [message]="error()" (dismissed)="error.set(null)">{{error()}} @if(data()){Les dernières informations chargées restent affichées.}</app-error-alert>}
  @if(loading()){<app-loading-state message="Chargement du suivi scolaire…"/>}
  @if(data();as d){
  <section class="parent-home__metrics" aria-label="Points à suivre">

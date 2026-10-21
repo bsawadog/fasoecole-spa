@@ -6,7 +6,7 @@
       <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" [disabled]="loading() || saving()" (click)="reload()">Actualiser</button>
     }
   </header>
-  @if (error()) { <p-message severity="error" class="ss__alert ss__alert--error" role="alert">{{ error() }}</p-message> }
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
   @if (success()) { <p-message severity="success" class="ss__alert ss__alert--success" role="status">{{ success() }}</p-message> }
   @if (loading()) { <app-loading-state message="Chargement…" /> }
   @else if (!schools().length) { <p class="ss__state">Aucun établissement accessible.</p> }

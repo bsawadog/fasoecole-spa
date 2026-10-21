@@ -49,6 +49,13 @@ describe('Roster accounting import', () => {
     expect(importStudent).toHaveBeenCalledWith(3, expect.objectContaining({ fees: 50000.5, paid: 20000, dueDate: '2026-10-01', paymentMethod: 'CASH' }));
     expect(c.remaining()).toBe(0);
   });
+  it('rejects a personal email shared by distinct students', async () => {
+    const c = component();
+    await load(c, 'prénom;nom;courriel;matricule;classe\nAwa;Test;famille@example.test;M001;CP1\nAli;Test;famille@example.test;M002;CP1');
+    expect(c.invalid()).toBe(1);
+    await c.save();
+    expect(importStudent).not.toHaveBeenCalled();
+  });
   it('blocks overpayments and incomplete fee information before saving', async () => {
     const c = component();
     await load(c, 'prénom;nom;courriel;matricule;classe;frais;paiement\nAwa;Traoré;awa@example.test;M001;CP1;1000;2000');

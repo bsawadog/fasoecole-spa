@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { Component, inject, input, output, OnInit, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
@@ -7,7 +8,7 @@ import { NumberField } from '../../../../shared/ui/number-field';
 import { PayrollService, PayrollEmployee, PayrollCalculationInput, PayrollCalculationPreview } from '../../payroll.service';
 
 @Component({
-  selector:'app-payroll-calculator',standalone:true,imports:[FormsModule,DecimalPipe,ButtonModule,NumberField],
+  selector:'app-payroll-calculator',standalone:true,imports:[ErrorAlert, FormsModule,DecimalPipe,ButtonModule,NumberField],
   templateUrl:'./payroll-calculator.html',styleUrl:'./payroll-calculator.scss',
 })
 export class PayrollCalculator implements OnInit,OnDestroy {

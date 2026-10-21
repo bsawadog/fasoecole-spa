@@ -2,7 +2,7 @@
   @if (!embedded()) { <a class="ss__back" routerLink="/parent/enfants">← Mes enfants</a> }
 
   @if (error()) {
-    <p-message severity="error" class="ss__alert ss__alert--error" role="alert">{{ error() }}</p-message>
+    <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert>
   } @else if (child(); as c) {
     <header class="module-help-header ss__header">
     @if (!embedded()) { <app-module-help /> }
@@ -38,7 +38,7 @@
     </div>
     }
 
-    @if (tabError()) { <p-message severity="error" class="ss__alert ss__alert--error" role="alert">{{ tabError() }}</p-message> }
+    @if (tabError()) { <app-error-alert [message]="tabError()" (dismissed)="tabError.set(null)">{{ tabError() }}</app-error-alert> }
 
     @switch (tab()) {
       @case ('notes') {

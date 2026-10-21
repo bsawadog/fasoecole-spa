@@ -1,7 +1,7 @@
 @if (loading()) {
   <app-loading-state message="Chargement des notes…" />
 } @else if (error()) {
-  <p-message severity="error" class="ss__alert ss__alert--error" role="alert">{{ error() }}</p-message>
+  <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert>
 } @else if (data(); as d) {
   @if (!d.className) {
     <p class="ss__state">Aucune inscription en cours : les notes s’afficheront dès l’inscription dans une classe.</p>

@@ -7,6 +7,7 @@ export interface StudyProfile {studentId:number;fullName:string;schoolId:number;
 export interface StudyTask {id:number;title:string;details:string;dueOn:string|null;done:boolean;}
 export interface StudentDashboard extends Pick<ParentDashboard,'asOf'|'attendance'|'weeks'|'periods'|'subjectPeriod'|'subjects'|'homework'|'dueHomework'|'evaluations'|'announcements'|'events'|'sharedSupport'> {
  profile:StudyProfile;courses:ScheduleEntry[];tasks:StudyTask[];pendingTasks:number;overdueTasks:number;
+ subjectSuccess:{subjectId:number;name:string;percentage:number;gradeCount:number}[];
 }
 @Injectable({providedIn:'root'})
 export class StudentDashboardService {

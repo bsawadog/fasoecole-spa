@@ -7,7 +7,7 @@
     <button pButton type="button" (click)="load()" [disabled]="loading() || !schoolId">Actualiser</button>
   </div>
   @if (loading()) {<p role="status">Chargement de l’emploi du temps…</p>}
-  @if (error()) {<p-message severity="error" role="alert">{{ error() }}</p-message>}
+  @if (error()) {<app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}</app-error-alert>}
   @if (!loading() && !schools().length && !error()) {<p>Aucun établissement accessible.</p>}
   @if (data(); as schedule) {
     <section class="sheet" aria-label="Emploi du temps de la classe">

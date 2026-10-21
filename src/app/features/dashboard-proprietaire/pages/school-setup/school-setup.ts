@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { NumberField } from '../../../../shared/ui/number-field';
 import { SelectField } from '../../../../shared/ui/select-field';
@@ -19,7 +20,7 @@ import { apiError } from '../../../../shared/self-space/self-space.service';
 
 @Component({
   selector: 'app-school-setup', standalone: true,
-  imports: [ModuleHelpButton, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink],
+  imports: [ErrorAlert, ModuleHelpButton, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink],
   templateUrl: './school-setup.html', styleUrl: './school-setup.scss',
 })
 export class SchoolSetup implements OnInit {

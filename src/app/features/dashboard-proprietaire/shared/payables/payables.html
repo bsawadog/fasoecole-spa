@@ -9,7 +9,7 @@
       <button pButton type="button" (click)="openForm('fixed')" [disabled]="busy() || loading()">Ajouter une charge fixe</button>
     }
   </div>
-  @if (error()) { <p-message severity="error" class="alert error" role="alert">{{ error() }}</p-message> }
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}</app-error-alert> }
   @if (success()) { <p-message severity="success" class="alert success" role="status">{{ success() }}</p-message> }
   @if (loading()) { <app-loading-state message="Chargement des échéances…" /> }
   @if (data(); as d) {
@@ -81,8 +81,12 @@
             <td>{{ r.dueDate | date:'dd/MM/yyyy' }}@if (r.period !== month) { <small>Report de {{ r.period }}</small> }</td>
             <td>{{ r.amount | number:'1.0-2' }}</td><td>{{ r.paid | number:'1.0-2' }}</td><td class="remaining">{{ r.remaining | number:'1.0-2' }}</td>
             <td><span class="badge" [attr.data-status]="r.status">{{ status[r.status] }}</span>@if (r.overdue) { <small class="danger">En retard</small> }</td>
-            <td><div class="row-actions"><button pButton type="button" (click)="openDetail(r)" [disabled]="busy()">{{ r.remaining > 0 && r.status !== 'CANCELLED' ? 'Payer / détails' : 'Détails' }}</button>
-              @if (canCancel(r)) { <button pButton severity="danger" type="button" class="danger ui-row-action ui-row-action--danger" (click)="cancel(r)" [disabled]="busy()" pTooltip="Annuler" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Annuler"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12 M6 18L18 6" /></svg></button> }</div></td>
+            <td><div class="row-actions">
+<app-row-actions>
+<button pButton type="button" (click)="openDetail(r)" [disabled]="busy()">{{ r.remaining > 0 && r.status !== 'CANCELLED' ? 'Payer / détails' : 'Détails' }}</button>
+              @if (canCancel(r)) { <button pButton severity="danger" type="button" class="danger ui-row-action ui-row-action--danger" (click)="cancel(r)" [disabled]="busy()" pTooltip="Annuler" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Annuler"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12 M6 18L18 6" /></svg><span class="ui-actions-label">Annuler</span></button> }
+</app-row-actions>
+</div></td>
           </tr>
         } @empty { <tr><td colspan="7" class="empty">Aucune dépense pour ce filtre. Choisissez « Toutes les dépenses » pour consulter les échéances soldées ou annulées.</td></tr> }
       </tbody>
@@ -110,7 +114,7 @@
         }
         <h4>Historique des versements</h4>
         @if (historyLoading()) { <app-loading-state message="Chargement des versements…" /> }
-        @else if (historyError()) { <p-message severity="error" class="error" role="alert">{{ historyError() }}</p-message> }
+        @else if (historyError()) { <app-error-alert [message]="historyError()" (dismissed)="historyError.set('')">{{ historyError() }}</app-error-alert> }
         @else {
           <div class="table-wrap"><table><thead><tr><th>Date</th><th>Montant (FCFA)</th><th>Mode</th><th>Référence</th></tr></thead>
             <tbody>@for (p of history(); track p.id) { <tr><td>{{ p.date | date:'dd/MM/yyyy' }}</td><td>{{ p.amount | number:'1.0-2' }}</td><td>{{ p.method ? methodLabels[p.method] : 'Fiche enseignant' }}</td><td>{{ p.reference || '—' }}</td></tr> }

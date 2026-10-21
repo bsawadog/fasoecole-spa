@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
@@ -11,7 +12,7 @@ import { environment } from '../../../../../environments/environment';
 import { apiError } from '../../../../shared/self-space/self-space.service';
 interface Lesson { id:number; dayOfWeek:number; date:string; startTime:string; endTime:string; teacherName:string; subjects:string|null; }
 interface Overview { schoolName:string; yearLabel:string; yearStart:string; yearEnd:string; classId:number|null; className:string|null; weekStart:string; classes:{id:number;name:string}[]; lessons:Lesson[]; }
-@Component({selector:'app-class-timetable',standalone:true,imports:[DatePipe,FormsModule,ButtonModule,MessageModule],templateUrl:'./class-timetable.html',styleUrl:'./class-timetable.scss'})
+@Component({selector:'app-class-timetable',standalone:true,imports:[ErrorAlert, DatePipe,FormsModule,ButtonModule,MessageModule],templateUrl:'./class-timetable.html',styleUrl:'./class-timetable.scss'})
 export class ClassTimetablePage implements OnInit {
   private readonly http=inject(HttpClient); private readonly auth=inject(AuthService); private readonly destroy=inject(DestroyRef);
   private request?:Subscription;

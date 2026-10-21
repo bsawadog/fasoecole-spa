@@ -1,3 +1,5 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { apiError } from '../../../../shared/api-error';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
 import { InputTextModule } from 'primeng/inputtext';
@@ -13,9 +15,10 @@ import { AuthService, RegistrationSchool } from '../../../../core/auth';
 
 import { parseChildMatricules, childMatriculesError } from '../../../../core/auth/child-matricules';
 
-type AuthMode = 'login' | 'register' | 'forgot' | 'reset' | 'activate';
+type AuthMode = 'login' | 'register' | 'forgot' | 'reset' | 'activate' | 'recover' | 'recover-complete';
 
 function initialMode(params: { has(name: string): boolean }): AuthMode {
+  if (params.has('recover')) return 'recover-complete';
   if (params.has('activate')) return 'activate';
   if (params.has('token')) return 'reset';
   return 'login';
@@ -24,7 +27,7 @@ function initialMode(params: { has(name: string): boolean }): AuthMode {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormValidationDirective,
+  imports: [ErrorAlert, SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormValidationDirective,
     ReactiveFormsModule,
     RouterLink,
     LucideArrowLeft,
@@ -50,6 +53,7 @@ export class Login implements OnInit {
   readonly showPassword = signal(false);
   readonly resetToken = this.route.snapshot.queryParamMap.get('token');
   readonly activationToken = this.route.snapshot.queryParamMap.get('activate');
+  readonly recoveryToken = this.route.snapshot.queryParamMap.get('recover');
   private readonly verificationToken = this.route.snapshot.queryParamMap.get('verify');
 
   ngOnInit(): void {
@@ -89,6 +93,26 @@ export class Login implements OnInit {
   readonly emailForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
   });
+
+  readonly recoveryForm = this.fb.nonNullable.group({
+    schoolId: [0, [Validators.required, Validators.min(1)]],
+    registrationNumber: ['', [Validators.required, Validators.maxLength(50)]],
+    firstName: ['', [Validators.required, Validators.maxLength(100)]],
+    lastName: ['', [Validators.required, Validators.maxLength(100)]],
+    newEmail: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
+    reason: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(1000)]],
+  });
+
+  submitRecovery(): void {
+    if (this.loading() || this.recoveryForm.invalid) { this.recoveryForm.markAllAsTouched(); return; }
+    this.loading.set(true); this.errorMessage.set(null); this.successMessage.set(null);
+    const form = this.recoveryForm.getRawValue();
+    this.auth.submitAccountRecovery({ ...form, registrationNumber: form.registrationNumber.trim(),
+      firstName: form.firstName.trim(), lastName: form.lastName.trim(), newEmail: form.newEmail.trim(), reason: form.reason.trim() }).subscribe({
+      next: result => { this.loading.set(false); this.recoveryForm.reset(); this.successMessage.set(result.message); },
+      error: err => { this.loading.set(false); this.errorMessage.set(apiError(err, 'Impossible d’envoyer la demande. Réessayez plus tard.')); },
+    });
+  }
 
   readonly resetForm = this.fb.nonNullable.group({
     password: ['', [Validators.required, Validators.minLength(8)]],
@@ -225,9 +249,9 @@ export class Login implements OnInit {
         this.loading.set(false);
         this.successMessage.set('Votre adresse courriel est confirmée. Connectez-vous pour accéder à votre espace.');
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set('Ce lien de vérification est invalide ou expiré. Demandez-en un nouveau depuis votre profil.');
+        this.errorMessage.set(apiError(err, 'Ce lien de vérification est invalide ou expiré. Demandez-en un nouveau depuis votre profil.'));
       },
     });
   }
@@ -262,13 +286,23 @@ export class Login implements OnInit {
       this.errorMessage.set('Les deux mots de passe ne correspondent pas.');
       return;
     }
-    if (!this.resetToken && !this.activationToken) {
+    if (!this.resetToken && !this.activationToken && !this.recoveryToken) {
       this.errorMessage.set('Le lien de réinitialisation est invalide ou incomplet.');
       return;
     }
 
     this.loading.set(true);
     this.errorMessage.set(null);
+    if (this.mode() === 'recover-complete' && this.recoveryToken) {
+      this.auth.completeAccountRecovery(this.recoveryToken, password).subscribe({
+        next: () => {
+          this.loading.set(false); this.resetForm.reset(); this.setMode('login');
+          this.successMessage.set('Votre compte est récupéré. Connectez-vous avec votre nouvelle adresse courriel et votre nouveau mot de passe. Vos dossiers sont conservés.');
+        },
+        error: err => { this.loading.set(false); this.errorMessage.set(apiError(err, 'Ce lien est invalide ou expiré. Contactez votre établissement.')); },
+      });
+      return;
+    }
     if (this.mode() === 'activate' && this.activationToken) {
       this.auth.verifyEmail(this.activationToken, password).subscribe({
         next: () => {

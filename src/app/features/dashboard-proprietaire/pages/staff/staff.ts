@@ -1,3 +1,5 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { RowActions } from '../../../../shared/ui/row-actions';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { NumberField } from '../../../../shared/ui/number-field';
@@ -48,7 +50,7 @@ const MODULE_HINTS: Record<OwnerModule, string> = {
 @Component({
   selector: 'app-staff',
   standalone: true,
-  imports: [DateField, ModuleHelpButton, TooltipModule, NumberField, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DecimalPipe],
+  imports: [ErrorAlert, RowActions, DateField, ModuleHelpButton, TooltipModule, NumberField, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DecimalPipe],
   templateUrl: './staff.html',
   styleUrl: './staff.scss',
 })

@@ -1,3 +1,4 @@
+import { ErrorAlert } from './error-alert';
 import { ModuleHelpButton } from './help/module-help-button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -7,7 +8,7 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { timer, exhaustMap, catchError, EMPTY, map } from 'rxjs';
 import { AuthService, RegistrationSchool } from '../core/auth/auth.service';
@@ -15,11 +16,11 @@ import { environment } from '../../environments/environment';
 interface IncidentEvent { action:string; note:string; created_at:string; first_name:string; last_name:string; }
 interface Incident { id:number; school_id:number; school_name:string; title:string; page_title:string; description:string; status:string; has_image:boolean; updated_at:string; events?:IncidentEvent[]; }
 @Component({
- selector:'app-support-incidents', standalone:true, imports: [ModuleHelpButton, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormsModule,DatePipe],
+ selector:'app-support-incidents', standalone:true, imports: [ErrorAlert, ModuleHelpButton, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormsModule,DatePipe],
  styles:[`@layer legacy {  :host{display:block} section{background:var(--theme-surface, white);padding:24px;border-radius:16px;margin-bottom:20px} h1,h2{margin-top:0} label{display:block;margin:12px 0} input,select,textarea{display:block;padding:10px;border:1px solid var(--theme-control-border, #ccd8d1);border-radius:8px;width:100%;box-sizing:border-box} textarea{min-height:100px} button{padding:9px 14px;margin:5px;border:1px solid var(--theme-control-border, #cbd5d1);border-radius:8px;background:var(--theme-success-soft, #eff7f2);cursor:pointer} button:disabled{opacity:.5;cursor:default} .layout{display:grid;grid-template-columns:minmax(260px,1fr) minmax(300px,1.5fr);gap:20px}.incident{display:block;width:100%;text-align:left}.selected{border-color:var(--theme-success, #13834b)}small{display:block;color:var(--theme-muted, #58685f)}img{max-width:100%;max-height:450px} .error{color:var(--theme-danger, #b42318)}.event{border-left:3px solid var(--theme-success-border, #c5e4d1);padding:10px;margin:12px 0;white-space:pre-wrap}.description{white-space:pre-wrap}@media(max-width:800px){.layout{display:block}} }`],
  template:`
  <header class="ui-page-header module-help-header"><app-module-help /><h1>Incidents et assistance</h1><p>Déclarez un problème, suivez sa prise en charge et confirmez le résultat du nouveau test. Mise à jour toutes les 10 secondes.</p></header>
- @if(error()){<p-message severity="error" class="error" role="alert">{{error()}}</p-message>} @if(notice()){<p-message severity="success" role="status">{{notice()}}</p-message>}
+ @if(error()){<app-error-alert [message]="error()" (dismissed)="error.set('')">{{error()}}</app-error-alert>} @if(notice()){<p-message severity="success" role="status">{{notice()}}</p-message>}
  @if(!admin){<section><button pButton (click)="creating=!creating">{{creating?'Annuler':'Ouvrir un incident'}}</button>
  @if(creating){<form (ngSubmit)="create()" #form="ngForm">
  <label>Titre de l’incident<input pInputText name="title" [(ngModel)]="title" required maxlength="160"></label>
@@ -45,12 +46,15 @@ interface Incident { id:number; school_id:number; school_name:string; title:stri
  </section>}</div>`
 })
 export class SupportIncidents {
- private http=inject(HttpClient); private auth=inject(AuthService); private router=inject(Router); private destroy=inject(DestroyRef);
+ private http=inject(HttpClient); private auth=inject(AuthService); private router=inject(Router); private route=inject(ActivatedRoute); private destroy=inject(DestroyRef);
  private endpoint=`${environment.apiUrl}/support`;
  readonly admin=this.auth.user()?.rawRoles.includes('SUPER_ADMIN')===true;
  rows=signal<Incident[]>([]);selected=signal<Incident|null>(null);schools=signal<RegistrationSchool[]>([]);error=signal('');notice=signal('');busy=signal(false);imageUrl=signal('');
  search='';page=0;creating=false;closing=false;schoolId:number|null=this.auth.schoolContextId();title='';pageTitle='';description='';note='';image:File|null=null;private generation=0;private detailGeneration=0;
  constructor(){
+  this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(query=>{
+   if(!this.admin&&query.get('nouveau')==='1'){this.creating=true;this.pageTitle=String(query.get('source')??'').slice(0,200);}
+  });
   if(!this.admin&&this.auth.user())this.auth.getOwnedSchools(this.auth.user()!.id).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:s=>{this.schools.set(s);this.schoolId=s[0]?.id??null;},error:()=>this.error.set('Établissements indisponibles.')});
   timer(0,10000).pipe(exhaustMap(()=>{const generation=this.generation;return this.http.get<Incident[]>(`${this.endpoint}/incidents`,{params:this.listParams()}).pipe(catchError(()=>{this.error.set('Impossible de synchroniser les incidents.');return EMPTY;}),map(rows=>({rows,generation})));}),takeUntilDestroyed(this.destroy)).subscribe(({rows,generation})=>{if(generation!==this.generation)return;this.rows.set(rows);if(this.selected()&&!this.busy())this.refreshDetail(this.selected()!.id);});
   this.destroy.onDestroy(()=>this.clearImage());

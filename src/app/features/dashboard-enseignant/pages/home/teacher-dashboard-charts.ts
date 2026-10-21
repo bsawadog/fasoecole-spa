@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
@@ -8,7 +9,7 @@ import { environment } from '../../../../../environments/environment';
 import { apiError, TeacherClass } from '../../../../shared/self-space/self-space.service';
 interface Week {start:string;end:string;present:number;absent:number;late:number;excused:number;}
 interface Dashboard {classes:TeacherClass[];classId:number|null;yearLabel:string|null;asOf:string;weeks:Week[];marks:{evaluationId:number|null;evaluations:{id:number;title:string;subject:string;date:string}[];buckets:{label:string;count:number}[];count:number;average:number|null};homework:{todo:number;submitted:number;corrected:number;overdue:number};}
-@Component({selector:'app-teacher-dashboard-charts',standalone:true,imports:[DatePipe,FormsModule],templateUrl:'./teacher-dashboard-charts.html',styleUrl:'./teacher-dashboard-charts.scss'})
+@Component({selector:'app-teacher-dashboard-charts',standalone:true,imports:[ErrorAlert, DatePipe,FormsModule],templateUrl:'./teacher-dashboard-charts.html',styleUrl:'./teacher-dashboard-charts.scss'})
 export class TeacherDashboardCharts implements OnInit {
  private readonly http=inject(HttpClient);private readonly destroy=inject(DestroyRef);private request?:Subscription;
  readonly data=signal<Dashboard|null>(null);readonly classes=signal<TeacherClass[]>([]);readonly loading=signal(false);readonly error=signal('');classId:number|null=null;evaluationId:number|null=null;

@@ -33,6 +33,7 @@
  &__period-track>span{width:100%;background:var(--theme-success,#166044);border-radius:.5rem .5rem 0 0}
  &__period small{color:var(--theme-muted,#445c70)}
  &__subjects{display:grid;gap:1rem;margin:1rem 0}
+ &__subject-scale{display:flex;justify-content:space-between;color:var(--theme-muted,#445c70);font-size:.75rem;margin-top:1.2rem}
  &__bar-label{display:flex;justify-content:space-between;gap:.8rem;font-size:.88rem;margin-bottom:.4rem}
  &__bar-label strong{white-space:nowrap}
  &__subject-track{height:.65rem;border-radius:1rem;overflow:hidden;background:var(--theme-inset,#e5edf3)}

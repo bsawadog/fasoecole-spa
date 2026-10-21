@@ -6,7 +6,7 @@
     <button pButton type="button" (click)="load()" [disabled]="busy()||loading()">Actualiser</button>
     @if(data()?.book){<button pButton type="button" (click)="exportCsv()" [disabled]="busy()||loading()">Exporter CSV</button><button pButton type="button" (click)="print()" [disabled]="busy()||loading()">Imprimer / PDF</button>}
   </div>
-  @if(error()){<p-message severity="error" role="alert">{{error()}}</p-message>}
+  @if(error()){<app-error-alert [message]="error()" (dismissed)="error.set('')">{{error()}}</app-error-alert>}
   @if(success()){<p-message severity="success" role="status">{{success()}}</p-message>}
   @if(loading()){<app-loading-state message="Chargement de la banque…" />}
   @else if(!schoolId()){<p>Aucun établissement accessible.</p>}

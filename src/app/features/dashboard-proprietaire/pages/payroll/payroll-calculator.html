@@ -1,7 +1,7 @@
 <section class="calculator" aria-label="Calcul automatique de la paie" [attr.aria-busy]="busy() || loading()">
   <h3>Calculer et valider la paie — {{ month() }}</h3>
   <p>Brut en espèces déjà enregistré : <strong>{{ employee().due | number:'1.0-2' }} FCFA</strong>. Renseignez sa composition ; les indemnités ne sont pas ajoutées une deuxième fois. Pour modifier le brut, corrigez d’abord la rémunération dans la fiche de l’employé.</p>
-  @if(error()){<p class="calculator__error" role="alert">{{ error() }}</p>}
+  @if(error()){<app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}</app-error-alert>}
   @if(loading()){<p role="status">Chargement des paramètres précédents…</p>}
   <form #calculation="ngForm" (ngSubmit)="calculation.valid && calculate()">
     <fieldset [disabled]="busy() || loading()">

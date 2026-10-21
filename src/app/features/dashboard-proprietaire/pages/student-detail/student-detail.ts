@@ -1,3 +1,6 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { apiError } from '../../../../shared/api-error';
+import { RowActions } from '../../../../shared/ui/row-actions';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
@@ -49,7 +52,7 @@ interface PaymentForm {
 @Component({
   selector: 'app-student-detail',
   standalone: true,
-  imports: [ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, TagModule, LoadingState, InputTextModule, ButtonModule, FormValidationDirective, DecimalPipe, FormsModule, NgClass],
+  imports: [ErrorAlert, RowActions, ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, TagModule, LoadingState, InputTextModule, ButtonModule, FormValidationDirective, DecimalPipe, FormsModule, NgClass],
   templateUrl: './student-detail.html',
   styleUrl: './student-detail.scss',
 })
@@ -119,9 +122,9 @@ export class StudentDetailPage implements OnInit {
           error: () => undefined,
         });
       },
-      error: () => {
+      error: (err) => {
         if (version !== this.detailVersion) return;
-        this.errorMessage.set('Impossible de charger la fiche de l’élève.');
+        this.errorMessage.set(apiError(err, 'Impossible de charger la fiche de l’élève.'));
         this.loading.set(false);
       },
     });
@@ -268,7 +271,7 @@ export class StudentDetailPage implements OnInit {
         this.successMessage.set(editingId ? 'La présence a été mise à jour.' : 'La présence a été ajoutée.');
         this.loadDetail();
       },
-      error: () => this.fail('L’enregistrement de la présence a échoué.'),
+      error: (err) => this.fail(apiError(err, 'L’enregistrement de la présence a échoué.')),
     });
   }
 
@@ -286,7 +289,7 @@ export class StudentDetailPage implements OnInit {
         this.successMessage.set('L’enregistrement a été supprimé.');
         this.loadDetail();
       },
-      error: () => this.fail('La suppression a échoué.'),
+      error: (err) => this.fail(apiError(err, 'La suppression a échoué.')),
     });
   }
 
@@ -346,7 +349,7 @@ export class StudentDetailPage implements OnInit {
         this.successMessage.set('Le frais a été annulé.');
         this.loadDetail();
       },
-      error: () => this.fail('L’annulation a échoué.'),
+      error: (err) => this.fail(apiError(err, 'L’annulation a échoué.')),
     });
   }
 

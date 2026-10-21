@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { ChangeDetectorRef,Component,computed,ElementRef,HostListener,inject,OnDestroy,OnInit,signal } from '@angular/core';
 import { DatePipe,DecimalPipe } from '@angular/common';
@@ -22,7 +23,7 @@ import { SchoolTaxesService,TAX_CODES,TaxCode,TaxRow,TaxDetail,TaxOverview,TaxPa
 const today=()=>new Date().toLocaleDateString('en-CA');
 const normalize=(s:string)=>s.normalize('NFD').replace(/\p{M}/gu,'').toLowerCase();
 @Component({selector:'app-school-taxes',standalone:true,
-  imports: [ModuleHelpButton, DatePipe,DecimalPipe,FormsModule,ButtonModule,InputTextModule,MessageModule,TableModule,TooltipModule,DateField,NumberField,SelectField,SelectOption,LoadingState,TableRow,FormValidationDirective],
+  imports: [ErrorAlert, ModuleHelpButton, DatePipe,DecimalPipe,FormsModule,ButtonModule,InputTextModule,MessageModule,TableModule,TooltipModule,DateField,NumberField,SelectField,SelectOption,LoadingState,TableRow,FormValidationDirective],
   templateUrl:'./taxes.html',styleUrl:'./taxes.scss'})
 export class SchoolTaxesPage implements OnInit,OnDestroy {
   private readonly auth=inject(AuthService);private readonly api=inject(SchoolTaxesService);

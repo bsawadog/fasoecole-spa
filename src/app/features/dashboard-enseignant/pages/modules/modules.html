@@ -8,7 +8,7 @@
     }
     <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" [disabled]="loadingClasses() || loading() || saving()" (click)="reload()">Actualiser</button>
   </header>
-  @if (error()) { <p-message severity="error" class="ss__alert ss__alert--error" role="alert">{{ error() }}</p-message> }
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
   @if (success()) { <p-message severity="success" class="ss__alert ss__alert--success" role="status">{{ success() }}</p-message> }
   @if (loadingClasses()) { <app-loading-state message="Chargement de vos classes…" /> }
   @else if (module() !== 'emploi' && !classes().length && !error()) { <p class="ss__state">Aucune classe ne vous est affectée.</p> }

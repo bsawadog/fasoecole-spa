@@ -4,7 +4,7 @@
     <div class="appointments__actions"><button pButton type="button" class="appointments__button" [disabled]="loading() || busy()" (click)="refresh()">Actualiser</button>
       @if (owner()) { <button pButton type="button" class="appointments__button appointments__button--primary" [disabled]="loading() || busy()" [attr.aria-expanded]="showForm" aria-controls="appointment-form" (click)="showForm = !showForm">{{ showForm ? 'Fermer le formulaire' : '+ Prendre un rendez-vous' }}</button> }</div>
   </div>
-  @if (error()) { <p-message severity="error" class="appointments__notice appointments__notice--error" role="alert">{{ error() }}</p-message> }
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
   @if (success()) { <p-message severity="success" class="appointments__notice" role="status">{{ success() }}</p-message> }
   @if (loading()) { <app-loading-state message="Chargement des rendez-vous…" /> }
   @else {

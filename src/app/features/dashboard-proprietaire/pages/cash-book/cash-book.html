@@ -10,7 +10,7 @@
       <button pButton type="button" class="dep__btn" (click)="print()" [disabled]="loading()">Imprimer / PDF</button>
     }
   </div>
-  @if (error()) {<p-message severity="error" class="dep__alert dep__alert--error" role="alert">{{ error() }}</p-message>}
+  @if (error()) {<app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}</app-error-alert>}
   @if (success()) {<p-message severity="success" class="dep__alert dep__alert--success" role="status">{{ success() }}</p-message>}
   @if (loading()) {<app-loading-state message="Chargement de la caisse…" />}
   @else if (!schools().length) {<p>Aucun établissement accessible.</p>}

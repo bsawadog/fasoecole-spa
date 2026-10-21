@@ -1,10 +1,10 @@
 <section class="class-roster">
   <header class="module-help-header class-roster__header">
     <app-module-help />
-    <div><a routerLink="/proprietaire">Retour à l’accueil</a><h1>{{ title() }}</h1><p>{{ parentsMode ? 'Coordonnées des parents et accès aux fiches de leurs enfants inscrits dans les classes.' : 'Tous les élèves de l’établissement, avec ou sans classe. Ouvrez une fiche pour consulter les détails.' }}</p></div>
+    <div><a routerLink="/proprietaire">Retour au tableau de bord</a><h1>{{ title() }}</h1><p>{{ parentsMode ? 'Coordonnées des parents et accès aux fiches de leurs enfants inscrits dans les classes.' : 'Tous les élèves de l’établissement, avec ou sans classe. Ouvrez une fiche pour consulter les détails.' }}</p></div>
 
   </header>
-  @if (error()) { <p-message severity="error" class="class-roster__alert class-roster__alert--error" role="alert">{{ error() }}</p-message>@if (schoolId()) { <button pButton type="button" (click)="selectSchool(schoolId()!)">Réessayer</button> } }
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert>@if (schoolId()) { <button pButton type="button" (click)="selectSchool(schoolId()!)">Réessayer</button> } }
   @if (loading()) { <app-loading-state message="Chargement…" /> }
   @else if (!error()) {
     <section class="class-roster__card">

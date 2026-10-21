@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
@@ -9,7 +10,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../../../core/auth';
 
 @Component({
-  selector:'app-owner-registration',standalone:true,imports: [InputTextModule, ButtonModule, MessageModule, FormValidationDirective, ReactiveFormsModule,RouterLink],
+  selector:'app-owner-registration',standalone:true,imports: [ErrorAlert, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, ReactiveFormsModule,RouterLink],
   host: { class: 'public-onboarding' },
   template:`
     <main class="onboarding">
@@ -27,7 +28,7 @@ import { AuthService } from '../../../../core/auth';
             <p class="eyebrow">VOTRE COMPTE EXISTANT</p><h2>Bonjour {{ auth.user()?.firstName }}</h2>
             @if (ready()) {
               <p>Utilisez votre compte pour préparer un nouvel établissement. Vos dossiers et accès actuels sont conservés.</p>
-              @if (error()) { <p-message severity="error" class="error" role="alert">{{ error() }}</p-message> }
+              @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}</app-error-alert> }
               <button pButton type="button" (click)="continueWithAccount()" [disabled]="busy()">{{ busy()?'Préparation…':'Continuer avec mon compte' }}</button>
             } @else {
               <p>Confirmez votre courriel et terminez les étapes demandées dans votre profil avant de préparer un établissement.</p>
@@ -40,7 +41,7 @@ import { AuthService } from '../../../../core/auth';
           } @else {
             <p class="eyebrow">PREMIÈRE ÉTAPE</p><h2>Créer mon compte propriétaire</h2>
             <p>Vous avez déjà un compte ? <a routerLink="/login" [queryParams]="{next:'school-setup'}">Connectez-vous</a></p>
-            @if (error()) { <p-message severity="error" class="error" role="alert">{{ error() }}</p-message> }
+            @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}</app-error-alert> }
             <form [formGroup]="form" (ngSubmit)="register()" novalidate>
               <div class="names"><label>Prénom<input pInputText type="text" formControlName="firstName" autocomplete="given-name" required maxlength="100" /></label>
                 <label>Nom<input pInputText type="text" formControlName="lastName" autocomplete="family-name" required maxlength="100" /></label></div>

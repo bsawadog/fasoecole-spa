@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { DateField } from '../../../../shared/ui/date-field';
 import { SelectField } from '../../../../shared/ui/select-field';
@@ -43,7 +44,7 @@ const INVOICE_LABELS: Record<string, string> = {
 @Component({
   selector: 'app-parent-child-detail',
   standalone: true,
-  imports: [ModuleHelpButton, DateField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, DecimalPipe, FormsModule, RouterLink, ScheduleView, StudentGradesView],
+  imports: [ErrorAlert, ModuleHelpButton, DateField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, DecimalPipe, FormsModule, RouterLink, ScheduleView, StudentGradesView],
   templateUrl: './child-detail.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

@@ -1,3 +1,5 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { apiError } from '../../../../shared/api-error';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
@@ -24,13 +26,14 @@ interface SchoolRow {
 interface SchoolPage { items: SchoolRow[]; total: number; page: number; size: number; }
 
 @Component({
-  selector: 'app-platform-schools', standalone: true, imports: [ModuleHelpButton, SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormsModule, DatePipe, AppointmentCounter],
+  selector: 'app-platform-schools', standalone: true, imports: [ErrorAlert, ModuleHelpButton, SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormsModule, DatePipe, AppointmentCounter],
   template: `
     <section class="platform">
       <header class="module-help-header ui-page-header">
     <app-module-help /><div class="eyebrow">ADMINISTRATION DE LA PLATEFORME</div><h1>Établissements</h1>
         <p>Gérez les accès des établissements et contactez leurs propriétaires.</p></header>
       <app-appointment-counter profile="personal" pageLink="/admin/mes-rendez-vous" />
+      <button pButton type="button" severity="secondary" variant="outlined" (click)="openRecoveries()">Récupérations de compte — Support</button>
       <div class="toolbar">
         <label class="search">Rechercher
           <input pInputText type="search" [(ngModel)]="search" (ngModelChange)="searchChanged()" maxlength="200"
@@ -42,7 +45,7 @@ interface SchoolPage { items: SchoolRow[]; total: number; page: number; size: nu
         <button pButton severity="secondary" variant="outlined" type="button" class="secondary" (click)="reload.next()" [disabled]="loading()">Actualiser</button>
       </div>
       @if (notice()) { <p-message severity="success" class="notice" role="status">{{ notice() }}</p-message> }
-      @if (error()) { <p-message severity="error" class="error" role="alert">{{ error() }}</p-message> }
+      @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}</app-error-alert> }
       <div class="summary">{{ total() }} établissement(s) @if (loading()) { <span>· Chargement…</span> }</div>
       <div class="table-wrap"><table><thead><tr><th>Établissement</th><th>Propriétaire</th><th>Statut</th>
         <th>Dernière activation</th><th>Dernière désactivation</th><th>Actions</th></tr></thead><tbody>
@@ -67,7 +70,7 @@ interface SchoolPage { items: SchoolRow[]; total: number; page: number; size: nu
       <div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="activation-title">
         <h2 id="activation-title">{{ school.status === 'ACTIVE' ? 'Désactiver' : 'Activer' }} {{ school.name }} ?</h2>
         <p>{{ school.status === 'ACTIVE' ? 'L’établissement sera suspendu. Ses données seront conservées.' : 'L’établissement sera actif et disponible pour les inscriptions.' }}</p>
-        @if (actionError()) { <p-message severity="error" class="error" role="alert">{{ actionError() }}</p-message> }
+        @if (actionError()) { <app-error-alert [message]="actionError()" (dismissed)="actionError.set('')">{{ actionError() }}</app-error-alert> }
         <div class="actions"><button pButton severity="secondary" variant="outlined" type="button" class="secondary" (click)="confirmation.set(null); actionError.set('')" [disabled]="saving()">Annuler</button>
           <button pButton type="button" (click)="saveStatus(school)" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Confirmer' }}</button></div>
       </section></div>
@@ -95,7 +98,8 @@ interface SchoolPage { items: SchoolRow[]; total: number; page: number; size: nu
 })
 export class PlatformSchools {
  private auth = inject(AuthService); private router = inject(Router);
- openSchool(id:number):void {this.http.post(environment.apiUrl+'/support/school-access/'+id,{}).subscribe({next:()=>{this.auth.selectSchoolContext(id);this.router.navigateByUrl('/proprietaire');},error:()=>this.error.set('Acc?s impossible.')});}
+ openRecoveries(): void { this.router.navigateByUrl('/admin/demandes'); }
+ openSchool(id:number):void {this.http.post(environment.apiUrl+'/support/school-access/'+id,{}).subscribe({next:()=>{this.auth.selectSchoolContext(id);this.router.navigateByUrl('/proprietaire');},error:(err)=>this.error.set(apiError(err, 'Acc?s impossible.'))});}
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
   private readonly endpoint = `${environment.apiUrl}/platform/schools`;
@@ -136,7 +140,7 @@ export class PlatformSchools {
     const active=school.status !== 'ACTIVE';
     this.http.patch<void>(`${this.endpoint}/${school.id}/activation`,{active}).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next:()=>{ this.saving.set(false);this.confirmation.set(null);this.notice.set(`${school.name} : établissement ${active ? 'activé' : 'désactivé'}.`);this.reload.next(); },
-      error:()=>{ this.saving.set(false);this.actionError.set('La modification a échoué. Réessayez.'); },
+      error:(err)=>{ this.saving.set(false);this.actionError.set(apiError(err, 'La modification a échoué. Réessayez.')); },
     });
   }
 }

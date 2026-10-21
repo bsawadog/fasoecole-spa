@@ -1,3 +1,5 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { RowActions } from '../../../../shared/ui/row-actions';
 import type { ExpenseInvoiceTax } from '../../expenses.service';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -32,7 +34,7 @@ const monthStart = () => today().slice(0, 8) + '01';
 @Component({
   selector: 'app-expenses',
   standalone: true,
-  imports: [ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DecimalPipe, Payables],
+  imports: [ErrorAlert, RowActions, ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DecimalPipe, Payables],
   templateUrl: './expenses.html',
   styleUrl: './expenses.scss',
 })

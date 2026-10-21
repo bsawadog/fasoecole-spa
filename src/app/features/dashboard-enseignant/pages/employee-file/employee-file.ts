@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
@@ -13,7 +14,7 @@ import type { TeacherDetail } from '../../../dashboard-proprietaire/teacher-work
 import { environment } from '../../../../../environments/environment';
 interface Choice {teacherId:number;schoolId:number;schoolName:string;employeeNumber:string|null;}
 interface EmployeeFile {teacherId:number;schoolId:number;schoolName:string;hireDate:string|null;month:string;detail:TeacherDetail;canRequest:boolean;administrationName:string;}
-@Component({selector:'app-teacher-employee-file',standalone:true,imports:[DatePipe,FormsModule,RouterLink,ModuleHelpButton],templateUrl:'./employee-file.html',styleUrl:'./employee-file.scss'})
+@Component({selector:'app-teacher-employee-file',standalone:true,imports:[ErrorAlert, DatePipe,FormsModule,RouterLink,ModuleHelpButton],templateUrl:'./employee-file.html',styleUrl:'./employee-file.scss'})
 export class TeacherEmployeeFilePage implements OnInit {
  private readonly http=inject(HttpClient);private readonly auth=inject(AuthService);private readonly destroy=inject(DestroyRef);private readonly activity=inject(MessageActivityService);
  private readonly url=environment.apiUrl+'/me/teacher/employee-files';private readRequest?:Subscription;

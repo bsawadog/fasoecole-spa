@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { PayrollCalculator } from './payroll-calculator';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { ChangeDetectorRef, Component, computed, ElementRef, HostListener, inject, OnDestroy, OnInit, signal } from '@angular/core';
@@ -26,7 +27,7 @@ const normalize=(value:string)=>value.normalize('NFD').replace(/\p{M}/gu,'').toL
 
 @Component({
   selector:'app-payroll',standalone:true,
-  imports: [PayrollCalculator, ModuleHelpButton, FormsModule,DatePipe,DecimalPipe,ButtonModule,InputTextModule,MessageModule,TableModule,TooltipModule,
+  imports: [ErrorAlert, PayrollCalculator, ModuleHelpButton, FormsModule,DatePipe,DecimalPipe,ButtonModule,InputTextModule,MessageModule,TableModule,TooltipModule,
     DateField,NumberField,SelectField,SelectOption,LoadingState,TableRow,FormValidationDirective],
   templateUrl:'./payroll.html',styleUrl:'./payroll.scss',
 })

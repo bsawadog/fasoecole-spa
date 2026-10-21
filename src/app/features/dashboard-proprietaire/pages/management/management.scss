@@ -31,12 +31,12 @@
   :host .owner-management tbody tr:nth-child(even) { background: var(--theme-soft, #f3f7ff); }
   :host .owner-management tbody tr:hover { background: var(--theme-soft, #dbeafe); }
   :host .owner-management__actions-heading { width: 7.5rem; }
-  :host .owner-management__actions .owner-management__icon-action {
+  :host .owner-management__actions > .owner-management__icon-action {
     display: inline-flex; align-items: center; justify-content: center;
     width: 2.75rem; min-height: 2.75rem; padding: 0;
     color: var(--theme-link, #1d4ed8); background: var(--theme-soft, #eff6ff); border: 1px solid var(--theme-soft, #bfdbfe); border-radius: .6rem;
   }
-  :host .owner-management__actions .owner-management__icon-action:hover { background: var(--theme-soft, #dbeafe); border-color: var(--theme-accent, #60a5fa); }
+  :host .owner-management__actions > .owner-management__icon-action:hover { background: var(--theme-soft, #dbeafe); border-color: var(--theme-accent, #60a5fa); }
   :host .owner-management__actions .owner-management__delete { color: var(--theme-danger, #b91c1c); background: var(--theme-danger-soft, #fef2f2); border-color: var(--theme-danger-border, #fecaca); }
   :host .owner-management__actions .owner-management__delete:hover { background: var(--theme-danger-soft, #fee2e2); border-color: var(--theme-danger-border, #f87171); }
   :host .owner-management__summary > div:first-child { background: var(--theme-soft, #eff6ff); border-color: var(--theme-soft, #bfdbfe); }

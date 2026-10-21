@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../shared/error-alert';
 import { MessageActivityService } from '../../../shared/message-activity.service';
 import { LoadingState } from '../../../shared/ui/loading-state';
 import { AccountActions } from './account-actions';
@@ -43,7 +44,7 @@ interface NavigationItem {
 
 const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
   admin: [
-    { label: 'Accueil', icon: 'home', routerLink: '/admin' },
+    { label: 'Tableau de bord', icon: 'home', routerLink: '/admin' },
     { label: 'Créer une école', icon: 'building', routerLink: '/admin/creer-ecole' },
     { label: 'Créer un employé', icon: 'users', routerLink: '/admin/employes' },
     { label: 'Inscriptions', icon: 'calendar', routerLink: '/admin/inscriptions' },
@@ -62,7 +63,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Suivi des devoirs', icon: 'notes', routerLink: '/proprietaire/suivi-devoirs', module: 'HOMEWORK' },
     { label: 'Demandes administratives', icon: 'notes', routerLink: '/proprietaire/demandes-administratives', module: 'REQUESTS' },
     { label: 'Incidents', icon: 'shield', routerLink: '/proprietaire/incidents', module: null },
-    { label: 'Accueil', icon: 'home', routerLink: '/proprietaire', module: 'DASHBOARD' },
+    { label: 'Tableau de bord', icon: 'home', routerLink: '/proprietaire', module: 'DASHBOARD' },
     { label: 'Créer une école', icon: 'building', routerLink: '/proprietaire/creer-ecole', module: null },
     { label: 'Créer un employé', icon: 'users', routerLink: '/proprietaire/employes', module: null },
     { label: 'Inscriptions', icon: 'calendar', routerLink: '/proprietaire/inscriptions', module: 'ENROLLMENT' },
@@ -90,7 +91,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Calendrier scolaire', icon: 'calendar', routerLink: '/enseignant/calendrier' },
     { label: 'Discipline et vie scolaire', icon: 'shield', routerLink: '/enseignant/discipline' },
     { label: 'Bibliothèque', icon: 'book', routerLink: '/enseignant/bibliotheque' },
-    { label: 'Accueil', icon: 'home', routerLink: '/enseignant' },
+    { label: 'Tableau de bord', icon: 'home', routerLink: '/enseignant' },
     { label: 'Mes classes', icon: 'users', routerLink: '/enseignant/classes' },
     { label: 'Présences et retards', icon: 'users', routerLink: '/enseignant/presences' },
     { label: 'Ma fiche employé', icon: 'users', routerLink: '/enseignant/ma-fiche' },
@@ -110,7 +111,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Devoirs de maison', icon: 'book', routerLink: '/etudiant/devoirs' },
     { label: 'Cours et ressources', icon: 'book', routerLink: '/etudiant/documents' },
     { label: 'Demandes administratives', icon: 'notes', routerLink: '/etudiant/demandes-administratives' },
-    { label: 'Accueil', icon: 'home', routerLink: '/etudiant' },
+    { label: 'Tableau de bord', icon: 'home', routerLink: '/etudiant' },
     { label: 'Messages', icon: 'message', routerLink: '/etudiant/messages' },
     { label: 'Mes notes', icon: 'star', routerLink: '/etudiant/notes' },
     { label: 'Mes présences et retards', icon: 'users', routerLink: '/etudiant/presences' },
@@ -125,7 +126,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
     { label: 'Discipline et vie scolaire', icon: 'shield', routerLink: '/parent/discipline' },
     { label: 'Bibliothèque', icon: 'book', routerLink: '/parent/bibliotheque' },
     { label: 'Demandes administratives', icon: 'notes', routerLink: '/parent/demandes-administratives' },
-    { label: 'Accueil', icon: 'home', routerLink: '/parent' },
+    { label: 'Tableau de bord', icon: 'home', routerLink: '/parent' },
     { label: 'Mes enfants', icon: 'users', routerLink: '/parent/enfants' },
     { label: 'Notes et bulletins', icon: 'notes', routerLink: '/parent/notes' },
     { label: 'Accompagnement', icon: 'shield', routerLink: '/parent/accompagnement' },
@@ -143,7 +144,7 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [AccountActions, NavigationActivity, LoadingState, ButtonModule, MessageModule, ModuleHelpButton,
+  imports: [ErrorAlert, AccountActions, NavigationActivity, LoadingState, ButtonModule, MessageModule, ModuleHelpButton,
     NgTemplateOutlet,
     RouterOutlet,
     AcademicContextPicker,
@@ -209,7 +210,7 @@ export class AppShell implements OnInit {
     ];
     if (role === 'admin') return [
       { label: 'Incidents', icon: 'shield', routerLink: '/admin/incidents' },
-      { label: 'Accueil', icon: 'home', routerLink: '/admin' },
+      { label: 'Tableau de bord', icon: 'home', routerLink: '/admin' },
     ];
     if (role !== 'proprietaire') {
       return MENU_BY_ROLE[role].map((item) => item.routerLink.endsWith('/messages')
@@ -235,7 +236,7 @@ export class AppShell implements OnInit {
     const role = this.auth.role();
     if (!role) return [];
     const home = this.menuItems().find(item => item.icon === 'home')?.routerLink ?? `/${role}`;
-    const crumbs: { label: string; url: string }[] = [{ label: 'Accueil', url: home }];
+    const crumbs: { label: string; url: string }[] = [{ label: 'Tableau de bord', url: home }];
     if (route === home) return crumbs;
     if (route === '/profil') return [...crumbs, { label: 'Mon profil', url: route }];
     if (route === '/aide') return [...crumbs, { label: 'Aide', url: route }];

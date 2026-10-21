@@ -34,7 +34,7 @@
             <p-message severity="success" class="auth-card__notice" role="status">{{ successMessage() }}</p-message>
           }
           @if (errorMessage()) {
-            <p-message severity="error" class="auth-card__error" role="alert">{{ errorMessage() }}</p-message>
+            <app-error-alert [message]="errorMessage()" (dismissed)="errorMessage.set(null)">{{ errorMessage() }}</app-error-alert>
           }
 
           <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
@@ -90,6 +90,7 @@
             </button>
           </form>
 
+          <p class="auth-card__switch"><button pButton severity="secondary" variant="text" class="auth-card__text-button" type="button" (click)="setMode('recover')">Courriel et mot de passe oubliés ? Récupérer mon compte</button></p>
           <p class="auth-card__switch">
             Vous n’avez pas encore de compte ?
             <button pButton severity="secondary" variant="text" class="auth-card__text-button" type="button" (click)="setMode('register')">Créer un compte</button>
@@ -101,13 +102,13 @@
             <p>Un propriétaire d’établissement validera votre demande et définira votre accès.</p>
           </div>
           @if (errorMessage()) {
-            <p-message severity="error" class="auth-card__error" role="alert">{{ errorMessage() }}</p-message>
+            <app-error-alert [message]="errorMessage()" (dismissed)="errorMessage.set(null)">{{ errorMessage() }}</app-error-alert>
           }
           @if (successMessage()) {
             <p-message severity="success" class="auth-card__notice" role="status">{{ successMessage() }}</p-message>
           } @else {
             @if (schoolsError()) {
-              <p-message severity="error" class="auth-card__error" role="alert">{{ schoolsError() }}</p-message>
+              <app-error-alert [message]="schoolsError()" (dismissed)="schoolsError.set(null)">{{ schoolsError() }}</app-error-alert>
             }
             <form [formGroup]="registerForm" (ngSubmit)="submitRegistration()" novalidate>
               <div class="auth-card__field-row">
@@ -216,6 +217,34 @@
               </button>
             </form>
           }
+        } @else if (mode() === 'recover') {
+          <div class="auth-card__heading">
+            <h2>Récupérer mon compte apprenant</h2>
+            <p>Votre école vérifiera votre identité avant d’autoriser le changement du courriel et du mot de passe. Ce formulaire ne modifie pas votre compte.</p>
+          </div>
+          @if (errorMessage()) { <app-error-alert [message]="errorMessage()" (dismissed)="errorMessage.set(null)">{{ errorMessage() }}</app-error-alert> }
+          @if (successMessage()) {
+            <p-message severity="success" role="status">{{ successMessage() }}</p-message>
+          } @else {
+            @if (schoolsError()) { <p>Liste des écoles indisponible. Réessayez plus tard ou contactez votre établissement.</p> }
+            <form [formGroup]="recoveryForm" (ngSubmit)="submitRecovery()">
+              <div class="auth-card__field"><label for="recovery-school">Établissement</label>
+                <app-select-field inputId="recovery-school" ariaLabel="Établissement" formControlName="schoolId" required [disabled]="schoolsLoading() || schools().length === 0">
+                  <app-select-option [value]="0" label="Choisir mon établissement" />
+                  @for (school of schools(); track school.id) { <app-select-option [value]="school.id" [label]="school.name" /> }
+                </app-select-field>
+              </div>
+              <div class="auth-card__field"><label for="recovery-number">Matricule dans cet établissement</label><input pInputText id="recovery-number" formControlName="registrationNumber" maxlength="50" required /></div>
+              <div class="auth-card__field-row">
+                <div class="auth-card__field"><label for="recovery-first-name">Prénom</label><input pInputText id="recovery-first-name" formControlName="firstName" maxlength="100" required autocomplete="given-name" /></div>
+                <div class="auth-card__field"><label for="recovery-last-name">Nom</label><input pInputText id="recovery-last-name" formControlName="lastName" maxlength="100" required autocomplete="family-name" /></div>
+              </div>
+              <div class="auth-card__field"><label for="recovery-email">Nouvelle adresse courriel accessible</label><input pInputText id="recovery-email" type="email" formControlName="newEmail" maxlength="150" required autocomplete="email" /></div>
+              <div class="auth-card__field"><label for="recovery-reason">Motif de la récupération (10 caractères minimum)</label><textarea pInputText id="recovery-reason" formControlName="reason" minlength="10" maxlength="1000" rows="3" required></textarea></div>
+              <p>Ne transmettez aucun mot de passe ni document d’identité ici. Pour un mineur, l’école pourra contacter le responsable légal aux coordonnées déjà enregistrées. Contactez votre école pour le suivi.</p>
+              <button pButton class="auth-card__submit" type="submit" [disabled]="loading() || schoolsLoading() || recoveryForm.invalid">{{ loading() ? 'Envoi…' : 'Envoyer ma demande de récupération' }}</button>
+            </form>
+          }
         } @else if (mode() === 'forgot') {
           <div class="auth-card__heading">
             <p class="auth-card__eyebrow">Récupération de compte</p>
@@ -223,11 +252,12 @@
             <p>Indiquez l’adresse e-mail associée à votre compte. Nous vous enverrons un lien sécurisé.</p>
           </div>
           @if (errorMessage()) {
-            <p-message severity="error" class="auth-card__error" role="alert">{{ errorMessage() }}</p-message>
+            <app-error-alert [message]="errorMessage()" (dismissed)="errorMessage.set(null)">{{ errorMessage() }}</app-error-alert>
           }
           @if (successMessage()) {
             <p-message severity="success" class="auth-card__notice" role="status">{{ successMessage() }}</p-message>
           }
+          <p><button pButton severity="secondary" variant="text" type="button" (click)="setMode('recover')">Je n’ai plus accès à mon courriel : récupérer mon compte</button></p>
           <form [formGroup]="emailForm" (ngSubmit)="submitForgotPassword()" novalidate>
             <div class="auth-card__field">
               <label for="forgot-email">Adresse e-mail</label>
@@ -252,7 +282,10 @@
         } @else {
           <div class="auth-card__heading">
             <p class="auth-card__eyebrow">Presque terminé</p>
-            @if (mode() === 'activate') {
+            @if (mode() === 'recover-complete') {
+              <h2>Confirmer la récupération</h2>
+              <p>Votre école ou le support a autorisé cette récupération. Choisissez un nouveau mot de passe pour confirmer votre nouvelle adresse. Vos dossiers et accès seront conservés.</p>
+            } @else if (mode() === 'activate') {
               <h2>Activez votre compte</h2>
               <p>Votre adresse est confirmée. Choisissez votre mot de passe (8 caractères minimum) pour accéder à l’espace parent.</p>
             } @else {
@@ -261,7 +294,7 @@
             }
           </div>
           @if (errorMessage()) {
-            <p-message severity="error" class="auth-card__error" role="alert">{{ errorMessage() }}</p-message>
+            <app-error-alert [message]="errorMessage()" (dismissed)="errorMessage.set(null)">{{ errorMessage() }}</app-error-alert>
           }
           <form [formGroup]="resetForm" (ngSubmit)="submitPasswordReset()" novalidate>
             <div class="auth-card__field">
@@ -289,6 +322,8 @@
               @if (loading()) {
                 <span class="auth-card__spinner" aria-hidden="true"></span>
                 Modification…
+              } @else if (mode() === 'recover-complete') {
+                Confirmer mon adresse et récupérer mon compte
               } @else if (mode() === 'activate') {
                 Activer mon compte <svg lucideArrowRight [size]="18" aria-hidden="true"></svg>
               } @else {

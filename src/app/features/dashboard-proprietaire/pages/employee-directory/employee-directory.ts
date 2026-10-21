@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { LoadingState } from '../../../../shared/ui/loading-state';
 import { InputTextModule } from 'primeng/inputtext';
@@ -11,13 +12,13 @@ import { StaffService } from '../../staff.service';
 
 interface Employee { key: string; name: string; job: string; email: string; phone: string | null; route: string; staffId?: number; userId:number; }
 @Component({
-  selector: 'app-employee-directory', standalone: true, imports: [ModuleHelpButton, LoadingState, InputTextModule, MessageModule, FormsModule, RouterLink],
+  selector: 'app-employee-directory', standalone: true, imports: [ErrorAlert, ModuleHelpButton, LoadingState, InputTextModule, MessageModule, FormsModule, RouterLink],
   template: `
     <header class="ui-page-header module-help-header"><app-module-help /><h1>Tous les employés de l’école</h1>
     <p>Enseignants et personnel : consultez leur fiche.</p></header>
 
     <label>Rechercher <input pInputText [(ngModel)]="search" placeholder="Nom, fonction ou courriel"></label>
-    @if (error()) { <p-message severity="error" role="alert">{{ error() }}</p-message> }
+    @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}</app-error-alert> }
     @if (loading()) { <app-loading-state message="Chargement…" /> } @else {
       <div class="table-wrap"><table><thead><tr><th>Employé</th><th>Fonction</th><th>Contact</th><th></th></tr></thead><tbody>
         @for (employee of filtered(); track employee.key) {

@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { MessageActivityService } from '../../../../shared/message-activity.service';
 import { CashBookService, CashOverview } from '../../cash-book.service';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
@@ -38,7 +39,7 @@ import { DatedAppointment, pendingAppointmentCount } from '../../../../shared/ap
 @Component({
   selector: 'app-proprietaire-home',
   standalone: true,
-  imports: [ModuleHelpButton, MonthlyFinanceChart, DashboardCharts, ButtonModule, MessageModule,
+  imports: [ErrorAlert, ModuleHelpButton, MonthlyFinanceChart, DashboardCharts, ButtonModule, MessageModule,
     DatePipe,
     DecimalPipe,
     RouterLink,

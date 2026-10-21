@@ -9,7 +9,7 @@
     @if (opened() === 'notifications') {
       <section id="account-notifications" class="account-panel account-panel--notifications" aria-label="Notifications">
         <h2>Notifications <span>{{ unread() }} non lues</span></h2>
-        @if (error()) { <p role="alert">{{ error() }}</p> }
+        @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}</app-error-alert> }
         @if (loading()) { <p role="status">Chargement des notifications…</p> }
         @else if (!notifications().length && !error()) { <p>Aucune notification pour le moment.</p> }
         <ul>
@@ -49,7 +49,7 @@
           }
         </div>
       }
-      @if (switchError()) { <p role="alert">{{ switchError() }}</p> }
+      @if (switchError()) { <app-error-alert [message]="switchError()" (dismissed)="switchError.set('')">{{ switchError() }}</app-error-alert> }
       <a routerLink="/profil" (click)="opened.set(null)"><svg lucideUserRound [size]="18" aria-hidden="true"></svg>Mon profil</a>
       <button type="button" class="account-logout" (click)="auth.logout()"><svg lucideLogOut [size]="18" aria-hidden="true"></svg>Se déconnecter</button>
     </section>

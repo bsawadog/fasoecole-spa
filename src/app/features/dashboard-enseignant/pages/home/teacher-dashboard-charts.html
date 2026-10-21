@@ -1,6 +1,6 @@
 <section class="teacher-charts" aria-label="Graphiques de mes classes">
  <header><div><p class="eyebrow">Suivi pédagogique</p><h2>Mes classes en chiffres</h2></div><div class="chart-controls"><label>Classe<select aria-label="Classe des graphiques" [(ngModel)]="classId" (ngModelChange)="chooseClass()" [disabled]="loading() || !classes().length">@for(c of classes();track c.classId){<option [ngValue]="c.classId">{{ c.schoolName }} · {{ c.className }} · {{ c.academicYearLabel }}</option>}</select></label><button type="button" [disabled]="loading()" (click)="load()">Actualiser les graphiques</button></div></header>
- @if(error()){<p class="chart-error" role="alert">{{ error() }}@if(data()){ Les chiffres affichés sont ceux de la dernière actualisation réussie. }</p>}
+ @if(error()){<app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}@if(data()){ Les chiffres affichés sont ceux de la dernière actualisation réussie. }</app-error-alert>}
  @if(loading()){<p role="status">Actualisation des graphiques…</p>}
  @if(data();as d){
   @if(d.classId===null){<p class="empty" role="status">Aucune classe affectée dans le contexte sélectionné.</p>}

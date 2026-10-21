@@ -110,7 +110,7 @@ describe('AccountActions', () => {
     const { fixture, page, http } = setup();
     http.expectOne(`${environment.apiUrl}/notifications/by-user/7`).flush({}, { status: 500, statusText: 'Error' });
     page.toggle('notifications'); fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[role="alertdialog"]')).not.toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('Aucune notification');
     fixture.destroy();
   });

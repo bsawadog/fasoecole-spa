@@ -11,15 +11,15 @@
 
   </header>
   @if (selectedSchoolId() && !loading()) {
-    <app-roster-import [schoolId]="selectedSchoolId()!" kind="students" [classes]="classes()" (completed)="importCompleted()" />
+    <details class="class-roster__import class-roster__no-print">
+      <summary>Importer des élèves depuis Excel ou CSV</summary>
+      <app-roster-import [schoolId]="selectedSchoolId()!" kind="students" [classes]="classes()" (completed)="importCompleted()" />
+    </details>
   }
 
 
-  @if (errorMessage()) {
-    <div class="class-roster__alert class-roster__alert--error class-roster__no-print">{{ errorMessage() }}</div>
-  }
   @if (successMessage()) {
-    <div class="class-roster__alert class-roster__alert--success class-roster__no-print">{{ successMessage() }}</div>
+    <div role="status" class="class-roster__alert class-roster__alert--success class-roster__no-print">{{ successMessage() }}</div>
   }
 
   @if (loading()) {
@@ -28,8 +28,6 @@
     <p class="class-roster__state">Aucune classe n’a encore été créée pour cet établissement.</p>
   } @else {
     <section class="class-roster__card class-roster__no-print" aria-label="Choix de la classe">
-      <div class="class-roster__card-head"><h2>Classe sélectionnée</h2></div>
-      <p class="class-roster__state">La création individuelle et l’affectation des {{ learner().plural }} à une classe se font dans « Inscriptions ». Cette page permet de consulter et de suivre leurs dossiers.</p>
       <div class="class-roster__toolbar">
         <label class="class-roster__class-picker" for="class-select">Choisir une classe
           <app-select-field inputId="class-select" class="class-roster__select" [ngModel]="selectedClassId()" (change)="onClassChange($event)" [ariaLabel]="(&quot;Choisir une classe &quot;).trim()">
@@ -38,9 +36,26 @@
             }
           </app-select-field>
         </label>
+        <button pButton type="button" class="class-roster__teachers-button" [disabled]="!selectedClassId()" (click)="showTeachers()">Voir les enseignants</button>
+        @if (rows().length > 0) {
+          <div class="class-roster__search">
+            <div class="class-roster__search-controls">
+              <input pInputText id="roster-student-search" type="search" class="class-roster__select"
+                     [ngModel]="studentSearch()" (ngModelChange)="studentSearch.set($event)"
+                     aria-label="Rechercher un élève par nom, prénom, matricule ou courriel"
+                     placeholder="Rechercher : nom, prénom, matricule ou courriel" />
+              @if (studentSearch()) {
+                <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__action" (click)="studentSearch.set('')">Effacer</button>
+              }
+              <span class="class-roster__count" role="status">{{ filteredRows().length }} / {{ rows().length }} {{ learner().plural }}</span>
+            </div>
+          </div>
+        }
         <div class="class-roster__toolbar-actions">
           @if (selectedClassId() && rows().length > 0) {
-            <button pButton type="button" class="class-roster__print-btn" (click)="printRoster()">🖨️ Imprimer / Enregistrer en PDF</button>
+            <button pButton type="button" class="class-roster__print-btn" (click)="printRoster()"
+                    pTooltip="Imprimer / Enregistrer en PDF" tooltipEvent="both" tooltipPosition="top" appendTo="body"
+                    aria-label="Imprimer / Enregistrer en PDF"><svg lucidePrinter [size]="21" aria-hidden="true"></svg></button>
           }
         </div>
       </div>
@@ -56,20 +71,6 @@
       <p class="class-roster__state">Aucun {{ learner().singular }} actif inscrit dans cette classe. Utilisez « Inscriptions » pour inscrire un nouvel {{ learner().singular }} et choisir sa classe d’accueil.</p>
     } @else {
       <section class="class-roster__card class-roster__list">
-        <div class="class-roster__card-head class-roster__no-print">
-          <h2>Liste des {{ learner().plural }}</h2>
-          <button pButton type="button" class="class-roster__teachers-button" (click)="showTeachers()">Voir les enseignants</button>
-          <span class="class-roster__count" role="status">{{ filteredRows().length }} / {{ rows().length }} {{ learner().plural }}</span>
-        </div>
-        <div class="class-roster__search class-roster__no-print">
-          <label for="roster-student-search">Rechercher un {{ learner().singular }}</label>
-          <input pInputText id="roster-student-search" type="search" class="class-roster__select"
-                 [ngModel]="studentSearch()" (ngModelChange)="studentSearch.set($event)"
-                 placeholder="Nom, prénom, matricule ou courriel" />
-          @if (studentSearch()) {
-            <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__action" (click)="studentSearch.set('')">Effacer</button>
-          }
-        </div>
         <div class="class-roster__table-wrap" tabindex="0" role="region" [attr.aria-label]="'Liste des ' + learner().plural + ' : défilement horizontal et vertical'">
         <table class="class-roster__table">
           <thead>
@@ -92,11 +93,17 @@
               <tr class="class-roster__row">
                 @if (editingStudentId() === row.studentId) {
                   <td colspan="8">
-                    <form class="class-roster__edit-form" (ngSubmit)="saveStudent(row.studentId)">
+                    <form class="class-roster__edit-form" #studentEdit="ngForm" (ngSubmit)="studentEdit.valid && saveStudent(row.studentId)">
                       <div class="class-roster__edit-grid">
                         <label>Prénom <input pInputText name="firstName" [(ngModel)]="studentForm.firstName" required /></label>
                         <label>Nom <input pInputText name="lastName" [(ngModel)]="studentForm.lastName" required /></label>
-                        <label>Courriel (facultatif) <input pInputText type="email" email name="email" [(ngModel)]="studentForm.email" /></label>
+                        <label>Courriel personnel
+                          @if (canCorrectStudentEmail(row)) {
+                            <input pInputText name="email" type="email" email [(ngModel)]="studentForm.email" maxlength="150" />
+                          } @else {
+                            <input pInputText type="email" [value]="row.email ?? ''" readonly />
+                          }
+                        </label>
                         <label>Téléphone <input pInputText name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" [(ngModel)]="studentForm.phone" /></label>
                         <label>Matricule <input pInputText type="text" autocomplete="off" [name]="'matricule_' + selectedSchoolId() + '_' + row.studentId" maxlength="50" [(ngModel)]="studentForm.registrationNumber" required /></label>
                         <label>Naissance <app-date-field mode="date" name="birthDate" [(ngModel)]="studentForm.birthDate" [ariaLabel]="(&quot;Naissance &quot;).trim()" /></label>
@@ -109,6 +116,11 @@
                         </label>
                       </div>
                       <div class="class-roster__edit-actions">
+                        @if (canCorrectStudentEmail(row)) {
+                          <p class="class-roster__muted">Le compte n’est pas encore activé. Vous pouvez corriger le courriel : l’ancien lien sera invalidé et une nouvelle invitation sera envoyée. Le courriel sera corrigé dans tous les dossiers liés à ce compte ; toutes les écoles concernées doivent vous appartenir.</p>
+                        } @else {
+                          <p class="class-roster__muted">Le courriel personnel est commun à tous les établissements. Son titulaire peut le modifier depuis Mon profil, après confirmation de la nouvelle adresse. Les courriels des parents se renseignent dans leurs fiches.</p>
+                        }
                         <button pButton type="submit" [disabled]="saving()" class="ui-row-action" pTooltip="Enregistrer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Enregistrer"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 6" /></svg></button>
                         <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelEdit()" class="ui-row-action" pTooltip="Annuler" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Annuler"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12 M6 18L18 6" /></svg></button>
                       </div>
@@ -153,13 +165,13 @@
                     </div>
                     @if (row.gender) { <div class="class-roster__muted">{{ row.gender }}</div> }
                   </td>
-                  <td>
-                    <div>{{ row.email }}</div>
-                    @if (row.emailVerified === false) {
-                      <small>{{ row.invitationDeliveryStatus === 'FAILED' ? 'Envoi échoué' : 'Compte à activer' }}</small>
-                      <button pButton type="button" class="class-roster__no-print ui-row-action ui-row-action--info" [disabled]="saving() || !row.email" (click)="resendInvitation(row.userId)" [pTooltip]="row.email ? 'Envoyer le lien d’activation' : 'Renseignez un courriel pour envoyer le lien d’activation'" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Envoyer le lien d’activation : ' + row.firstName + ' ' + row.lastName"><svg lucideSend [size]="18" aria-hidden="true"></svg></button>
-                    }
+                  <td class="class-roster__contact-cell">
+                    <details class="class-roster__details">
+                      <summary>{{ row.email || 'Aucun courriel' }}</summary>
+                    @if (row.email) { <div>{{ row.email }}</div> }
+                    <div class="class-roster__muted">Courriel personnel et de connexion</div>
                     @if (row.phone) { <div class="class-roster__muted">{{ row.phone }}</div> }
+                    </details>
                   </td>
                   <td>{{ row.registrationNumber }}</td>
                   <td>{{ row.billingSummary ? money(row.billingSummary.totalDue) : '—' }}</td>
@@ -169,7 +181,13 @@
                       <a [routerLink]="['/proprietaire/eleves', row.studentId]" fragment="student-billing">{{ money(row.billingSummary.totalBalance) }}</a>
                     } @else { — }
                   </td>
-                  <td>
+                  <td class="class-roster__parents-cell">
+                    <details class="class-roster__details">
+                      <summary>
+                        @for (parent of row.parents; track parent.parentId) {
+                          <span class="class-roster__parent-name">{{ parent.lastName }} {{ parent.firstName }}</span>
+                        } @empty { <span>Aucun parent associé</span> }
+                      </summary>
                     @for (parent of row.parents; track parent.parentId) {
                       @if (editingParentId() === parent.parentId) {
                         <form class="class-roster__edit-form" (ngSubmit)="saveParent(parent.parentId, row.studentId)">
@@ -191,21 +209,23 @@
                           @if (parent.email) { <span class="class-roster__muted">{{ parent.email }}</span> }
                           @if (parent.phone) { <span class="class-roster__muted">{{ parent.phone }}</span> }
                           <div class="class-roster__parent-actions class-roster__no-print">
-                            <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__link ui-row-action ui-row-action--warning" pTooltip="Modifier le parent" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Modifier le parent : ' + parent.firstName + ' ' + parent.lastName" (click)="startEditParent(parent)"><svg lucidePencil [size]="18" aria-hidden="true"></svg></button>
-                            @if (parent.email) {
-                              <a class="class-roster__link ui-row-action ui-row-action--info" [href]="'mailto:' + parent.email" pTooltip="Contacter le parent par courriel" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Contacter par courriel : ' + parent.firstName + ' ' + parent.lastName"><svg lucideMail [size]="18" aria-hidden="true"></svg></a>
-                            }
-                            @if (parent.phone) {
-                              <a class="class-roster__link ui-row-action ui-row-action--success" [href]="'tel:' + parent.phone" pTooltip="Appeler le parent" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Appeler : ' + parent.firstName + ' ' + parent.lastName"><svg lucidePhone [size]="18" aria-hidden="true"></svg></a>
-                            }
-                            @if (parent.email) {
-                              <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__link ui-row-action ui-row-action--info" [disabled]="saving()" (click)="sendParentAccountLink(parent)"
-                                [pTooltip]="parentNeedsActivation(parent) ? 'Envoyer le lien d’activation' : 'Envoyer le lien de réinitialisation du mot de passe'" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body"
-                                [attr.aria-label]="(parentNeedsActivation(parent) ? 'Envoyer le lien d’activation : ' : 'Réinitialiser le mot de passe : ') + parent.firstName + ' ' + parent.lastName">
-                                @if (parentNeedsActivation(parent)) { <svg lucideSend [size]="18" aria-hidden="true"></svg> }
-                                @else { <svg lucideKeyRound [size]="18" aria-hidden="true"></svg> }
-                              </button>
-                            }
+                            <app-row-actions>
+                              <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__link ui-row-action ui-row-action--warning" pTooltip="Modifier le parent" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Modifier le parent : ' + parent.firstName + ' ' + parent.lastName" (click)="startEditParent(parent)"><svg lucidePencil [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">{{ 'Modifier le parent : ' + parent.firstName + ' ' + parent.lastName }}</span></button>
+                              @if (parent.email) {
+                                <a class="class-roster__link ui-row-action ui-row-action--info" [href]="'mailto:' + parent.email" pTooltip="Contacter le parent par courriel" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Contacter par courriel : ' + parent.firstName + ' ' + parent.lastName"><svg lucideMail [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">{{ 'Contacter par courriel : ' + parent.firstName + ' ' + parent.lastName }}</span></a>
+                              }
+                              @if (parent.phone) {
+                                <a class="class-roster__link ui-row-action ui-row-action--success" [href]="'tel:' + parent.phone" pTooltip="Appeler le parent" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Appeler : ' + parent.firstName + ' ' + parent.lastName"><svg lucidePhone [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">{{ 'Appeler : ' + parent.firstName + ' ' + parent.lastName }}</span></a>
+                              }
+                              @if (parent.email) {
+                                <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__link ui-row-action ui-row-action--info" [disabled]="saving()" (click)="sendParentAccountLink(parent)"
+                                  [pTooltip]="parentNeedsActivation(parent) ? 'Envoyer le lien d’activation' : 'Envoyer le lien de réinitialisation du mot de passe'" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body"
+                                  [attr.aria-label]="(parentNeedsActivation(parent) ? 'Envoyer le lien d’activation : ' : 'Réinitialiser le mot de passe : ') + parent.firstName + ' ' + parent.lastName">
+                                  @if (parentNeedsActivation(parent)) { <svg lucideSend [size]="18" aria-hidden="true"></svg> }
+                                  @else { <svg lucideKeyRound [size]="18" aria-hidden="true"></svg> }
+                                <span class="ui-actions-label">{{ parentNeedsActivation(parent) ? 'Envoyer le lien d’activation' : 'Envoyer le lien de réinitialisation du mot de passe' }}</span></button>
+                              }
+                            </app-row-actions>
                           </div>
                         </div>
                       }
@@ -232,13 +252,16 @@
                             [attr.aria-label]="'Ajouter un parent pour ' + row.firstName + ' ' + row.lastName">+ Ajouter un parent</button>
                         </div>
                       }
-
+                    </details>
                   </td>
                   <td class="class-roster__actions class-roster__no-print">
-                    <a class="class-roster__action ui-row-action" pTooltip="Voir la fiche" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Voir la fiche : ' + row.firstName + ' ' + row.lastName" [routerLink]="['/proprietaire/eleves', row.studentId]"><svg lucideEye [size]="18" aria-hidden="true"></svg></a>
-                    <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__action ui-row-action ui-row-action--warning" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Modifier : ' + row.firstName + ' ' + row.lastName" (click)="startEditStudent(row)"><svg lucidePencil [size]="18" aria-hidden="true"></svg></button>
-                    <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__action ui-row-action ui-row-action--info" pTooltip="Transférer vers une autre classe" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Transférer : ' + row.firstName + ' ' + row.lastName" (click)="startTransfer(row)"><svg lucideArrowRightLeft [size]="18" aria-hidden="true"></svg></button>
-                    <button pButton severity="danger" variant="outlined" type="button" class="class-roster__action ui-row-action ui-row-action--danger" pTooltip="Supprimer la fiche de cet élève de l’établissement" tooltipPosition="top" tooltipEvent="both" [showDelay]="500" appendTo="body" [attr.aria-label]="'Supprimer : ' + row.firstName + ' ' + row.lastName" [disabled]="saving()" (click)="deleteStudent(row)"><svg lucideTrash2 [size]="18" aria-hidden="true"></svg></button>
+                    <app-row-actions>
+                      <a class="class-roster__action ui-row-action" pTooltip="Voir la fiche" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Voir la fiche : ' + row.firstName + ' ' + row.lastName" [routerLink]="['/proprietaire/eleves', row.studentId]"><svg lucideEye [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">{{ 'Voir la fiche : ' + row.firstName + ' ' + row.lastName }}</span></a>
+                      <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__action ui-row-action ui-row-action--info" [disabled]="saving()" (click)="openStudentAccess(row)" [attr.aria-label]="'Accès de connexion : ' + row.firstName + ' ' + row.lastName"><svg lucideKeyRound [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">Accès de connexion</span></button>
+                      <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__action ui-row-action ui-row-action--warning" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Modifier : ' + row.firstName + ' ' + row.lastName" (click)="startEditStudent(row)"><svg lucidePencil [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">{{ 'Modifier : ' + row.firstName + ' ' + row.lastName }}</span></button>
+                      <button pButton severity="secondary" variant="outlined" type="button" class="class-roster__action ui-row-action ui-row-action--info" pTooltip="Transférer vers une autre classe" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" [attr.aria-label]="'Transférer : ' + row.firstName + ' ' + row.lastName" (click)="startTransfer(row)"><svg lucideArrowRightLeft [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">{{ 'Transférer : ' + row.firstName + ' ' + row.lastName }}</span></button>
+                      <button pButton severity="danger" variant="outlined" type="button" class="class-roster__action ui-row-action ui-row-action--danger" pTooltip="Supprimer la fiche de cet élève de l’établissement" tooltipPosition="top" tooltipEvent="both" [showDelay]="500" appendTo="body" [attr.aria-label]="'Supprimer : ' + row.firstName + ' ' + row.lastName" [disabled]="saving()" (click)="deleteStudent(row)"><svg lucideTrash2 [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">{{ 'Supprimer : ' + row.firstName + ' ' + row.lastName }}</span></button>
+                    </app-row-actions>
                   </td>
                 }
               </tr>
@@ -249,13 +272,35 @@
       </section>
     }
   }
+  <p-dialog header="Accès de connexion de l’élève" [visible]="accessStudent() !== null" (visibleChange)="!$event && accessStudent.set(null)"
+    [modal]="true" [draggable]="false" [style]="{ width: '32rem', maxWidth: '95vw' }" appendTo="body">
+    @if (accessStudent(); as student) {
+      <p>{{ student.firstName }} {{ student.lastName }}</p>
+      <p>Un seul courriel personnel sert à la connexion dans tous les établissements.</p>
+      <form #accessForm="ngForm" (ngSubmit)="accessForm.valid && sendStudentAccess()">
+        @if (student.accountEmail) {
+          <p>Adresse de connexion : <strong>{{ student.accountEmail }}</strong></p>
+          <p>Le titulaire peut changer cette adresse depuis Mon profil, après confirmation de la nouvelle adresse.</p>
+        } @else {
+          <label class="class-roster__class-picker">Courriel de connexion de l’élève
+            <input pInputText type="email" email name="studentLoginEmail" [(ngModel)]="studentLoginEmail" required maxlength="150" />
+          </label>
+          <p>Choisissez l’adresse qui servira à l’élève pour se connecter. Une adresse déjà utilisée ne rattache jamais automatiquement un autre compte.</p>
+        }
+        <div class="class-roster__edit-actions">
+          <button pButton type="submit" [disabled]="saving() || accessForm.invalid">{{ student.accountEmail && !studentNeedsActivation(student) ? 'Envoyer le lien de réinitialisation' : 'Envoyer le lien d’activation' }}</button>
+          <button pButton type="button" severity="secondary" variant="outlined" [disabled]="saving()" (click)="accessStudent.set(null)">Fermer</button>
+        </div>
+      </form>
+    }
+  </p-dialog>
   <p-dialog header="Enseignants de la classe" [visible]="teachersVisible()" (visibleChange)="teachersVisible.set($event)"
     [modal]="true" [draggable]="false" [style]="{ width: '34rem', maxWidth: '95vw' }" appendTo="body">
     <p>{{ currentSchoolName() }} — {{ currentClassLabel() }}</p>
     @if (loadingTeachers()) {
       <app-loading-state message="Chargement des enseignants et matières…" />
     } @else if (teachersError()) {
-      <p role="alert">{{ teachersError() }}</p>
+      <app-error-alert [message]="teachersError()" (dismissed)="teachersError.set(null)">{{ teachersError() }}</app-error-alert>
       <button pButton type="button" (click)="showTeachers()">Réessayer</button>
     } @else {
       <div class="class-roster__teachers-list">
@@ -273,6 +318,8 @@
     (cancel)="onErrorCancel($event)" (close)="dismissError()">
     <h2>Action échouée</h2>
     <p id="class-roster-error-message">{{ errorDialogMessage() }}</p>
+    <p>Si le problème persiste, vous pouvez contacter le support technique.</p>
+    <a routerLink="/proprietaire/incidents" [queryParams]="{ nouveau: 1, source: '/proprietaire/classes' }" (click)="dismissError()">Ouvrir un incident</a>
     <div class="class-roster__error-actions"><button pButton severity="danger" type="button" (click)="dismissError()" autofocus>OK</button></div>
   </dialog>
 </section>

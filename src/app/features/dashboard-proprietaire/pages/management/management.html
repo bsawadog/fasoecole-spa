@@ -12,7 +12,7 @@
   </header>
 
   @if (errorMessage()) {
-    <p-message severity="error" class="owner-management__message owner-management__message--error" role="alert">{{ errorMessage() }}</p-message>
+    <app-error-alert [message]="errorMessage()" (dismissed)="errorMessage.set(null)">{{ errorMessage() }}</app-error-alert>
   }
   @if (successMessage()) {
     <p-message severity="success" class="owner-management__message owner-management__message--success" role="status">{{ successMessage() }}</p-message>
@@ -105,7 +105,7 @@
             <h3>Matières suggérées</h3><p>Ajoutez le secondaire général ou les filières techniques enseignées ici. Les matières, codes personnalisés et coefficients existants sont conservés. Les catégories ne modifient pas le calcul des moyennes.</p>
             <button pButton type="button" (click)="showSubjectCatalog()" [disabled]="catalogBusy()||saving()">Afficher les catalogues</button>
             @if(catalogBusy()){<p role="status">Chargement du catalogue…</p>}
-            @if(catalogError()){<p-message severity="error" role="alert">{{catalogError()}}</p-message>}
+            @if(catalogError()){<app-error-alert [message]="catalogError()" (dismissed)="catalogError.set(null)">{{catalogError()}}</app-error-alert>}
             @if(catalogOpen()){@for(pack of subjectCatalog();track pack.id){<details><summary>{{pack.label}} · {{pack.subjects.length}} matières</summary>
               <p>Coefficient initial : 1, modifiable par matière et par classe.</p>
               <ul>@for(subject of pack.subjects;track subject.code){<li><strong>{{subject.code}}</strong> — {{subject.name}} · {{subject.category}}</li>}</ul>
@@ -160,7 +160,7 @@
               <p class="owner-management__wide owner-management__hint">Appliqué à toutes les classes ; il reste ajustable par classe dans « Notes &amp; bulletins ».</p>
             }
             @if (academicError()) {
-              <p-message severity="error" class="owner-management__message owner-management__message--error owner-management__wide" role="alert">{{ academicError() }}</p-message>
+              <app-error-alert [message]="academicError()" (dismissed)="academicError.set(null)">{{ academicError() }}</app-error-alert>
             }
             <div class="owner-management__form-actions owner-management__wide">
               <span>Renseignez les champs obligatoires avant d’enregistrer.</span>
@@ -180,8 +180,10 @@
                     <td><strong>{{ academicName(row) }}</strong></td>
                     <td>{{ academicDescription(row) }}</td>
                     <td class="owner-management__actions">
-                      <button pButton variant="outlined" type="button" class="owner-management__icon-action ui-row-action--warning" [attr.aria-label]="'Modifier : ' + academicName(row)" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="editAcademic(row)"><svg lucidePencil [size]="18" aria-hidden="true"></svg></button>
-                      <button pButton severity="danger" variant="outlined" type="button" class="owner-management__icon-action owner-management__delete ui-row-action--danger" [attr.aria-label]="'Supprimer : ' + academicName(row)" pTooltip="Supprimer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="deleteAcademic(row)"><svg lucideTrash2 [size]="18" aria-hidden="true"></svg></button>
+                      <app-row-actions>
+                        <button pButton variant="outlined" type="button" class="owner-management__icon-action ui-row-action--warning" [attr.aria-label]="'Modifier : ' + academicName(row)" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="editAcademic(row)"><svg lucidePencil [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">{{ 'Modifier : ' + academicName(row) }}</span></button>
+                        <button pButton severity="danger" variant="outlined" type="button" class="owner-management__icon-action owner-management__delete ui-row-action--danger" [attr.aria-label]="'Supprimer : ' + academicName(row)" pTooltip="Supprimer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="deleteAcademic(row)"><svg lucideTrash2 [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">{{ 'Supprimer : ' + academicName(row) }}</span></button>
+                      </app-row-actions>
                     </td>
                   </tr>
                 }
@@ -233,8 +235,10 @@
                     <td>{{ frequencyLabel(fee.frequency) }}</td>
                     <td>{{ fee.amount | number: '1.0-0' }} FCFA</td>
                     <td class="owner-management__actions">
-                      <button pButton variant="outlined" type="button" class="owner-management__icon-action ui-row-action--warning" [attr.aria-label]="'Modifier : ' + fee.name" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="editFee(fee)"><svg lucidePencil [size]="18" aria-hidden="true"></svg></button>
-                      <button pButton severity="danger" variant="outlined" type="button" class="owner-management__icon-action owner-management__delete ui-row-action--danger" [attr.aria-label]="'Supprimer : ' + fee.name" pTooltip="Supprimer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="deleteFee(fee)"><svg lucideTrash2 [size]="18" aria-hidden="true"></svg></button>
+                      <app-row-actions>
+                        <button pButton variant="outlined" type="button" class="owner-management__icon-action ui-row-action--warning" [attr.aria-label]="'Modifier : ' + fee.name" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="editFee(fee)"><svg lucidePencil [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">{{ 'Modifier : ' + fee.name }}</span></button>
+                        <button pButton severity="danger" variant="outlined" type="button" class="owner-management__icon-action owner-management__delete ui-row-action--danger" [attr.aria-label]="'Supprimer : ' + fee.name" pTooltip="Supprimer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="deleteFee(fee)"><svg lucideTrash2 [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">{{ 'Supprimer : ' + fee.name }}</span></button>
+                      </app-row-actions>
                     </td>
                   </tr>
                 }

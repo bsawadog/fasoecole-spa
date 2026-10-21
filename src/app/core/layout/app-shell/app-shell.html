@@ -96,9 +96,9 @@
 
     <div class="shell__page">
     @if (accountStatusError()) {
-      <section class="shell__status shell__status--error" role="alert">
+      <app-error-alert [message]="accountStatusError()" (dismissed)="accountStatusError.set(false)">
         Impossible de vérifier l’état du compte. Certaines informations peuvent ne pas être à jour.
-      </section>
+      </app-error-alert>
     }
     @if (user(); as currentUser) {
       @if (currentUser.emailVerified !== true) {

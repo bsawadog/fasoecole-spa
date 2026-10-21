@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { DateField } from '../../../../shared/ui/date-field';
 import { NumberField } from '../../../../shared/ui/number-field';
@@ -23,7 +24,7 @@ interface InitialSlot {
 }
 
 @Component({
-  selector: 'app-employees', standalone: true, imports: [ModuleHelpButton, DateField, NumberField, SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, StaffPage],
+  selector: 'app-employees', standalone: true, imports: [ErrorAlert, ModuleHelpButton, DateField, NumberField, SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, StaffPage],
   template: `
     <main class="employees ui-workspace">
     <header class="module-help-header ui-page-header">
@@ -81,7 +82,7 @@ interface InitialSlot {
           <h3>Créneaux hebdomadaires (facultatifs)</h3>
           @if (loadingSchedule()) { <p role="status">Chargement des classes et matières…</p> }
           @if (scheduleError()) {
-            <p-message severity="error" role="alert">{{ scheduleError() }}</p-message>
+            <app-error-alert [message]="scheduleError()" (dismissed)="scheduleError.set('')">{{ scheduleError() }}</app-error-alert>
             <button pButton class="employee-action employee-action--blue" type="button" (click)="loadScheduleContext()" [disabled]="loadingSchedule()">Réessayer le chargement</button>
           }
           @for (slot of slots; track slot; let index = $index) {
@@ -110,7 +111,7 @@ interface InitialSlot {
         <p>Un compte existant conserve son identité et son mot de passe et reçoit une notification. Un nouveau compte reçoit un lien d’activation, sans approbation supplémentaire.</p>
         <button pButton severity="success" class="employee-action employee-action--green" type="submit" [disabled]="busy()">Ajouter l’enseignant</button>
       </form>
-      @if (error()) { <p-message severity="error" role="alert">{{ error() }}</p-message> }
+      @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}</app-error-alert> }
       @if (success()) { <p-message severity="success" role="status">{{ success() }}</p-message> }
       </section>
     }

@@ -1,3 +1,5 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { RowActions } from '../../../../shared/ui/row-actions';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
 import { NumberField } from '../../../../shared/ui/number-field';
@@ -23,7 +25,7 @@ export const PAYABLE_SOURCE = { MANUAL: 'Dépense ponctuelle', FIXED: 'Charge fi
 
 @Component({
   selector: 'app-payables', standalone: true,
-  imports: [TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormsModule, DatePipe, DecimalPipe, FormValidationDirective],
+  imports: [ErrorAlert, RowActions, TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormsModule, DatePipe, DecimalPipe, FormValidationDirective],
   templateUrl: './payables.html', styleUrl: './payables.scss',
 })
 export class Payables implements OnDestroy {

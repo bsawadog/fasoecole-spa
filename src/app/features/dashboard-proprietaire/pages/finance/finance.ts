@@ -1,3 +1,5 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { RowActions } from '../../../../shared/ui/row-actions';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
@@ -40,7 +42,7 @@ const monthStart = () => today().slice(0, 8) + '01';
 @Component({
   selector: 'app-finance',
   standalone: true,
-  imports: [ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, TagModule, ProgressBarModule, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, TableModule, FormValidationDirective, FormsModule, RouterLink, DecimalPipe],
+  imports: [ErrorAlert, RowActions, ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, TagModule, ProgressBarModule, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, TableModule, FormValidationDirective, FormsModule, RouterLink, DecimalPipe],
   templateUrl: './finance.html',
   styleUrl: './finance.scss',
 })

@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { LoadingState } from '../../../../shared/ui/loading-state';
 import { MessageModule } from 'primeng/message';
@@ -10,15 +11,15 @@ import { Appointments } from '../../../../shared/appointments/appointments';
 
 @Component({
   selector: 'app-owner-appointments-page', standalone: true,
-  imports: [ModuleHelpButton, LoadingState, MessageModule, Appointments, FormsModule, RouterLink],
+  imports: [ErrorAlert, ModuleHelpButton, LoadingState, MessageModule, Appointments, FormsModule, RouterLink],
   styleUrl: '../../../../shared/self-space/self-space.scss',
   template: `
     <main class="ss">
       <header class="module-help-header ss__header">
-    <app-module-help /><div><a [routerLink]="home">Retour à l’accueil</a><h1>Rendez-vous</h1><p>Consultez les demandes reçues et les rendez-vous que vous avez pris.</p></div>
+    <app-module-help /><div><a [routerLink]="home">Retour au tableau de bord</a><h1>Rendez-vous</h1><p>Consultez les demandes reçues et les rendez-vous que vous avez pris.</p></div>
 
       </header>
-      @if (error()) { <p-message severity="error" class="ss__alert ss__alert--error" role="alert">{{ error() }}</p-message> }
+      @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
       @if (loading()) { <app-loading-state message="Chargement…" /> }
       @else if (schoolId()) { <app-appointments [owner]="true" [schoolId]="schoolId()" [showHeading]="false" /> }
       @else if (!error()) { <p class="ss__state">Aucun établissement accessible.</p> }

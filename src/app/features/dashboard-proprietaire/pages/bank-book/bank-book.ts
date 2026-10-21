@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { Component, computed, DestroyRef, HostListener, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
@@ -19,7 +20,7 @@ import { SelectOption } from '../../../../shared/ui/select-field';
 import { apiError } from '../../../../shared/self-space/self-space.service';
 
 @Component({selector:'app-bank-book',standalone:true,
-  imports:[DatePipe,DecimalPipe,FormsModule,ButtonModule,InputTextModule,MessageModule,ModuleHelpButton,LoadingState,DateField,NumberField,SelectField,SelectOption],
+  imports:[ErrorAlert, DatePipe,DecimalPipe,FormsModule,ButtonModule,InputTextModule,MessageModule,ModuleHelpButton,LoadingState,DateField,NumberField,SelectField,SelectOption],
   templateUrl:'./bank-book.html',styleUrls:['../expenses/expenses.scss','./bank-book.scss']})
 export class BankBookPage implements OnInit {
   private readonly api=inject(BankBookService);private readonly auth=inject(AuthService);

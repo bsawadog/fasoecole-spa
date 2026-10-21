@@ -6,8 +6,9 @@
     <p>Examinez les inscriptions adressées à vos établissements et définissez le profil de chaque personne.</p>
   </header>
 
+  <app-account-recovery-queue />
   @if (errorMessage()) {
-    <p-message severity="error" class="approvals__message approvals__message--error" role="alert">{{ errorMessage() }}</p-message>
+    <app-error-alert [message]="errorMessage()" (dismissed)="errorMessage.set(null)">{{ errorMessage() }}</app-error-alert>
   }
   @if (successMessage()) {
     <p-message severity="success" class="approvals__message approvals__message--success" role="status">{{ successMessage() }}</p-message>

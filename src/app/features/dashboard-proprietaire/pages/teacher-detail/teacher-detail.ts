@@ -1,3 +1,5 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { RowActions } from '../../../../shared/ui/row-actions';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
@@ -21,7 +23,7 @@ import { TeacherDetail, TeacherSession, TeacherWorkService } from '../../teacher
 @Component({
   selector: 'app-teacher-detail',
   standalone: true,
-  imports: [ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DecimalPipe, RouterLink],
+  imports: [ErrorAlert, RowActions, ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DecimalPipe, RouterLink],
   templateUrl: './teacher-detail.html',
   styleUrl: './teacher-detail.scss',
 })

@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../error-alert';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
@@ -17,7 +18,7 @@ import { PortalPosts } from './portal-posts';
 
 @Component({
   selector: 'app-learning-resources-page', standalone: true,
-  imports: [FamilyLearning, FormsModule, ButtonModule, MessageModule, SelectField, SelectOption, LoadingState, ModuleHelpButton, HomeworkTracking, PortalPosts],
+  imports: [ErrorAlert, FamilyLearning, FormsModule, ButtonModule, MessageModule, SelectField, SelectOption, LoadingState, ModuleHelpButton, HomeworkTracking, PortalPosts],
   styleUrl: './self-space.scss',
   template: `
     <div class="ss ui-academic-blue">
@@ -25,7 +26,7 @@ import { PortalPosts } from './portal-posts';
         <h1>{{ homework() ? 'Devoirs de maison' : 'Cours et ressources' }}</h1>
         <p>{{ homework() ? 'Consignes, pièces jointes, dates de remise et retours du professeur.' : 'Supports de cours et exercices partagés avec votre classe.' }}</p>
       </div></header>
-      @if (error()) { <p-message severity="error" role="alert">{{ error() }}</p-message>
+      @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert>
         @if (!students().length) { <button pButton type="button" (click)="loadStudents()" [disabled]="loading()">Réessayer</button> } }
       @if (students().length) {
         <label class="ss__field">Élève<app-select-field [ngModel]="studentId()" (ngModelChange)="choose(+$event)" ariaLabel="Élève">

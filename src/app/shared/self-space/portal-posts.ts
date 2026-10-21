@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../error-alert';
 import { DialogModule } from 'primeng/dialog';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ButtonModule } from 'primeng/button';
@@ -8,10 +9,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ParentPortalService, PortalFile, PortalPost, POST_LABELS } from './parent-portal.service';
 
 @Component({
-  selector: 'app-portal-posts', standalone: true, imports: [DialogModule, ButtonModule, MessageModule, DatePipe],
+  selector: 'app-portal-posts', standalone: true, imports: [ErrorAlert, DialogModule, ButtonModule, MessageModule, DatePipe],
   template: `
     @if (!posts().length) { <p class="ss__state">Aucune publication disponible.</p> }
-    @if (error()) { <p-message severity="error" class="ss__alert ss__alert--error" role="alert">{{ error() }}</p-message> }
+    @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
     @for (post of posts(); track post.id) {
       <article class="ss__card ss__body">
         <small class="ss__muted">{{ labels[post.kind] }} · {{ post.createdAt | date:'dd/MM/yyyy' }} · {{ post.className || 'Tout l’établissement' }}</small>

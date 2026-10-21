@@ -1,8 +1,11 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { RowActions } from '../../../../shared/ui/row-actions';
+import { apiError } from '../../../../shared/api-error';
 import { DialogModule } from 'primeng/dialog';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
-import { LucidePencil, LucideEye, LucideArrowRightLeft, LucideTrash2, LucideMail, LucidePhone, LucideSend, LucideKeyRound } from '@lucide/angular';
+import { LucidePencil, LucideEye, LucideArrowRightLeft, LucideTrash2, LucideMail, LucidePhone, LucideSend, LucideKeyRound, LucidePrinter } from '@lucide/angular';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
 import { LoadingState } from '../../../../shared/ui/loading-state';
@@ -46,7 +49,7 @@ interface ParentEditForm {
 @Component({
   selector: 'app-class-roster',
   standalone: true,
-  imports: [DialogModule, ModuleHelpButton, TooltipModule, LucidePencil, LucideEye, LucideArrowRightLeft, LucideTrash2, LucideMail, LucidePhone, LucideSend, LucideKeyRound, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, RosterImport, FormValidationDirective, FormsModule, RouterLink],
+  imports: [ErrorAlert, RowActions, DialogModule, ModuleHelpButton, TooltipModule, LucidePencil, LucideEye, LucideArrowRightLeft, LucideTrash2, LucideMail, LucidePhone, LucideSend, LucideKeyRound, LucidePrinter, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, RosterImport, FormValidationDirective, FormsModule, RouterLink],
   templateUrl: './class-roster.html',
   styleUrl: './class-roster.scss',
 })
@@ -69,6 +72,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   }
 
   dismissError(): void {
+    this.errorMessage.set(null);
     this.errorDialogMessage.set(null);
     if (this.errorDialog().nativeElement.open) this.errorDialog().nativeElement.close();
   }
@@ -85,6 +89,9 @@ export class ClassRoster implements OnInit, OnDestroy {
   private request?: Subscription;
   private classRequest?: Subscription;
   private parentLinkRequest?: Subscription;
+  private studentLinkRequest?: Subscription;
+  readonly accessStudent = signal<ClassRosterRow | null>(null);
+  studentLoginEmail = '';
 
   readonly schools = signal<RegistrationSchool[]>([]);
   readonly selectedSchoolId = signal<number | null>(null);
@@ -119,7 +126,7 @@ export class ClassRoster implements OnInit, OnDestroy {
         this.classTeachers.set([...groups.values()].map(g => ({ ...g, subjects: g.subjects.sort((a,b) => a.localeCompare(b,'fr')) })).sort((a,b) => a.name.localeCompare(b.name,'fr')));
         this.loadingTeachers.set(false);
       },
-      error: () => { if (classId === this.selectedClassId()) { this.loadingTeachers.set(false); this.teachersError.set('Impossible de charger les enseignants et leurs matières. Réessayez.'); } },
+      error: (err) => { if (classId === this.selectedClassId()) { this.loadingTeachers.set(false); this.teachersError.set(apiError(err, 'Impossible de charger les enseignants et leurs matières. Réessayez.')); } },
     });
   }
   readonly studentSearch = signal('');
@@ -181,6 +188,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.teachersRequest?.unsubscribe();
     this.parentLinkRequest?.unsubscribe();
+    this.studentLinkRequest?.unsubscribe();
     this.syncSubscription?.unsubscribe();
     this.request?.unsubscribe();
     this.classRequest?.unsubscribe();
@@ -245,6 +253,7 @@ export class ClassRoster implements OnInit, OnDestroy {
   }
 
   cancelEdit(): void {
+    this.accessStudent.set(null);
     this.addingParentStudentId.set(null);
     this.editingStudentId.set(null);
     this.editingParentId.set(null);
@@ -309,6 +318,13 @@ export class ClassRoster implements OnInit, OnDestroy {
     });
   }
 
+  canCorrectStudentEmail(row: ClassRosterRow): boolean {
+    const user = this.auth.user();
+    return row.passwordSet === false && row.emailVerified === false
+      && (this.auth.ownerAccess()?.some(access => access.schoolId === this.selectedSchoolId() && access.owner === true) === true
+        || user?.rawRoles?.includes('SUPER_ADMIN') === true);
+  }
+
   saveStudent(studentId: number): void {
     const classId = this.selectedClassId();
     if (!classId || !this.studentForm.firstName.trim() || !this.studentForm.lastName.trim() ||
@@ -316,6 +332,8 @@ export class ClassRoster implements OnInit, OnDestroy {
       return;
     }
     this.saving.set(true);
+    const previousEmail = this.rows().find(row => row.studentId === studentId)?.email?.trim().toLowerCase() || null;
+    const emailChanged = previousEmail !== (this.studentForm.email.trim().toLowerCase() || null);
     this.api.updateRosterStudent(classId, studentId, {
       firstName: this.studentForm.firstName.trim(),
       lastName: this.studentForm.lastName.trim(),
@@ -329,10 +347,66 @@ export class ClassRoster implements OnInit, OnDestroy {
         this.rows.update((rows) => rows.map((row) => (row.studentId === studentId ? { ...updated, billingSummary: updated.billingSummary ?? row.billingSummary } : row)));
         this.saving.set(false);
         this.editingStudentId.set(null);
+        if (emailChanged) {
+          this.successMessage.set(updated.invitationDeliveryStatus === 'SENT'
+            ? 'Courriel corrigé et nouvelle invitation envoyée. L’ancien lien n’est plus utilisable.'
+            : 'Courriel corrigé. L’ancien lien n’est plus utilisable. Utilisez Actions → Accès de connexion pour envoyer ou réessayer l’invitation.');
+          return;
+        }
         this.successMessage.set(`Les informations de ${this.learner().definite} ont été mises à jour.`);
       },
-      error: () => this.fail(`La mise à jour de ${this.learner().definite} a échoué.`),
+      error: (err) => this.fail(apiError(err, `La mise à jour de ${this.learner().definite} a échoué.`)),
     });
+  }
+
+  openStudentAccess(row: ClassRosterRow): void {
+    if (this.saving()) return;
+    this.accessStudent.set(row);
+    this.studentLoginEmail = '';
+  }
+
+  studentNeedsActivation(row: ClassRosterRow): boolean {
+    return row.emailVerified !== true || row.passwordSet !== true;
+  }
+
+  sendStudentAccess(): void {
+    const row = this.accessStudent(), classId = this.selectedClassId();
+    if (!row || !classId || this.saving()) return;
+    if (!row.accountEmail && !this.studentLoginEmail.trim()) return;
+    this.saving.set(true);
+    this.errorMessage.set(null); this.successMessage.set(null);
+    const current = () => this.selectedClassId() === classId;
+    if (!row.accountEmail) {
+      this.studentLinkRequest = this.api.inviteStudentAccount(classId, row.studentId, this.studentLoginEmail.trim()).subscribe({
+        next: result => {
+          this.saving.set(false);
+          if (!current()) return;
+          const updated = { ...result.student, billingSummary: result.student.billingSummary ?? row.billingSummary };
+          this.rows.update(rows => rows.map(student => student.studentId === row.studentId ? updated : student));
+          this.accessStudent.set(updated);
+          if (result.emailSent) {
+            this.accessStudent.set(null);
+            this.successMessage.set('Le lien d’activation a été envoyé au courriel personnel de l’apprenant. Cette adresse servira à la connexion dans tous ses établissements.');
+          } else this.reportError('L’adresse de connexion a été enregistrée, mais le courriel n’a pas pu être envoyé. Utilisez « Envoyer le lien d’activation » pour réessayer.');
+        },
+        error: err => { this.saving.set(false); if (current()) this.reportError(apiError(err, 'Impossible de préparer cet accès élève.')); },
+      });
+    } else if (this.studentNeedsActivation(row)) {
+      this.studentLinkRequest = this.auth.resendUserInvitation(row.userId).subscribe({
+        next: result => {
+          this.saving.set(false);
+          if (!current()) return;
+          if (result.emailSent) { this.accessStudent.set(null); this.successMessage.set('Lien d’activation envoyé à l’adresse de connexion.'); }
+          else this.reportError('Le lien d’activation n’a pas pu être envoyé. Réessayez ultérieurement.');
+        },
+        error: err => { this.saving.set(false); if (current()) this.reportError(apiError(err, 'Impossible d’envoyer le lien d’activation.')); },
+      });
+    } else {
+      this.studentLinkRequest = this.auth.requestPasswordReset(row.accountEmail).subscribe({
+        next: result => { this.saving.set(false); if (current()) { this.accessStudent.set(null); this.successMessage.set(result.message); } },
+        error: err => { this.saving.set(false); if (current()) this.reportError(apiError(err, 'Impossible de demander la réinitialisation du mot de passe.')); },
+      });
+    }
   }
 
   saveParent(parentId: number, studentId: number): void {

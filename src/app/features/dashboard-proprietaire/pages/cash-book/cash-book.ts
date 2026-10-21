@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
@@ -24,7 +25,7 @@ const today = () => {
 };
 @Component({
   selector: 'app-cash-book', standalone: true,
-  imports: [ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormsModule, DatePipe, DecimalPipe, FormValidationDirective],
+  imports: [ErrorAlert, ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormsModule, DatePipe, DecimalPipe, FormValidationDirective],
   templateUrl: './cash-book.html', styleUrls: ['../expenses/expenses.scss', './cash-book.scss'],
 })
 export class CashBookPage implements OnInit, OnDestroy {

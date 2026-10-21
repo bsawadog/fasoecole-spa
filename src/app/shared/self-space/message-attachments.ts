@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../error-alert';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { Component, inject, input, output, signal } from '@angular/core';
@@ -16,7 +17,7 @@ export function conversationBody(payload: unknown, files: File[]): unknown | For
 }
 
 @Component({
-  imports: [ButtonModule, MessageModule],
+  imports: [ErrorAlert, ButtonModule, MessageModule],
   selector: 'app-conversation-files',
   standalone: true,
   template: `
@@ -24,7 +25,7 @@ export function conversationBody(payload: unknown, files: File[]): unknown | For
       <input type="file" multiple [disabled]="disabled()" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.txt,.csv,.jpg,.jpeg,.png" (change)="choose($event)" />
     </label>
     <small>PDF, Word, Excel, PowerPoint, textes et images. Maximum 3 fichiers de 10 Mo.</small>
-    @if (error()) { <p-message severity="error" role="alert">{{ error() }}</p-message> }
+    @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
     @for (file of files(); track $index) {
       <div>{{ file.name }} <button pButton type="button" [disabled]="disabled()" (click)="remove($index)" [attr.aria-label]="'Retirer ' + file.name">Retirer</button></div>
     }
@@ -55,14 +56,14 @@ export class ConversationFiles {
 }
 
 @Component({
-  imports: [ButtonModule, MessageModule],
+  imports: [ErrorAlert, ButtonModule, MessageModule],
   selector: 'app-message-attachments',
   standalone: true,
   template: `
     @for (file of attachments(); track file.id) {
       <button pButton type="button" [disabled]="downloading()" (click)="download(file)">📎 {{ file.filename }} ({{ size(file.sizeBytes) }})</button>
     }
-    @if (error()) { <p-message severity="error" role="alert">{{ error() }}</p-message> }
+    @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
   `,
   styles: [`@layer legacy { :host { display: grid; gap: .3rem; margin-top: .5rem; white-space: normal; } button { background: var(--theme-surface, #fff); border: 1px solid var(--theme-control-border, #cbd5e1); border-radius: .35rem; padding: .4rem; color: var(--theme-success, #166534); text-align: left; overflow-wrap: anywhere; cursor: pointer; } p { color: var(--theme-danger, #b91c1c); } }`],
 })

@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
@@ -34,7 +35,7 @@ const today = () => new Date(Date.now()-new Date().getTimezoneOffset()*60_000).t
 
 @Component({
   selector: 'app-teacher-module', standalone: true,
-  imports: [TeacherDailyTools, HomeworkTracking, ModuleHelpButton, TooltipModule, DateField, SelectField, SelectOption, TableRow, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, TableModule, FormValidationDirective, FormsModule, ConversationFiles, PortalPosts, ScheduleView, Appointments],
+  imports: [ErrorAlert, TeacherDailyTools, HomeworkTracking, ModuleHelpButton, TooltipModule, DateField, SelectField, SelectOption, TableRow, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, TableModule, FormValidationDirective, FormsModule, ConversationFiles, PortalPosts, ScheduleView, Appointments],
   templateUrl: './modules.html', styleUrl: '../../../../shared/self-space/self-space.scss',
 })
 export class TeacherModule implements OnInit {

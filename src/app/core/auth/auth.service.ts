@@ -39,6 +39,16 @@ export interface OwnerRegistrationRequest {
   firstName:string;lastName:string;email:string;phone:string;password:string;
 }
 
+export interface AccountRecoveryView {
+  id: number; schoolId: number; schoolName: string; studentId: number | null;
+  firstName: string; lastName: string; registrationNumber: string; newEmail: string; reason: string;
+  status: 'PENDING' | 'SUPPORT_REQUIRED' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'SUPERSEDED';
+  createdAt: string; decidedAt: string | null; completedAt: string | null; decidedBy: number | null;
+  verificationNote: string | null; deliveryStatus: string | null; oldNotificationStatus: string | null;
+  expiresAt: string | null; sendCount: number; affectedSchools: string[];
+  history: { actorId: number | null; action: string; details: string; createdAt: string }[];
+}
+
 export interface RegistrationSchool {
   id: number;
   name: string;
@@ -410,6 +420,26 @@ export class AuthService {
 
   resendEmailVerification(): Observable<{ emailSent: boolean }> {
     return this.http.post<{ emailSent: boolean }>(`${this.apiUrl}/users/me/email-verification`, {});
+  }
+
+  requestEmailChange(email: string, currentPassword: string): Observable<{ emailSent: boolean }> {
+    return this.http.post<{ emailSent: boolean }>(`${this.apiUrl}/users/me/email-change`, { email, currentPassword });
+  }
+
+  submitAccountRecovery(request: { schoolId: number; registrationNumber: string; firstName: string; lastName: string; newEmail: string; reason: string }): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/account-recovery`, request);
+  }
+  completeAccountRecovery(token: string, newPassword: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/auth/account-recovery/complete`, { token, newPassword });
+  }
+  getAccountRecoveries(schoolId?: number | null): Observable<AccountRecoveryView[]> {
+    return this.http.get<AccountRecoveryView[]>(`${this.apiUrl}/account-recovery`, schoolId ? { params: { schoolId } } : {});
+  }
+  decideAccountRecovery(id: number, approve: boolean, identityVerified: boolean, verificationNote: string): Observable<AccountRecoveryView> {
+    return this.http.post<AccountRecoveryView>(`${this.apiUrl}/account-recovery/${id}/decision`, { approve, identityVerified, verificationNote });
+  }
+  resendAccountRecovery(id: number): Observable<AccountRecoveryView> {
+    return this.http.post<AccountRecoveryView>(`${this.apiUrl}/account-recovery/${id}/resend`, {});
   }
 
   logout(): void {

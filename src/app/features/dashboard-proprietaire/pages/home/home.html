@@ -27,7 +27,7 @@
     <p class="owner-dashboard__message" role="status">Votre établissement est en préparation. <a routerLink="/proprietaire/creer-ecole" [queryParams]="{schoolId:selectedSchoolId()}">Terminer et soumettre pour validation</a>.</p>
   }
   @if (errorMessage()) {
-    <p-message severity="error" class="owner-dashboard__message owner-dashboard__message--error" role="alert">{{ errorMessage() }}</p-message>
+    <app-error-alert [message]="errorMessage()" (dismissed)="errorMessage.set(null)">{{ errorMessage() }}</app-error-alert>
   }
 
   @if (loading()) {
@@ -136,7 +136,7 @@
           <article class="owner-dashboard__balance">
             <h2><a routerLink="/proprietaire/caisse">Niveau de la caisse</a></h2>
             @if (cashLoading()) { <p role="status">Chargement du solde…</p> }
-            @else if (cashError()) { <p role="alert">Solde de caisse indisponible. <button type="button" (click)="refreshDashboard(data.schoolId)">Réessayer</button></p> }
+            @else if (cashError()) { <app-error-alert [message]="cashError()" (dismissed)="cashError.set(false)">Solde de caisse indisponible. <button type="button" (click)="refreshDashboard(data.schoolId)">Réessayer</button></app-error-alert> }
             @else if (cash(); as report) {
               @if (report.book) {
                 <strong class="owner-dashboard__balance-value" [class.owner-dashboard__balance-negative]="report.closingBalance < 0">{{ formatAmount(report.closingBalance) }}</strong>
@@ -164,7 +164,7 @@
 
     <div class="owner-dashboard__columns">
       <section class="owner-dashboard__panel" id="attendance">
-        @if (syncError()) { <p-message severity="error" class="owner-dashboard__hint" role="alert">Actualisation indisponible : les chiffres affichés peuvent être anciens.</p-message> }
+        @if (syncError()) { <app-error-alert [message]="syncError()" (dismissed)="syncError.set(false)">Actualisation indisponible : les chiffres affichés peuvent être anciens.</app-error-alert> }
         @if (lastUpdated()) { <small>Mise à jour : {{ lastUpdated() | date:'HH:mm:ss' }} · {{ sync.connections()[data.schoolId] ? 'Synchronisation active' : 'Reconnexion en cours' }}</small> }
         <div class="owner-dashboard__panel-heading">
           <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--blue"><svg lucideCalendarCheck2 [size]="20" aria-hidden="true"></svg></span>
@@ -187,7 +187,7 @@
         }
         <div class="owner-dashboard__handled-reports">
           <h3>Signalements en attente pour cette journée <span class="owner-dashboard__pending-count">{{ data.pendingAttendanceReportsCount ?? 0 }}</span></h3>
-          @if (reportError()) { <p-message severity="error" class="owner-dashboard__hint" role="alert">{{ reportError() }}</p-message> }
+          @if (reportError()) { <app-error-alert [message]="reportError()" (dismissed)="reportError.set(null)">{{ reportError() }}</app-error-alert> }
           @if (reportSuccess()) { <p-message severity="success" class="owner-dashboard__hint" role="status">{{ reportSuccess() }}</p-message> }
           <p class="owner-dashboard__hint">Signalements des parents à traiter. Ils apparaîtront dans les compteurs après l’enregistrement d’une présence.</p>
           <ul>

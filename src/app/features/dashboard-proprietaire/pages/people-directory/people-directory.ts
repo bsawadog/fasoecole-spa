@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { LoadingState } from '../../../../shared/ui/loading-state';
@@ -18,7 +19,7 @@ interface ParentRow extends RosterParent { children: StudentRecord[]; }
 
 @Component({
   selector: 'app-people-directory', standalone: true,
-  imports: [ModuleHelpButton, TooltipModule, TableModule, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, FormsModule, RouterLink],
+  imports: [ErrorAlert, ModuleHelpButton, TooltipModule, TableModule, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, FormsModule, RouterLink],
   templateUrl: './people-directory.html',
   styleUrl: '../class-roster/class-roster.scss',
 })

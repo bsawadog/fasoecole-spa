@@ -1,6 +1,6 @@
 <section class="ss__card ss__body" [attr.aria-label]="mode() === 'lessons' ? 'Cahier de textes' : mode() === 'support' ? 'Élèves à accompagner' : mode() === 'notes' ? 'Carnet personnel' : 'Disponibilités et absences'">
  <h2>{{ mode() === 'lessons' ? 'Cahier de textes' : mode() === 'support' ? 'Élèves à accompagner' : mode() === 'notes' ? 'Carnet personnel' : 'Disponibilités et absences' }}</h2>
- @if(error()){<p-message severity="error" role="alert">{{error()}}</p-message>}
+ @if(error()){<app-error-alert [message]="error()" (dismissed)="error.set(null)">{{error()}}</app-error-alert>}
  @if(success()){<p-message severity="success" role="status">{{success()}}</p-message>}
  <button pButton type="button" severity="secondary" variant="outlined" (click)="load()" [disabled]="loading()||saving()">Actualiser</button>
  @if(loading()){<p role="status">Chargement…</p>}

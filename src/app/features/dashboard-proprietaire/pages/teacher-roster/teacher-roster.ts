@@ -1,7 +1,11 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { apiError } from '../../../../shared/api-error';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
-import { LucideEye, LucidePencil, LucidePower, LucideRotateCcw, LucideTrash2 } from '@lucide/angular';
+import { LucideChevronDown, LucideEye, LucidePencil, LucideSend, LucideKeyRound, LucideRotateCcw, LucidePower, LucideTrash2 } from '@lucide/angular';
+import { MenuModule } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
 import { LoadingState } from '../../../../shared/ui/loading-state';
@@ -11,7 +15,7 @@ import { MessageModule } from 'primeng/message';
 import { RosterImport } from '../../roster-import';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, effect, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { PayrollOverview, PayrollService, SalaryContract } from '../../payroll.service';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -25,7 +29,7 @@ import { ConfirmationService } from '../../../../shared/confirmation/confirmatio
 @Component({
   selector: 'app-teacher-roster',
   standalone: true,
-  imports: [ModuleHelpButton, TooltipModule, LucideEye, LucidePencil, LucidePower, LucideRotateCcw, LucideTrash2, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, RosterImport, FormValidationDirective, FormsModule, RouterLink, NgTemplateOutlet],
+  imports: [ErrorAlert, ModuleHelpButton, TooltipModule, LucideChevronDown, LucideEye, LucidePencil, LucideSend, LucideKeyRound, LucideRotateCcw, LucidePower, LucideTrash2, MenuModule, DateField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, RosterImport, FormValidationDirective, FormsModule, RouterLink, NgTemplateOutlet],
   templateUrl: './teacher-roster.html',
   styleUrl: './teacher-roster.scss',
 })
@@ -42,7 +46,7 @@ export class TeacherRoster implements OnInit, OnDestroy {
     if (!school || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return;
     this.payrollRequest = this.payroll.overview(school, month).subscribe({
       next: result => this.payrollOverview.set(result),
-      error: () => this.payrollError.set('Salaires indisponibles. Vérifiez votre accès au module Salaires ou réessayez.'),
+      error: (err) => this.payrollError.set(apiError(err, 'Salaires indisponibles. Vérifiez votre accès au module Salaires ou réessayez.')),
     });
   }
   salary(teacherId: number): SalaryContract | undefined {
@@ -73,6 +77,17 @@ export class TeacherRoster implements OnInit, OnDestroy {
   readonly teachers = signal<TeacherCard[]>([]);
   readonly candidates = signal<TeacherCard[]>([]);
   readonly allTeachers = signal<TeacherCard[]>([]);
+  readonly teacherSearch = signal('');
+  readonly filteredTeachers = computed(() => this.filterTeachers(this.teachers()));
+  readonly filteredAllTeachers = computed(() => this.filterTeachers(this.allTeachers()));
+  private filterTeachers(list: TeacherCard[]): TeacherCard[] {
+    const normalize = (value: string) => value.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+    const query = normalize(this.teacherSearch().trim());
+    return query ? list.filter(teacher => normalize([
+      teacher.firstName, teacher.lastName, teacher.employeeNumber, teacher.email,
+      this.teachingSubjectsLabel(teacher),
+    ].join(' ')).includes(query)) : list;
+  }
   readonly showAllTeachers = signal(false);
   readonly loadingAllTeachers = signal(false);
   readonly loading = signal(true);
@@ -126,9 +141,9 @@ export class TeacherRoster implements OnInit, OnDestroy {
         const stored = Number(localStorage.getItem('fasoecole_owner_school'));
         this.selectSchool(schools.find(school => school.id === stored)?.id ?? schools[0].id);
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.error.set('Impossible de charger vos établissements.');
+        this.error.set(apiError(err, 'Impossible de charger vos établissements.'));
       },
     });
   }
@@ -194,9 +209,9 @@ export class TeacherRoster implements OnInit, OnDestroy {
         this.editingTeacher.set(record);
         this.loadingEditor.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.loadingEditor.set(false);
-        this.error.set('Impossible de charger les informations de cet enseignant.');
+        this.error.set(apiError(err, 'Impossible de charger les informations de cet enseignant.'));
       },
     });
   }
@@ -312,9 +327,56 @@ export class TeacherRoster implements OnInit, OnDestroy {
         this.allTeachers.set(teachers);
         this.loadingAllTeachers.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.loadingAllTeachers.set(false);
-        this.error.set('Impossible de charger les enseignants de l’établissement.');
+        this.error.set(apiError(err, 'Impossible de charger les enseignants de l’établissement.'));
+      },
+    });
+  }
+
+  teacherNeedsActivation(teacher: TeacherCard): boolean {
+    return teacher.emailVerified !== true || teacher.passwordSet === false;
+  }
+
+  teacherActions(teacher: TeacherCard, classMode: boolean): MenuItem[] {
+    return [
+      { label: 'Voir la fiche', icon: 'eye', routerLink: ['/proprietaire/enseignants', teacher.id] },
+      { label: 'Modifier', icon: 'pencil', disabled: this.saving(), command: () => this.startEditTeacher(teacher) },
+      {
+        label: this.teacherNeedsActivation(teacher) ? 'Envoyer le lien d’activation' : 'Réinitialiser le mot de passe',
+        icon: this.teacherNeedsActivation(teacher) ? 'send' : 'key',
+        disabled: this.saving() || !teacher.email || !teacher.userId,
+        command: () => this.sendTeacherAccountLink(teacher),
+      },
+      ...(classMode ? [
+        { separator: true },
+        {
+          label: teacher.activeInClass === false ? 'Réactiver dans cette classe' : 'Désactiver dans cette classe',
+          icon: teacher.activeInClass === false ? 'restore' : 'power',
+          disabled: this.saving(), command: () => this.setTeacherActive(teacher, teacher.activeInClass === false),
+        },
+        { label: 'Supprimer de l’établissement', icon: 'trash', disabled: this.saving(), command: () => this.deleteTeacher(teacher) },
+      ] : []),
+    ];
+  }
+
+  sendTeacherAccountLink(teacher: TeacherCard): void {
+    if (this.saving() || !teacher.email || !teacher.userId) return;
+    if (this.teacherNeedsActivation(teacher)) {
+      this.resendInvitation(teacher.userId);
+      return;
+    }
+    this.saving.set(true);
+    this.error.set(null);
+    this.success.set(null);
+    this.auth.requestPasswordReset(teacher.email).subscribe({
+      next: result => {
+        this.saving.set(false);
+        this.success.set(result.message);
+      },
+      error: err => {
+        this.saving.set(false);
+        this.error.set(err?.error?.message ?? 'Impossible d’envoyer le lien de réinitialisation.');
       },
     });
   }
@@ -402,9 +464,9 @@ export class TeacherRoster implements OnInit, OnDestroy {
         this.loading.set(false);
         if (classes.length) this.selectClass(classes[0].id);
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.error.set('Impossible de charger les classes de cet établissement.');
+        this.error.set(apiError(err, 'Impossible de charger les classes de cet établissement.'));
       },
     });
   }
@@ -423,14 +485,14 @@ export class TeacherRoster implements OnInit, OnDestroy {
         this.teachers.set(teachers);
         this.loadingTeachers.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.loadingTeachers.set(false);
-        this.error.set('Impossible de charger les enseignants de cette classe.');
+        this.error.set(apiError(err, 'Impossible de charger les enseignants de cette classe.'));
       },
     });
     this.candidatesRequest = this.teacherWork.candidatesByClass(classId).subscribe({
       next: teachers => this.candidates.set(teachers.filter(teacher => this.candidateSchoolIds.has(teacher.schoolId))),
-      error: () => this.error.set('Impossible de charger les enseignants disponibles pour cette classe.'),
+      error: (err) => this.error.set(apiError(err, 'Impossible de charger les enseignants disponibles pour cette classe.')),
     });
   }
 }

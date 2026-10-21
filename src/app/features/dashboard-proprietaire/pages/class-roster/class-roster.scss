@@ -126,3 +126,60 @@
 .class-roster__teachers-list .class-roster__table { min-width: 0; width: 100%; }
 .class-roster__teachers-list td { white-space: normal; overflow-wrap: anywhere; }
 .class-roster__teachers-list li { padding: .5rem 0; overflow-wrap: anywhere; }
+
+@layer application {
+  .class-roster { padding: 1rem; gap: .65rem; }
+  .class-roster__header { padding: .65rem 1rem; }
+  .class-roster__header-icon { width: 2.3rem; height: 2.3rem; }
+  .class-roster__header h1 { font-size: 1.2rem; }
+  .class-roster__import {
+    border: 1px solid var(--theme-border, #e2e8f0);
+    border-radius: .5rem;
+    background: var(--theme-surface, #fff);
+    > summary { padding: .55rem 1rem; cursor: pointer; font-size: .85rem; font-weight: 600; }
+  }
+  .class-roster__toolbar { padding: .65rem 1rem; align-items: end; justify-content: flex-start; }
+  .class-roster__search { padding: 0; flex: 1 1 16rem; display: flex; flex-direction: column; align-items: stretch; gap: .3rem; }
+  .class-roster__search-controls { display: flex; align-items: center; gap: .4rem; }
+  .class-roster__search input { min-width: 0; width: 100%; }
+  .class-roster__toolbar .class-roster__teachers-button { margin-left: 0; }
+  .class-roster__search-controls .class-roster__count { flex: 0 0 auto; white-space: nowrap; }
+  .class-roster__print-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2.5rem; height: 2.5rem; padding: 0; flex: 0 0 auto;
+    border-radius: .65rem;
+    box-shadow: 0 2px 5px rgb(15 23 42 / 12%);
+    transition: box-shadow .15s ease;
+    &:hover { box-shadow: 0 3px 8px rgb(15 23 42 / 22%); }
+    &:focus-visible { outline: 2px solid var(--theme-link, #2563eb); outline-offset: 3px; }
+  }
+  .class-roster__table { font-size: .85rem; line-height: 1.35; }
+  .class-roster__table td { padding: .45rem .65rem; vertical-align: middle; }
+  .class-roster__avatar { width: 1.65rem; height: 1.65rem; font-size: .75rem; }
+  .class-roster__details {
+    min-width: 10rem;
+    > summary { cursor: pointer; overflow-wrap: anywhere; }
+    > summary:focus-visible { outline: 2px solid var(--theme-link, #2563eb); outline-offset: 3px; }
+    &[open] > summary { margin-bottom: .5rem; }
+  }
+  .class-roster__contact-cell { max-width: 16rem; overflow-wrap: anywhere; }
+  .class-roster__parents-cell { min-width: 12rem; max-width: 22rem; }
+  .class-roster__parent-name { display: inline; }
+  .class-roster__parent-name + .class-roster__parent-name::before { content: ' · '; }
+  .class-roster__parent { gap: .15rem; margin-bottom: .35rem; }
+  .class-roster__parent-actions { gap: .25rem; flex-wrap: nowrap; }
+  .class-roster__actions > * { margin-bottom: 0; }
+  @media (max-width: 650px) {
+    .class-roster { padding: .5rem; }
+    .class-roster__header p { display: none; }
+    .class-roster__search { flex-basis: 100%; }
+  }
+  @media print {
+    .class-roster { padding: 0; }
+    .class-roster__details::details-content { display: block; content-visibility: visible; }
+    .class-roster__details { min-width: 0; }
+    .class-roster__details > summary { display: none; }
+    .class-roster__parents-cell { min-width: 0; }
+    .class-roster__table td { padding: .35rem .4rem; }
+  }
+}

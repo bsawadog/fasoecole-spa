@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -20,7 +21,7 @@ import { StudentDashboard, StudentDashboardService, StudyProfile } from '../../.
 import { LucideBookOpen, LucideCalendarDays, LucideMessageCircle, LucideNotebookPen, LucideUsers, LucideShieldCheck } from '@lucide/angular';
 interface Shortcut {route:string;title:string;description:string;icon:string;}
 @Component({selector:'app-etudiant-home',standalone:true,
- imports:[NgTemplateOutlet,ModuleHelpButton,RouterLink,DatePipe,DecimalPipe,FormsModule,ButtonModule,MessageModule,AppointmentCounter,SelectField,SelectOption,LoadingState,LucideBookOpen,LucideCalendarDays,LucideMessageCircle,LucideNotebookPen,LucideUsers,LucideShieldCheck],
+ imports:[ErrorAlert, NgTemplateOutlet,ModuleHelpButton,RouterLink,DatePipe,DecimalPipe,FormsModule,ButtonModule,MessageModule,AppointmentCounter,SelectField,SelectOption,LoadingState,LucideBookOpen,LucideCalendarDays,LucideMessageCircle,LucideNotebookPen,LucideUsers,LucideShieldCheck],
  templateUrl:'./home.html',styleUrl:'./home.scss'})
 export class EtudiantHome implements OnInit {
  private readonly auth=inject(AuthService);private readonly self=inject(SelfSpaceService);private readonly api=inject(StudentDashboardService);

@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { TeacherDailyTools } from '../../../../shared/self-space/teacher-daily-tools';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { DateField } from '../../../../shared/ui/date-field';
@@ -30,7 +31,7 @@ import {
 @Component({
   selector: 'app-enseignant-classes',
   standalone: true,
-  imports: [TeacherDailyTools, ModuleHelpButton, DateField, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, RouterLink, ScheduleView],
+  imports: [ErrorAlert, TeacherDailyTools, ModuleHelpButton, DateField, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, RouterLink, ScheduleView],
   templateUrl: './classes.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

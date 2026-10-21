@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
@@ -22,7 +23,7 @@ import { FamilyLearning } from '../../../../shared/self-space/family-learning';
 type Mode='presences'|'annonces'|'accompagnement'|'dossier'|'organisation';
 const titles:Record<Mode,string>={presences:'Mes présences et retards',annonces:'Les annonces de mon établissement',accompagnement:'Mon accompagnement',dossier:'Mon dossier élève',organisation:'Mon organisation'};
 @Component({selector:'app-student-study-module',standalone:true,
- imports:[DatePipe,FormsModule,RouterLink,ButtonModule,MessageModule,InputTextModule,TextareaModule,ModuleHelpButton,SelectField,SelectOption,DateField,LoadingState,FormValidationDirective,PortalPosts,FamilyLearning],
+ imports:[ErrorAlert, DatePipe,FormsModule,RouterLink,ButtonModule,MessageModule,InputTextModule,TextareaModule,ModuleHelpButton,SelectField,SelectOption,DateField,LoadingState,FormValidationDirective,PortalPosts,FamilyLearning],
  templateUrl:'./study-module.html',styleUrl:'../../../../shared/self-space/self-space.scss',styles:[`.study-list{display:grid;gap:1rem}.study-text{white-space:pre-wrap;overflow-wrap:anywhere}.study-details{display:grid;grid-template-columns:minmax(8rem,1fr) minmax(0,2fr);gap:.65rem}dd{margin:0;overflow-wrap:anywhere}`]})
 export class StudentStudyModule implements OnInit {
  private readonly self=inject(SelfSpaceService);private readonly api=inject(StudentDashboardService);private readonly portal=inject(ParentPortalService);

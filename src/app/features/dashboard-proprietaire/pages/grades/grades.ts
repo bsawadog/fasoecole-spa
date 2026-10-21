@@ -1,3 +1,5 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { RowActions } from '../../../../shared/ui/row-actions';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DateField } from '../../../../shared/ui/date-field';
@@ -28,7 +30,7 @@ type SheetValue = number | string | null;
 @Component({
   selector: 'app-grades',
   standalone: true,
-  imports: [ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, TableModule, FormsModule, DecimalPipe, DatePipe, NgTemplateOutlet],
+  imports: [ErrorAlert, RowActions, ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, TableModule, FormsModule, DecimalPipe, DatePipe, NgTemplateOutlet],
   templateUrl: './grades.html',
   styleUrl: './grades.scss',
 })

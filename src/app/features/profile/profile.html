@@ -37,7 +37,7 @@
   <section class="profile__card" aria-labelledby="profile-info-title">
     <h2 id="profile-info-title">Informations personnelles</h2>
 
-    @if (error()) { <p-message severity="error" class="profile__error" role="alert">{{ error() }}</p-message> }
+    @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
     @if (success()) { <p-message severity="success" class="profile__success" role="status">Profil mis à jour.</p-message> }
 
     <form #profileForm="ngForm" (ngSubmit)="save(profileForm)">
@@ -75,7 +75,7 @@
   <section class="profile__card" aria-labelledby="profile-password-title">
     <h2 id="profile-password-title">Mot de passe</h2>
 
-    @if (passwordError()) { <p-message severity="error" class="profile__error" role="alert">{{ passwordError() }}</p-message> }
+    @if (passwordError()) { <app-error-alert [message]="passwordError()" (dismissed)="passwordError.set(null)">{{ passwordError() }}</app-error-alert> }
     @if (passwordSuccess()) { <p-message severity="success" class="profile__success" role="status">Mot de passe modifié.</p-message> }
 
     <form #passwordFormRef="ngForm" (ngSubmit)="changePassword(passwordFormRef)">
@@ -99,6 +99,22 @@
     </form>
   </section>
 
+
+
+  <section class="profile__card" aria-labelledby="profile-email-title">
+    <h2 id="profile-email-title">Changer mon courriel personnel</h2>
+    <p>Cette adresse sert à la connexion et vous suit dans tous vos établissements. Le changement prend effet après confirmation de la nouvelle adresse.</p>
+    @if (emailError()) { <app-error-alert [message]="emailError()" (dismissed)="emailError.set(null)">{{ emailError() }}</app-error-alert> }
+    @if (emailMessage()) { <p-message severity="success" role="status">{{ emailMessage() }}</p-message> }
+    <form #emailChangeForm="ngForm" (ngSubmit)="changeEmail(emailChangeForm)">
+      <label for="profile-new-email">Nouveau courriel personnel</label>
+      <input pInputText id="profile-new-email" name="newEmail" type="email" email required maxlength="150" [(ngModel)]="emailForm.email" autocomplete="email" />
+      <label for="profile-email-password">Mot de passe actuel pour confirmer le changement</label>
+      <input pInputText id="profile-email-password" name="emailPassword" type="password" required maxlength="100" [(ngModel)]="emailForm.currentPassword" autocomplete="current-password" />
+      <button pButton type="submit" [disabled]="emailSaving() || emailChangeForm.invalid">Envoyer le lien de confirmation</button>
+    </form>
+  </section>
+
   @if (canRequestSchools()) {
     <section id="school-access" class="profile__card" aria-labelledby="profile-schools-title">
       <h2 id="profile-schools-title">Accès à d’autres établissements</h2>
@@ -106,7 +122,7 @@
         Demandez l’accès à un autre établissement. Le propriétaire de l’établissement validera votre demande.
       </p>
 
-      @if (accessError()) { <p-message severity="error" class="profile__error" role="alert">{{ accessError() }}</p-message> }
+      @if (accessError()) { <app-error-alert [message]="accessError()" (dismissed)="accessError.set(null)">{{ accessError() }}</app-error-alert> }
       @if (accessSuccess()) { <p-message severity="success" class="profile__success" role="status">{{ accessSuccess() }}</p-message> }
 
       <form class="profile__inline-form" (ngSubmit)="requestAccess()">

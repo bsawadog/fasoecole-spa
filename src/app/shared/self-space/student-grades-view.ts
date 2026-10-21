@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../error-alert';
 import { LoadingState } from '../ui/loading-state';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
@@ -14,7 +15,7 @@ const STATUS_LABELS: Record<string, string> = {
 @Component({
   selector: 'app-student-grades-view',
   standalone: true,
-  imports: [LoadingState, ButtonModule, MessageModule, DatePipe, DecimalPipe],
+  imports: [ErrorAlert, LoadingState, ButtonModule, MessageModule, DatePipe, DecimalPipe],
   templateUrl: './student-grades-view.html',
   styleUrl: './self-space.scss',
   host: { class: 'ss', style: 'padding:0;background:transparent' },

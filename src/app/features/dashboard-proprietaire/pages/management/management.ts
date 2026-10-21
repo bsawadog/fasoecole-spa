@@ -1,3 +1,6 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { apiError } from '../../../../shared/api-error';
+import { RowActions } from '../../../../shared/ui/row-actions';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -54,7 +57,7 @@ interface AcademicForm {
 @Component({
   selector: 'app-owner-management',
   standalone: true,
-  imports: [ModuleHelpButton, TooltipModule, LucidePencil, LucideTrash2, DateField, NumberField, SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink, DatePipe, DecimalPipe],
+  imports: [ErrorAlert, RowActions, ModuleHelpButton, TooltipModule, LucidePencil, LucideTrash2, DateField, NumberField, SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink, DatePipe, DecimalPipe],
   templateUrl: './management.html',
   styleUrl: './management.scss',
 })
@@ -103,7 +106,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
   showSubjectCatalog():void {
     const id=this.selectedSchoolId();if(id===null||this.catalogBusy())return;
     this.catalogOpen.set(true);this.catalogBusy.set(true);this.catalogError.set(null);this.subjectCatalog.set([]);this.catalogConflicts.set([]);
-    this.api.subjectCatalog(id).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:packs=>{this.catalogBusy.set(false);if(id===this.selectedSchoolId())this.subjectCatalog.set(packs);},error:()=>{this.catalogBusy.set(false);this.catalogError.set('Impossible de charger les catalogues de matières.');}});
+    this.api.subjectCatalog(id).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:packs=>{this.catalogBusy.set(false);if(id===this.selectedSchoolId())this.subjectCatalog.set(packs);},error:(err)=>{this.catalogBusy.set(false);this.catalogError.set(apiError(err, 'Impossible de charger les catalogues de matières.'));}});
   }
   applySubjectCatalog(pack:SubjectCatalogPack):void {
     const id=this.selectedSchoolId();if(id===null||this.saving()||this.catalogBusy())return;
@@ -111,8 +114,8 @@ export class OwnerManagement implements OnDestroy, OnInit {
     this.api.applySubjectCatalog(id,pack.id).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:result=>{
       if(id!==this.selectedSchoolId()){this.saving.set(false);this.catalogBusy.set(false);return;}
       this.catalogConflicts.set(result.conflicts);this.successMessage.set(result.created+' matière(s) ajoutée(s), '+result.completed+' matière(s) complétée(s).');
-      this.api.getSubjects(id).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:subjects=>{if(id===this.selectedSchoolId())this.subjects.set(subjects);this.saving.set(false);this.catalogBusy.set(false);},error:()=>{this.saving.set(false);this.catalogBusy.set(false);this.catalogError.set('Catalogue ajouté. Actualisez la page pour recharger les matières.');}});
-    },error:()=>{this.saving.set(false);this.catalogBusy.set(false);this.catalogError.set('Impossible d’ajouter ce catalogue. Réessayez.');}});
+      this.api.getSubjects(id).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:subjects=>{if(id===this.selectedSchoolId())this.subjects.set(subjects);this.saving.set(false);this.catalogBusy.set(false);},error:(err)=>{this.saving.set(false);this.catalogBusy.set(false);this.catalogError.set(apiError(err, 'Catalogue ajouté. Actualisez la page pour recharger les matières.'));}});
+    },error:(err)=>{this.saving.set(false);this.catalogBusy.set(false);this.catalogError.set(apiError(err, 'Impossible d’ajouter ce catalogue. Réessayez.'));}});
   }
   readonly levelCatalog = LEVEL_CATALOG;
   readonly activatingLevel = signal(false);
@@ -158,9 +161,9 @@ export class OwnerManagement implements OnDestroy, OnInit {
         const selected = schools.find((item) => item.id === storedId) ?? schools[0];
         this.selectSchool(selected.id);
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set('Impossible de charger vos établissements.');
+        this.errorMessage.set(apiError(err, 'Impossible de charger vos établissements.'));
       },
     });
   }
@@ -375,9 +378,9 @@ export class OwnerManagement implements OnDestroy, OnInit {
         this.successMessage.set('Les informations académiques ont été enregistrées.');
         if (this.selectedSchoolId() === schoolId) this.loadData(schoolId);
       },
-      error: () => {
+      error: (err) => {
         this.saving.set(false);
-        this.academicError.set('Enregistrement impossible. Vérifiez les informations et réessayez.');
+        this.academicError.set(apiError(err, 'Enregistrement impossible. Vérifiez les informations et réessayez.'));
       },
     });
   }
@@ -403,7 +406,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
         const schoolId = this.selectedSchoolId();
         if (schoolId) this.loadData(schoolId);
       },
-      error: () => this.fail('Suppression impossible. Cet élément est peut-être déjà utilisé.'),
+      error: (err) => this.fail(apiError(err, 'Suppression impossible. Cet élément est peut-être déjà utilisé.')),
     });
   }
 
@@ -434,7 +437,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
         this.successMessage.set('Le tarif a été enregistré.');
         if (this.selectedSchoolId() === schoolId) this.loadData(schoolId);
       },
-      error: () => this.fail('Enregistrement du tarif impossible.'),
+      error: (err) => this.fail(apiError(err, 'Enregistrement du tarif impossible.')),
     });
   }
 
@@ -455,7 +458,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
         this.saving.set(false);
         this.successMessage.set('Les coordonnées de l’établissement ont été mises à jour.');
       },
-      error: () => this.fail('La mise à jour de l’établissement a échoué.'),
+      error: (err) => this.fail(apiError(err, 'La mise à jour de l’établissement a échoué.')),
     });
   }
 
@@ -472,7 +475,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
         const schoolId = this.selectedSchoolId();
         if (schoolId) this.loadData(schoolId);
       },
-      error: () => this.fail('Suppression impossible. Ce frais est peut-être déjà facturé.'),
+      error: (err) => this.fail(apiError(err, 'Suppression impossible. Ce frais est peut-être déjà facturé.')),
     });
   }
 
@@ -552,7 +555,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
         this.teachers.set(data.teachers);
         this.loading.set(false);
       },
-      error: () => this.fail('Certaines données de cet établissement n’ont pas pu être chargées.'),
+      error: (err) => this.fail(apiError(err, 'Certaines données de cet établissement n’ont pas pu être chargées.')),
     });
   }
 

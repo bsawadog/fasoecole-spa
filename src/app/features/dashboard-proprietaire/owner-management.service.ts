@@ -99,6 +99,8 @@ export interface RosterParent {
 }
 
 export interface ClassRosterRow {
+  accountEmail?: string | null;
+  passwordSet?: boolean;
   billingSummary?: { totalDue: number; totalPaid: number; totalBalance: number };
   emailVerified?: boolean;
   invitationDeliveryStatus?: string | null;
@@ -106,7 +108,7 @@ export interface ClassRosterRow {
   userId: number;
   firstName: string;
   lastName: string;
-  email: string;
+  email: string | null;
   phone: string | null;
   registrationNumber: string;
   birthDate: string | null;
@@ -380,6 +382,11 @@ export class OwnerManagementService {
 
   updateRosterParent(classId: number, parentId: number, payload: UpdateParentProfilePayload): Observable<ClassRosterRow> {
     return this.http.put<ClassRosterRow>(`${this.apiUrl}/classes/${classId}/roster/parents/${parentId}`, payload);
+  }
+
+  inviteStudentAccount(classId: number, studentId: number, email: string): Observable<{ student: ClassRosterRow; emailSent: boolean }> {
+    return this.http.post<{ student: ClassRosterRow; emailSent: boolean }>(
+      `${this.apiUrl}/classes/${classId}/roster/students/${studentId}/account-invitation`, { email });
   }
 
   deleteRosterStudent(classId: number, studentId: number): Observable<void> {

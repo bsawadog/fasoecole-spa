@@ -11,7 +11,7 @@
 
   </header>
 
-  @if (error()) { <p-message severity="error" class="enr__alert enr__alert--error" role="alert">{{ error() }}</p-message> }
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
   @if (success()) {
     <div class="enr__alert enr__alert--success" role="status">
       {{ success() }}
@@ -68,8 +68,8 @@
             }
             <label>Prénom<input pInputText name="nsFirstName" [(ngModel)]="newStudentForm.firstName" maxlength="100" required></label>
             <label>Nom<input pInputText name="nsLastName" [(ngModel)]="newStudentForm.lastName" maxlength="100" required></label>
-            <label>Courriel (facultatif)<input pInputText name="nsEmail" type="email" email [(ngModel)]="newStudentForm.email" maxlength="150"></label>
-            <p>Un lien d’activation sera envoyé par courriel pour choisir le mot de passe.</p>
+            <label>Courriel personnel de l’apprenant (facultatif)<input pInputText name="nsEmail" type="email" email [(ngModel)]="newStudentForm.email" maxlength="150"></label>
+            <p>Cette adresse servira à la connexion dans tous ses établissements. Renseignez le courriel d’un parent dans sa fiche parent. L’activation se fait dans « Élèves par classe → Actions → Accès de connexion ».</p>
             <label>Matricule<input pInputText name="nsRegistration" value="Généré automatiquement" disabled title="Format MAT-AAAA-NNN, attribué à l’enregistrement"></label>
             <label>Téléphone (facultatif)<input pInputText name="nsPhone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="newStudentForm.phone" maxlength="30"></label>
             <label>Date de naissance<app-date-field mode="date" name="nsBirthDate" [(ngModel)]="newStudentForm.birthDate" [ariaLabel]="(&quot;Date de naissance&quot;).trim()" /></label>

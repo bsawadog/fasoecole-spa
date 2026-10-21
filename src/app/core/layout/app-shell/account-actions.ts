@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../shared/error-alert';
 import { Component, computed, DestroyRef, ElementRef, HostListener, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -21,7 +22,7 @@ export interface AccountNotification {
 @Component({
   selector: 'app-account-actions',
   standalone: true,
-  imports: [RouterLink, DatePipe, LucideBell, LucideUserRound, LucideLogOut, TooltipModule],
+  imports: [ErrorAlert, RouterLink, DatePipe, LucideBell, LucideUserRound, LucideLogOut, TooltipModule],
   templateUrl: './account-actions.html',
   styleUrl: './account-actions.scss',
 })

@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { LoadingState } from '../../../../shared/ui/loading-state';
 import { ButtonModule } from 'primeng/button';
@@ -10,13 +11,13 @@ import { environment } from '../../../../../environments/environment';
 
 interface SchoolChoice { id:number;name:string;status:string; }
 @Component({
-  selector:'app-school-data-export',standalone:true,imports: [ModuleHelpButton, LoadingState, ButtonModule, MessageModule, FormsModule],
+  selector:'app-school-data-export',standalone:true,imports: [ErrorAlert, ModuleHelpButton, LoadingState, ButtonModule, MessageModule, FormsModule],
   template:`
     <main class="export ui-workspace">
       <header class="module-help-header ui-page-header">
     <app-module-help /><p class="eyebrow">VOS DONNÉES</p><h1>Exporter les données de mon établissement</h1>
         <p>Conservez une copie de vos dossiers et de vos activités, consultable sans FasoEcole.</p></header>
-      @if (error()) { <p-message severity="error" class="error" role="alert">{{ error() }}</p-message> }
+      @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}</app-error-alert> }
       @if (loading()) { <app-loading-state message="Chargement de vos établissements…" /> }
       @else if (!schools().length) { <section class="card"><h2>Aucun établissement à exporter</h2>
         <p>Ce téléchargement est réservé au propriétaire de l’établissement.</p></section> }

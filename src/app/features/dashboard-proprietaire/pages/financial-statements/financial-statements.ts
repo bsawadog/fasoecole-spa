@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { LoadingState } from '../../../../shared/ui/loading-state';
 import { ButtonModule } from 'primeng/button';
@@ -10,7 +11,7 @@ import { ExpensesService, ExpenseSummary } from '../../expenses.service';
 
 @Component({
   selector: 'app-financial-statements', standalone: true,
-  imports: [ModuleHelpButton, LoadingState, ButtonModule, FormsModule, DecimalPipe, DatePipe],
+  imports: [ErrorAlert, ModuleHelpButton, LoadingState, ButtonModule, FormsModule, DecimalPipe, DatePipe],
   templateUrl: './financial-statements.html',
   styleUrls: ['../expenses/expenses.scss', './financial-statements.scss'],
 })

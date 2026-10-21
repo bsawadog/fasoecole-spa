@@ -1,3 +1,4 @@
+import { ErrorAlert } from '../error-alert';
 import { Component, DestroyRef, inject, input, OnChanges, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
@@ -18,7 +19,7 @@ import { HttpClient } from '@angular/common/http';
 import { Availability, Lesson, PersonalNote, Support, TeacherDailyToolsService } from './teacher-daily-tools.service';
 
 @Component({selector:'app-teacher-daily-tools',standalone:true,
- imports:[DatePipe,DecimalPipe,FormsModule,RouterLink,ButtonModule,MessageModule,InputTextModule,TextareaModule,DateField,SelectField,SelectOption,FormValidationDirective],
+ imports:[ErrorAlert, DatePipe,DecimalPipe,FormsModule,RouterLink,ButtonModule,MessageModule,InputTextModule,TextareaModule,DateField,SelectField,SelectOption,FormValidationDirective],
  templateUrl:'./teacher-daily-tools.html',styleUrl:'./self-space.scss',
  styles:[`:host{display:block;margin-block:1rem}.daily-list{display:grid;gap:1rem}.daily-text{white-space:pre-wrap;overflow-wrap:anywhere}summary{cursor:pointer;font-weight:700;padding:.75rem}label:has(input[type=checkbox]){display:flex;gap:.6rem;align-items:center}`]})
 export class TeacherDailyTools implements OnChanges {

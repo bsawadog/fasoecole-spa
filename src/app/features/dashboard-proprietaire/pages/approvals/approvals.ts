@@ -1,3 +1,6 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { AccountRecoveryQueue } from '../../../../shared/account-recovery-queue';
+import { apiError } from '../../../../shared/api-error';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
@@ -15,7 +18,7 @@ interface ApprovalSelection {
 }
 
 @Component({
-  imports: [ModuleHelpButton, SelectField, SelectOption, ButtonModule, MessageModule],
+  imports: [AccountRecoveryQueue, ErrorAlert, ModuleHelpButton, SelectField, SelectOption, ButtonModule, MessageModule],
   selector: 'app-approvals',
   standalone: true,
   templateUrl: './approvals.html',
@@ -52,9 +55,9 @@ export class Approvals implements OnInit {
         this.schools.set(schools);
         this.loadRequests(schools);
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set('Impossible de charger vos établissements.');
+        this.errorMessage.set(apiError(err, 'Impossible de charger vos établissements.'));
       },
     });
     this.schoolAccess.pending().subscribe({
@@ -62,7 +65,7 @@ export class Approvals implements OnInit {
         const schoolId = this.auth.schoolContextId();
         this.accessRequests.set(requests.filter(request => schoolId === null || request.schoolId === schoolId));
       },
-      error: () => this.errorMessage.set('Impossible de charger les demandes d’accès à vos établissements.'),
+      error: (err) => this.errorMessage.set(apiError(err, 'Impossible de charger les demandes d’accès à vos établissements.')),
     });
   }
 
@@ -148,7 +151,7 @@ export class Approvals implements OnInit {
         this.successMessage.set(result.emailSent ? 'Lien envoyé au titulaire du compte.' : null);
         this.errorMessage.set(result.emailSent ? null : 'Le courriel n’a pas pu être envoyé. Réessayez ultérieurement.');
       },
-      error: () => { this.resendingId.set(null); this.errorMessage.set('Impossible de renvoyer le lien.'); },
+      error: (err) => { this.resendingId.set(null); this.errorMessage.set(apiError(err, 'Impossible de renvoyer le lien.')); },
     });
   }
 
@@ -207,9 +210,9 @@ export class Approvals implements OnInit {
         );
         this.loading.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set('Impossible de charger les demandes de compte.');
+        this.errorMessage.set(apiError(err, 'Impossible de charger les demandes de compte.'));
       },
     });
   }

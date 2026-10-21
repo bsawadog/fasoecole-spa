@@ -28,12 +28,15 @@ describe('ClassRoster transfer', () => {
       ])),
       getClassTeachers: vi.fn(() => of([{ teacherId: 1, teacherName: "Professeur A", subjectName: "Mathématiques" }, { teacherId: 1, teacherName: "Professeur A", subjectName: "Français" }, { teacherId: 1, teacherName: "Professeur A", subjectName: "Français" }, { teacherId: 2, teacherName: "Professeur A", subjectName: "Histoire" }])),
       getClassRoster: vi.fn(() => of([row])),
+      inviteStudentAccount: vi.fn(() => of({ student: { ...row, email: 'login@example.test', accountEmail: 'login@example.test' }, emailSent: true })),
       transferRosterStudent: vi.fn(() => of({ ...row })),
       deleteRosterStudent: vi.fn(() => of(undefined)),
       updateRosterParent: vi.fn(() => of({ ...row })),
+      updateRosterStudent: vi.fn(() => of({ ...row })),
     };
     const confirmation = { confirm: vi.fn(() => Promise.resolve(true)) };
     const auth = {
+      ownerAccess: vi.fn(() => [{ schoolId: 1, owner: true }]),
       resendUserInvitation: vi.fn(() => of({ emailSent: true })),
       requestPasswordReset: vi.fn(() => of({ message: 'Demande de réinitialisation prise en compte.' })),
     };
@@ -43,7 +46,7 @@ describe('ClassRoster transfer', () => {
         provideRouter([]),
         {
           provide: AuthService,
-          useValue: { ...auth, user: () => ({ id: 10 }), selectSchoolContext: vi.fn(), selectedSchoolType: () => 'PRIMAIRE', getOwnedSchools: vi.fn(() => of([{ id: 1, name: 'École A', type: 'PRIMAIRE' }])) },
+          useValue: { ...auth, user: () => ({ id: 10, ownerAccount: false }), selectSchoolContext: vi.fn(), selectedSchoolType: () => 'PRIMAIRE', getOwnedSchools: vi.fn(() => of([{ id: 1, name: 'École A', type: 'PRIMAIRE' }])) },
         },
         { provide: OwnerManagementService, useValue: api },
         { provide: ConfirmationService, useValue: confirmation },
@@ -56,6 +59,67 @@ describe('ClassRoster transfer', () => {
     fixture.detectChanges();
     return { fixture, component: fixture.componentInstance, api, confirmation, auth };
   }
+
+  it.each([
+    [false, false, false],
+    [true, false, true],
+    [false, true, true],
+    [true, true, true],
+    [undefined, undefined, true],
+  ])('allows owner email corrections only before activation: password=%s verified=%s', (passwordSet, emailVerified, readonly) => {
+    const { component, fixture } = setup();
+    const student = { ...row, userId: 9, passwordSet, emailVerified } as never;
+    component.rows.set([student]); component.startEditStudent(student); fixture.detectChanges();
+    const email = fixture.nativeElement.querySelector('.class-roster__edit-form input[type="email"]') as HTMLInputElement;
+    expect(email.readOnly).toBe(readonly);
+  });
+
+  it('keeps email read-only for delegated staff or ownership of another school', () => {
+    const { component, auth } = setup();
+    const student = { ...row, userId: 9, passwordSet: false, emailVerified: false } as never;
+    auth.ownerAccess.mockReturnValue([{ schoolId: 1, owner: false }]);
+    expect(component.canCorrectStudentEmail(student)).toBe(false);
+    auth.ownerAccess.mockReturnValue([{ schoolId: 2, owner: true }]);
+    expect(component.canCorrectStudentEmail(student)).toBe(false);
+  });
+
+  it('reports a saved correction without promising delivery after an invitation failure', () => {
+    const { component, api } = setup();
+    component.startEditStudent(row as never); component.studentForm.email = 'correct@example.test';
+    api.updateRosterStudent.mockReturnValueOnce(of({ ...row, email: 'correct@example.test', invitationDeliveryStatus: 'FAILED' }) as never);
+    component.saveStudent(row.studentId);
+    expect(component.rows()[0].email).toBe('correct@example.test');
+    expect(component.successMessage()).toContain('réessayer');
+    expect(component.successMessage()).not.toContain('invitation envoyée');
+  });
+
+  it('does not announce a new invitation for a case-only email change', () => {
+    const { component } = setup();
+    component.startEditStudent(row as never); component.studentForm.email = row.email.toUpperCase();
+    component.saveStudent(row.studentId);
+    expect(component.successMessage()).not.toContain('Courriel corrigé');
+  });
+
+  it('assigns the personal email explicitly when the student has none', () => {
+    const { component, api, auth } = setup();
+    component.openStudentAccess({ ...row, email: null } as never);
+    expect(component.studentLoginEmail).toBe('');
+    component.sendStudentAccess();
+    expect(api.inviteStudentAccount).not.toHaveBeenCalled();
+    component.studentLoginEmail = 'login@example.test';
+    component.sendStudentAccess();
+    expect(api.inviteStudentAccount).toHaveBeenCalledWith(100, 7, 'login@example.test');
+    expect(component.rows()[0].email).toBe('login@example.test');
+    expect(auth.requestPasswordReset).not.toHaveBeenCalled();
+  });
+
+  it('sends password reset to the login address instead of the school contact', () => {
+    const { component, auth } = setup();
+    component.openStudentAccess({ ...row, userId: 9, accountEmail: 'login@example.test', emailVerified: true, passwordSet: true } as never);
+    component.sendStudentAccess();
+    expect(auth.requestPasswordReset).toHaveBeenCalledWith('login@example.test');
+    expect(auth.resendUserInvitation).not.toHaveBeenCalled();
+  });
 
   it('groups the current class subjects by teacher identity without duplicates', () => {
     const { component, api } = setup();
@@ -99,7 +163,7 @@ describe('ClassRoster transfer', () => {
     expect(dialog.textContent).toContain('Le lien d’activation n’a pas pu être envoyé. Réessayez ultérieurement.');
     (dialog.querySelector('button') as HTMLButtonElement).click();
     expect(dialog.open).toBe(false);
-    expect(component.errorMessage()).toContain('n’a pas pu être envoyé');
+    expect(component.errorMessage()).toBeNull();
     expect(component.saving()).toBe(false);
   });
 
@@ -173,14 +237,45 @@ describe('ClassRoster transfer', () => {
     expect(component.rows()[0].billingSummary?.totalBalance).toBe(30000);
   });
 
+  it.each([
+    'Ce compte possède plusieurs rôles. Son titulaire peut modifier son identité depuis Mon profil.',
+    'Ce courriel est déjà utilisé par un autre compte.',
+  ])('shows the API explanation and retains the student edits after a rejected update: %s', message => {
+    const { fixture, component, api } = setup();
+    component.startEditStudent(row as never);
+    component.studentForm.email = 'nouveau@example.test';
+    api.updateRosterStudent.mockReturnValueOnce(throwError(() => ({ status: 400, error: { message } })));
+    component.saveStudent(row.studentId);
+    fixture.detectChanges();
+    expect(component.errorDialogMessage()).toBe(message);
+    expect(fixture.nativeElement.querySelector('#class-roster-error-message').textContent).toContain(message);
+    expect(component.saving()).toBe(false);
+    expect(component.editingStudentId()).toBe(row.studentId);
+    expect(component.studentForm.email).toBe('nouveau@example.test');
+    expect(component.rows()[0].email).toBe(row.email);
+    expect(component.successMessage()).toBeNull();
+    component.dismissError();
+    fixture.detectChanges();
+    expect(component.errorMessage()).toBeNull();
+    expect(component.errorDialogMessage()).toBeNull();
+    component.saveStudent(row.studentId);
+    fixture.detectChanges();
+    expect(component.successMessage()).toContain('Courriel corrigé');
+    expect(component.errorMessage()).toBeNull();
+  });
+
   it('offers accessible icon actions with a student deletion action', () => {
     const { fixture } = setup();
-    expect(fixture.nativeElement.textContent).toContain('Inscriptions');
+    const toolbar = fixture.nativeElement.querySelector('.class-roster__toolbar');
+    expect(toolbar.querySelector('.class-roster__teachers-button').textContent).toContain('Voir les enseignants');
+    expect(toolbar.querySelector('#roster-student-search')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.class-roster__hint')).toBeNull();
     expect(fixture.nativeElement.querySelector('input[name="nFirstName"]')).toBeNull();
     expect(Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>)
       .some(button => /Ajouter un (élève|étudiant)/.test(button.textContent ?? ''))).toBe(false);
     const actions = fixture.nativeElement.querySelector('.class-roster__actions');
-    expect(actions.querySelectorAll('svg').length).toBe(4);
+    expect(actions.querySelector('.ui-actions-trigger')).not.toBeNull();
+    expect(actions.querySelectorAll('.ui-actions-panel svg').length).toBe(5);
     expect(actions.querySelector('a[aria-label^="Voir la fiche"]')).not.toBeNull();
     expect(actions.querySelector('button[aria-label^="Transf"]')).not.toBeNull();
     expect(actions.querySelector('button[aria-label^="Supprimer"]')).not.toBeNull();

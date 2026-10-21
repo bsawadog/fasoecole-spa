@@ -1,3 +1,5 @@
+import { ErrorAlert } from '../../shared/error-alert';
+import { apiError } from '../../shared/api-error';
 import { ModuleHelpButton } from '../../shared/help/module-help-button';
 import { AppearancePicker } from '../../shared/ui/appearance-picker';
 import { SelectField } from '../../shared/ui/select-field';
@@ -47,7 +49,7 @@ function apiMessage(error: unknown, fallback: string): string {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [AppearancePicker, ModuleHelpButton, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule],
+  imports: [ErrorAlert, AppearancePicker, ModuleHelpButton, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })
@@ -78,6 +80,26 @@ export class ProfilePage implements OnInit {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly success = signal(false);
+  readonly emailSaving = signal(false);
+  readonly emailError = signal<string | null>(null);
+  readonly emailMessage = signal<string | null>(null);
+  emailForm = { email: '', currentPassword: '' };
+
+  changeEmail(form: NgForm): void {
+    if (form.invalid || this.emailSaving()) return;
+    this.emailSaving.set(true); this.emailError.set(null); this.emailMessage.set(null);
+    this.auth.requestEmailChange(this.emailForm.email.trim(), this.emailForm.currentPassword)
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: result => {
+          this.emailSaving.set(false);
+          if (result.emailSent) {
+            form.resetForm();
+            this.emailMessage.set('Un lien a été envoyé à votre nouvelle adresse. Votre courriel actuel reste utilisable jusqu’à confirmation. Après confirmation, reconnectez-vous avec la nouvelle adresse dans tous vos établissements.');
+          } else this.emailError.set('Le lien n’a pas pu être envoyé. Réessayez plus tard. Votre adresse actuelle est conservée.');
+        },
+        error: err => { this.emailSaving.set(false); this.emailError.set(apiError(err, 'Impossible de demander ce changement de courriel.')); },
+      });
+  }
 
   // Mot de passe
   readonly passwordSaving = signal(false);
@@ -188,9 +210,9 @@ export class ProfilePage implements OnInit {
         this.saving.set(false);
         this.success.set(true);
       },
-      error: () => {
+      error: (err) => {
         this.saving.set(false);
-        this.error.set('Impossible d’enregistrer les modifications. Veuillez réessayer.');
+        this.error.set(apiError(err, 'Impossible d’enregistrer les modifications. Veuillez réessayer.'));
       },
     });
   }
@@ -303,7 +325,7 @@ export class ProfilePage implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (schools) => this.schools.set(schools),
-        error: () => this.accessError.set('Impossible de charger la liste des établissements.'),
+        error: (err) => this.accessError.set(apiError(err, 'Impossible de charger la liste des établissements.')),
       });
     this.schoolAccess.mine()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -312,9 +334,9 @@ export class ProfilePage implements OnInit {
           this.requests.set(requests);
           this.accessLoading.set(false);
         },
-        error: () => {
+        error: (err) => {
           this.accessLoading.set(false);
-          this.accessError.set('Impossible de charger vos demandes d’accès.');
+          this.accessError.set(apiError(err, 'Impossible de charger vos demandes d’accès.'));
         },
       });
   }

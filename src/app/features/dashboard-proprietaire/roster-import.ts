@@ -116,7 +116,12 @@ async function readWorkbook(file: File): Promise<string[][]> {
       <p>Colonnes obligatoires : <strong>{{ required().join(', ') }}</strong>.</p>
       <p>Colonnes facultatives : {{ optional().join(', ') }}. Dates : AAAA-MM-JJ. Matricules et numéros d’employé : cellules au format texte pour conserver les zéros.</p>
       <p>Utilisez le nom exact d’une classe de l’année sélectionnée{{ kind() === 'teachers' ? ' et du nom ou du code d’une matière de cet établissement. Répétez un enseignant avec le même numéro d’employé pour plusieurs affectations' : '. Une ligne représente un élève. Pour ajouter un parent ou tuteur, renseignez parent_prénom et parent_nom ; son courriel et son téléphone sont facultatifs. lien_parenté indique Père, Mère, Tuteur…' }}.</p>
-      <p>Le courriel de l’élève ou de l’enseignant est facultatif : la colonne peut être absente ou vide. Le matricule ou le numéro d’employé identifie chaque personne. Aucun mot de passe à fournir ; une invitation est envoyée uniquement lorsqu’un courriel est disponible. Un courriel omis ne supprime pas celui d’un dossier existant.</p>
+      <p>Le courriel est facultatif. Le matricule ou le numéro d’employé identifie chaque personne. Un courriel omis ne supprime pas celui d’un dossier existant.</p>
+      @if (kind() === 'students') {
+        <p>Le courriel personnel de l’apprenant sert à sa connexion dans tous ses établissements. Ne renseignez pas celui d’un parent dans cette colonne : utilisez parent_courriel. Un compte existant ne se rattache jamais automatiquement par courriel. Pour activer un compte élève, utilisez Élèves par classe → Actions → Accès de connexion.</p>
+      } @else {
+        <p>Aucun mot de passe à fournir ; une invitation est envoyée lorsqu’un courriel est disponible.</p>
+      }
       <p>Classes disponibles : {{ classNames() }}.</p>
       <p>Les montants sont en FCFA, avec deux décimales maximum. Laissez une cellule vide pour conserver les paiements existants ; 0 signifie aucun paiement.</p>
       @if (kind() === 'students') {
@@ -128,7 +133,7 @@ async function readWorkbook(file: File): Promise<string[][]> {
       <p><strong>paiement est le total déjà versé</strong> pour ce frais ou ce mois, et non un versement supplémentaire. Si ce total augmente, renseignez date_paiement et mode_paiement : CASH (espèces), MOBILE_MONEY, BANK_TRANSFER ou CARD. Les paiements enregistrés ne sont jamais effacés par l’import.</p>
       @if (kind() === 'teachers') { <p>Matières disponibles : {{ subjectNames() }}.</p> }
       <input class="import__file" type="file" accept=".csv,.xlsx" aria-label="Fichier Excel ou CSV à importer" [disabled]="busy() || outcome() !== null" (change)="load($event)">
-      @if (message()) { <p-message [severity]="messageSeverity()" role="status">{{ message() }}</p-message> }
+      @if (message() && messageSeverity() === 'success') { <p-message severity="success" role="status">{{ message() }}</p-message> }
       @if (rows().length) {
         <p>{{ rows().length }} lignes — {{ invalid() }} avec erreur. Les contrôles de doublons et d’autorisation du serveur sont appliqués lors de l’enregistrement.</p>
         <div class="scroll"><table><thead><tr><th>Ligne</th><th>Nom</th><th>Courriel</th><th>Classe</th>@if (kind() === 'students') { <th>Parent / tuteur</th> }<th>{{ kind() === 'students' ? 'Frais' : 'Salaire' }}</th><th>Paiement cumulé</th><th>Résultat</th></tr></thead><tbody>
@@ -155,6 +160,10 @@ async function readWorkbook(file: File): Promise<string[][]> {
         <h2>{{ result.title }}</h2>
         <p>{{ result.message }}</p>
         @if (result.details.length) { <ul>@for (detail of result.details; track $index) { <li>{{ detail }}</li> }</ul> }
+        @if (result.severity === 'error') {
+          <p>Si le problème persiste, vous pouvez contacter le support technique.</p>
+          <a href="/proprietaire/incidents?nouveau=1" (click)="acknowledgeOutcome()">Ouvrir un incident</a>
+        }
         <div class="import-dialog__actions"><button pButton type="button" [severity]="result.severity === 'error' ? 'danger' : 'success'" (click)="acknowledgeOutcome()" autofocus>OK</button></div>
       }
     </dialog>`,
@@ -214,6 +223,7 @@ export class RosterImport {
     const result = this.outcome();
     if (!result) return;
     this.outcome.set(null);
+    if (result.severity === 'error') this.message.set('');
     if (this.resultDialog().nativeElement.open) this.resultDialog().nativeElement.close();
     if (result.refresh && !this.destroyed) this.completed.emit();
   }
@@ -268,7 +278,6 @@ export class RosterImport {
         if (this.kind() === 'teachers' && subject.length !== 1) errors.push('Matière introuvable ou ambiguë : utilisez un code ou un nom unique de cet établissement');
         if (this.kind() === 'students' && ['parent_prenom', 'parent_nom', 'parent_courriel', 'parent_telephone', 'lien_parente'].some(h => data[h]) && ['parent_prenom', 'parent_nom'].some(h => !data[h])) errors.push('Parent : prénom et nom obligatoires ; courriel facultatif');
         const email = (data['courriel'] ?? '').toLowerCase();
-        if (email && data['parent_courriel']?.toLowerCase() === email) errors.push('Le parent doit avoir un courriel différent de celui de l’élève');
         const identifier = data[this.kind() === 'teachers' ? 'numero_employe' : 'matricule'];
         if (identifiers.has(identifier) && (this.kind() === 'students' || identifiers.get(identifier) !== email)) errors.push('Matricule ou numéro d’employé en double'); identifiers.set(identifier, email);
         if (email && emailIdentifiers.has(email) && emailIdentifiers.get(email) !== identifier) errors.push('Le même courriel est utilisé pour plusieurs personnes');
