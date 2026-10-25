@@ -152,12 +152,14 @@ describe('ClassRoster transfer', () => {
   const parent = { parentId: 30, userId: 31, firstName: 'Mamadou', lastName: 'Traoré',
     email: 'parent@example.test', phone: '+22670000000', relationship: 'Père', emailVerified: false, passwordSet: false };
 
-  it('opens a small error dialog for a failed activation and closes it on OK', async () => {
+  it('opens a small error dialog for a failed activation and closes it on OK', () => {
     const { fixture, component, auth } = setup();
     component.rows.set([{ ...row, userId: 9, parents: [parent] }]);
     auth.resendUserInvitation.mockReturnValue(of({ emailSent: false }));
     component.sendParentAccountLink(parent);
-    fixture.detectChanges(); await fixture.whenStable();
+    // Mocked API responses and the component's dialog effect are synchronous.
+    // Render this view instead of waiting for unrelated application tasks.
+    fixture.detectChanges();
     const dialog = fixture.nativeElement.querySelector('.class-roster__error-dialog') as HTMLDialogElement;
     expect(dialog.open).toBe(true);
     expect(dialog.textContent).toContain('Le lien d’activation n’a pas pu être envoyé. Réessayez ultérieurement.');
@@ -167,11 +169,11 @@ describe('ClassRoster transfer', () => {
     expect(component.saving()).toBe(false);
   });
 
-  it('shows server errors from a failed student action in the same dialog', async () => {
+  it('shows server errors from a failed student action in the same dialog', () => {
     const { fixture, component, auth } = setup();
     auth.resendUserInvitation.mockReturnValue(throwError(() => ({ error: { message: 'Service de courriel indisponible.' } })));
     component.resendInvitation(9);
-    fixture.detectChanges(); await fixture.whenStable();
+    fixture.detectChanges();
     const dialog = fixture.nativeElement.querySelector('.class-roster__error-dialog') as HTMLDialogElement;
     expect(dialog.open).toBe(true);
     expect(dialog.textContent).toContain('Service de courriel indisponible.');

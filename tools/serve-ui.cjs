@@ -12,7 +12,8 @@ http.createServer((request, response) => {
   try { file = path.resolve(root, '.' + decodeURIComponent(new URL(request.url, 'http://localhost').pathname)); }
   catch { response.writeHead(400).end(); return; }
   if (file !== root && !file.startsWith(root + path.sep)) { response.writeHead(403).end(); return; }
-  if (!fs.existsSync(file) || !fs.statSync(file).isFile()) file = path.join(root, 'index.html');
+  if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
+  if (!fs.existsSync(file) || !fs.statSync(file).isFile()) file = path.join(root, fs.existsSync(path.join(root,'index.csr.html')) ? 'index.csr.html' : 'index.html');
   response.setHeader('Content-Type', mime[path.extname(file).toLowerCase()] || 'application/octet-stream');
   response.setHeader('Cache-Control', 'no-store');
   fs.createReadStream(file).pipe(response);

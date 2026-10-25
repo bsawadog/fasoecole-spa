@@ -36,7 +36,7 @@ export class AppearanceService {
       this.current.set(isAppearanceTheme(stored) ? stored : DEFAULT_APPEARANCE);
       this.saved.set(true);
     });
-    effect(() => { this.document.body.dataset['appTheme'] = this.current(); });
+    effect(() => { this.document.body.setAttribute('data-app-theme', this.current()); });
   }
 
   choose(theme: AppearanceTheme): void {

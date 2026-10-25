@@ -1,5 +1,5 @@
 import { LoadingState } from '../../shared/ui/loading-state';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { afterNextRender, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService, RegistrationSchool } from '../../core/auth';
 
@@ -21,6 +21,7 @@ const SCHOOL_TYPES: Record<string, string> = {
   styleUrl: './school-directory.scss',
 })
 export class SchoolDirectory implements OnInit {
+  constructor(){afterNextRender(()=>this.loadSchools());}
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   readonly schools = signal<RegistrationSchool[]>([]);
@@ -49,6 +50,9 @@ export class SchoolDirectory implements OnInit {
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((params) => this.filterType.set(params.get('type')));
+  }
+
+  private loadSchools():void {
     this.auth.getRegistrationSchools().subscribe({
       next: (schools) => { this.schools.set(schools); this.loading.set(false); },
       error: () => { this.loading.set(false); this.failed.set(true); },

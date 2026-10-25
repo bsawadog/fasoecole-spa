@@ -87,6 +87,31 @@ For more information on using the Angular CLI, including detailed command refere
 
 ## Sitemap Google
 
+Les builds `npm run build:dev` et `npm run build:prod` pré-rendent les huit
+pages publiques en HTML avec Angular SSG. Les espaces authentifiés restent
+rendus dans le navigateur. L’annuaire pré-rend son introduction et ses liens ;
+sa liste d’établissements est chargée dans le navigateur pour ne pas dépendre
+du backend pendant le build. Aucun dossier ou renseignement privé n’est exporté.
+
+`src/app/core/seo/public-pages.ts` définit les titres et descriptions. La stratégie
+SEO applique une seule URL canonique par page publique, sans paramètres, et
+`noindex` aux autres routes. Les origines sont définies dans `environment*.ts`.
+`tools/finalize-seo.cjs` adapte sitemap et robots au domaine dev ou production et
+vérifie le contenu et les URL canoniques des HTML générés. Ne pas partager le
+sitemap dev avec le domaine de production.
+
+CloudFront doit appliquer la règle de réécriture mise à jour dans
+`fasoecole-bff/infra/dev/platform.json` : les pages publiques pointent vers leur
+propre `/index.html` et les espaces connectés vers `/index.csr.html`. Déployer
+le frontend d’abord, puis la modification d’infrastructure ; sinon les liens
+publics profonds afficheront encore le HTML de l’accueil.
+
+Après déploiement, valider la propriété du domaine dans Google Search Console
+(par enregistrement DNS), soumettre `/sitemap.xml`, puis inspecter l’accueil et
+les pages de services et demander leur indexation. Contrôler le rendu et les
+motifs de non-indexation. Ces opérations nécessitent l’accès au compte Google
+et au DNS ; le sitemap ne garantit pas un classement dans les résultats.
+
 Le fichier `public/sitemap.xml` recense les pages publiques stables sur
 `https://app.dev.fasoecole.com`. `public/robots.txt` déclare son adresse et
 demande aux robots de ne pas explorer les espaces connectés et les formulaires

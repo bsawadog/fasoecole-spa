@@ -1,4 +1,5 @@
 export const environment = {
+  siteUrl: 'https://app.fasoecole.com',
   primeUiLicense: '',
   production: true,
   envName: 'prod' as const,

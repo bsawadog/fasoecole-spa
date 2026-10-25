@@ -2,7 +2,8 @@ import { ApplicationConfig, LOCALE_ID, provideBrowserGlobalErrorListeners } from
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { provideRouter, withInMemoryScrolling } from '@angular/router';
+import { provideRouter, TitleStrategy, withInMemoryScrolling } from '@angular/router';
+import { SeoTitleStrategy } from './core/seo/seo-title-strategy';
 import { routes } from './app.routes';
 import { academicContextInterceptor } from './shared/academic-context';
 import { authInterceptor } from './core/auth';
@@ -14,6 +15,7 @@ registerLocaleData(localeFr);
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    { provide: TitleStrategy, useClass: SeoTitleStrategy },
     { provide: LOCALE_ID, useValue: 'fr-FR' },
     providePrimeNG({
       license: environment.primeUiLicense || undefined,

@@ -41,6 +41,8 @@
           },
           "configurations": {
             "production": {
+              "server": "src/main.server.ts",
+              "outputMode": "static",
               "budgets": [
                 {
                   "type": "initial",
@@ -62,6 +64,8 @@
               ]
             },
             "dev": {
+              "server": "src/main.server.ts",
+              "outputMode": "static",
               "optimization": true,
               "extractLicenses": true,
               "sourceMap": false,

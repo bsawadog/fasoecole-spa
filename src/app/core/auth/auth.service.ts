@@ -210,7 +210,7 @@ export class AuthService {
   private readonly _ownerAccess = signal<SchoolAccess[] | null>(null);
   private ownerAccessRequest?: { token: string | null; response: Observable<SchoolAccess[]> };
   readonly ownerAccess = this._ownerAccess.asReadonly();
-  private readonly selectedSchoolId = signal(Number(localStorage.getItem('fasoecole_owner_school')) || null);
+  private readonly selectedSchoolId = signal(typeof localStorage==='undefined'?null:Number(localStorage.getItem('fasoecole_owner_school')) || null);
   readonly schoolContextId = this.selectedSchoolId.asReadonly();
   private readonly ownedSchools = signal<RegistrationSchool[]>([]);
   readonly selectedSchoolType = computed(() => {
@@ -530,6 +530,7 @@ export class AuthService {
   }
 
   private restoreSession(): StoredSession | null {
+    if(typeof localStorage==='undefined')return null;
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     try {

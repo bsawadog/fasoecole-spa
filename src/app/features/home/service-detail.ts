@@ -1,5 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { LucideArrowLeft, LucideArrowRight, LucideCheck } from '@lucide/angular';
 
 interface ServiceInfo {
@@ -51,5 +52,6 @@ const SERVICES: Record<string, ServiceInfo> = {
 })
 export class ServiceDetail {
   private readonly route = inject(ActivatedRoute);
-  readonly service = computed(() => SERVICES[this.route.snapshot.paramMap.get('slug') ?? ''] ?? null);
+  private readonly params = toSignal(this.route.paramMap,{initialValue:this.route.snapshot.paramMap});
+  readonly service = computed(() => SERVICES[this.params().get('slug') ?? ''] ?? null);
 }

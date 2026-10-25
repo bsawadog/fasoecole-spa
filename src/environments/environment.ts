@@ -1,4 +1,5 @@
 export const environment = {
+  siteUrl: 'http://localhost:4200',
   primeUiLicense: '',
   production: false,
   envName: 'local' as const,
