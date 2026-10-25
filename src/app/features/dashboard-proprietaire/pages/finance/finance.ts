@@ -1,3 +1,19 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { RowActions } from '../../../../shared/ui/row-actions';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { TooltipModule } from 'primeng/tooltip';
+import { DateField } from '../../../../shared/ui/date-field';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { TagModule } from 'primeng/tag';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { TableRow } from '../../../../shared/ui/table-row';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
+import { TableModule } from 'primeng/table';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
@@ -26,7 +42,7 @@ const monthStart = () => today().slice(0, 8) + '01';
 @Component({
   selector: 'app-finance',
   standalone: true,
-  imports: [FormValidationDirective, FormsModule, RouterLink, DecimalPipe],
+  imports: [ErrorAlert, RowActions, ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, TagModule, ProgressBarModule, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, TableModule, FormValidationDirective, FormsModule, RouterLink, DecimalPipe],
   templateUrl: './finance.html',
   styleUrl: './finance.scss',
 })
@@ -401,7 +417,7 @@ export class FinancePage implements OnInit, OnDestroy {
     this.schoolId.set(schoolId);
     this.balances.set(null);
     this.syncSubscription = this.sync.watch(schoolId).subscribe(() => { if (!this.loading()) { this.loadTab(); this.loadBalances(); } });
-    this.auth.selectSchoolContext(schoolId);
+
     this.loading.set(true);
     this.panel.set(null);
     this.overview.set(null);

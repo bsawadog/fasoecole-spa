@@ -1,10 +1,11 @@
 <div class="ss">
-  <header class="ss__header"><div><h1>Messages</h1><p>Lisez les messages de votre établissement et répondez aux conversations.</p></div></header>
-  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
+  <header class="module-help-header ss__header">
+    <app-module-help /><div><h1>Messages</h1><p>Lisez les messages de votre établissement et répondez aux conversations.</p></div></header>
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
   <div class="ss__split">
     <aside class="ss__card" aria-label="Conversations">
       <h2 class="ss__card-head">Mes conversations</h2>
-      @if (loading()) { <p class="ss__body">Chargement…</p> }
+      @if (loading()) { <app-loading-state message="Chargement…" /> }
       @for (item of conversations(); track item.id) {
         <button type="button" class="ss__conv" [disabled]="sending()" [class.ss__conv--on]="thread()?.conversation?.id === item.id" [class.ss__conv--unread]="item.unread" (click)="open(item)">
           <strong>{{ item.subject }}</strong><span>{{ item.schoolName }}</span>
@@ -26,9 +27,9 @@
           }
         </div>
         <form (ngSubmit)="send()" class="ss__body">
-          <label class="ss__field">Répondre<textarea name="reply" [(ngModel)]="reply" [required]="!files.length" maxlength="4000" rows="3"></textarea></label>
+          <label class="ss__field">Répondre<textarea pTextarea name="reply" [(ngModel)]="reply" [required]="!files.length" maxlength="4000" rows="3"></textarea></label>
           <app-conversation-files [(files)]="files" [disabled]="sending()" />
-          <button class="ss__btn" type="submit" [disabled]="sending() || (!reply.trim() && !files.length)">{{ sending() ? 'Envoi…' : 'Envoyer' }}</button>
+          <button pButton class="ss__btn" type="submit" [disabled]="sending() || (!reply.trim() && !files.length)">{{ sending() ? 'Envoi…' : 'Envoyer' }}</button>
         </form>
       } @else { <p>Choisissez une conversation.</p> }
     </section>

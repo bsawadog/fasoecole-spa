@@ -1,3 +1,4 @@
+@layer legacy {
 :host {
   display: block;
   min-height: 100vh;
@@ -37,8 +38,8 @@
 
 .auth-page__brand-logo {
   display: block;
-  width: 10rem;
-  height: 3rem;
+  width: 5rem;
+  height: 5rem;
   object-fit: contain;
 }
 
@@ -75,6 +76,27 @@
   object-fit: cover;
   object-position: center;
   animation: auth-image-pan 22s ease-in-out infinite alternate;
+}
+
+.auth-card__home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  align-self: flex-start;
+  margin-bottom: 1rem;
+  padding: .5rem .25rem;
+  color: var(--theme-link, #075c78);
+  font-size: .9rem;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: .2em;
+
+  &:hover { color: var(--theme-ink, #152c40); }
+  &:focus-visible {
+    outline: 3px solid var(--theme-focus, #087d9f);
+    outline-offset: 3px;
+    border-radius: .25rem;
+  }
 }
 
 @keyframes auth-image-pan {
@@ -481,4 +503,6 @@
     flex-direction: column;
     gap: 0;
   }
+}
+
 }

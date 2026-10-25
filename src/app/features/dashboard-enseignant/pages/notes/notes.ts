@@ -1,3 +1,16 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { RowActions } from '../../../../shared/ui/row-actions';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { TooltipModule } from 'primeng/tooltip';
+import { DateField } from '../../../../shared/ui/date-field';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
@@ -38,7 +51,7 @@ interface EvaluationForm {
 @Component({
   selector: 'app-enseignant-notes',
   standalone: true,
-  imports: [FormValidationDirective, DatePipe, DecimalPipe, FormsModule],
+  imports: [ErrorAlert, RowActions, ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, DecimalPipe, FormsModule],
   templateUrl: './notes.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

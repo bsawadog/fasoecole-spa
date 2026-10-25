@@ -1,30 +1,23 @@
 <div class="ss">
-  <header class="ss__header">
+  <header class="module-help-header ss__header">
+    <app-module-help />
     <div>
       <h1>Messages</h1>
       <p>Échangez avec les enseignants, les élèves et les parents de votre établissement.</p>
     </div>
-    <button class="ss__btn" type="button" (click)="toggleComposer()">Nouvelle conversation</button>
-    @if (schools().length > 1) {
-      <label class="ss__picker">Établissement
-        <select [value]="schoolId() ?? ''" (change)="changeSchool($any($event.target).value)">
-          @for (school of schools(); track school.id) {
-            <option [value]="school.id">{{ school.name }}</option>
-          }
-        </select>
-      </label>
-    } @else if (schools().length === 1) {
+    <button pButton class="ss__btn" type="button" (click)="toggleComposer()">Nouvelle conversation</button>
+    @if (schools().length === 1) {
       <span class="ss__chip">{{ schools()[0].name }}</span>
     }
   </header>
 
-  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
-  @if (success()) { <p class="ss__alert ss__alert--success" role="status">{{ success() }}</p> }
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
+  @if (success()) { <p-message severity="success" class="ss__alert ss__alert--success" role="status">{{ success() }}</p-message> }
 
   @if (!loading() && !schools().length) {
     <p class="ss__state">Aucun établissement n’est associé à votre compte propriétaire.</p>
   } @else if (loading()) {
-    <p class="ss__state">Chargement des conversations…</p>
+    <app-loading-state message="Chargement des conversations…" />
   } @else {
     <div class="ss__split">
       <aside class="ss__card" aria-label="Conversations de l’établissement">
@@ -51,26 +44,26 @@
           <form class="ss__body" (ngSubmit)="startConversation()">
             <h2>Nouvelle conversation</h2>
             <p class="ss__muted">Choisissez une ou plusieurs personnes. Tous les participants voient les messages et les destinataires de la conversation.</p>
-            <label class="ss__field">Rechercher un destinataire<input name="recipientSearch" [ngModel]="recipientSearch()" (ngModelChange)="searchRecipients($event)" placeholder="Nom, prénom, courriel ou rôle" /></label>
+            <label class="ss__field">Rechercher un destinataire<input pInputText name="recipientSearch" [ngModel]="recipientSearch()" (ngModelChange)="searchRecipients($event)" placeholder="Nom, prénom, courriel ou rôle" /></label>
             <div class="ss__actions">
-              <button type="button" class="ss__mini" [disabled]="loadingRecipients()" (click)="reloadRecipients()">{{ loadingRecipients() ? 'Chargement des destinataires…' : 'Actualiser les destinataires' }}</button>
-              <button type="button" class="ss__mini" [class.ss__mini--selected]="groupSelected('ENSEIGNANT')" [attr.aria-pressed]="groupSelected('ENSEIGNANT')" (click)="selectAllRecipients('ENSEIGNANT')">Tous les enseignants ({{ groupCount('ENSEIGNANT') }})</button>
-              <button type="button" class="ss__mini" [disabled]="loadingRecipients()" [class.ss__mini--selected]="groupSelected('ELEVE')" [attr.aria-pressed]="groupSelected('ELEVE')" (click)="selectAllRecipients('ELEVE')">Tous les élèves ({{ loadingRecipients() ? '…' : groupCount('ELEVE') }})</button>
-              <button type="button" class="ss__mini" [class.ss__mini--selected]="groupSelected('PARENT')" [attr.aria-pressed]="groupSelected('PARENT')" (click)="selectAllRecipients('PARENT')">Tous les parents ({{ groupCount('PARENT') }})</button>
-              <button type="button" class="ss__mini" [class.ss__mini--selected]="recipients().length > 0 && selectedRecipientIds().length === recipients().length" (click)="selectAllRecipients()">Les trois groupes ({{ recipients().length }})</button>
-              <button type="button" class="ss__mini" (click)="selectedRecipientIds.set([])">Tout désélectionner</button>
+              <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" [disabled]="loadingRecipients()" (click)="reloadRecipients()">{{ loadingRecipients() ? 'Chargement des destinataires…' : 'Actualiser les destinataires' }}</button>
+              <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" [class.ss__mini--selected]="groupSelected('ENSEIGNANT')" [attr.aria-pressed]="groupSelected('ENSEIGNANT')" (click)="selectAllRecipients('ENSEIGNANT')">Tous les enseignants ({{ groupCount('ENSEIGNANT') }})</button>
+              <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" [disabled]="loadingRecipients()" [class.ss__mini--selected]="groupSelected('ELEVE')" [attr.aria-pressed]="groupSelected('ELEVE')" (click)="selectAllRecipients('ELEVE')">Tous les élèves ({{ loadingRecipients() ? '…' : groupCount('ELEVE') }})</button>
+              <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" [class.ss__mini--selected]="groupSelected('PARENT')" [attr.aria-pressed]="groupSelected('PARENT')" (click)="selectAllRecipients('PARENT')">Tous les parents ({{ groupCount('PARENT') }})</button>
+              <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" [class.ss__mini--selected]="recipients().length > 0 && selectedRecipientIds().length === recipients().length" (click)="selectAllRecipients()">Les trois groupes ({{ recipients().length }})</button>
+              <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" (click)="selectedRecipientIds.set([])">Tout désélectionner</button>
             </div>
             <p class="ss__muted">{{ selectedRecipientIds().length }} destinataire(s) sélectionné(s)</p>
-            <button type="button" class="ss__mini" [attr.aria-expanded]="showRecipients() || !!recipientSearch().trim()" (click)="showRecipients.set(!(showRecipients() || !!recipientSearch().trim())); searchRecipients('')">{{ showRecipients() || recipientSearch().trim() ? 'Masquer la liste' : 'Choisir des personnes' }}</button>
+            <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" [attr.aria-expanded]="showRecipients() || !!recipientSearch().trim()" (click)="showRecipients.set(!(showRecipients() || !!recipientSearch().trim())); searchRecipients('')">{{ showRecipients() || recipientSearch().trim() ? 'Masquer la liste' : 'Choisir des personnes' }}</button>
             @if (showRecipients() || recipientSearch().trim()) {
               <div class="ss__recipient-tools">
                 <label class="ss__field">Rôle
-                  <select name="recipientRole" [ngModel]="recipientRoleFilter()" (ngModelChange)="filterRole($event)">
-                    <option value="">Tous les rôles</option>
-                    <option value="ENSEIGNANT">Enseignants</option>
-                    <option value="ELEVE">Élèves</option>
-                    <option value="PARENT">Parents</option>
-                  </select>
+                  <app-select-field name="recipientRole" [ngModel]="recipientRoleFilter()" (ngModelChange)="filterRole($event)" [ariaLabel]="(&quot;Rôle &quot;).trim()">
+                    <app-select-option [value]="&quot;&quot;" [label]="(&quot;Tous les rôles&quot;).trim()" />
+                    <app-select-option [value]="&quot;ENSEIGNANT&quot;" [label]="(&quot;Enseignants&quot;).trim()" />
+                    <app-select-option [value]="&quot;ELEVE&quot;" [label]="(&quot;Élèves&quot;).trim()" />
+                    <app-select-option [value]="&quot;PARENT&quot;" [label]="(&quot;Parents&quot;).trim()" />
+                  </app-select-field>
                 </label>
                 <label><input type="checkbox" [checked]="selectedOnly()" (change)="selectedOnly.set($any($event.target).checked); recipientLimit.set(30)" /> Sélectionnés seulement</label>
               </div>
@@ -85,20 +78,20 @@
               }
               </div>
               @if (visibleRecipients().length < filteredRecipients().length) {
-                <button type="button" class="ss__mini" (click)="recipientLimit.set(recipientLimit() + 30)">Afficher plus ({{ visibleRecipients().length }}/{{ filteredRecipients().length }})</button>
+                <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" (click)="recipientLimit.set(recipientLimit() + 30)">Afficher plus ({{ visibleRecipients().length }}/{{ filteredRecipients().length }})</button>
               }
             }
             <label class="ss__field">Objet
-              <input name="subject" [(ngModel)]="subject" maxlength="160" required />
+              <input pInputText name="subject" [(ngModel)]="subject" maxlength="160" required />
             </label>
             <label class="ss__field">Message
-              <textarea name="message" [(ngModel)]="message" rows="4" maxlength="4000" [required]="!messageFiles.length"></textarea>
+              <textarea pTextarea name="message" [(ngModel)]="message" rows="4" maxlength="4000" [required]="!messageFiles.length"></textarea>
             </label>
             <app-conversation-files [(files)]="messageFiles" [disabled]="sending()" />
             <div class="ss__emoji-picker" aria-label="Ajouter un emoji">
-              @for (emoji of emojis; track emoji) { <button type="button" (click)="addEmoji(emoji, 'message')" [attr.aria-label]="'Ajouter ' + emoji">{{ emoji }}</button> }
+              @for (emoji of emojis; track emoji) { <button pButton type="button" (click)="addEmoji(emoji, 'message')" [attr.aria-label]="'Ajouter ' + emoji">{{ emoji }}</button> }
             </div>
-            <button class="ss__btn" type="submit" [disabled]="sending() || !selectedRecipientIds().length || !subject.trim() || (!message.trim() && !messageFiles.length)">
+            <button pButton class="ss__btn" type="submit" [disabled]="sending() || !selectedRecipientIds().length || !subject.trim() || (!message.trim() && !messageFiles.length)">
               {{ sending() ? 'Envoi…' : 'Créer la conversation' }}
             </button>
           </form>
@@ -122,13 +115,13 @@
           </div>
           <form class="ss__body" (ngSubmit)="sendReply()">
             <label class="ss__field">Répondre aux participants
-              <textarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" [required]="!replyFiles.length"></textarea>
+              <textarea pTextarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" [required]="!replyFiles.length"></textarea>
             </label>
             <app-conversation-files [(files)]="replyFiles" [disabled]="sending()" />
             <div class="ss__emoji-picker" aria-label="Ajouter un emoji">
-              @for (emoji of emojis; track emoji) { <button type="button" (click)="addEmoji(emoji, 'reply')" [attr.aria-label]="'Ajouter ' + emoji">{{ emoji }}</button> }
+              @for (emoji of emojis; track emoji) { <button pButton type="button" (click)="addEmoji(emoji, 'reply')" [attr.aria-label]="'Ajouter ' + emoji">{{ emoji }}</button> }
             </div>
-            <button class="ss__btn" type="submit" [disabled]="sending() || (!reply.trim() && !replyFiles.length)">
+            <button pButton class="ss__btn" type="submit" [disabled]="sending() || (!reply.trim() && !replyFiles.length)">
               {{ sending() ? 'Envoi…' : 'Envoyer la réponse' }}
             </button>
           </form>

@@ -1,0 +1,74 @@
+@use '../../../home/home-theme' as home;
+
+@media screen {
+  .shell__content:has(app-proprietaire-home) {
+    background: var(--theme-background, #{home.$background});
+  }
+
+  .shell__page .owner-dashboard > header {
+    color: var(--theme-ink, #f0f7ff);
+
+    h1 { color: var(--theme-ink, #f0f7ff); }
+    .owner-dashboard__eyebrow { color: var(--theme-link, #a5e9f3); }
+    .owner-dashboard__subtitle { color: var(--theme-muted, #c1d6e8); }
+  }
+
+  .shell__page .owner-dashboard {
+    color: var(--theme-ink, #f0f7ff);
+    --p-button-primary-background: var(--theme-button, #0c6b83);
+    --p-button-primary-border-color: var(--theme-button-border, #3997ae);
+    --p-button-primary-color: #fff;
+    --p-button-primary-hover-background: var(--theme-button-hover, #0e8097);
+    --p-button-primary-hover-border-color: var(--theme-accent, #7dd3fc);
+    --p-button-primary-hover-color: #fff;
+
+    .owner-dashboard__metric, .owner-dashboard__panel,
+    .owner-dashboard__school-badge, .owner-dashboard__empty {
+      background: var(--theme-surface, #0d3154);
+      border-color: var(--theme-border, #2d5a78);
+      color: var(--theme-ink, #f0f7ff);
+      box-shadow: var(--theme-shadow, 0 8px 24px rgb(0 10 30 / 15%));
+    }
+    h2, h3, strong, .owner-dashboard__attendance-grid strong,
+    .owner-dashboard__finance-row strong, .owner-dashboard__notification-list strong { color: var(--theme-ink, #f0f7ff); }
+    a { color: var(--theme-link, #a5e9f3); }
+    a:hover { color: var(--theme-link-hover, #e0f7ff); }
+    .owner-dashboard__metric { color: var(--theme-ink, #f0f7ff); transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
+    .owner-dashboard__metric:hover { transform: translateY(-3px); border-color: var(--metric); box-shadow: 0 12px 28px rgb(0 10 30 / 25%); }
+    .owner-dashboard__metric--green, .owner-dashboard__panel-icon--green { --metric: var(--theme-success, #6ee7b7); --tint: var(--theme-success-soft, #153f42); }
+    .owner-dashboard__metric--blue, .owner-dashboard__panel-icon--blue { --metric: var(--theme-accent, #7dd3fc); --tint: var(--theme-soft, #153d60); }
+    .owner-dashboard__metric--violet, .owner-dashboard__panel-icon--violet { --metric: var(--theme-violet, #c4b5fd); --tint: var(--theme-violet-soft, #30375b); }
+    .owner-dashboard__metric--amber, .owner-dashboard__panel-icon--amber { --metric: var(--theme-warning, #fcd34d); --tint: var(--theme-warning-soft, #414236); }
+    .owner-dashboard__metric--teal { --metric: #5eead4; --tint: #124447; }
+    .owner-dashboard__metric--rose { --metric: var(--theme-danger, #fda4af); --tint: #443249; }
+
+    .owner-dashboard__metric-label, .owner-dashboard__panel-heading p,
+    .owner-dashboard__hint, .owner-dashboard__attendance-total span,
+    .owner-dashboard__attendance-grid div, .owner-dashboard__finance-row div,
+    .owner-dashboard__invoice-count, .owner-dashboard__average span,
+    .owner-dashboard__handled-reports span, .owner-dashboard__handled-reports small,
+    .owner-dashboard__notification-list article, .owner-dashboard__notification-list time,
+    table th, table td { color: var(--theme-muted, #c1d6e8); }
+    .owner-dashboard__average strong { color: var(--theme-violet, #c4b5fd); }
+    .owner-dashboard__average strong small { color: var(--theme-violet, #d8cfff); }
+    .owner-dashboard__finance-row { color: var(--theme-success, #6ee7b7); }
+    .owner-dashboard__finance-row--due { color: var(--theme-warning, #fcd34d); }
+    .owner-dashboard__attendance-total, .owner-dashboard__handled-reports,
+    .owner-dashboard__handled-reports li + li, .owner-dashboard__finance-row + .owner-dashboard__finance-row,
+    table td { border-color: var(--theme-border, #2d5a78); }
+    .owner-dashboard__unread, .owner-dashboard__pending-count { background: var(--theme-warning-soft, #414236); color: var(--theme-warning, #fde68a); }
+    .owner-dashboard__refresh, .owner-dashboard__history-toggle,
+    .owner-dashboard__record-report { background: var(--theme-button, #0c6b83); border-color: var(--theme-button-border, #3997ae); color: #fff; }
+    .owner-dashboard__refresh:hover, .owner-dashboard__history-toggle:hover,
+    .owner-dashboard__record-report:enabled:hover { background: var(--theme-button-hover, #0e8097); }
+    .owner-dashboard__empty h2 { color: var(--theme-ink, #f0f7ff); }
+    .owner-dashboard__message:not(p-message) { background: var(--theme-raised, #103d5d); color: var(--theme-link-hover, #e0f7ff); }
+    table tbody tr:hover { background: var(--theme-raised, #103d5d); }
+    :focus-visible { outline: 3px solid var(--theme-focus, #a5f3fc); outline-offset: 3px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shell__page .owner-dashboard .owner-dashboard__metric { transition: none; }
+    .shell__page .owner-dashboard .owner-dashboard__metric:hover { transform: none; }
+  }
+}

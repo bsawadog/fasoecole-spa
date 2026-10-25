@@ -1,6 +1,7 @@
+@layer legacy {
 .dashboard-home {
   &__subtitle {
-    color: #6b7280;
+    color: var(--theme-muted, #6b7280);
     margin-top: -0.5rem;
   }
 
@@ -13,20 +14,20 @@
 
   &__card {
     padding: 1.4rem;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--theme-border, #e5e7eb);
     border-radius: 0.9rem;
-    background: #fff;
+    background: var(--theme-surface, #fff);
     box-shadow: 0 4px 16px rgb(17 24 39 / 5%);
 
     h2 {
       margin: 0 0 0.6rem;
-      color: #111827;
+      color: var(--theme-ink, #111827);
       font-size: 1.1rem;
     }
 
     p {
       margin: 0;
-      color: #6b7280;
+      color: var(--theme-muted, #6b7280);
       line-height: 1.6;
     }
   }
@@ -39,9 +40,11 @@
 
     &:hover,
     &:focus-visible {
-      border-color: #16a34a;
+      border-color: var(--theme-success, #16a34a);
       box-shadow: 0 6px 20px rgb(22 163 74 / 18%);
       outline: none;
     }
   }
+}
+
 }

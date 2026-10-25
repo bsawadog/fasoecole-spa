@@ -2,9 +2,10 @@
   @if (!embedded()) { <a class="ss__back" routerLink="/parent/enfants">← Mes enfants</a> }
 
   @if (error()) {
-    <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p>
+    <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert>
   } @else if (child(); as c) {
-    <header class="ss__header">
+    <header class="module-help-header ss__header">
+    @if (!embedded()) { <app-module-help /> }
       <div>
         <h1>{{ c.fullName }}</h1>
         <p>{{ c.schoolName }} · {{ c.className ? c.className + ' (' + c.academicYearLabel + ')' : 'Pas d’inscription en cours' }}
@@ -37,7 +38,7 @@
     </div>
     }
 
-    @if (tabError()) { <p class="ss__alert ss__alert--error" role="alert">{{ tabError() }}</p> }
+    @if (tabError()) { <app-error-alert [message]="tabError()" (dismissed)="tabError.set(null)">{{ tabError() }}</app-error-alert> }
 
     @switch (tab()) {
       @case ('notes') {
@@ -45,7 +46,7 @@
       }
       @case ('emploi') {
         @if (schedule(); as entries) { <app-schedule-view [entries]="entries" [showTeacher]="true" /> }
-        @else if (!tabError()) { <p class="ss__state">Chargement…</p> }
+        @else if (!tabError()) { <app-loading-state message="Chargement…" /> }
       }
       @case ('absences') {
         <form class="ss__card ss__body" (ngSubmit)="reportAbsence()">
@@ -53,24 +54,24 @@
           <p class="ss__muted">Prévenez l’établissement d’une absence ou d’un retard pour une date précise.</p>
           <div class="ss__form">
             <label>Date concernée
-              <input type="date" name="reportDate" [(ngModel)]="reportDate" required />
+              <app-date-field mode="date" name="reportDate" [(ngModel)]="reportDate" required [ariaLabel]="(&quot;Date concernée &quot;).trim()" />
             </label>
             <label>Type de signalement
-              <select name="reportType" [(ngModel)]="reportType">
-                <option value="ABSENT">Absence</option>
-                <option value="LATE">Retard</option>
-              </select>
+              <app-select-field name="reportType" [(ngModel)]="reportType" [ariaLabel]="(&quot;Type de signalement &quot;).trim()">
+                <app-select-option [value]="&quot;ABSENT&quot;" [label]="(&quot;Absence&quot;).trim()" />
+                <app-select-option [value]="&quot;LATE&quot;" [label]="(&quot;Retard&quot;).trim()" />
+              </app-select-field>
             </label>
             <label class="ss__wide">Motif
-              <textarea name="reportReason" [(ngModel)]="reportReason" rows="3" maxlength="500" required
+              <textarea pTextarea name="reportReason" [(ngModel)]="reportReason" rows="3" maxlength="500" required
                         placeholder="Indiquez brièvement le motif de l’absence"></textarea>
             </label>
           </div>
-          <button class="ss__btn" type="submit" [disabled]="reportSaving">
+          <button pButton class="ss__btn" type="submit" [disabled]="reportSaving">
             {{ reportSaving ? 'Envoi…' : 'Envoyer le signalement' }}
           </button>
         </form>
-        @if (reportSuccess()) { <p class="ss__alert ss__alert--success" role="status">{{ reportSuccess() }}</p> }
+        @if (reportSuccess()) { <p-message severity="success" class="ss__alert ss__alert--success" role="status">{{ reportSuccess() }}</p-message> }
         @if (absenceReports(); as reports) {
           <section class="ss__card ss__body">
             <h2>Signalements envoyés</h2>
@@ -116,7 +117,7 @@
               </table>
             </div>
           }
-        } @else if (!tabError()) { <p class="ss__state">Chargement…</p> }
+        } @else if (!tabError()) { <app-loading-state message="Chargement…" /> }
       }
       @case ('frais') {
         @if (invoices(); as items) {
@@ -146,10 +147,10 @@
               </table>
             </div>
           }
-        } @else if (!tabError()) { <p class="ss__state">Chargement…</p> }
+        } @else if (!tabError()) { <app-loading-state message="Chargement…" /> }
       }
     }
   } @else {
-    <p class="ss__state">Chargement…</p>
+    <app-loading-state message="Chargement…" />
   }
 </div>

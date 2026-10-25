@@ -1,3 +1,16 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { RowActions } from '../../../../shared/ui/row-actions';
+import type { ExpenseInvoiceTax } from '../../expenses.service';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { TooltipModule } from 'primeng/tooltip';
+import { DateField } from '../../../../shared/ui/date-field';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
@@ -11,7 +24,7 @@ import {
 import { Payables } from '../../shared/payables/payables';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 
-type Tab = 'summary' | 'expenses' | 'budget' | 'categories' | 'payables' | 'salaries';
+type Tab = 'create' | 'fixed' | 'summary' | 'expenses' | 'budget' | 'categories' | 'payables';
 
 const isoDate = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -21,7 +34,7 @@ const monthStart = () => today().slice(0, 8) + '01';
 @Component({
   selector: 'app-expenses',
   standalone: true,
-  imports: [FormValidationDirective, FormsModule, DecimalPipe, Payables],
+  imports: [ErrorAlert, RowActions, ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DecimalPipe, Payables],
   templateUrl: './expenses.html',
   styleUrl: './expenses.scss',
 })
@@ -35,17 +48,29 @@ export class ExpensesPage implements OnInit, OnDestroy {
   readonly todayIso = today();
   readonly methods = Object.keys(METHOD_LABELS) as PaymentMethod[];
   readonly tabs: { id: Tab; label: string }[] = [
-    { id: 'salaries', label: 'Salaires' },
-    { id: 'payables', label: 'À payer' },
+    { id: 'create', label: 'Saisir une dépense' },
+    { id: 'fixed', label: 'Saisir une charge fixe' },
+    { id: 'payables', label: 'Dépenses à payer' },
+    { id: 'expenses', label: 'Paiements effectués' },
     { id: 'summary', label: 'Bilan' },
-    { id: 'expenses', label: 'Paiements enregistrés' },
     { id: 'budget', label: 'Budget annuel' },
     { id: 'categories', label: 'Catégories' },
   ];
 
+  readonly explanations: Record<Tab, string> = {
+    create: 'Enregistrez une dépense ponctuelle : achat, réparation ou facture. Indiquez le montant total TTC, les taxes éventuelles et la date d’échéance. Elle apparaîtra dans Dépenses à payer ; aucun paiement n’est enregistré à cette étape.',
+    fixed: 'Configurez une charge qui revient chaque mois, comme le loyer ou un abonnement. Choisissez le montant, le premier mois et le jour d’échéance. Une dépense à régler sera préparée chaque mois. Vous pouvez arrêter ou réactiver la charge ci-dessous.',
+    payables: 'Retrouvez les dépenses à régler et les impayés antérieurs. Cliquez sur Payer / détails pour consulter une dépense et enregistrer un versement partiel ou total. Chaque versement apparaît ensuite dans Paiements effectués.',
+    expenses: 'Consultez les paiements réellement effectués, avec leur date, leur mode et leur référence. Une facture déjà réglée peut être enregistrée directement ici. Pour régler une dépense déjà saisie, utilisez Dépenses à payer afin de conserver son suivi.',
+    summary: 'Comparez les recettes encaissées et les dépenses payées sur la période, suivez le solde et les dépassements de budget. Les dépenses encore à payer restent dans leur rubrique dédiée.',
+    budget: 'Définissez le montant prévu pour chaque catégorie sur l’année scolaire. Le budget sert de repère pour comparer vos prévisions aux dépenses payées ; sa saisie n’enregistre aucun paiement.',
+    categories: 'Classez les dépenses par nature : fournitures, entretien, loyer… Créez ou modifiez vos catégories pour retrouver vos dépenses et suivre votre budget. Les catégories de paie sont gérées par l’application.',
+  };
+  readonly activeSection = computed(() => this.tabs.find(item => item.id === this.tab())!);
+
   readonly schools = signal<RegistrationSchool[]>([]);
   readonly schoolId = signal<number | null>(null);
-  readonly tab = signal<Tab>('payables');
+  readonly tab = signal<Tab>('create');
   readonly summary = signal<ExpenseSummary | null>(null);
   readonly categories = signal<ExpenseCategory[]>([]);
   readonly expenses = signal<ExpenseRow[]>([]);
@@ -140,12 +165,26 @@ export class ExpensesPage implements OnInit, OnDestroy {
 
   // ------------------------------------------------------------ dépenses
 
+  invoiceEnabled=false;
+  invoice={number:"",date:"",supplierIfu:"",taxDueDate:""};
+  invoiceTaxes:ExpenseInvoiceTax[]=[];
+  hasInvoiceWithholding(row:ExpenseRow):boolean{return !!row.invoice?.taxes.some(t=>t.treatment==='WITHHELD');}
+  invoiceIncluded():number{return this.invoiceTaxes.filter(t=>t.treatment==='INCLUDED').reduce((n,t)=>n+Number(t.amount||0),0);}
+  invoiceWithheld():number{return this.invoiceTaxes.filter(t=>t.treatment==='WITHHELD').reduce((n,t)=>n+Number(t.amount||0),0);}
+  addInvoiceTax():void{this.invoiceTaxes.push({code:"TVA",label:"TVA",treatment:"INCLUDED",amount:0});}
+  async createInvoiceObligations(row:ExpenseRow):Promise<void>{
+    if(this.busy()||!await this.confirmation.confirm({title:"Créer les reversements fiscaux ?",message:"Les retenues de cette facture seront inscrites dans Impôts et taxes. Aucun paiement ne sera effectué.",confirmLabel:"Créer les obligations"}))return;
+    this.run(this.api.createInvoiceObligations(row.id),"Reversements créés ou actualisés dans Impôts et taxes.");
+  }
   openExpense(row?: ExpenseRow): void {
+    this.invoiceEnabled=!!row?.invoice;
+    this.invoice={number:row?.invoice?.number??'',date:row?.invoice?.date??row?.expenseDate??today(),supplierIfu:row?.invoice?.supplierIfu??'',taxDueDate:row?.invoice?.taxDueDate??''};
+    this.invoiceTaxes=(row?.invoice?.taxes??[]).map(t=>({...t}));
     this.error.set(null);
     this.success.set(null);
     this.editingId = row?.id ?? null;
     this.form = row
-      ? { categoryId: row.categoryId, expenseDate: row.expenseDate, amount: row.amount, label: row.label,
+      ? { categoryId: row.categoryId, expenseDate: row.expenseDate, amount: row.invoice?.total??row.amount, label: row.label,
           supplier: row.supplier ?? '', method: row.method ?? 'CASH', reference: row.reference ?? '', notes: row.notes ?? '' }
       : this.emptyExpense();
     this.formOpen.set(true);
@@ -163,8 +202,11 @@ export class ExpensesPage implements OnInit, OnDestroy {
       this.error.set('La date de la dépense ne peut pas être dans le futur.');
       return;
     }
+    const total=Math.round(amount*100)/100,withheld=this.invoiceEnabled?this.invoiceWithheld():0;
+    const invoice=this.invoiceEnabled?{...this.invoice,total,excludingTax:Math.round((total-this.invoiceIncluded())*100)/100,taxDueDate:this.invoice.taxDueDate||null,taxes:this.invoiceTaxes.map(t=>({...t,amount:Number(t.amount)}))}:null;
+    if(invoice&&(!invoice.number.trim()||!invoice.date||invoice.date>f.expenseDate||invoice.excludingTax<0||total<=withheld||invoice.taxes.some(t=>!(t.amount>0)||!t.label.trim())||withheld>0&&!invoice.taxDueDate)){this.error.set('Vérifiez la facture, ses taxes et l’échéance des retenues. Le net fournisseur doit être positif.');return;}
     this.run(this.api.saveExpense(schoolId, {
-      categoryId: Number(f.categoryId), expenseDate: f.expenseDate, amount, label: f.label.trim(),
+      categoryId: Number(f.categoryId), expenseDate: f.expenseDate, amount:Math.round((total-withheld)*100)/100, invoice, label: f.label.trim(),
       supplier: f.supplier.trim() || null, method: f.method, reference: f.reference.trim() || null,
       notes: f.notes.trim() || null,
     }, this.editingId ?? undefined), this.editingId ? 'Dépense modifiée.' : 'Dépense enregistrée.');
@@ -269,8 +311,7 @@ export class ExpensesPage implements OnInit, OnDestroy {
 
   loadTab(): void {
     switch (this.tab()) {
-      case 'salaries':
-      case 'payables': this.loading.set(false); break;
+      case 'create': case 'fixed': case 'payables': this.loading.set(false); break;
       case 'summary':
       case 'budget':
         this.loadSummary();
@@ -331,11 +372,11 @@ export class ExpensesPage implements OnInit, OnDestroy {
     this.requests.unsubscribe();
     this.requests = new Subscription();
     this.schoolId.set(schoolId);
-    this.auth.selectSchoolContext(schoolId);
+
     this.loading.set(true);
     this.summary.set(null);
     this.expenses.set([]);
-    this.yearId = null;
+    this.yearId = Number(localStorage.getItem(`fasoecole_year_${schoolId}`)) || null;
     this.categoryFilter = null;
     this.formOpen.set(false);
     if (this.tab() !== 'expenses' && this.tab() !== 'categories') this.loadCategories();

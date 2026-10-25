@@ -1,141 +1,138 @@
 <section class="teacher-roster">
-  <header class="teacher-roster__header">
+  <header class="module-help-header teacher-roster__header">
+    <app-module-help />
     <div class="teacher-roster__identity">
       <span class="teacher-roster__header-icon" aria-hidden="true">E</span>
       <div>
         <h1>Enseignants par classe</h1>
-        <p>Sélectionnez une classe pour consulter ses enseignants et accéder à leur fiche.</p>
+        <p>Affectez les enseignants existants à une classe et à leurs matières, puis consultez leur fiche.</p>
       </div>
     </div>
-    @if (schools().length > 1) {
-      <label class="teacher-roster__school-picker">Choisir un établissement
-        <select class="teacher-roster__select" [ngModel]="selectedSchoolId()" (change)="changeSchool($event)">
-          @for (school of schools(); track school.id) {
-            <option [value]="school.id">{{ school.name }}</option>
-          }
-        </select>
-      </label>
-    }
+
   </header>
   @if (selectedSchoolId() && !loading()) {
-    <app-roster-import [schoolId]="selectedSchoolId()!" kind="teachers" [classes]="classes()" [subjects]="subjects()" (completed)="importCompleted()" />
+    <details class="teacher-roster__import">
+      <summary>Importer des enseignants depuis Excel ou CSV</summary>
+      <app-roster-import [schoolId]="selectedSchoolId()!" kind="teachers" [classes]="classes()" [subjects]="subjects()" (completed)="importCompleted()" />
+    </details>
+    <div class="teacher-roster__toolbar teacher-roster__payroll">
+      <label>Mois de paie <app-date-field mode="month" [ngModel]="salaryMonth()" (ngModelChange)="salaryMonth.set($event)" ariaLabel="Mois de paie" /></label>
+      <button pButton severity="secondary" variant="outlined" type="button" (click)="refreshPayroll()">Actualiser les salaires</button>
+      <p class="teacher-roster__payroll-hint">Montants du mois choisi, toutes classes confondues.</p>
+    </div>
+    @if (payrollError()) { <app-error-alert [message]="payrollError()" (dismissed)="payrollError.set('')">{{ payrollError() }}</app-error-alert> }
   }
 
 
-  @if (error()) { <div class="teacher-roster__alert teacher-roster__alert--error" role="alert">{{ error() }}</div> }
-  @if (success()) { <div class="teacher-roster__alert teacher-roster__alert--success" role="status">{{ success() }}</div> }
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
+  @if (success()) { <p-message severity="success" class="teacher-roster__alert teacher-roster__alert--success" role="status">{{ success() }}</p-message> }
 
   @if (loading()) {
-    <p class="teacher-roster__state">Chargement des classes…</p>
+    <app-loading-state message="Chargement des classes…" />
   } @else if (!schools().length) {
     <p class="teacher-roster__state">Aucun établissement associé à votre compte.</p>
   } @else if (!classes().length) {
-    <p class="teacher-roster__state">Aucune classe dans cet établissement. Créez-en une dans Gestion de l’établissement.</p>
+    <p class="teacher-roster__state">Aucune classe dans cet établissement. Créez-en une dans Configuration de l’école.</p>
   } @else {
     <section class="teacher-roster__card" aria-label="Choix de la classe">
-      <div class="teacher-roster__card-head"><h2>Classe sélectionnée</h2></div>
       <div class="teacher-roster__toolbar">
         <label class="teacher-roster__class-picker" for="teacher-class-select">Choisir une classe
-          <select id="teacher-class-select" class="teacher-roster__select" [ngModel]="selectedClassId()" (change)="changeClass($event)">
+          <app-select-field inputId="teacher-class-select" class="teacher-roster__select" [ngModel]="selectedClassId()" (change)="changeClass($event)" [ariaLabel]="(&quot;Choisir une classe &quot;).trim()">
             @for (schoolClass of classes(); track schoolClass.id) {
-              <option [value]="schoolClass.id">{{ classLabel(schoolClass) }}</option>
+              <app-select-option [value]="schoolClass.id" [label]="((&quot;&quot; + ((classLabel(schoolClass))) + &quot;&quot;)).trim()" />
             }
-          </select>
+          </app-select-field>
         </label>
         <div class="teacher-roster__toolbar-actions">
-          <button type="button" class="teacher-roster__add-btn" (click)="openAddTeacher()" [disabled]="!subjects().length">+ Ajouter un enseignant</button>
-          <button type="button" class="teacher-roster__add-btn" (click)="openAssignment()" [disabled]="!subjects().length || !candidates().length">
+          <button pButton type="button" class="teacher-roster__add-btn" (click)="openAssignment()" [disabled]="!subjects().length || !candidates().length">
             Affecter un enseignant existant
           </button>
-          <button type="button" class="teacher-roster__secondary-btn" (click)="toggleAllTeachers()" [attr.aria-expanded]="showAllTeachers()">
+          <button pButton severity="secondary" variant="outlined" type="button" class="teacher-roster__secondary-btn" (click)="toggleAllTeachers()" [attr.aria-expanded]="showAllTeachers()">
             {{ showAllTeachers() ? 'Masquer la liste des enseignants' : 'Voir tous les enseignants de l’établissement' }}
           </button>
         </div>
+        <div class="teacher-roster__search">
+          <input pInputText type="search" id="roster-teacher-search" class="teacher-roster__select"
+                 [ngModel]="teacherSearch()" (ngModelChange)="teacherSearch.set($event)"
+                 aria-label="Rechercher un enseignant par nom, prénom, numéro, matière ou courriel"
+                 placeholder="Rechercher : nom, prénom, numéro, matière ou courriel" />
+          @if (teacherSearch()) {
+            <button pButton severity="secondary" variant="outlined" type="button" (click)="teacherSearch.set('')">Effacer</button>
+          }
+          <span class="teacher-roster__count" role="status">{{ filteredTeachers().length }} / {{ teachers().length }} enseignants</span>
+        </div>
       </div>
       @if (!subjects().length) {
-        <p class="teacher-roster__hint">Créez d’abord une matière dans Gestion de l’établissement → Académique pour pouvoir affecter un enseignant.</p>
+        <p class="teacher-roster__hint">Créez d’abord une matière dans Configuration de l’école → Académique pour pouvoir affecter un enseignant.</p>
       } @else if (!candidates().length) {
-        <p class="teacher-roster__hint">Aucun enseignant existant n’est disponible : utilisez « Ajouter un enseignant » pour en créer un.</p>
+        <p class="teacher-roster__hint">Aucun enseignant existant n’est disponible. Le propriétaire peut en ajouter depuis « Créer un employé » en choisissant la fonction « Enseignant », puis revenir ici pour l’affecter.</p>
       }
     </section>
 
-    @if (addingTeacher()) {
-      <form class="teacher-roster__new-form teacher-roster__card" (ngSubmit)="saveTeacher()">
-        <div class="teacher-roster__card-head"><h2>Nouvel enseignant dans cette classe</h2></div>
+    @if (loadingEditor()) {
+      <app-loading-state message="Chargement des informations de l’enseignant…" />
+    }
+    @if (editingTeacher()) {
+      <form class="teacher-roster__new-form teacher-roster__card" #editTeacherForm="ngForm" (ngSubmit)="editTeacherForm.valid && saveTeacherEdit()" aria-label="Modifier l’enseignant">
+        <div class="teacher-roster__card-head"><h2>Modifier {{ editingTeacherName }}</h2></div>
         <div class="teacher-roster__edit-grid">
-          <label>Prénom<input name="firstName" [(ngModel)]="newTeacher.firstName" required maxlength="100"></label>
-          <label>Nom<input name="lastName" [(ngModel)]="newTeacher.lastName" required maxlength="100"></label>
-          <label>Courriel<input name="email" type="email" email [(ngModel)]="newTeacher.email" required maxlength="150"></label>
-          <p>Un lien d’activation sera envoyé par courriel pour choisir le mot de passe.</p>
-          <label>Téléphone<input name="phone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="newTeacher.phone" maxlength="30"></label>
-          <label>Numéro d’employé<input type="text" name="employeeNumber" [(ngModel)]="newTeacher.employeeNumber" maxlength="50" placeholder="Attribué automatiquement si vide"></label>
-          <label>Spécialité<input name="specialty" [(ngModel)]="newTeacher.specialty" maxlength="150"></label>
-          <label>Date d’embauche<input name="hireDate" type="date" [(ngModel)]="newTeacher.hireDate"></label>
-          <label>Salaire mensuel fixe (FCFA)<input name="monthlySalary" type="number" min="0" max="9999999999.99" step="0.01" [(ngModel)]="newTeacher.monthlySalary" placeholder="Ou définir un taux dans la fiche enseignant"></label>
-          <label>Matière enseignée
-            <select name="subjectId" [(ngModel)]="newTeacher.subjectId" required>
-              @for (subject of subjects(); track subject.id) { <option [ngValue]="subject.id">{{ subject.name }}</option> }
-            </select>
-          </label>
+          <label>Spécialité<input pInputText name="editSpecialty" [(ngModel)]="teacherEditForm.specialty" maxlength="150" [disabled]="saving()"></label>
+          <label>Date d’embauche<app-date-field name="editHireDate" [(ngModel)]="teacherEditForm.hireDate" ariaLabel="Date d’embauche" [disabled]="saving()" /></label>
         </div>
         <div class="teacher-roster__edit-actions">
-          <button type="submit" [disabled]="saving()">Créer et affecter</button>
-          <button type="button" (click)="cancelForms()">Annuler</button>
+          <button pButton type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer' }}</button>
+          <button pButton severity="secondary" variant="outlined" type="button" [disabled]="saving()" (click)="cancelForms()">Annuler</button>
         </div>
       </form>
     }
-
     @if (assigningTeacher()) {
       <form class="teacher-roster__new-form teacher-roster__card" (ngSubmit)="saveAssignment()">
         <div class="teacher-roster__card-head"><h2>Affecter un enseignant existant</h2></div>
         <p class="teacher-roster__hint">Seuls les enseignants liés à vos établissements sont proposés.</p>
         <div class="teacher-roster__edit-grid">
           <label>Enseignant
-            <select name="existingTeacher" [(ngModel)]="assignment.teacherId" required>
+            <app-select-field name="existingTeacher" [ngModel]="assignment.teacherId" (ngModelChange)="chooseAssignmentTeacher($event)" required [ariaLabel]="(&quot;Enseignant &quot;).trim()">
               @for (candidate of candidates(); track candidate.id) {
-                <option [ngValue]="candidate.id">{{ candidate.firstName }} {{ candidate.lastName }} · {{ candidate.email }}</option>
+                <app-select-option [value]="candidate.id" [label]="((&quot;&quot; + ((candidate.firstName)) + &quot; &quot; + ((candidate.lastName)) + &quot; · &quot; + ((candidate.email)) + &quot;&quot;)).trim()" />
               }
-            </select>
+            </app-select-field>
           </label>
-          <label>Matière
-            <select name="existingSubject" [(ngModel)]="assignment.subjectId" required>
-              @for (subject of subjects(); track subject.id) { <option [ngValue]="subject.id">{{ subject.name }}</option> }
-            </select>
-          </label>
+          <fieldset class="teacher-roster__subjects"><legend>Matières à enseigner dans cette classe</legend>
+            <p>Les matières du dossier de l’enseignant sont précochées lorsqu’elles existent dans cet établissement. Ajustez les choix ; les affectations déjà présentes sont conservées.</p>
+            @for (subject of subjects(); track subject.id) {
+              <label><input type="checkbox" [name]="'assignmentSubject' + subject.id" [checked]="assignmentSubjectIds.includes(subject.id)" (change)="toggleSubject(subject.id, $any($event.target).checked)"> {{ subject.name }}</label>
+            }
+          </fieldset>
         </div>
         <div class="teacher-roster__edit-actions">
-          <button type="submit" [disabled]="saving()">Affecter à cette classe</button>
-          <button type="button" (click)="cancelForms()">Annuler</button>
+          <button pButton type="submit" [disabled]="saving()">Affecter à cette classe</button>
+          <button pButton severity="secondary" variant="outlined" type="button" (click)="cancelForms()">Annuler</button>
         </div>
       </form>
     }
 
     @if (loadingTeachers()) {
-      <p class="teacher-roster__state">Chargement des enseignants…</p>
+      <app-loading-state message="Chargement des enseignants…" />
     } @else if (!teachers().length) {
       <p class="teacher-roster__state">Aucun enseignant affecté à cette classe. Les affectations sont déterminées par la classe et la matière enseignée.</p>
     } @else {
       <section class="teacher-roster__card">
-        <div class="teacher-roster__card-head">
-          <h2>Enseignants affectés</h2>
-          <span class="teacher-roster__count">{{ teachers().length }} enseignant(s)</span>
-        </div>
-        <ng-container *ngTemplateOutlet="teacherTable; context: { $implicit: teachers(), empty: '—', classMode: true }" />
+        <ng-container *ngTemplateOutlet="teacherTable; context: { $implicit: filteredTeachers(), empty: '—', classMode: true }" />
       </section>
     }
 
     @if (showAllTeachers()) {
       @if (loadingAllTeachers()) {
-        <p class="teacher-roster__state">Chargement des enseignants de l’établissement…</p>
+        <app-loading-state message="Chargement des enseignants de l’établissement…" />
       } @else if (!allTeachers().length) {
         <p class="teacher-roster__state">Aucun enseignant enregistré dans cet établissement.</p>
       } @else {
         <section class="teacher-roster__card">
           <div class="teacher-roster__card-head">
             <h2>Tous les enseignants de l’établissement</h2>
-            <span class="teacher-roster__count">{{ allTeachers().length }} enseignant(s)</span>
+            <span class="teacher-roster__count" role="status">{{ filteredAllTeachers().length }} / {{ allTeachers().length }} enseignants</span>
           </div>
-          <ng-container *ngTemplateOutlet="teacherTable; context: { $implicit: allTeachers(), empty: 'Aucune affectation', classMode: false }" />
+          <ng-container *ngTemplateOutlet="teacherTable; context: { $implicit: filteredAllTeachers(), empty: 'Aucune affectation', classMode: false }" />
         </section>
       }
     }
@@ -146,7 +143,7 @@
   <div class="teacher-roster__table-wrap">
     <table class="teacher-roster__table">
       <thead><tr>
-        <th>Enseignant</th><th>Matières</th><th>Contact</th>
+        <th>Enseignant</th><th>Matières</th><th>Contact</th><th>Salaire net</th><th>Versements</th><th>Reste à payer</th>
         @if (classMode) { <th>Statut</th> } @else { <th>Classes actives</th> }
         <th>Actions</th>
       </tr></thead>
@@ -160,13 +157,20 @@
                   <div class="teacher-roster__muted">{{ teacher.specialty || 'Spécialité non renseignée' }} · {{ teacher.employeeNumber || 'Numéro à attribuer' }}</div></div>
               </div>
             </td>
-            <td>{{ teacher.subjects.join(', ') || empty }}</td>
-            <td>{{ teacher.email }}<div class="teacher-roster__muted">{{ teacher.phone || '—' }}</div>
-              @if (teacher.emailVerified === false && teacher.userId) {
+            <td>{{ (classMode ? teacher.subjects.join(', ') : teachingSubjectsLabel(teacher)) || empty }}</td>
+            <td class="teacher-roster__contact">
+              <details><summary>{{ teacher.email || 'Aucun courriel' }}</summary>
+              <div class="teacher-roster__muted">{{ teacher.phone || 'Aucun téléphone' }}</div>
+              @if (teacherNeedsActivation(teacher) && teacher.userId) {
                 <small>{{ teacher.invitationDeliveryStatus === 'FAILED' ? 'Envoi échoué' : 'Compte à activer' }}</small>
-                <button type="button" [disabled]="saving()" (click)="resendInvitation(teacher.userId)">Renvoyer le lien</button>
               }
+              </details>
             </td>
+            @if (salary(teacher.id); as contract) {
+              <td>{{ contract.rate === null ? 'À définir' : money(contract.net ?? contract.due) }}</td>
+              <td>{{ money(contract.paid) }}</td>
+              <td><a [routerLink]="['/proprietaire/salaires']" [queryParams]="{ month: salaryMonth() }">{{ money(contract.remaining) }}</a></td>
+            } @else { <td>—</td><td>—</td><td>—</td> }
             @if (classMode) {
               <td>
                 @if (teacher.activeInClass === false) {
@@ -179,16 +183,31 @@
               <td><span class="teacher-roster__count">{{ teacher.classCount ?? 0 }}</span></td>
             }
             <td class="teacher-roster__actions">
-              <a class="teacher-roster__action" [routerLink]="['/proprietaire/enseignants', teacher.id]">Voir la fiche</a>
-              @if (classMode) {
-                @if (teacher.activeInClass === false) {
-                  <button type="button" class="teacher-roster__action teacher-roster__action--ok" [disabled]="saving()" (click)="setTeacherActive(teacher, true)">Réactiver</button>
-                } @else {
-                  <button type="button" class="teacher-roster__action teacher-roster__action--danger" [disabled]="saving()" (click)="setTeacherActive(teacher, false)">Désactiver</button>
-                }
-              }
+              <p-menu #actionsMenu [model]="teacherActions(teacher, classMode)" [popup]="true" appendTo="body" styleClass="teacher-roster-actions-menu">
+                <ng-template #item let-item>
+                  <a class="p-menu-item-link teacher-roster__menu-item" [attr.data-action]="item.icon" [routerLink]="item.disabled ? null : item.routerLink" [attr.aria-disabled]="item.disabled || null" tabindex="-1">
+                    @switch (item.icon) {
+                      @case ('eye') { <svg lucideEye [size]="18" aria-hidden="true"></svg> }
+                      @case ('pencil') { <svg lucidePencil [size]="18" aria-hidden="true"></svg> }
+                      @case ('send') { <svg lucideSend [size]="18" aria-hidden="true"></svg> }
+                      @case ('key') { <svg lucideKeyRound [size]="18" aria-hidden="true"></svg> }
+                      @case ('restore') { <svg lucideRotateCcw [size]="18" aria-hidden="true"></svg> }
+                      @case ('power') { <svg lucidePower [size]="18" aria-hidden="true"></svg> }
+                      @case ('trash') { <svg lucideTrash2 [size]="18" aria-hidden="true"></svg> }
+                    }
+                    <span>{{ item.label }}</span>
+                  </a>
+                </ng-template>
+              </p-menu>
+              <button pButton severity="secondary" variant="outlined" type="button" class="teacher-roster__menu-button"
+                      (click)="actionsMenu.toggle($event)" aria-haspopup="menu" [attr.aria-expanded]="actionsMenu.visible()"
+                      [attr.aria-label]="'Actions : ' + teacher.firstName + ' ' + teacher.lastName">
+                Actions <svg lucideChevronDown [size]="16" aria-hidden="true"></svg>
+              </button>
             </td>
           </tr>
+        } @empty {
+          <tr><td colspan="8" class="teacher-roster__state">Aucun enseignant ne correspond à votre recherche.</td></tr>
         }
       </tbody>
     </table>

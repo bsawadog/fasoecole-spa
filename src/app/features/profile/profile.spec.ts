@@ -18,6 +18,7 @@ describe('ProfilePage', () => {
       updateProfile: vi.fn(() => of({ ...baseUser, firstName: 'Aminata' })),
       changePassword: vi.fn(() => of(undefined)),
       resendEmailVerification: vi.fn(() => of({ emailSent: true })),
+      requestEmailChange: vi.fn(() => of({ emailSent: true })),
       logout: vi.fn(),
       getRegistrationSchools: vi.fn(() => of([{ id: 2, name: 'École B', type: 'PRIMAIRE' }])),
     };
@@ -61,9 +62,29 @@ describe('ProfilePage', () => {
     );
   }
 
+  it('requests confirmation without replacing the current personal email', async () => {
+    const { fixture, auth } = setup();
+    await fixture.whenStable();
+    const form = fixture.nativeElement.querySelector('#profile-new-email').closest('form') as HTMLFormElement;
+    for (const [id, value] of [['profile-new-email', 'new@example.test'], ['profile-email-password', 'current']]) {
+      const input = fixture.nativeElement.querySelector('#' + id) as HTMLInputElement;
+      input.value = value; input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    fixture.detectChanges(); await fixture.whenStable();
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+    expect(auth.requestEmailChange).toHaveBeenCalledWith('new@example.test', 'current');
+    expect(fixture.componentInstance.user()?.email).toBe(baseUser.email);
+    expect(fixture.componentInstance.emailMessage()).toContain('confirmation');
+    expect(fixture.componentInstance.emailSaving()).toBe(false);
+  });
+
   it('displays personal details and saves editable fields', async () => {
     const { fixture, auth } = setup();
     const page = fixture.componentInstance;
+    const profileType = fixture.nativeElement.querySelector('#profile-type') as HTMLInputElement;
+    expect(profileType.value).toBe('Enseignant');
+    expect(profileType.readOnly).toBe(true);
     const email = fixture.nativeElement.querySelector('#profile-email') as HTMLInputElement;
     expect(email.value).toBe('awa@ecole.bf');
     expect(email.readOnly).toBe(true);

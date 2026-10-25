@@ -1,37 +1,38 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { forkJoin, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
 import { StaffService } from '../../staff.service';
-import { TeacherWorkService } from '../../teacher-work.service';
 
-interface Employee { key: string; name: string; job: string; email: string; phone: string | null; route: string; staffId?: number; }
+interface Employee { key: string; name: string; job: string; email: string; phone: string | null; route: string; staffId?: number; userId:number; }
 @Component({
-  selector: 'app-employee-directory', standalone: true, imports: [FormsModule, RouterLink],
+  selector: 'app-employee-directory', standalone: true, imports: [ErrorAlert, ModuleHelpButton, LoadingState, InputTextModule, MessageModule, FormsModule, RouterLink],
   template: `
-    <h1>Tous les employés de l’école</h1>
-    <p>Enseignants et personnel : consultez leur fiche.</p>
-    <label>Établissement <select [ngModel]="schoolId()" (ngModelChange)="selectSchool($event)">
-      @for (school of schools(); track school.id) { <option [ngValue]="school.id">{{ school.name }}</option> }
-    </select></label>
-    <label>Rechercher <input [(ngModel)]="search" placeholder="Nom, fonction ou courriel"></label>
-    @if (error()) { <p role="alert">{{ error() }}</p> }
-    @if (loading()) { <p>Chargement…</p> } @else {
+    <header class="ui-page-header module-help-header"><app-module-help /><h1>Tous les employés de l’école</h1>
+    <p>Enseignants et personnel : consultez leur fiche.</p></header>
+
+    <label>Rechercher <input pInputText [(ngModel)]="search" placeholder="Nom, fonction ou courriel"></label>
+    @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}</app-error-alert> }
+    @if (loading()) { <app-loading-state message="Chargement…" /> } @else {
       <div class="table-wrap"><table><thead><tr><th>Employé</th><th>Fonction</th><th>Contact</th><th></th></tr></thead><tbody>
         @for (employee of filtered(); track employee.key) {
           <tr><td>{{ employee.name }}</td><td>{{ employee.job }}</td><td>{{ employee.email }}@if (employee.phone) { <br>{{ employee.phone }} }</td>
-          <td><a [routerLink]="employee.route" [queryParams]="employee.staffId ? {staffId: employee.staffId} : {}">Voir la fiche</a></td></tr>
+          <td><a [routerLink]="employee.route" [queryParams]="{employeeId: employee.userId}">Voir la fiche</a></td></tr>
         } @empty { <tr><td colspan="4">Aucun employé pour cette recherche.</td></tr> }
       </tbody></table></div>
     }
   `,
-  styles: [`:host{display:block}label{display:inline-flex;gap:10px;align-items:center;margin:12px 20px 12px 0}input,select{padding:10px;border:1px solid #cbd5e1;border-radius:8px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;background:white}th,td{text-align:left;padding:16px;border-bottom:1px solid #e2e8f0}a{color:#15803d}`],
+  styles: [`@layer legacy { :host{display:block}label{display:inline-flex;gap:10px;align-items:center;margin:12px 20px 12px 0}input,select{padding:10px;border:1px solid var(--theme-control-border, #cbd5e1);border-radius:8px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;background:var(--theme-surface, white)}th,td{text-align:left;padding:16px;border-bottom:1px solid var(--theme-border, #e2e8f0)}a{color:var(--theme-success, #15803d)} }`],
 })
 export class EmployeeDirectory implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly staff = inject(StaffService);
-  private readonly teachers = inject(TeacherWorkService);
   private readonly requests = new Subscription();
   private schoolRequest?: Subscription;
   readonly schools = signal<RegistrationSchool[]>([]);
@@ -56,14 +57,11 @@ export class EmployeeDirectory implements OnInit, OnDestroy {
   selectSchool(id: number): void {
     if (!this.schools().some(s => s.id === id)) return;
     this.schoolRequest?.unsubscribe();
-    this.schoolId.set(id); this.auth.selectSchoolContext(id);
+    this.schoolId.set(id);
     this.employees.set([]); this.loading.set(true); this.error.set('');
-    this.schoolRequest = forkJoin({staff: this.staff.list(id), teachers: this.teachers.teachersBySchool(id)}).subscribe({
+    this.schoolRequest = this.staff.directory(id).subscribe({
       next: data => {
-        this.employees.set([
-          ...data.teachers.map(t => ({key: 'teacher-'+t.id, name: t.lastName+' '+t.firstName, job: 'Enseignant', email: t.email, phone: t.phone, route: '/proprietaire/enseignants/'+t.id})),
-          ...data.staff.map(s => ({key: 'staff-'+s.id, name: s.lastName+' '+s.firstName, job: s.jobTitle, email: s.email, phone: s.phone, route: '/proprietaire/personnel', staffId: s.id})),
-        ].sort((a,b) => a.name.localeCompare(b.name, 'fr')));
+        this.employees.set(data.map(s=>({key:'employee-'+s.userId,userId:s.userId,name:s.lastName+' '+s.firstName,job:s.teacher && s.administrativeEmployment?s.jobTitle+' · Enseignant':s.jobTitle,email:s.email??'',phone:s.phone,route:'/proprietaire/personnel'})));
         this.loading.set(false);
       },
       error: () => { this.loading.set(false); this.error.set('Impossible de charger les employés.'); },

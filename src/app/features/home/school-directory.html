@@ -1,22 +1,25 @@
 <main class="school-directory">
   <header class="school-directory__header">
-    <a routerLink="/" aria-label="Retour à l’accueil"><img src="assets/images/fasoecole-logo-alt.svg" alt="FasoEcole" /></a>
+    <a routerLink="/" aria-label="Retour à l’accueil"><img src="assets/images/logofe.png" alt="FasoEcole" /></a>
     <a class="school-directory__back" routerLink="/">Accueil</a>
   </header>
 
   @if (schoolId; as id) {
     @if (loading()) {
-      <p class="school-directory__state">Chargement de la fiche de l’établissement…</p>
+      <app-loading-state message="Chargement de la fiche de l’établissement…" />
     } @else if (selectedSchool(); as school) {
       <section class="school-profile">
         <p class="school-profile__eyebrow">Établissement partenaire FasoEcole</p>
         <span class="school-profile__type">{{ typeName(school.type) }}</span>
         <h1>{{ school.name }}</h1>
         <p class="school-profile__intro">Un établissement qui utilise FasoEcole pour accompagner les élèves, les familles et l’équipe éducative au quotidien.</p>
+        <h2>Les fonctionnalités FasoÉcole</h2>
         <div class="school-profile__features">
-          <article><strong>Suivi scolaire</strong><span>Les informations de scolarité réunies dans un espace numérique.</span></article>
-          <article><strong>Communication</strong><span>Des échanges facilités entre l’établissement, les familles et les enseignants.</span></article>
-          <article><strong>Accompagnement</strong><span>Des outils adaptés au parcours et au niveau de l’établissement.</span></article>
+          @for (feature of platformFeatures; track feature.slug) {
+            <article><strong>{{ feature.title }}</strong><span>{{ feature.description }}</span>
+              <a [routerLink]="['/services', feature.slug]">En savoir plus</a>
+            </article>
+          }
         </div>
         <a class="school-profile__cta" routerLink="/login">Accéder à mon espace</a>
         <a class="school-profile__all" routerLink="/etablissements">Voir les autres établissements</a>
@@ -27,12 +30,14 @@
   } @else {
     <section class="school-directory__hero">
       <p class="school-directory__eyebrow">Le réseau FasoEcole</p>
-      <h1>Les établissements partenaires</h1>
+      <h1>{{ directoryTitle() }}</h1>
       <p>Découvrez les écoles et centres de formation qui utilisent FasoEcole pour rapprocher les équipes éducatives et les familles.</p>
     </section>
 
+
+
     @if (loading()) {
-      <p class="school-directory__state">Chargement des établissements…</p>
+      <app-loading-state message="Chargement des établissements…" />
     } @else if (failed()) {
       <p class="school-directory__state" role="alert">Le répertoire est momentanément indisponible. Réessayez plus tard.</p>
     } @else if (!visibleSchools().length) {
@@ -48,5 +53,17 @@
         }
       </div>
     }
+
+    <section class="school-directory__features" aria-labelledby="directory-features-title">
+      <h2 id="directory-features-title">Les fonctionnalités FasoÉcole</h2>
+      <p>Découvrez les outils de la plateforme pour accompagner ce parcours.</p>
+      <div class="school-profile__features">
+        @for (feature of platformFeatures; track feature.slug) {
+          <article><strong>{{ feature.title }}</strong><span>{{ feature.description }}</span>
+            <a [routerLink]="['/services', feature.slug]">En savoir plus</a>
+          </article>
+        }
+      </div>
+    </section>
   }
 </main>

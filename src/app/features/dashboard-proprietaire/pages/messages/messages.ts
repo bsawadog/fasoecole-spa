@@ -1,3 +1,12 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe } from '@angular/common';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
@@ -12,7 +21,7 @@ import { ConversationFiles, MessageAttachments } from '../../../../shared/self-s
 @Component({
   selector: 'app-owner-messages',
   standalone: true,
-  imports: [FormValidationDirective, DatePipe, FormsModule, ConversationFiles, MessageAttachments],
+  imports: [ErrorAlert, ModuleHelpButton, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, ConversationFiles, MessageAttachments],
   templateUrl: './messages.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })
@@ -94,19 +103,7 @@ export class OwnerMessages implements OnInit {
       this.error.set('Impossible d’identifier votre compte propriétaire.');
       return;
     }
-    if (!this.auth.isSchoolOwner()) {
-      this.auth.loadOwnerAccess().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: (access) => this.initializeSchools(access.filter((school) => school.modules.includes('STUDENTS')).map((school) => ({
-          id: school.schoolId, name: school.schoolName, type: school.schoolType,
-        }))),
-        error: () => {
-          this.loading.set(false);
-          this.error.set('Impossible de charger les établissements accessibles.');
-        },
-      });
-      return;
-    }
-    this.auth.getOwnedSchools(ownerId, 'DASHBOARD').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.auth.getOwnedSchools(ownerId, 'MESSAGES').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (schools) => this.initializeSchools(schools),
       error: () => {
         this.loading.set(false);
@@ -266,7 +263,7 @@ export class OwnerMessages implements OnInit {
 
   private selectSchool(schoolId: number): void {
     this.schoolId.set(schoolId);
-    this.auth.selectSchoolContext(schoolId);
+
     this.loading.set(true);
     this.error.set(null);
     this.thread.set(null);

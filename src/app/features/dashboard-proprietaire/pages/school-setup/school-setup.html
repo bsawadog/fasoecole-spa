@@ -1,42 +1,34 @@
-<main class="setup">
-  <header><h1>Demander un nouvel établissement</h1><p>Présentez votre établissement en quelques informations. Vous organiserez les classes et ajouterez les personnes après approbation.</p></header>
-  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
-  @if (success()) { <p class="success" role="status">{{ success() }}</p> }
-  @if (loading()) { <p>Chargement de la demande…</p> }
+<main class="setup ui-workspace">
+  <header class="module-help-header ui-page-header">
+    <app-module-help /><h1>Demander un nouvel établissement</h1><p>Présentez votre établissement en quelques informations. Vous organiserez les classes et ajouterez les personnes après approbation.</p></header>
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
+  @if (success()) { <p-message severity="warn" class="success" [class.success--pending]="finalized() && !active()" role="status">{{ success() }}</p-message> }
+  @if (loading()) { <app-loading-state message="Chargement de la demande…" /> }
   @else {
     @if (!finalized()) {
-      <form #schoolForm="ngForm" (ngSubmit)="schoolForm.valid && create()">
-        <h2>Identité et effectifs prévus</h2>
-        <label>Nom de l’établissement<input name="name" [(ngModel)]="form.name" required maxlength="200" [readonly]="saving()" /></label>
-        <label>Type<select name="type" [(ngModel)]="form.type" required [disabled]="saving()">
-          <option value="PRESCOLAIRE">Préscolaire</option><option value="PRIMAIRE">Primaire</option><option value="SECONDAIRE">Secondaire</option><option value="MIXTE">Mixte</option><option value="UNIVERSITE">Université</option><option value="FORMATION">Centre de formation</option>
-        </select></label>
-        <label>Adresse<input name="address" [(ngModel)]="form.address" required maxlength="255" [readonly]="saving()" /></label>
-        <label>Téléphone (facultatif)<input name="phone" type="tel" inputmode="tel" [(ngModel)]="form.phone" maxlength="30" [readonly]="saving()" /></label>
-        <label>Courriel (facultatif)<input name="email" type="email" email [(ngModel)]="form.email" maxlength="150" [readonly]="saving()" /></label>
-        <label>Nombre prévu d’élèves / étudiants<input name="expectedStudentCount" type="number" min="0" max="2147483647" step="1" [(ngModel)]="form.expectedStudentCount" required [readonly]="saving()" /></label>
-        <label>Nombre prévu de classes<input name="expectedClassCount" type="number" min="1" max="2147483647" step="1" [(ngModel)]="form.expectedClassCount" required [readonly]="saving()" /></label>
-        <label>Nombre prévu d’enseignants<input name="expectedTeacherCount" type="number" min="0" max="2147483647" step="1" [(ngModel)]="form.expectedTeacherCount" required [readonly]="saving()" /></label>
+      <form class="ui-panel ui-school-form" #schoolForm="ngForm" (ngSubmit)="schoolForm.valid && create()">
+        <h2 class="ui-panel-heading">Identité et effectifs prévus</h2>
+        <label>Nom de l’établissement<input pInputText name="name" [(ngModel)]="form.name" required maxlength="200" [readonly]="saving()" /></label>
+        <label>Type<app-select-field name="type" [(ngModel)]="form.type" required [disabled]="saving()" [ariaLabel]="(&quot;Type&quot;).trim()">
+          <app-select-option [value]="&quot;PRESCOLAIRE&quot;" [label]="(&quot;Maternelle&quot;).trim()" /><app-select-option [value]="&quot;PRIMAIRE&quot;" [label]="(&quot;Primaire&quot;).trim()" /><app-select-option [value]="&quot;SECONDAIRE&quot;" [label]="(&quot;Secondaire&quot;).trim()" /><app-select-option [value]="&quot;MIXTE&quot;" [label]="(&quot;Mixte&quot;).trim()" /><app-select-option [value]="&quot;UNIVERSITE&quot;" [label]="(&quot;Université&quot;).trim()" /><app-select-option [value]="&quot;FORMATION&quot;" [label]="(&quot;Centre de formation&quot;).trim()" />
+        </app-select-field></label>
+        <label>Adresse<input pInputText name="address" [(ngModel)]="form.address" required maxlength="255" [readonly]="saving()" /></label>
+        <label>Téléphone (facultatif)<input pInputText name="phone" type="tel" inputmode="tel" [(ngModel)]="form.phone" maxlength="30" [readonly]="saving()" /></label>
+        <label>Courriel (facultatif)<input pInputText name="email" type="email" email [(ngModel)]="form.email" maxlength="150" [readonly]="saving()" /></label>
+        <label>Nombre prévu d’élèves / étudiants<app-number-field name="expectedStudentCount" min="0" max="2147483647" step="1" [(ngModel)]="form.expectedStudentCount" required [readonly]="saving()" [ariaLabel]="(&quot;Nombre prévu d’élèves / étudiants&quot;).trim()" /></label>
+        <label>Nombre prévu de classes<app-number-field name="expectedClassCount" min="1" max="2147483647" step="1" [(ngModel)]="form.expectedClassCount" required [readonly]="saving()" [ariaLabel]="(&quot;Nombre prévu de classes&quot;).trim()" /></label>
+        <label>Nombre prévu d’enseignants<app-number-field name="expectedTeacherCount" min="0" max="2147483647" step="1" [(ngModel)]="form.expectedTeacherCount" required [readonly]="saving()" [ariaLabel]="(&quot;Nombre prévu d’enseignants&quot;).trim()" /></label>
         <p class="hint">Ces nombres sont des estimations. Il n’est pas nécessaire de saisir les classes, les enseignants ou les élèves pour envoyer la demande.</p>
-        <div class="actions"><button type="submit" [disabled]="saving()">{{ saving() ? 'Envoi…' : 'Envoyer pour approbation' }}</button></div>
+        <p class="hint">L’année scolaire en cours (du 1er octobre au 30 septembre) et une base de matières adaptée au type d’établissement seront créées automatiquement. Après approbation, vous pourrez modifier les dates, adapter les matières et en ajouter dans « Configuration de l’école ».</p>
+        <div class="actions"><button pButton type="submit" [disabled]="saving()">{{ saving() ? 'Envoi…' : 'Envoyer pour approbation' }}</button></div>
       </form>
     } @else {
       <h2>{{ schoolName() }}</h2>
       <p>{{ form.address }} · {{ form.expectedStudentCount ?? '—' }} élèves / étudiants · {{ form.expectedClassCount ?? '—' }} classes · {{ form.expectedTeacherCount ?? '—' }} enseignants prévus</p>
       @if (active()) {
         <a routerLink="/proprietaire/gestion">Commencer la configuration de l’établissement</a>
-      } @else { <button type="button" (click)="refresh()" [disabled]="saving()">Vérifier l’approbation</button> }
-      <button type="button" (click)="startAnother()" [disabled]="saving()">Demander un autre établissement</button>
+      } @else { <button pButton type="button" (click)="refresh()" [disabled]="saving()">Vérifier l’approbation</button> }
+      <button pButton type="button" (click)="startAnother()" [disabled]="saving()">Demander un autre établissement</button>
     }
-    <section aria-label="Aperçu des fonctionnalités">
-      <h2>Découvrez les modules</h2>
-      <nav aria-label="Modules disponibles après approbation">
-        @for (item of modules; track item.name) { <button type="button" [class.active]="module() === item.name" (click)="module.set(item.name)">{{ item.name }}</button> }
-      </nav>
-      @for (item of modules; track item.name) { @if (module() === item.name) {
-        <h3>{{ item.name }}</h3><p>{{ item.description }}</p>
-        @if (!active()) { <p class="hint" role="status">Les informations de ce module seront visibles et pourront être renseignées lorsque la demande de création d’établissement sera approuvée par le SUPER_ADMIN.</p> }
-      } }
-    </section>
   }
 </main>

@@ -1,3 +1,13 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { DateField } from '../../../../shared/ui/date-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
@@ -17,7 +27,7 @@ const TITLES: Record<Module, string> = { notes: 'Notes et bulletins', absences: 
 
 @Component({
   selector: 'app-parent-module', standalone: true,
-  imports: [FormValidationDirective, DatePipe, DecimalPipe, FormsModule, ParentChildDetail, PortalPosts, Appointments],
+  imports: [ErrorAlert, ModuleHelpButton, DateField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, DecimalPipe, FormsModule, ParentChildDetail, PortalPosts, Appointments],
   templateUrl: './modules.html', styleUrls: ['../../../../shared/self-space/self-space.scss', './modules.scss'],
 })
 export class ParentModule implements OnInit {

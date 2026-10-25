@@ -1,0 +1,369 @@
+@layer legacy, primeng, application;
+
+@layer application {
+  .shell__page .ui-actions-trigger {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .45rem .8rem; min-height: 2.5rem;
+    border: 1px solid var(--theme-link, #2563eb); border-radius: .5rem;
+    background: var(--theme-soft, #dbeafe); color: var(--theme-link, #1d4ed8);
+    font-weight: 600; white-space: nowrap; cursor: pointer;
+    &:hover, &[aria-expanded='true'] { background: var(--theme-link, #2563eb); color: var(--theme-button-ink, #fff); }
+  }
+  .ui-actions-panel[popover] {
+    position: fixed; inset: auto; margin: 0; padding: .4rem;
+    width: min(22rem, calc(100vw - 1rem)); max-width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem);
+    overflow: auto; border: 1px solid var(--theme-border, #e2e8f0); border-radius: .65rem;
+    background: var(--theme-surface, #fff); color: var(--theme-ink, #1e293b);
+    box-shadow: 0 8px 24px rgb(15 23 42 / 20%); line-height: 1.4;
+    &:popover-open { display: flex; flex-direction: column; gap: .15rem; }
+  }
+  .shell__page .ui-actions-panel.ui-actions-panel :is(button, a) {
+    display: flex; align-items: center; justify-content: flex-start; gap: .65rem;
+    width: 100%; min-width: 0; height: auto; min-height: 2.65rem; margin: 0; padding: .65rem .85rem;
+    border: 0; border-radius: .35rem; box-shadow: none;
+    background: var(--theme-surface, #fff); color: var(--theme-ink, #1e293b);
+    font-size: .875rem; font-weight: 500; text-align: left; text-decoration: none;
+    white-space: normal; cursor: pointer;
+    &:not(:disabled):not([aria-disabled='true']):is(:hover, :focus-visible) {
+      background: var(--theme-soft, #dbeafe); color: var(--theme-ink, #1e293b);
+    }
+    &:disabled, &[aria-disabled='true'] { opacity: .5; cursor: not-allowed; }
+    svg { flex: 0 0 auto; color: var(--theme-link, #2563eb); }
+    &.ui-row-action--warning svg { color: var(--theme-warning, #b45309); }
+    &.ui-row-action--danger svg, &[severity='danger'] svg { color: var(--theme-danger, #dc2626); }
+    &.ui-row-action--success svg, &[class*='--ok'] svg { color: var(--theme-success, #16a34a); }
+  }
+  .ui-actions-panel .ui-actions-label { overflow-wrap: anywhere; }
+  @media print { app-row-actions { display: none !important; } }
+}
+
+@layer application {
+  :root {
+    color-scheme: light;
+    --ui-ink: var(--theme-ink, #192f27);
+    --ui-muted: var(--theme-muted, #62776d);
+    --ui-primary: var(--theme-accent, #047857);
+    --ui-primary-soft: var(--theme-success-soft, #ecf7f1);
+    --ui-border: var(--theme-border, #e0e8e4);
+    --ui-canvas: var(--theme-inset, #f5f8f6);
+    --ui-shadow: 0 2px 12px rgb(22 43 34 / 4%);
+    --ui-radius: 1rem;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { font-size: 15px; -webkit-text-size-adjust: 100%; }
+  body { color: var(--ui-ink); background: var(--ui-canvas); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  button, input, select, textarea { font: inherit; }
+  button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+  button, a { touch-action: manipulation; }
+  button:disabled { cursor: not-allowed; }
+  :focus-visible { outline: 3px solid var(--theme-success-border, #a7d9c5); outline-offset: 3px; }
+  a { text-underline-offset: 0.2em; }
+  ::selection { background: var(--theme-soft, #d1fae5); color: var(--theme-ink, #064e3b); }
+  [hidden] { display: none !important; }
+
+  .p-button { font-size: 0.875rem; min-height: 2.65rem; text-decoration: none; }
+  .p-button:disabled { opacity: 0.55; }
+  .shell__page .ui-row-action {
+    display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;
+    width: 2.75rem; min-height: 2.75rem; padding: 0; border: 1px solid var(--theme-soft, #bfdbfe);
+    border-radius: .6rem; background: var(--theme-soft, #eff6ff); color: var(--theme-link, #1d4ed8); text-decoration: none;
+  }
+  .shell__page .ui-row-action:hover { background: var(--theme-soft, #dbeafe); border-color: var(--theme-accent, #60a5fa); }
+  .shell__page .ui-row-action--danger { color: var(--theme-danger, #b91c1c); background: var(--theme-danger-soft, #fef2f2); border-color: var(--theme-danger-border, #fecaca); }
+  .shell__page .ui-row-action--danger:hover { background: var(--theme-danger-soft, #fee2e2); border-color: var(--theme-danger-border, #f87171); }
+  .shell__page .ui-row-action--success { color: var(--theme-success, #15803d); background: var(--theme-success-soft, #f0fdf4); border-color: var(--theme-success-border, #bbf7d0); }
+  .shell__page .ui-row-action--success:hover { background: var(--theme-success-soft, #dcfce7); border-color: var(--theme-success, #4ade80); }
+  .p-button[class*="__mini"] { min-height: 2.1rem; padding: 0.35rem 0.65rem; font-size: 0.8rem; }
+  .p-inputtext, .p-textarea, .p-select { font-size: 0.9rem; max-width: 100%; }
+  .form-validation-error { display: block; color: var(--theme-danger, #b42318); font-size: .8rem; line-height: 1.5; margin-top: .3rem; }
+  app-date-field .p-datepicker, app-number-field .p-inputnumber, app-select-field .p-select { width: 100%; }
+  app-date-field .p-datepicker-input, app-number-field .p-inputnumber-input { min-width: 0; width: 100%; }
+  :is(app-date-field, app-number-field, app-select-field)[class] { padding: 0; border: 0; background: transparent; box-shadow: none; }
+  .shell__school-context app-select-field { width: 100%; }
+  .shell__page :is(.class-roster__class-picker, .teacher-roster__class-picker) app-select-field .p-select {
+    border: 2px solid var(--theme-warning-border, #f59e0b); background: var(--theme-warning-soft, #fef3c7); color: var(--theme-warning, #78350f); font-weight: 700;
+    box-shadow: 0 0 0 3px rgb(245 158 11 / 15%);
+  }
+  .shell__page :is(.class-roster__class-picker, .teacher-roster__class-picker) .p-select-label { color: var(--theme-warning, #78350f); }
+  .p-inputtext:not([type="checkbox"]):not([type="radio"]) { min-height: 2.65rem; }
+  .p-textarea { resize: vertical; min-height: 6rem; line-height: 1.6; }
+  .p-inputtext[aria-invalid="true"], .p-textarea[aria-invalid="true"] { border-color: var(--theme-danger, #dc2626); }
+  p-message { display: block; max-width: 100%; }
+  p-message[class*="__alert"], p-message[class*="__notice"], p-message[class*="__error"] { margin-block: 0.25rem; padding: 0; border: 0; background: transparent; }
+  .p-message { font-size: 0.9rem; }
+  p-tag { display: inline-flex; }
+
+  // Shared administration pages retain the blue identity of the class roster.
+  .shell__page .ui-workspace { max-width: 82rem; margin-inline: auto; padding: 0; background: transparent; }
+  .shell__page .ui-page-header {
+    padding: 1.4rem 1.5rem; margin-bottom: 1.4rem; border: 1px solid var(--theme-ink, #1e3a8a); border-radius: 1rem;
+    background: linear-gradient(135deg, var(--theme-ink, #1e3a8a), var(--theme-link, #2563eb)); color: var(--theme-button-ink, #fff); box-shadow: 0 2px 6px rgb(30 58 138 / 25%);
+  }
+  .shell__page .ui-page-header h1 { color: var(--theme-button-ink, #fff); margin: 0 0 .4rem; }
+  .shell__page .ui-page-header p { color: var(--theme-soft, #dbeafe); margin: .35rem 0 0; line-height: 1.6; }
+  .shell__page .module-help-header.module-help-header { position:relative; padding-inline-end:5rem; }
+  .shell__page .module-help-header > app-module-help { display:flex; position:absolute; inset-block-start:50%; inset-inline-end:1rem; transform:translateY(-50%); z-index:1; }
+  .shell__page .ui-page-header :is(.eyebrow, .approvals__eyebrow) { color: var(--theme-soft, #bfdbfe); margin: 0 0 .4rem; }
+  .shell__page :is(.ui-panel, .ui-context-bar) { background: var(--theme-surface, #fff); border: 1px solid var(--theme-soft, #dbeafe); border-radius: 1rem; box-shadow: var(--ui-shadow); }
+  .shell__page .ui-panel { padding: 1.5rem; margin-top: 1rem; }
+  .shell__page .ui-panel-heading {
+    margin: -1.5rem -1.5rem 1.25rem; padding: 1rem 1.5rem; background: var(--theme-soft, #eff6ff);
+    color: var(--theme-link-hover, #1e40af); border-bottom: 3px solid var(--theme-link, #2563eb); border-radius: 1rem 1rem 0 0; font-size: 1.1rem;
+  }
+  .shell__page .ui-context-bar { padding: 1rem 1.5rem; background: var(--theme-soft, #eff6ff); }
+  .shell__page .ui-context-bar > label { max-width: 32rem; color: var(--theme-link-hover, #1e40af); font-weight: 600; }
+  .shell__page .employees form { max-width: none; margin: 0; padding: 0; background: transparent; }
+  .shell__page .employees form > p { margin: 0; padding: .8rem 1rem; border-radius: .6rem; background: var(--theme-surface, #f8fafc); color: var(--theme-muted, #475569); font-size: .9rem; }
+  .shell__page .employees form > button { grid-column: 1 / -1; justify-self: start; }
+  .shell__page .ui-school-form { max-width: none; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .shell__page .ui-school-form > :is(h2, .hint, .actions) { grid-column: 1 / -1; }
+  .shell__page .ui-school-form .hint { padding: 1rem; background: var(--theme-warning-soft, #fffbeb); border-radius: .65rem; color: var(--theme-warning, #92400e); margin: 0; }
+  .shell__page .approvals__heading--section { background: var(--theme-soft, #eff6ff); padding: 1rem 1.25rem; border-bottom: 3px solid var(--theme-link, #2563eb); border-radius: .75rem .75rem 0 0; }
+  .shell__page .approvals__heading--section h2 { color: var(--theme-link-hover, #1e40af); }
+  .shell__page .approvals__card { border-color: var(--theme-soft, #dbeafe); box-shadow: var(--ui-shadow); }
+  .shell__page .approvals__avatar { background: var(--theme-soft, #dbeafe); color: var(--theme-link, #1d4ed8); }
+  .shell__page .approvals__controls { padding: 1rem; border-radius: .75rem; background: var(--theme-surface, #f8fafc); }
+  .shell__page .export .card { border-color: var(--theme-soft, #dbeafe); box-shadow: var(--ui-shadow); }
+  .shell__page .export .scope { margin-top: 0; background: var(--theme-soft, #eff6ff); border-left: 3px solid var(--theme-link, #2563eb); color: var(--theme-link-hover, #1e40af); }
+  .shell__page .export .categories > div { padding: 1rem; background: var(--theme-surface, #f8fafc); border: 1px solid var(--theme-border, #e2e8f0); border-radius: .75rem; }
+  .shell__page .export .categories h3 { margin-top: 0; color: var(--theme-link-hover, #1e40af); }
+  .shell__page .export .download { display: flex; flex-direction: column; align-items: flex-start; }
+  .shell__page .export .download p { flex: 1; }
+  .shell__page .export .download:not(.recommended) { background: var(--theme-soft, #eff6ff); border-color: var(--theme-soft, #bfdbfe); }
+  .shell__page .export .recommended { background: var(--theme-success-soft, #f0fdf4); border-color: var(--theme-success-border, #86efac); }
+  .shell__page .platform th { background: var(--theme-soft, #eff6ff); color: var(--theme-link-hover, #1e40af); }
+  .shell__page .platform tbody tr:nth-child(even) { background: var(--theme-soft, #f3f7ff); }
+  .shell__page .platform tbody tr:hover { background: var(--theme-soft, #dbeafe); }
+  // Teacher, parent and student spaces keep their green identity.
+  .shell__page .ss .ss__card { border-color: var(--theme-success-border, #d1e7da); }
+  .shell__page .ss .ss__card-head { background: var(--theme-success-soft, #f0fdf4); border-bottom: 3px solid var(--theme-success, #16a34a); }
+  .shell__page .ss th { background: var(--theme-success-soft, #f0fdf4); color: var(--theme-success, #166534); }
+  .shell__page .ss tbody tr:nth-child(even) { background: var(--theme-success-soft, #f2faf5); }
+  .shell__page .ss tbody tr:hover { background: var(--theme-success-soft, #dcfce7); }
+  @media (max-width: 700px) {
+    .shell__page .ui-page-header { padding: 1.1rem; }
+    .shell__page .ui-panel { padding: 1rem; }
+    .shell__page .ui-panel-heading { margin: -1rem -1rem 1rem; padding: 1rem; }
+    .shell__page .ui-school-form { grid-template-columns: minmax(0, 1fr); }
+    .shell__page .employees form { grid-template-columns: minmax(0, 1fr); }
+    .shell__page .export .card { padding: 1rem; }
+  }
+  @media print {
+    .shell__page .ui-page-header { color: var(--theme-ink, #0f172a); background: var(--theme-surface, #fff); border-color: var(--theme-control-border, #cbd5e1); box-shadow: none; }
+    .shell__page .ui-page-header :is(h1, p) { color: var(--theme-ink, #0f172a); }
+  }
+
+  // Navigation frame: a quiet workspace around the content, with clear context.
+  .shell__sidebar { width: 264px; padding: 1.5rem 0.85rem; background: var(--theme-shell, #112e25); border-right: 1px solid var(--theme-shell, #1e4034); }
+  .shell__brand { padding-inline: 0.5rem; margin-bottom: 1.5rem; }
+  .shell__nav { gap: 0.3rem; }
+  .shell__nav-link { min-height: 2.8rem; padding: 0.7rem 0.8rem; border-radius: 0.65rem; color: var(--theme-border, #c8d9d1); font-size: 0.9rem; font-weight: 500; }
+  .shell__nav-link:hover { background: var(--theme-raised, #1c4033); color: var(--theme-button-ink, #fff); }
+  .shell__nav-link--active { background: var(--theme-button, #24664d); color: var(--theme-button-ink, #fff); box-shadow: inset 3px 0 var(--theme-success-border, #8bd2ac); }
+  .shell__nav-heading { color: var(--theme-muted, #9dbdaf); font-size: 1rem; letter-spacing: 0.01em; }
+  .shell__nav-section { margin-top: 0.65rem; }
+  .shell__content { background: var(--ui-canvas); }
+  .shell__topbar { min-height: 5rem; gap: 0.7rem; background: var(--theme-surface, #fff); border-bottom: 1px solid var(--ui-border); }
+  .shell__page { padding-block: 1.75rem 3rem; }
+  .shell__action { min-height: 2.6rem; border-radius: 0.65rem; font-size: 0.83rem; }
+  .shell__action--active { color: var(--theme-link, #065f46); background: var(--theme-success-soft, #ecf7f1); border-color: var(--theme-success-border, #cce7d9); }
+  .shell__action--logout { color: var(--theme-danger, #a33333); }
+  .shell__modules-toggle.p-button { width: 2.65rem; min-width: 2.65rem; padding: 0; }
+  .shell__modules-toggle svg { width: 1.25rem; height: 1.25rem; flex: 0 0 auto; }
+  .shell__status { border-radius: 0.75rem; }
+
+  // All role workspaces use the same hierarchy while preserving their page layouts.
+  .shell__page :is(.enr, .fin, .dep, .gr, .stf, .ss) { background: transparent; gap: 1.35rem; }
+  .shell__page :is(.enr__header, .fin__header, .dep__header, .gr__header, .stf__header, .ss__header,
+    .class-roster__header, .teacher-roster__header, .owner-management__header, .student-detail__header,
+    .teacher-detail__header, .approvals__header) {
+    border-radius: var(--ui-radius); padding: 1.4rem 1.5rem;
+  }
+  .shell__page h1 { color: var(--ui-ink); font-size: clamp(1.4rem, 2vw, 1.85rem); line-height: 1.25; letter-spacing: -0.035em; font-weight: 750; }
+  .shell__page :is(.enr__header, .fin__header, .dep__header, .gr__header, .stf__header, .ss__header,
+    .class-roster__header, .teacher-roster__header, .owner-management__header, .student-detail__header) p { font-size: 0.9rem; line-height: 1.6; }
+  .shell__page :is(.enr__header, .fin__header, .dep__header, .gr__header, .stf__header, .ss__header,
+    .class-roster__header, .teacher-roster__header, .student-detail__header, .teacher-detail__header) h1 { color: revert-layer; }
+  .shell__page :is(.enr__header-icon, .fin__header-icon, .dep__header-icon, .gr__header-icon, .stf__header-icon) {
+    width: 3rem; height: 3rem; border-radius: 0.8rem; background: var(--ui-primary-soft); color: var(--ui-primary);
+  }
+  .shell__page :is(.enr__school-picker, .fin__school-picker, .dep__school-picker, .gr__school-picker, .ss__picker) { color: var(--ui-muted); }
+  .shell__page :is(.enr__card, .fin__card, .dep__card, .gr__card, .stf__card, .ss__card, .ss__day,
+    .class-roster__card, .teacher-roster__card, .student-detail__card, .teacher-detail__card,
+    .owner-management__panel, .owner-management__editor) {
+    border: 1px solid var(--ui-border); border-radius: var(--ui-radius); background: var(--theme-surface, #fff); box-shadow: var(--ui-shadow);
+  }
+  .shell__page :is(.enr__card-head, .fin__card-head, .dep__card-head, .gr__card-head, .stf__card-head,
+    .ss__card-head, .class-roster__card-head, .teacher-roster__card-head) {
+    min-height: 4rem; padding: 1rem 1.25rem; gap: 0.8rem; flex-wrap: wrap;
+  }
+  .shell__page :is(.enr__card-head, .fin__card-head, .dep__card-head, .gr__card-head, .stf__card-head,
+    .ss__card-head, .class-roster__card-head, .teacher-roster__card-head) h2 {
+    font-size: 0.98rem; text-transform: none; letter-spacing: -0.01em; font-weight: 650;
+  }
+  .shell__page :is(.enr__panel, .fin__panel, .dep__panel, .gr__panel, .stf__panel) { border: 1px solid var(--theme-control-border, #d7e7de); background: var(--theme-inset, #f7faf8); border-radius: 0.85rem; padding: 1.25rem; }
+  .shell__page :is(.enr__form, .fin__form, .dep__form, .gr__form, .ss__form) { gap: 1rem; }
+  .shell__page :is(.enr__actions, .fin__actions, .dep__actions, .ss__actions) { gap: 0.65rem; flex-wrap: wrap; }
+  .shell__page :is(.enr__toolbar, .fin__toolbar, .dep__toolbar, .gr__toolbar, .stf__toolbar) { gap: 1rem; padding: 1rem 1.25rem; background: var(--theme-inset, #fafcfb); }
+  .shell__page label { line-height: 1.5; }
+  .shell select { min-height: 2.65rem; border: 1px solid var(--theme-control-border, #bdcdc5); border-radius: .625rem; padding: .625rem .8rem; color: var(--ui-ink); background: var(--theme-surface, #fff); }
+  .shell__page select, .auth-page select, .registration select {
+    min-height: 2.65rem; padding: 0.625rem 2.2rem 0.625rem 0.8rem;
+    border: 1px solid var(--theme-control-border, #bdcdc5); border-radius: 0.625rem; background-color: var(--theme-surface, #fff); color: var(--ui-ink); font-size: 0.9rem;
+  }
+  .shell__page input:is([type="checkbox"], [type="radio"]) { width: 1.05rem; height: 1.05rem; accent-color: var(--ui-primary); cursor: pointer; vertical-align: middle; }
+
+  // Existing report tables keep their structure; PrimeNG collection tables share this density.
+  .shell__page table { width: 100%; border-collapse: collapse; font-size: 0.875rem; color: var(--ui-ink); }
+  .shell__page :is(th, td) { padding: 0.85rem 1rem; border-bottom: 1px solid var(--theme-border, #edf1ef); vertical-align: middle; }
+  .shell__page th { color: var(--theme-muted, #536c5f); background: var(--theme-inset, #f6f9f7); font-size: 0.72rem; font-weight: 650; letter-spacing: 0.035em; text-align: left; white-space: nowrap; }
+  .shell__page tbody tr:nth-child(odd) { background: transparent; }
+  .shell__page tbody tr:hover { background: var(--theme-raised, #f6faf8); }
+  .shell__page tbody tr:last-child td { border-bottom: 0; }
+  .shell__page td a { color: var(--theme-accent, #047857); }
+  .shell__page td strong { font-weight: 600; }
+  // Keep the blue identity and highlighted class picker of the roster screens.
+  .shell__page :is(.class-roster, .teacher-roster) th { background: var(--theme-soft, #eff6ff); color: var(--theme-link-hover, #1e40af); }
+  .shell__page :is(.class-roster, .teacher-roster) tbody tr:nth-child(odd) { background: var(--theme-soft, #f3f7ff); }
+  .shell__page :is(.class-roster, .teacher-roster) tbody tr:hover { background: var(--theme-soft, #dbeafe); }
+  .shell__page :is(.class-roster, .teacher-roster) td a { color: var(--theme-link, #1d4ed8); }
+  .shell__page :is(.class-roster__class-picker, .teacher-roster__class-picker) select {
+    border: 2px solid var(--theme-warning-border, #f59e0b); background: var(--theme-warning-soft, #fef3c7); color: var(--theme-warning, #78350f);
+    font-weight: 700; box-shadow: 0 0 0 3px rgb(245 158 11 / 15%);
+  }
+  .shell__page :is(.class-roster, .teacher-roster) td a:is(.class-roster__action--primary, .teacher-roster__action--primary) { color: var(--theme-button-ink, #fff); }
+  .shell__page :is([class*="__table-wrap"], .p-datatable-table-container) { overflow-x: auto; overscroll-behavior-x: contain; }
+  .ui-data-table { display: block; width: 100%; }
+  .ui-data-table .p-datatable { border: 0; border-radius: 0; }
+  .ui-data-table .p-datatable-paginator-bottom { border-top: 1px solid var(--ui-border); border-bottom: 0; }
+  .p-paginator { font-size: 0.8rem; gap: 0.25rem; }
+  .p-paginator-current { margin-right: auto; color: var(--ui-muted); }
+  .shell__page :is(.enr__kpi, .fin__kpi, .dep__kpi, .gr__kpi, .ss__kpi, .stf__kpi) {
+    border: 1px solid var(--ui-border); border-left: 3px solid var(--ui-primary); border-radius: 0.9rem;
+    padding: 1.1rem 1.25rem; background: var(--theme-surface, #fff); box-shadow: var(--ui-shadow); gap: 0.4rem;
+  }
+  .shell__page :is(.fin__kpi--warn, .dep__kpi--warn, .ss__kpi--warn) { border-left-color: var(--theme-warning-border, #d89b22); }
+  .shell__page :is(.fin__kpi--bad, .dep__kpi--bad, .ss__kpi--danger) { border-left-color: var(--theme-danger, #d45b5b); }
+  .shell__page :is(.enr__kpi, .fin__kpi, .dep__kpi, .gr__kpi, .ss__kpi) strong { font-size: clamp(1.2rem, 1.6vw, 1.6rem); font-weight: 700; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; }
+  .shell__page :is(.fin__kpi, .dep__kpi, .ss__kpi) > span { color: var(--ui-muted); text-transform: none; font-size: 0.82rem; letter-spacing: 0; }
+  .shell__page :is(.enr__state, .fin__state, .dep__state, .gr__state, .ss__state, .class-roster__state) { padding: 1.5rem; border: 1px dashed var(--ui-border); border-radius: 0.85rem; background: var(--theme-surface, #fff); color: var(--ui-muted); line-height: 1.7; }
+  .shell__page :is(.enr__tabs, .fin__tabs, .dep__tabs, .gr__tabs, .ss__tabs) { gap: 0.4rem; padding: 0.35rem; border: 1px solid var(--ui-border); border-radius: 0.85rem; background: var(--theme-success-soft, #edf3ef); }
+  .shell__page :is(.enr__tab, .fin__tab, .dep__tab, .gr__tab, .ss__tab) { padding: 0.65rem 1rem; border: 0; border-radius: 0.6rem; color: var(--theme-muted, #536c5f); background: transparent; font-size: 0.85rem; }
+  .shell__page :is(.enr__tab--on, .fin__tab--on, .dep__tab--on, .gr__tab--on, .ss__tab--on) { background: var(--theme-surface, #fff); color: var(--theme-link, #065f46); box-shadow: 0 1px 4px #173e241a; }
+  .shell__page :is(.fin__bar, .ss__bar) { border-radius: 999px; overflow: hidden; background: var(--theme-inset, #e8f0eb); }
+  .shell__page .fin__bar > span { background: var(--theme-success, #0d966b); border-radius: inherit; }
+  .shell__page :is(.ss__summary, .ss__day h3) { border-color: var(--ui-border); background: var(--theme-inset, #f6faf7); color: var(--theme-link, #065f46); }
+  .shell__page :is(.ss__card--link:hover, .ss__card--active) { border-color: var(--theme-success-border, #8dc4a9); box-shadow: 0 3px 15px #174b2d0d; }
+  .confirmation { border-radius: 1.1rem; border-color: var(--ui-border); padding: 1.75rem; }
+  .confirmation__icon { color: var(--theme-accent, #047857); background: var(--theme-soft, #e7f5ed); border-radius: 0.8rem; }
+  .confirmation__icon--danger { background: var(--theme-danger-soft, #fff1f2); color: var(--theme-danger, #be123c); }
+  .ui-money { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .ui-empty { padding: 2rem 1.25rem; text-align: center; color: var(--ui-muted); }
+  .enr__fee-table .p-inputnumber { width: 11rem; max-width: 100%; }
+  .enr__fee-table .p-inputnumber-input { width: 100%; text-align: right; }
+  .shell__page .enr__selected, .shell__page .enr__selected:hover { background: var(--theme-success-soft, #f0f9f4); }
+  .enr__fees { min-width: 0; }
+
+  .shell__page :is(.platform > header, .help > header, .setup > header, .export > header, .profile__heading):not(.ui-page-header) {
+    padding: 1.5rem; border: 1px solid var(--ui-border); border-radius: var(--ui-radius); background: var(--theme-surface, #fff); box-shadow: var(--ui-shadow);
+  }
+  .shell__page :is(.platform > header, .help > header, .setup > header, .export > header, .profile__heading):not(.ui-page-header) h1 { margin-top: .25rem; }
+  .shell__page :is(.platform > header, .help > header, .setup > header, .export > header, .profile__heading):not(.ui-page-header) p { color: var(--ui-muted); margin-bottom: 0; }
+  .shell__page :is(.profile__card, .appointments__card, .payables__card, .export .card, .setup form, .help__filters, .help__item) {
+    border: 1px solid var(--ui-border); border-radius: var(--ui-radius); box-shadow: var(--ui-shadow);
+  }
+  .shell__page .profile { max-width: 54rem; }
+  .shell__page .profile__card { padding: 1.6rem; }
+  .shell__page .setup { padding: 0; background: transparent; }
+  .shell__page .setup form:not(.ui-school-form) { margin-top: 1.25rem; padding: 1.5rem; max-width: 54rem; }
+  .shell__page .profile input[readonly] { background: var(--theme-inset, #f5f8f6); color: var(--theme-muted, #62776d); }
+  .shell__page .help__question { min-height: 5rem; }
+  .shell__page .help__question:hover { background: var(--theme-inset, #f7faf8); }
+  .shell__page .help__item--open { border-color: var(--theme-success-border, #a8cdb9); }
+  .shell__page .dashboard-home { padding: 0; }
+  .dashboard-home > h1 { margin: 0 0 .5rem; }
+  .dashboard-home__subtitle { color: var(--ui-muted); margin-bottom: 1.75rem; }
+  .dashboard-home__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1.1rem; }
+  .dashboard-home__card {
+    position: relative; display: flex; flex-direction: column; gap: .6rem; min-height: 10.5rem;
+    border: 1px solid var(--ui-border); border-radius: 1rem; padding: 1.5rem;
+    background: var(--theme-surface, #fff); color: var(--ui-ink); box-shadow: var(--ui-shadow); text-decoration: none;
+  }
+  .dashboard-home__card h2 { margin: .3rem 0 0; color: var(--theme-ink, #225940); font-size: 1.05rem; font-weight: 650; }
+  .dashboard-home__card p { margin: 0; color: var(--ui-muted); font-size: .9rem; line-height: 1.65; }
+  .dashboard-home__card--link { padding-bottom: 3rem; transition: border-color .15s, box-shadow .15s; }
+  .dashboard-home__card--link::after { content: 'Consulter →'; position: absolute; bottom: 1.2rem; left: 1.5rem; color: var(--theme-accent, #047857); font-size: .8rem; font-weight: 600; }
+  .dashboard-home__card--link:hover { border-color: var(--theme-success-border, #9ac7af); box-shadow: 0 4px 20px #174b2d0d; }
+  .shell__page .student-detail__avatar { border-radius: 1rem; background: var(--theme-soft, #e3f3e9); color: var(--theme-accent, #076149); }
+  .shell__page :is(.student-detail__card, .teacher-detail__card) > h2 { color: var(--ui-ink); font-size: 1.05rem; }
+  .shell__page .student-detail__header { margin-bottom: 1.5rem; }
+  .shell__page .student-detail__stats > div { border-radius: .7rem; background: var(--theme-inset, #f4f8f5); }
+
+  // Public pages retain the photography and brand; controls share the product theme.
+  .auth-page .p-inputtext { width: 100%; border-radius: 0.65rem; }
+  .auth-page {
+    --ink: var(--theme-ink, #192f27); --muted: var(--theme-muted, #62776d); --green: var(--theme-accent, #047857);
+    grid-template-columns: 1fr 1fr; align-items: center; justify-items: center;
+    gap: 0; padding: 5.5rem 2.5rem 2.5rem; background: var(--theme-inset, #f7faf8);
+  }
+  .auth-card__visual { position: fixed; inset: 1rem auto 1rem 1rem; width: calc(48% - 1rem); border-radius: 1.5rem; z-index: 0; }
+  .auth-card__image { object-position: 70% center; animation: none; }
+  .auth-card__animation-toggle { display: none; }
+  .auth-card__visual--paused .auth-card__image { animation: none; }
+  .auth-card__image-shade { background: linear-gradient(180deg, #123d2414 20%, #0a3328ef 100%); }
+  .auth-card__visual-copy { display: block; bottom: 2.5rem; left: 2.25rem; right: 2.25rem; }
+  .auth-card__visual-copy h1 { font-size: clamp(1.8rem, 2.8vw, 2.8rem); }
+  .auth-page__brand { position: absolute; left: calc(50% + 2.5rem); top: 1.75rem; }
+  .auth-card {
+    grid-column: 2; width: min(100%, 34rem); min-height: auto; overflow: visible;
+    border: 0; border-radius: 1rem; background: transparent; backdrop-filter: none; box-shadow: none;
+  }
+  .auth-card__form-panel { padding: 2rem; }
+  .auth-card__form-content { max-width: 28rem; }
+  .auth-card__heading h2 { font-size: 2rem; letter-spacing: -.04em; }
+  .auth-card__eyebrow { color: var(--theme-accent, #047857); }
+  .auth-card__text-button { color: var(--theme-accent, #047857); }
+  .auth-card__field label { color: #2e4b3c; }
+  .auth-card__field .p-inputtext { min-height: 3rem; background: var(--theme-surface, #fff); }
+  .auth-card__switch, .auth-card__footer { color: var(--theme-muted, #62776d); }
+  .auth-card__password { position: relative; }
+  .auth-card__password .p-inputtext { padding-right: 3rem; }
+  .auth-card__submit.p-button { width: 100%; min-height: 3rem; }
+  .home__button, .service__button { border-radius: 0.65rem; }
+  .home__program-card { border-radius: 1rem; box-shadow: 0 4px 24px #1634250a; }
+
+  @media (max-width: 767px) {
+    html { font-size: 14px; }
+    .shell__page { padding-block: 1rem 2rem; }
+    .shell__page :is(.enr__header, .fin__header, .dep__header, .gr__header, .stf__header, .ss__header,
+      .class-roster__header, .teacher-roster__header, .owner-management__header) { padding: 1.1rem; }
+    .shell__page :is(th, td) { padding: 0.75rem; }
+    .shell__page :is(.enr__form, .fin__form, .dep__form, .ss__form) { grid-template-columns: minmax(0, 1fr); }
+    .p-paginator-current { width: 100%; margin: 0; text-align: center; }
+    .shell__page .p-button { min-height: 2.85rem; }
+    .auth-page { display: flex; flex-direction: column; padding: 6rem 1.25rem 2rem; background: var(--theme-inset, #f7faf8); }
+    .auth-page__brand { left: 1.5rem; top: 1.5rem; }
+    .auth-card__visual { display: none; }
+    .auth-card { width: min(100%, 32rem); border: 1px solid var(--ui-border); background: var(--theme-surface, #fff); box-shadow: var(--ui-shadow); }
+    .auth-card__form-panel { padding: 1.6rem; }
+    .auth-card__field-row { flex-direction: column; gap: 0; }
+    .auth-card__password-toggle { min-width: 2.8rem; min-height: 2.8rem; }
+  }
+  @media (max-width: 700px) {
+    .shell__sidebar { width: 100%; max-height: 70dvh; overflow-y: auto; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+  @media print {
+    html { font-size: 11px; }
+    body, .shell__content { background: var(--theme-surface, #fff); }
+    .shell__page :is(.enr__card, .fin__card, .dep__card, .ss__card, .student-detail__card) { box-shadow: none; }
+    .shell__page :is(th, td) { padding: 0.4rem; }
+    .p-paginator { display: none; }
+    .p-datatable-table-container { overflow: visible; }
+    .shell__page { padding: 0; }
+    .shell__page :is(.enr__header, .fin__header, .dep__header, .ss__header, .student-detail__header) { padding: .5rem; box-shadow: none; }
+  }
+}

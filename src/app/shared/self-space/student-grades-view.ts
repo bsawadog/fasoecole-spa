@@ -1,3 +1,7 @@
+import { ErrorAlert } from '../error-alert';
+import { LoadingState } from '../ui/loading-state';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, DestroyRef, effect, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -11,7 +15,7 @@ const STATUS_LABELS: Record<string, string> = {
 @Component({
   selector: 'app-student-grades-view',
   standalone: true,
-  imports: [DatePipe, DecimalPipe],
+  imports: [ErrorAlert, LoadingState, ButtonModule, MessageModule, DatePipe, DecimalPipe],
   templateUrl: './student-grades-view.html',
   styleUrl: './self-space.scss',
   host: { class: 'ss', style: 'padding:0;background:transparent' },

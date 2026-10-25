@@ -1,0 +1,120 @@
+@use '../../features/home/home-theme' as home;
+
+// Trial theme: configuration and class roster only; printed documents stay light.
+@media screen {
+  .shell__content:has(app-owner-management, app-class-roster) { background: var(--theme-background, #{home.$background}); }
+
+  .shell__page :is(.owner-management, .class-roster) {
+    color: var(--theme-ink, #f0f7ff);
+    background: transparent;
+    --school-eyebrow: var(--theme-link, #a5e9f3);
+    --p-button-primary-background: var(--theme-button, #0c6b83);
+    --p-button-primary-border-color: var(--theme-button-border, #3997ae);
+    --p-button-primary-color: #fff;
+    --p-button-primary-hover-background: var(--theme-button-hover, #0e8097);
+    --p-button-primary-hover-border-color: var(--theme-accent, #7dd3fc);
+    --p-button-primary-hover-color: #fff;
+    --p-button-secondary-outlined-color: var(--theme-link, #a5e9f3);
+    --p-button-secondary-outlined-border-color: var(--theme-control-border, #49738f);
+    --p-button-secondary-outlined-hover-background: var(--theme-raised, #103d5d);
+
+    h1, h2, h3, td strong, label { color: var(--theme-ink, #f0f7ff); }
+    header p, section p, .owner-management__hint, .owner-management__school-badge span,
+    .owner-management__form-actions span, .owner-management__summary span,
+    .class-roster__muted, .class-roster__search label,
+    .class-roster__edit-grid label, .class-roster__transfer label { color: var(--theme-muted, #c1d6e8); }
+    a, .owner-management__text-button, .class-roster__link { color: var(--theme-accent, #7dd3fc); }
+    a:hover, .class-roster__link:hover { color: var(--theme-link-hover, #e0f7ff); }
+    .class-roster__link--contact { color: var(--theme-success, #6ee7b7); }
+
+    .owner-management__header, .class-roster__header { background: var(--theme-background, #{home.$background}); border-color: var(--theme-border, #2d5a78); }
+    .owner-management__eyebrow { color: var(--theme-link, #a5e9f3) !important; }
+    .owner-management__panel, .class-roster__card, .class-roster__state,
+    .owner-management__empty-inline, .owner-management__school-badge {
+      background: var(--theme-surface, #0d3154); color: var(--theme-ink, #f0f7ff); border-color: var(--theme-border, #2d5a78);
+      box-shadow: var(--theme-shadow, 0 8px 24px rgb(0 10 30 / 15%));
+    }
+    .owner-management__panel-heading, .class-roster__card-head {
+      background: var(--theme-raised, #103d5d); border-bottom-color: var(--theme-button-border, #3997ae);
+    }
+    .owner-management__editor, .owner-management__level-catalog,
+    .class-roster__edit-form, .class-roster__transfer { background: var(--theme-inset, #092643); border-color: var(--theme-control-border, #49738f); }
+    .class-roster__transfer-title { color: var(--theme-ink, #f0f7ff); }
+    .owner-management__tabs { background: var(--theme-inset, #092643); border-color: var(--theme-border, #2d5a78); }
+    .owner-management__tabs button, .owner-management__subtabs button,
+    .owner-management__level-group button, .owner-management__previous {
+      background: transparent; color: var(--theme-muted, #c1d6e8); border-color: var(--theme-control-border, #49738f);
+    }
+    .owner-management__tabs button:hover, .owner-management__subtabs button:hover,
+    .owner-management__level-group button:enabled:hover { background: var(--theme-raised, #103d5d); color: var(--theme-ink, #f0f7ff); }
+    .owner-management__tabs .owner-management__tab--active,
+    .owner-management__subtabs .owner-management__subtab--active { background: var(--theme-button, #0c6b83); border-color: var(--theme-accent, #7dd3fc); color: #fff; }
+    .owner-management__level-group button:disabled { background: var(--theme-raised, #153747); color: var(--theme-placeholder, #9eb9ca); }
+    .owner-management__subtabs span, .owner-management__list-heading span,
+    .class-roster__count, .class-roster__avatar { background: var(--theme-soft, #153d60); color: var(--theme-link, #a5e9f3); }
+    .owner-management__summary > div { background: var(--theme-raised, #103d5d); border-color: var(--theme-border, #2d5a78); }
+    .owner-management__summary > div:last-child { background: var(--theme-success-soft, #153f42); }
+    .owner-management__summary strong { color: var(--theme-accent, #7dd3fc); }
+    .owner-management__summary > div:last-child strong { color: var(--theme-success, #6ee7b7); }
+
+    input:not([type='checkbox']):not([type='radio']), select, textarea, .p-select,
+    .p-datepicker-input, .p-inputnumber-input {
+      background: var(--theme-field, #061f38); border-color: var(--theme-control-border, #49738f); color: var(--theme-ink, #f0f7ff);
+      --p-select-color: var(--theme-ink, #f0f7ff);
+      --p-select-dropdown-color: var(--theme-link, #a5e9f3);
+    }
+    input::placeholder, textarea::placeholder { color: var(--theme-placeholder, #a8c2d5); opacity: 1; }
+    .class-roster__class-picker { color: var(--theme-warning, #fde68a); }
+    .class-roster__class-picker .p-select { background: var(--theme-warning-soft, #414236); border-color: var(--theme-warning-border, #d6ad43); --p-select-color: var(--theme-warning, #fde68a); --p-select-dropdown-color: var(--theme-warning, #fde68a); color: var(--theme-warning, #fde68a); box-shadow: 0 0 0 3px rgb(252 211 77 / 12%); }
+    .class-roster__class-picker .p-select-label { color: var(--theme-warning, #fde68a); }
+    app-roster-import .import { background: var(--theme-surface, #0d3154); color: var(--theme-ink, #f0f7ff); border-color: var(--theme-border, #2d5a78); }
+    app-roster-import summary { color: var(--theme-link, #a5e9f3); }
+    app-roster-import button { background: var(--theme-raised, #103d5d); color: var(--theme-link, #a5e9f3); border-color: var(--theme-control-border, #49738f); }
+    input:disabled, select:disabled, textarea:disabled, .p-select.p-disabled { opacity: .65; }
+
+    .owner-management__table-wrap, .class-roster__parent + .class-roster__parent { border-color: var(--theme-border, #2d5a78); }
+    table { color: var(--theme-ink, #f0f7ff); }
+    table th { background: var(--theme-inset, #092643); color: var(--theme-muted, #c1d6e8); border-color: var(--theme-border, #2d5a78); }
+    table td { color: var(--theme-ink, #e1edf7); border-color: var(--theme-border, #2d5a78); }
+    table tbody tr { background: var(--theme-surface, #0d3154); }
+    table tbody tr:nth-child(even) { background: var(--theme-raised, #103754); }
+    table tbody tr:hover { background: var(--theme-hover, #164766); }
+    .class-roster__student { color: var(--theme-ink, #f0f7ff); }
+
+    .owner-management__actions .owner-management__icon-action,
+    .class-roster__action, .class-roster__edit-actions button,
+    .ui-row-action { background: var(--theme-soft, #153d60); color: var(--theme-accent, #7dd3fc); border-color: var(--theme-control-border, #49738f); }
+    .owner-management__actions .owner-management__icon-action:hover,
+    .class-roster__action:hover, .ui-row-action:hover { background: var(--theme-hover, #1d506e); border-color: var(--theme-accent, #7dd3fc); }
+    .owner-management__actions .owner-management__delete,
+    .class-roster__danger, .ui-row-action--danger { background: var(--theme-danger-soft, #482c3d); color: var(--theme-danger, #fda4af); border-color: var(--theme-danger-border, #a45565); }
+    .owner-management__actions .owner-management__delete:hover,
+    .class-roster__danger:hover, .ui-row-action--danger:hover { background: var(--theme-danger-soft, #643345); border-color: var(--theme-danger, #fda4af); }
+    .ui-row-action--success { background: var(--theme-success-soft, #153f42); color: var(--theme-success, #6ee7b7); border-color: var(--theme-success-border, #398477); }
+    .class-roster__edit-actions button[type='submit'], .class-roster__action--primary,
+    .owner-management__form-actions button:not(.owner-management__previous),
+    .owner-management__editor-heading > button { background: var(--theme-button, #0c6b83); color: #fff; border-color: var(--theme-button-border, #3997ae); }
+    .class-roster__print-btn { background: #176449; border-color: var(--theme-success-border, #398477); color: #fff; }
+    .owner-management__notice { background: var(--theme-warning-soft, #414236); color: var(--theme-warning, #fde68a); }
+    .form-validation-error { color: var(--theme-danger, #fda4af); }
+    :focus-visible { outline: 3px solid var(--theme-focus, #a5f3fc); outline-offset: 3px; }
+  }
+
+  // Select overlays are attached to body rather than to the module.
+  body:has(.shell__page :is(app-owner-management, app-class-roster)) .p-select-overlay {
+    --p-select-overlay-background: var(--theme-inset, #092643);
+    --p-select-overlay-border-color: var(--theme-control-border, #49738f);
+    --p-select-overlay-color: var(--theme-ink, #f0f7ff);
+    --p-select-option-color: var(--theme-ink, #f0f7ff);
+    --p-select-option-focus-background: var(--theme-hover, #164766);
+    --p-select-option-focus-color: #fff;
+    --p-select-option-selected-background: var(--theme-button, #0c6b83);
+    --p-select-option-selected-color: #fff;
+    --p-select-option-selected-focus-background: var(--theme-button-hover, #0e8097);
+    --p-select-option-selected-focus-color: #fff;
+    --p-select-option-group-background: var(--theme-raised, #103d5d);
+    --p-select-option-group-color: var(--theme-link, #a5e9f3);
+    .p-inputtext { background: var(--theme-field, #061f38); color: var(--theme-ink, #f0f7ff); border-color: var(--theme-control-border, #49738f); }
+    .p-inputtext::placeholder { color: var(--theme-placeholder, #a8c2d5); }
+  }
+}

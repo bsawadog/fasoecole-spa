@@ -1,3 +1,4 @@
+@layer legacy {
 :host {
   display: block;
 }
@@ -38,8 +39,9 @@
 
 .home__brand-logo {
   display: block;
-  width: clamp(11rem, 19vw, 14rem);
-  height: auto;
+  width: 6rem;
+  height: 6rem;
+  object-fit: contain;
 }
 
 .home__brand-mark {
@@ -88,6 +90,19 @@
   list-style: none;
 }
 
+.home__dropdown[open] .home__dropdown-menu {
+  animation: home-dropdown-reveal 240ms cubic-bezier(.2, .7, .3, 1) both;
+}
+
+@keyframes home-dropdown-reveal {
+  from { opacity: 0; translate: 0 -.45rem; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home__dropdown[open] .home__dropdown-menu { animation: none; }
+}
+
 .home__dropdown-menu {
   position: absolute;
   z-index: 5;
@@ -101,6 +116,16 @@
   background: #fff;
   box-shadow: 0 0.8rem 2rem rgb(22 51 44 / 13%);
   transform: translateX(-50%);
+
+  // Keep the hover area continuous between the trigger and the menu.
+  &::before {
+    content: '';
+    position: absolute;
+    top: -.5rem;
+    left: 0;
+    width: 100%;
+    height: .5rem;
+  }
 }
 
 .home__dropdown-menu a {
@@ -264,6 +289,10 @@
 }
 
 .home__program-card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  &:focus-visible { outline: 3px solid #7dd3fc; outline-offset: 4px; }
   min-width: 0;
   overflow: hidden;
   border: 1px solid #e8e9e2;
@@ -284,6 +313,20 @@
   display: block;
   object-fit: cover;
   object-position: center 15%;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .home__program-image-wrap img {
+    transform: scale(1);
+    transition: transform 650ms cubic-bezier(.2, .7, .3, 1);
+  }
+
+  .home__program-card:is(:hover, :focus-visible) .home__program-image-wrap img {
+    transform: scale(1.08) translateY(-2px);
+  }
+
+  .home__program-icon { transition: transform 350ms ease; }
+  .home__program-card:is(:hover, :focus-visible) .home__program-icon { transform: translateY(-4px); }
 }
 
 .home__program-icon {
@@ -484,8 +527,9 @@
 
 .home__footer-logo {
   display: block;
-  width: 10rem;
-  height: auto;
+  width: 7rem;
+  height: 7rem;
+  object-fit: contain;
 }
 
 .home__footer p {
@@ -526,7 +570,8 @@
   }
 
   .home__brand-logo {
-    width: 10rem;
+    width: 5rem;
+    height: 5rem;
   }
 
   .home__nav {
@@ -642,4 +687,6 @@
     order: 1;
     width: 100%;
   }
+}
+
 }

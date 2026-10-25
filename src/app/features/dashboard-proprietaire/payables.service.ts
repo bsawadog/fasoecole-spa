@@ -2,22 +2,22 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { PaymentMethod } from './finance.service';
-import { ExpenseCategory } from './expenses.service';
+import { ExpenseCategory, ExpenseTaxDetails } from './expenses.service';
 
 export interface PayableRow {
-  id: number; source: 'MANUAL' | 'FIXED' | 'STAFF_SALARY' | 'TEACHER_SALARY'; period: string;
+  id: number; source: 'MANUAL' | 'FIXED' | 'STAFF_SALARY' | 'TEACHER_SALARY' | 'TAX'; period: string;
   dueDate: string; label: string; supplier: string | null; categoryId: number; categoryName: string;
   amount: number; paid: number; remaining: number; status: 'UNPAID' | 'PARTIAL' | 'PAID' | 'CANCELLED' | 'NOT_DUE';
-  overdue: boolean; notes: string | null;
+  overdue: boolean; notes: string | null; taxDetails?:ExpenseTaxDetails|null;
 }
 export interface FixedCharge {
   id: number; categoryId: number; label: string; supplier: string | null; amount: number;
-  dueDay: number; startMonth: string; active: boolean;
+  dueDay: number; startMonth: string; active: boolean; taxDetails?:ExpenseTaxDetails|null;
 }
 export interface PayablePayment { id: number; date: string; amount: number; method: PaymentMethod | null; reference: string | null }
 export interface PayableOverview { rows: PayableRow[]; fixedCharges: FixedCharge[]; total: number; paid: number; remaining: number; overdue: number }
-export interface PayablePayload { categoryId: number; label: string; supplier: string | null; amount: number; dueDate: string; notes: string | null }
-export interface FixedPayload { categoryId: number; label: string; supplier: string | null; amount: number; dueDay: number; startMonth: string }
+export interface PayablePayload { taxDetails?:ExpenseTaxDetails|null; categoryId: number; label: string; supplier: string | null; amount: number; dueDate: string; notes: string | null }
+export interface FixedPayload { taxDetails?:ExpenseTaxDetails|null; categoryId: number; label: string; supplier: string | null; amount: number; dueDay: number; startMonth: string }
 export interface PayablePay { requestId: string; amount: number; date: string; method: PaymentMethod; reference: string | null }
 
 @Injectable({ providedIn: 'root' })

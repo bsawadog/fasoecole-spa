@@ -1,6 +1,20 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { apiError } from '../../../../shared/api-error';
+import { RowActions } from '../../../../shared/ui/row-actions';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { TooltipModule } from 'primeng/tooltip';
+import { DateField } from '../../../../shared/ui/date-field';
+import { LucidePencil, LucideTrash2 } from '@lucide/angular';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin, Observable, Subscription } from 'rxjs';
@@ -15,7 +29,7 @@ import {
   OwnerManagementService,
   SchoolRecord,
   StudentRecord,
-  SubjectRecord,
+  SubjectRecord, SubjectCatalogPack,
   TeacherRecord,
 } from '../../owner-management.service';
 
@@ -37,12 +51,13 @@ interface AcademicForm {
   capacity: number;
   code: string;
   coefficient: number;
+  category: string;
 }
 
 @Component({
   selector: 'app-owner-management',
   standalone: true,
-  imports: [FormValidationDirective, FormsModule, RouterLink, DatePipe, DecimalPipe],
+  imports: [ErrorAlert, RowActions, ModuleHelpButton, TooltipModule, LucidePencil, LucideTrash2, DateField, NumberField, SelectField, SelectOption, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink, DatePipe, DecimalPipe],
   templateUrl: './management.html',
   styleUrl: './management.scss',
 })
@@ -52,6 +67,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
   readonly scopeSchoolId = input<number | null>(null);
   private readonly auth = inject(AuthService);
   private readonly api = inject(OwnerManagementService);
+  private readonly destroy = inject(DestroyRef);
   private readonly confirmation = inject(ConfirmationService);
   private dataRequest?: Subscription;
 
@@ -61,6 +77,18 @@ export class OwnerManagement implements OnDestroy, OnInit {
     { id: 'fees', label: 'Frais scolaires' },
     { id: 'people', label: 'Effectifs' },
   ];
+  readonly steps: { section: Section; kind?: AcademicKind; label: string }[] = [
+    { section: 'school', label: 'Établissement' },
+    { section: 'academic', kind: 'years', label: 'Années scolaires' },
+    { section: 'academic', kind: 'levels', label: 'Cycles et niveaux' },
+    { section: 'academic', kind: 'classes', label: 'Classes' },
+    { section: 'academic', kind: 'subjects', label: 'Matières' },
+    { section: 'fees', label: 'Frais scolaires' },
+    { section: 'people', label: 'Effectifs' },
+  ];
+  readonly stepIndex = computed(() => this.steps.findIndex(step =>
+    step.section === this.section() && (!step.kind || step.kind === this.academicKind())));
+  readonly stepNavigationDisabled = computed(() => this.loading() || this.saving() || this.activatingLevel() || this.editorOpen());
   readonly schools = signal<RegistrationSchool[]>([]);
   readonly selectedSchoolId = signal<number | null>(null);
   readonly section = signal<Section>('school');
@@ -73,6 +101,22 @@ export class OwnerManagement implements OnDestroy, OnInit {
   readonly students = signal<StudentRecord[]>([]);
   readonly teachers = signal<TeacherRecord[]>([]);
   readonly academicKind = signal<AcademicKind>('years');
+  readonly subjectCatalog=signal<SubjectCatalogPack[]>([]);
+  readonly catalogOpen=signal(false);readonly catalogBusy=signal(false);readonly catalogError=signal<string|null>(null);readonly catalogConflicts=signal<string[]>([]);
+  showSubjectCatalog():void {
+    const id=this.selectedSchoolId();if(id===null||this.catalogBusy())return;
+    this.catalogOpen.set(true);this.catalogBusy.set(true);this.catalogError.set(null);this.subjectCatalog.set([]);this.catalogConflicts.set([]);
+    this.api.subjectCatalog(id).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:packs=>{this.catalogBusy.set(false);if(id===this.selectedSchoolId())this.subjectCatalog.set(packs);},error:(err)=>{this.catalogBusy.set(false);this.catalogError.set(apiError(err, 'Impossible de charger les catalogues de matières.'));}});
+  }
+  applySubjectCatalog(pack:SubjectCatalogPack):void {
+    const id=this.selectedSchoolId();if(id===null||this.saving()||this.catalogBusy())return;
+    this.catalogBusy.set(true);this.saving.set(true);this.catalogError.set(null);this.catalogConflicts.set([]);
+    this.api.applySubjectCatalog(id,pack.id).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:result=>{
+      if(id!==this.selectedSchoolId()){this.saving.set(false);this.catalogBusy.set(false);return;}
+      this.catalogConflicts.set(result.conflicts);this.successMessage.set(result.created+' matière(s) ajoutée(s), '+result.completed+' matière(s) complétée(s).');
+      this.api.getSubjects(id).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:subjects=>{if(id===this.selectedSchoolId())this.subjects.set(subjects);this.saving.set(false);this.catalogBusy.set(false);},error:(err)=>{this.saving.set(false);this.catalogBusy.set(false);this.catalogError.set(apiError(err, 'Catalogue ajouté. Actualisez la page pour recharger les matières.'));}});
+    },error:(err)=>{this.saving.set(false);this.catalogBusy.set(false);this.catalogError.set(apiError(err, 'Impossible d’ajouter ce catalogue. Réessayez.'));}});
+  }
   readonly levelCatalog = LEVEL_CATALOG;
   readonly activatingLevel = signal(false);
   readonly loading = signal(true);
@@ -105,7 +149,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
       return;
     }
 
-    this.auth.getOwnedSchools(ownerId, 'MANAGEMENT').subscribe({
+    this.auth.getOwnedSchools(ownerId, 'MANAGEMENT', this.scopeSchoolId()).subscribe({
       next: (schools) => {
         if (this.scopeSchoolId() !== null) schools = schools.filter(school => school.id === this.scopeSchoolId());
         this.schools.set(schools);
@@ -117,9 +161,9 @@ export class OwnerManagement implements OnDestroy, OnInit {
         const selected = schools.find((item) => item.id === storedId) ?? schools[0];
         this.selectSchool(selected.id);
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set('Impossible de charger vos établissements.');
+        this.errorMessage.set(apiError(err, 'Impossible de charger vos établissements.'));
       },
     });
   }
@@ -136,6 +180,14 @@ export class OwnerManagement implements OnDestroy, OnInit {
   selectSection(section: Section): void {
     this.section.set(section);
     this.cancelEdit();
+  }
+
+  changeStep(offset: number): void {
+    if (this.stepNavigationDisabled()) return;
+    const step = this.steps[this.stepIndex() + offset];
+    if (!step) return;
+    this.selectSection(step.section);
+    if (step.kind) this.setAcademicKind(step.kind);
   }
 
   setAcademicKind(kind: AcademicKind): void {
@@ -178,7 +230,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
       }
       case 'subjects': {
         const subject = row as SubjectRecord;
-        return `${subject.code || 'Aucun code'} · Coefficient ${subject.coefficient ?? 1}`;
+        return `${subject.code || 'Aucun code'}${subject.category?' · '+subject.category:''} · Coefficient ${subject.coefficient ?? 1}`;
       }
     }
   }
@@ -256,7 +308,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
         }
         case 'subjects': {
           const subject = row as SubjectRecord;
-          Object.assign(this.academicForm, { name: subject.name, code: subject.code, coefficient: subject.coefficient ?? 1 });
+          Object.assign(this.academicForm, { name: subject.name, code: subject.code??'', category:subject.category??'', coefficient: subject.coefficient ?? 1 });
           break;
         }
       }
@@ -313,6 +365,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
           schoolId,
           name: this.academicForm.name.trim(),
           code: this.academicForm.code.trim(),
+          category:this.academicForm.category.trim(),
           coefficient: Number(this.academicForm.coefficient),
         }, id ?? undefined);
         break;
@@ -325,9 +378,9 @@ export class OwnerManagement implements OnDestroy, OnInit {
         this.successMessage.set('Les informations académiques ont été enregistrées.');
         if (this.selectedSchoolId() === schoolId) this.loadData(schoolId);
       },
-      error: () => {
+      error: (err) => {
         this.saving.set(false);
-        this.academicError.set('Enregistrement impossible. Vérifiez les informations et réessayez.');
+        this.academicError.set(apiError(err, 'Enregistrement impossible. Vérifiez les informations et réessayez.'));
       },
     });
   }
@@ -353,7 +406,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
         const schoolId = this.selectedSchoolId();
         if (schoolId) this.loadData(schoolId);
       },
-      error: () => this.fail('Suppression impossible. Cet élément est peut-être déjà utilisé.'),
+      error: (err) => this.fail(apiError(err, 'Suppression impossible. Cet élément est peut-être déjà utilisé.')),
     });
   }
 
@@ -384,7 +437,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
         this.successMessage.set('Le tarif a été enregistré.');
         if (this.selectedSchoolId() === schoolId) this.loadData(schoolId);
       },
-      error: () => this.fail('Enregistrement du tarif impossible.'),
+      error: (err) => this.fail(apiError(err, 'Enregistrement du tarif impossible.')),
     });
   }
 
@@ -405,7 +458,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
         this.saving.set(false);
         this.successMessage.set('Les coordonnées de l’établissement ont été mises à jour.');
       },
-      error: () => this.fail('La mise à jour de l’établissement a échoué.'),
+      error: (err) => this.fail(apiError(err, 'La mise à jour de l’établissement a échoué.')),
     });
   }
 
@@ -422,7 +475,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
         const schoolId = this.selectedSchoolId();
         if (schoolId) this.loadData(schoolId);
       },
-      error: () => this.fail('Suppression impossible. Ce frais est peut-être déjà facturé.'),
+      error: (err) => this.fail(apiError(err, 'Suppression impossible. Ce frais est peut-être déjà facturé.')),
     });
   }
 
@@ -452,7 +505,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
   typeLabel(type: string): string {
     const labels: Record<string, string> = {
       PRIMAIRE: 'École primaire',
-      PRESCOLAIRE: 'Établissement préscolaire',
+      PRESCOLAIRE: 'École maternelle',
       SECONDAIRE: 'Établissement secondaire',
       MIXTE: 'Établissement mixte',
       UNIVERSITE: 'Université',
@@ -462,9 +515,10 @@ export class OwnerManagement implements OnDestroy, OnInit {
   }
 
   private selectSchool(schoolId: number): void {
+    this.catalogOpen.set(false);this.subjectCatalog.set([]);this.catalogConflicts.set([]);this.catalogError.set(null);
     this.dataRequest?.unsubscribe();
     this.selectedSchoolId.set(schoolId);
-    this.auth.selectSchoolContext(schoolId);
+
     this.loading.set(true);
     this.errorMessage.set(null);
     this.successMessage.set(null);
@@ -501,7 +555,7 @@ export class OwnerManagement implements OnDestroy, OnInit {
         this.teachers.set(data.teachers);
         this.loading.set(false);
       },
-      error: () => this.fail('Certaines données de cet établissement n’ont pas pu être chargées.'),
+      error: (err) => this.fail(apiError(err, 'Certaines données de cet établissement n’ont pas pu être chargées.')),
     });
   }
 
@@ -530,6 +584,8 @@ export class OwnerManagement implements OnDestroy, OnInit {
   }
 
   private emptyAcademicForm(): AcademicForm {
+    const saved = Number(localStorage.getItem(`fasoecole_year_${this.selectedSchoolId()}`));
+    const year = this.years().find(year => year.id === saved) ?? this.years().find(year => year.isCurrent);
     return {
       id: null,
       label: '',
@@ -539,9 +595,10 @@ export class OwnerManagement implements OnDestroy, OnInit {
       isCurrent: false,
       cycle: '',
       orderIndex: 1,
-      academicYearId: null,
+      academicYearId: year?.id ?? null,
       levelId: null,
       capacity: 30,
+      category: '',
       code: '',
       coefficient: 1,
     };

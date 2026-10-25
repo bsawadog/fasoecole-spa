@@ -1,3 +1,4 @@
+@layer legacy {
 :host { display: block; min-height: 100vh; }
 
 .service-detail {
@@ -16,7 +17,7 @@
   max-width: 75rem;
   margin: 0 auto;
 
-  img { display: block; width: 12rem; height: 3.5rem; object-fit: contain; object-position: left center; }
+  img { display: block; width: 6rem; height: 6rem; object-fit: contain; object-position: left center; }
 }
 
 .service-detail__back {
@@ -59,4 +60,6 @@
   text-decoration: none;
   transition: transform 160ms ease, background 160ms ease;
   &:hover, &:focus-visible { transform: translateY(-2px); background: #1c5b3f; }
+}
+
 }

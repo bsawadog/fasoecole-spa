@@ -1,19 +1,18 @@
 <main class="home">
   <header class="home__header" id="accueil">
     <a class="home__brand" routerLink="/" aria-label="FasoEcole, accueil">
-      <img class="home__brand-logo" src="assets/images/fasoecole-logo-alt.svg" alt="" />
+      <img class="home__brand-logo" src="assets/images/logofe.png" alt="" />
     </a>
     <nav class="home__nav" aria-label="Navigation principale">
       <a class="home__nav-link" routerLink="/" fragment="accueil">Accueil</a>
 
-      <details class="home__dropdown">
+      <details class="home__dropdown" (pointerenter)="openOnHover($event)" (pointerleave)="closeOnLeave($event)">
         <summary class="home__nav-link">
           Établissements <svg lucideChevronDown [size]="15" aria-hidden="true"></svg>
         </summary>
         <div class="home__dropdown-menu">
           <a routerLink="/etablissements"><svg lucideSchool [size]="17" aria-hidden="true"></svg> Tous les établissements</a>
-          <a routerLink="/etablissements" [queryParams]="{ type: 'PRESCOLAIRE' }"><svg lucideSchool [size]="17" aria-hidden="true"></svg> Préscolaire</a>
-          <a routerLink="/etablissements" [queryParams]="{ type: 'PRIMAIRE' }"><svg lucideSchool [size]="17" aria-hidden="true"></svg> Primaire</a>
+          <a routerLink="/etablissements" [queryParams]="{ type: 'PRESCOLAIRE_PRIMAIRE' }"><svg lucideSchool [size]="17" aria-hidden="true"></svg> Maternelle et primaire</a>
           <a routerLink="/etablissements" [queryParams]="{ type: 'SECONDAIRE' }"><svg lucideBookOpen [size]="17" aria-hidden="true"></svg> Secondaire</a>
           <a routerLink="/etablissements" [queryParams]="{ type: 'MIXTE' }"><svg lucideSchool [size]="17" aria-hidden="true"></svg> Mixte</a>
           <a routerLink="/etablissements" [queryParams]="{ type: 'UNIVERSITE' }"><svg lucideGraduationCap [size]="17" aria-hidden="true"></svg> Université</a>
@@ -21,7 +20,7 @@
         </div>
       </details>
 
-      <details class="home__dropdown">
+      <details class="home__dropdown" (pointerenter)="openOnHover($event)" (pointerleave)="closeOnLeave($event)">
         <summary class="home__nav-link">
           Ressources <svg lucideChevronDown [size]="15" aria-hidden="true"></svg>
         </summary>
@@ -35,7 +34,7 @@
       </details>
 
       <a class="home__nav-link" routerLink="/" fragment="a-propos">À propos</a>
-      <a class="home__nav-link" routerLink="/" fragment="contact">Contact</a>
+      <a class="home__nav-link" routerLink="/contact">Contact</a>
     </nav>
     <a class="home__button home__button--header" routerLink="/login">
       Se connecter <svg lucideArrowRight [size]="17" aria-hidden="true"></svg>
@@ -76,19 +75,20 @@
     </div>
 
     <div class="home__program-grid">
-      <article id="primaire" class="home__program-card home__program-card--primary">
+      <a routerLink="/etablissements" [queryParams]="{ type: 'PRESCOLAIRE_PRIMAIRE' }" id="primaire" class="home__program-card home__program-card--primary">
         <div class="home__program-image-wrap">
           <img src="assets/images/02-primaire.jpg" alt="Une élève en classe primaire" />
           <span class="home__program-icon"><svg lucideSchool [size]="23" aria-hidden="true"></svg></span>
         </div>
         <div class="home__program-copy">
           <p class="home__program-kicker">Les premiers apprentissages</p>
-          <h3>FasoÉcole Primaire</h3>
-          <p>Les bases pour apprendre, grandir et prendre confiance à l’école.</p>
+          <h3>FasoÉcole Maternelle et primaire</h3>
+          <p>De la maternelle au primaire, les bases pour apprendre, grandir et prendre confiance.</p>
+          <span class="home__service-more">Voir les établissements <svg lucideArrowRight [size]="16" aria-hidden="true"></svg></span>
         </div>
-      </article>
+      </a>
 
-      <article id="secondaire" class="home__program-card home__program-card--secondary">
+      <a routerLink="/etablissements" [queryParams]="{ type: 'SECONDAIRE' }" id="secondaire" class="home__program-card home__program-card--secondary">
         <div class="home__program-image-wrap">
           <img src="assets/images/03-secondaire.jpg" alt="Des étudiants en travail collaboratif" />
           <span class="home__program-icon"><svg lucideBookOpen [size]="23" aria-hidden="true"></svg></span>
@@ -97,10 +97,11 @@
           <p class="home__program-kicker">Curiosité et ambition</p>
           <h3>FasoÉcole Secondaire</h3>
           <p>Des outils pour accompagner les élèves vers de nouveaux horizons.</p>
+          <span class="home__service-more">Voir les établissements <svg lucideArrowRight [size]="16" aria-hidden="true"></svg></span>
         </div>
-      </article>
+      </a>
 
-      <article id="universite" class="home__program-card home__program-card--university">
+      <a routerLink="/etablissements" [queryParams]="{ type: 'UNIVERSITE' }" id="universite" class="home__program-card home__program-card--university">
         <div class="home__program-image-wrap">
           <img src="assets/images/04-universite.jpg" alt="Des étudiants consultant un ordinateur à l'université" />
           <span class="home__program-icon"><svg lucideGraduationCap [size]="23" aria-hidden="true"></svg></span>
@@ -109,10 +110,11 @@
           <p class="home__program-kicker">Le savoir en mouvement</p>
           <h3>FasoÉcole Université</h3>
           <p>Un espace pour poursuivre ses études et préparer son avenir professionnel.</p>
+          <span class="home__service-more">Voir les établissements <svg lucideArrowRight [size]="16" aria-hidden="true"></svg></span>
         </div>
-      </article>
+      </a>
 
-      <article id="formation" class="home__program-card home__program-card--training">
+      <a routerLink="/etablissements" [queryParams]="{ type: 'FORMATION' }" id="formation" class="home__program-card home__program-card--training">
         <div class="home__program-image-wrap">
           <img src="assets/images/05-formation-professionnelle.jpg" alt="Une personne suivant une formation professionnelle" />
           <span class="home__program-icon"><svg lucideLightbulb [size]="23" aria-hidden="true"></svg></span>
@@ -121,8 +123,9 @@
           <p class="home__program-kicker">Apprendre toute la vie</p>
           <h3>FasoÉcole Formation</h3>
           <p>Développez vos compétences grâce à des parcours de formation adaptés.</p>
+          <span class="home__service-more">Voir les établissements <svg lucideArrowRight [size]="16" aria-hidden="true"></svg></span>
         </div>
-      </article>
+      </a>
     </div>
   </section>
 
@@ -183,16 +186,16 @@
 
   <section class="home__contact" id="contact" aria-labelledby="contact-title">
     <div>
-      <p class="home__eyebrow">Prêt à commencer ?</p>
-      <h2 id="contact-title">Retrouvez votre communauté éducative.</h2>
+      <p class="home__eyebrow">Besoin d’un renseignement ?</p>
+      <h2 id="contact-title">Échangez avec l’équipe FasoEcole.</h2>
     </div>
-    <a class="home__button" routerLink="/login">
-      Se connecter <svg lucideArrowRight [size]="17" aria-hidden="true"></svg>
+    <a class="home__button" routerLink="/contact">
+      Nous contacter <svg lucideArrowRight [size]="17" aria-hidden="true"></svg>
     </a>
   </section>
 
   <footer class="home__footer">
-    <span><img class="home__footer-logo" src="assets/images/fasoecole-logo-alt.svg" alt="FasoEcole" /></span>
+    <span><img class="home__footer-logo" src="assets/images/logofe.png" alt="FasoEcole" /></span>
     <p>Une communauté qui apprend et grandit ensemble.</p>
     <a routerLink="/login">Se connecter <svg lucideArrowRight [size]="16" aria-hidden="true"></svg></a>
   </footer>

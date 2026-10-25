@@ -1,7 +1,20 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { TooltipModule } from 'primeng/tooltip';
+import { DateField } from '../../../../shared/ui/date-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { TableRow } from '../../../../shared/ui/table-row';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
+import { TableModule } from 'primeng/table';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, computed, DestroyRef, effect, inject, OnInit, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { forkJoin, of, Subscription } from 'rxjs';
 import { SchoolDataSyncService } from '../../../../shared/school-data-sync.service';
@@ -11,16 +24,18 @@ import { APPOINTMENT_LABELS, ParentAppointment, ParentPortalService, PortalPost,
 import { ConversationFiles } from '../../../../shared/self-space/message-attachments';
 import { PortalPosts } from '../../../../shared/self-space/portal-posts';
 import { ScheduleView } from '../../../../shared/self-space/schedule-view';
+import { TeacherDailyTools } from '../../../../shared/self-space/teacher-daily-tools';
+import { HomeworkTracking } from '../../../../shared/school-life/homework-tracking';
 import { Appointments } from '../../../../shared/appointments/appointments';
 
 type Module = 'emploi' | 'presences' | 'signalements' | 'devoirs' | 'documents' | 'annonces' | 'rendez-vous';
 type Status = AttendanceItem['status'];
-const TITLES: Record<Module,string> = { emploi: 'Mon emploi du temps', presences: 'Présences et retards', signalements: 'Signalements des parents', devoirs: 'Devoirs', documents: 'Documents de classe', annonces: 'Annonces de classe', 'rendez-vous': 'Rendez-vous parents' };
+const TITLES: Record<Module,string> = { emploi: 'Mon emploi du temps', presences: 'Présences et retards', signalements: 'Signalements des parents', devoirs: 'Devoirs de maison', documents: 'Cours et ressources', annonces: 'Annonces de classe', 'rendez-vous': 'Rendez-vous parents' };
 const today = () => new Date(Date.now()-new Date().getTimezoneOffset()*60_000).toISOString().slice(0,10);
 
 @Component({
   selector: 'app-teacher-module', standalone: true,
-  imports: [FormValidationDirective, FormsModule, ConversationFiles, PortalPosts, ScheduleView, Appointments],
+  imports: [ErrorAlert, TeacherDailyTools, HomeworkTracking, ModuleHelpButton, TooltipModule, DateField, SelectField, SelectOption, TableRow, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, TableModule, FormValidationDirective, FormsModule, ConversationFiles, PortalPosts, ScheduleView, Appointments],
   templateUrl: './modules.html', styleUrl: '../../../../shared/self-space/self-space.scss',
 })
 export class TeacherModule implements OnInit {
@@ -31,6 +46,8 @@ export class TeacherModule implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly sync = inject(SchoolDataSyncService);
   private syncSubscription?: Subscription;
+  readonly lessonsOpen=signal(false);
+  readonly availabilityOpen=signal(false);
   readonly module = signal<Module>('emploi');
   readonly title = computed(() => TITLES[this.module()]);
   readonly classes = signal<TeacherClass[]>([]);
@@ -117,12 +134,27 @@ export class TeacherModule implements OnInit {
         const previous = new Map(this.attendance().map(row => [row.studentId,row]));
         for (const row of data.attendance) {
           const old = previous.get(row.studentId); const draft = this.attendanceDrafts[row.studentId];
-          const dirty = background && old && draft && (draft.status !== (old.status ?? '') || draft.justification !== (old.justification ?? ''));
-          if (!dirty) this.attendanceDrafts[row.studentId] = {status: row.status ?? '', justification: row.justification ?? ''};
+          const dirty = background && old && draft && (draft.status !== (old.status ?? 'PRESENT') || draft.justification !== (old.justification ?? ''));
+          if (!dirty) this.attendanceDrafts[row.studentId] = {status: row.status ?? 'PRESENT', justification: row.justification ?? ''};
         }
         this.schedule.set(data.schedule); this.attendance.set(data.attendance); this.reports.set(data.reports); this.posts.set(data.posts); this.appointments.set(data.appointments);
         this.loading.set(false);
       }, error: err => { if (version === this.version) { this.loading.set(false); this.error.set(apiError(err, 'Impossible de charger ces informations.')); } },
+    });
+  }
+  saveCall(): void {
+    const id=this.classId();const version=this.version;
+    if(id===null || this.saving() || this.loading() || !this.attendance().length)return;
+    const entries=this.attendance().filter(row=>{
+      const draft=this.attendanceDrafts[row.studentId];
+      return draft && (row.status===null || draft.status!==row.status || (draft.justification.trim()||null)!==(row.justification||null));
+    }).map(row=>({studentId:row.studentId,status:this.attendanceDrafts[row.studentId].status,justification:this.attendanceDrafts[row.studentId].justification.trim()||null,expectedStatus:row.status}));
+    if(!entries.length){this.success.set('L’appel est déjà enregistré.');return;}
+    if(entries.some(entry=>!entry.status)){this.error.set('Choisissez un statut pour chaque élève avant d’enregistrer l’appel.');return;}
+    this.saving.set(true);this.error.set(null);this.success.set(null);
+    this.api.saveTeacherAttendanceBatch(id,{date:this.date(),entries:entries as {studentId:number;status:Status;justification:string|null;expectedStatus:Status|null}[]}).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next:rows=>{this.saving.set(false);if(version!==this.version)return;this.attendance.set(rows);for(const row of rows)this.attendanceDrafts[row.studentId]={status:row.status??'PRESENT',justification:row.justification??''};this.success.set('Appel enregistré pour toute la classe.');},
+      error:err=>{this.saving.set(false);if(version===this.version)this.error.set(apiError(err,'Impossible d’enregistrer l’appel. Vos modifications sont conservées.'));},
     });
   }
   saveAttendance(row: TeacherAttendanceItem): void {
@@ -143,7 +175,7 @@ export class TeacherModule implements OnInit {
       error: err => { this.saving.set(false); if (version === this.version) this.error.set(apiError(err, 'Impossible de traiter ce signalement.')); },
     });
   }
-  publish(): void {
+  publish(form?: NgForm): void {
     const id = this.classId(); const kind = this.kind(); const version = this.version;
     if (id === null || !kind || this.saving()) return;
     if (!this.postTitle.trim() || !this.content.trim() || (kind === 'DOCUMENT' && !this.files.length) || (kind === 'HOMEWORK' && !this.dueDate)) {
@@ -152,13 +184,13 @@ export class TeacherModule implements OnInit {
     this.saving.set(true); this.error.set(null); this.success.set(null);
     this.portal.teacherPublish(id,{kind,title: this.postTitle.trim(),content: this.content.trim(),dueDate: kind === 'HOMEWORK' ? this.dueDate : null},this.files)
       .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: post => { this.saving.set(false); if (version !== this.version) return; this.posts.update(items => [post,...items]); this.postTitle = ''; this.content = ''; this.dueDate = ''; this.files = []; this.success.set('Publication disponible dans l’espace parent pour cette classe.'); },
+        next: post => { this.saving.set(false); if (version !== this.version) return; this.posts.update(items => [post,...items]); this.postTitle = ''; this.content = ''; this.dueDate = ''; this.files = []; form?.resetForm(); this.success.set('Publication disponible dans les espaces des parents et des élèves de cette classe.'); },
         error: err => { this.saving.set(false); if (version === this.version) this.error.set(apiError(err, 'Impossible de publier.')); },
       });
   }
   async remove(post: PortalPost): Promise<void> {
     const id = this.classId(); const version = this.version; if (id === null || this.saving()) return;
-    if (!await this.confirmation.confirm({title:'Retirer cette publication ?',message:'Elle ne sera plus visible par les parents.',confirmLabel:'Retirer',destructive:true})) return;
+    if (!await this.confirmation.confirm({title:'Retirer cette publication ?',message:'Elle ne sera plus visible par les parents et les élèves.',confirmLabel:'Retirer',destructive:true})) return;
     if (version !== this.version || this.saving()) return;
     this.saving.set(true); this.error.set(null);
     this.portal.teacherDelete(id,post.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({

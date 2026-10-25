@@ -1,15 +1,16 @@
 <div class="ss">
   <a class="ss__back" routerLink="/enseignant">← Retour à l’espace enseignant</a>
-  <header class="ss__header">
+  <header class="module-help-header ss__header">
+    <app-module-help />
     <div><h1>Messages</h1><p>Échangez avec vos élèves, leurs parents et le propriétaire de l’établissement.</p></div>
-    <button class="ss__btn" type="button" (click)="composing.set(!composing())">Nouvelle conversation</button>
+    <button pButton class="ss__btn" type="button" (click)="composing.set(!composing())">Nouvelle conversation</button>
   </header>
-  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
-  @if (success()) { <p class="ss__alert ss__alert--success" role="status">{{ success() }}</p> }
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
+  @if (success()) { <p-message severity="success" class="ss__alert ss__alert--success" role="status">{{ success() }}</p-message> }
   <div class="ss__split">
     <aside class="ss__card" aria-label="Conversations">
       <h2 class="ss__card-head">Mes conversations</h2>
-      @if (loading()) { <p class="ss__body ss__muted">Chargement…</p> }
+      @if (loading()) { <app-loading-state message="Chargement…" /> }
       @else if (!conversations().length) { <p class="ss__body ss__muted">Aucune conversation pour le moment.</p> }
       @else {
         @for (item of conversations(); track item.id) {
@@ -27,27 +28,27 @@
         <form class="ss__body" (ngSubmit)="startConversation()">
           <h2>Nouvelle conversation</h2>
           <label class="ss__field">Classe
-            <select name="classId" [ngModel]="classId" (ngModelChange)="selectClass($event)" [disabled]="sending()" required>
-              <option [ngValue]="null">Sélectionner une classe</option>
-              @for (item of classes(); track item.classId) { <option [ngValue]="item.classId">{{ item.className }} · {{ item.schoolName }}</option> }
-            </select>
+            <app-select-field name="classId" [ngModel]="classId" (ngModelChange)="selectClass($event)" [disabled]="sending()" required [ariaLabel]="(&quot;Classe &quot;).trim()">
+              <app-select-option [value]="null" [label]="(&quot;Sélectionner une classe&quot;).trim()" />
+              @for (item of classes(); track item.classId) { <app-select-option [value]="item.classId" [label]="((&quot;&quot; + ((item.className)) + &quot; · &quot; + ((item.schoolName)) + &quot;&quot;)).trim()" /> }
+            </app-select-field>
           </label>
           <p class="ss__muted">Chaque destinataire reçoit une conversation séparée. Les réponses restent privées.</p>
-          @if (loadingRecipients()) { <p role="status">Chargement des destinataires…</p> }
+          @if (loadingRecipients()) { <app-loading-state message="Chargement des destinataires…" /> }
           @else if (classId !== null) {
             <div class="ss__emoji-picker" aria-label="Choisir un groupe de destinataires">
-              <button type="button" (click)="selectGroup('ELEVE')" [class.ss__group--selected]="isGroupSelected('ELEVE')" [attr.aria-pressed]="isGroupSelected('ELEVE')" [disabled]="sending() || !groupCount('ELEVE')">Toute la classe ({{ groupCount('ELEVE') }})</button>
-              <button type="button" (click)="selectGroup('PARENT')" [class.ss__group--selected]="isGroupSelected('PARENT')" [attr.aria-pressed]="isGroupSelected('PARENT')" [disabled]="sending() || !groupCount('PARENT')">Tous les parents ({{ groupCount('PARENT') }})</button>
-              <button type="button" (click)="selectGroup('PROPRIETAIRE')" [class.ss__group--selected]="isGroupSelected('PROPRIETAIRE')" [attr.aria-pressed]="isGroupSelected('PROPRIETAIRE')" [disabled]="sending() || !groupCount('PROPRIETAIRE')">Propriétaire</button>
-              <button type="button" (click)="selectedRecipientIds.set([])" [disabled]="sending()">Tout désélectionner</button>
+              <button pButton type="button" (click)="selectGroup('ELEVE')" [class.ss__group--selected]="isGroupSelected('ELEVE')" [attr.aria-pressed]="isGroupSelected('ELEVE')" [disabled]="sending() || !groupCount('ELEVE')">Toute la classe ({{ groupCount('ELEVE') }})</button>
+              <button pButton type="button" (click)="selectGroup('PARENT')" [class.ss__group--selected]="isGroupSelected('PARENT')" [attr.aria-pressed]="isGroupSelected('PARENT')" [disabled]="sending() || !groupCount('PARENT')">Tous les parents ({{ groupCount('PARENT') }})</button>
+              <button pButton type="button" (click)="selectGroup('PROPRIETAIRE')" [class.ss__group--selected]="isGroupSelected('PROPRIETAIRE')" [attr.aria-pressed]="isGroupSelected('PROPRIETAIRE')" [disabled]="sending() || !groupCount('PROPRIETAIRE')">Propriétaire</button>
+              <button pButton type="button" (click)="selectedRecipientIds.set([])" [disabled]="sending()">Tout désélectionner</button>
             </div>
             <label class="ss__field">Type de destinataire
-              <select name="recipientFilter" [(ngModel)]="recipientFilter">
-                <option value="ALL">Tous</option><option value="ELEVE">Élèves</option>
-                <option value="PARENT">Parents</option><option value="PROPRIETAIRE">Propriétaire</option>
-              </select>
+              <app-select-field name="recipientFilter" [(ngModel)]="recipientFilter" [ariaLabel]="(&quot;Type de destinataire &quot;).trim()">
+                <app-select-option [value]="&quot;ALL&quot;" [label]="(&quot;Tous&quot;).trim()" /><app-select-option [value]="&quot;ELEVE&quot;" [label]="(&quot;Élèves&quot;).trim()" />
+                <app-select-option [value]="&quot;PARENT&quot;" [label]="(&quot;Parents&quot;).trim()" /><app-select-option [value]="&quot;PROPRIETAIRE&quot;" [label]="(&quot;Propriétaire&quot;).trim()" />
+              </app-select-field>
             </label>
-            <label class="ss__field">Rechercher une personne<input name="recipientSearch" [(ngModel)]="recipientSearch" /></label>
+            <label class="ss__field">Rechercher une personne<input pInputText name="recipientSearch" [(ngModel)]="recipientSearch" /></label>
             <p>{{ selectedRecipientIds().length }} destinataire(s) sélectionné(s)</p>
             <div class="ss__recipient-list">
               @for (recipient of visibleRecipients(); track recipient.userId) {
@@ -57,13 +58,13 @@
               } @empty { <p>Aucun destinataire disponible.</p> }
             </div>
           }
-          <label class="ss__field">Objet<input name="subject" [(ngModel)]="subject" maxlength="160" required /></label>
-          <label class="ss__field">Message<textarea name="message" [(ngModel)]="message" rows="4" maxlength="4000" [required]="!messageFiles.length"></textarea></label>
+          <label class="ss__field">Objet<input pInputText name="subject" [(ngModel)]="subject" maxlength="160" required /></label>
+          <label class="ss__field">Message<textarea pTextarea name="message" [(ngModel)]="message" rows="4" maxlength="4000" [required]="!messageFiles.length"></textarea></label>
           <app-conversation-files [(files)]="messageFiles" [disabled]="sending()" />
           <div class="ss__emoji-picker" aria-label="Ajouter un emoji">
-            @for (emoji of emojis; track emoji) { <button type="button" (click)="addEmoji(emoji, 'message')" [attr.aria-label]="'Ajouter ' + emoji">{{ emoji }}</button> }
+            @for (emoji of emojis; track emoji) { <button pButton type="button" (click)="addEmoji(emoji, 'message')" [attr.aria-label]="'Ajouter ' + emoji">{{ emoji }}</button> }
           </div>
-          <button class="ss__btn" type="submit" [disabled]="sending() || loadingRecipients() || !selectedRecipientIds().length">{{ sending() ? 'Envoi…' : 'Envoyer' }}</button>
+          <button pButton class="ss__btn" type="submit" [disabled]="sending() || loadingRecipients() || !selectedRecipientIds().length">{{ sending() ? 'Envoi…' : 'Envoyer' }}</button>
         </form>
       } @else if (thread(); as current) {
         <h2>{{ current.conversation.subject }}</h2>
@@ -78,12 +79,12 @@
           }
         </div>
         <form class="ss__body" (ngSubmit)="sendReply()">
-          <label class="ss__field">Répondre<textarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" [required]="!replyFiles.length"></textarea></label>
+          <label class="ss__field">Répondre<textarea pTextarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" [required]="!replyFiles.length"></textarea></label>
           <app-conversation-files [(files)]="replyFiles" [disabled]="sending()" />
           <div class="ss__emoji-picker" aria-label="Ajouter un emoji">
-            @for (emoji of emojis; track emoji) { <button type="button" (click)="addEmoji(emoji, 'reply')" [attr.aria-label]="'Ajouter ' + emoji">{{ emoji }}</button> }
+            @for (emoji of emojis; track emoji) { <button pButton type="button" (click)="addEmoji(emoji, 'reply')" [attr.aria-label]="'Ajouter ' + emoji">{{ emoji }}</button> }
           </div>
-          <button class="ss__btn" type="submit" [disabled]="sending() || (!reply.trim() && !replyFiles.length)">Envoyer</button>
+          <button pButton class="ss__btn" type="submit" [disabled]="sending() || (!reply.trim() && !replyFiles.length)">Envoyer</button>
         </form>
       } @else { <p class="ss__state">Choisissez une conversation ou démarrez-en une nouvelle.</p> }
     </section>

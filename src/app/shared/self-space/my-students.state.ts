@@ -1,3 +1,4 @@
+import { ActivatedRoute } from '@angular/router';
 import { DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { apiError, SelfSpaceService, StudentOverview } from './self-space.service';
@@ -10,6 +11,7 @@ import { SchoolDataSyncService } from '../school-data-sync.service';
 @Injectable()
 export class MyStudentsState {
   private readonly api = inject(SelfSpaceService);
+  private readonly route = inject(ActivatedRoute, { optional: true });
   private readonly destroyRef = inject(DestroyRef);
   private readonly sync = inject(SchoolDataSyncService);
   private readonly watchedSchools = new Set<number>();
@@ -24,7 +26,8 @@ export class MyStudentsState {
       next: (students) => {
         this.students.set(students);
         if (!students.some(student => student.studentId === this.selectedId())) {
-          this.selectedId.set(students[0]?.studentId ?? null);
+          const requested = Number(this.route?.snapshot.queryParamMap.get('studentId'));
+          this.selectedId.set(students.find(student => student.studentId === requested)?.studentId ?? students[0]?.studentId ?? null);
         }
         this.error.set(null);
         this.loading.set(false);

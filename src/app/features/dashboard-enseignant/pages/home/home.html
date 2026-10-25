@@ -1,23 +1,36 @@
 <div class="dashboard-home">
-  <h1>Bienvenue, {{ user()?.firstName }} 👋</h1>
-  <p class="dashboard-home__subtitle">Espace Enseignant</p>
+  <header class="ui-page-header module-help-header"><app-module-help /><h1>Bienvenue, {{ user()?.firstName }} 👋</h1>
+  <p class="dashboard-home__subtitle">Espace Enseignant</p></header>
 
-  <div class="dashboard-home__grid">
-    <app-appointment-counter profile="teacher" pageLink="/enseignant/rendez-vous" />
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/presences"><h2>Présences et retards</h2><p>Enregistrez la présence des élèves par classe et par date.</p></a>
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/signalements"><h2>Signalements des parents</h2><p>Prenez en compte les absences et retards signalés.</p></a>
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/emploi"><h2>Mon emploi du temps</h2><p>Consultez vos horaires de cours.</p></a>
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/devoirs"><h2>Devoirs</h2><p>Publiez les consignes et dates de remise pour les parents.</p></a>
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/documents"><h2>Documents de classe</h2><p>Partagez les supports avec les parents de vos classes.</p></a>
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/annonces"><h2>Annonces de classe</h2><p>Publiez les informations importantes pour les parents.</p></a>
-
+  <app-teacher-today />
+  <div class="dashboard-home__grid dashboard-home__priority">
     <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/classes">
       <h2>Mes classes</h2>
       <p>Vos classes, vos élèves et votre emploi du temps.</p>
     </a>
+    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/presences"><h2>Présences et retards</h2><p>Enregistrez la présence des élèves par classe et par date.</p></a>
+  </div>
+  <div class="dashboard-home__grid">
+    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/emploi"><h2>Mon emploi du temps</h2><p>Consultez vos horaires de cours.</p></a>
+    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/devoirs"><h2>Devoirs de maison</h2><p>Publiez les consignes et suivez les remises et corrections avec les élèves et les parents.</p></a>
+    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/messages"><h2>Messages</h2><p>Échangez avec la direction, les familles et les élèves autorisés.</p></a>
+    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/signalements"><h2>Signalements des parents</h2><p>Prenez en compte les absences et retards signalés.</p></a>
     <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/notes">
-      <h2>Notes à saisir</h2>
+      <h2>Évaluations et notes</h2>
       <p>Créez vos évaluations et saisissez les notes.</p>
     </a>
+    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/annonces"><h2>Annonces de classe</h2><p>Publiez les informations importantes pour les parents.</p></a>
+  </div>
+  <div class="dashboard-home__grid"><a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/ma-fiche"><h2>Ma fiche employé</h2><p>Consultez votre dossier et demandez une action à l’administration.</p></a></div>
+  <app-teacher-dashboard-charts />
+  <div class="dashboard-home__grid">
+    <app-appointment-counter profile="teacher" pageLink="/enseignant/rendez-vous" />
+
+    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/documents"><h2>Cours et ressources</h2><p>Partagez vos supports de cours et exercices avec les élèves et leurs parents.</p></a>
+
+
+    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/calendrier"><h2>Calendrier scolaire</h2><p>Consultez les événements et les dates importantes.</p></a>
+    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/discipline"><h2>Discipline et vie scolaire</h2><p>Consignez et consultez les observations de vos classes.</p></a>
+    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/enseignant/bibliotheque"><h2>Bibliothèque</h2><p>Consultez les ouvrages et les prêts accessibles.</p></a>
   </div>
 </div>

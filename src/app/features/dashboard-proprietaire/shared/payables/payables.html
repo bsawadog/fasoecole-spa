@@ -1,50 +1,75 @@
 <section class="payables">
   <div class="toolbar">
-    <div><h2>{{ salariesOnly() ? 'Salaires à payer' : 'Dépenses à payer' }}</h2>
-      <p>Charges du mois et impayés antérieurs. Les paiements alimentent le bilan de l’école.</p></div>
-    <label>Mois<input type="month" [(ngModel)]="month" (change)="load(true)" [disabled]="busy() || loading()"></label>
-    <button type="button" (click)="load(true)" [disabled]="busy() || loading()">Actualiser les charges</button>
-    @if (!salariesOnly()) {
-      <button type="button" class="primary" (click)="openForm('manual')" [disabled]="busy() || loading()">Ajouter une dépense</button>
-      <button type="button" (click)="openForm('fixed')" [disabled]="busy() || loading()">Ajouter une charge fixe</button>
+    @if (!formOnly()) { <div><h2>{{ salariesOnly() ? 'Salaires à payer' : 'Dépenses à payer' }}</h2>
+      <p>Charges du mois et impayés antérieurs. Les paiements alimentent le bilan de l’école.</p></div> }
+    @if (mode() !== 'manual') { <label>{{ mode() === 'fixed' ? 'Premier mois' : 'Mois' }}<app-date-field mode="month" [(ngModel)]="month" (change)="load(true)" [disabled]="busy() || loading()" [ariaLabel]="(&quot;Mois&quot;).trim()" /></label>
+    <button pButton type="button" (click)="load(true)" [disabled]="busy() || loading()">Actualiser les charges</button> }
+    @if (!salariesOnly() && mode() === 'all') {
+      <button pButton type="button" class="primary" (click)="openForm('manual')" [disabled]="busy() || loading()">Ajouter une dépense</button>
+      <button pButton type="button" (click)="openForm('fixed')" [disabled]="busy() || loading()">Ajouter une charge fixe</button>
     }
   </div>
-  @if (error()) { <p class="alert error" role="alert">{{ error() }}</p> }
-  @if (success()) { <p class="alert success" role="status">{{ success() }}</p> }
-  @if (loading()) { <p role="status" class="empty">Chargement des échéances…</p> }
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}</app-error-alert> }
+  @if (success()) { <p-message severity="success" class="alert success" role="status">{{ success() }}</p-message> }
+  @if (loading()) { <app-loading-state message="Chargement des échéances…" /> }
   @if (data(); as d) {
+    @if (!formOnly()) {
     <div class="metrics">
       <article><span>Montant prévu</span><strong>{{ d.total | number:'1.0-2' }} <small>FCFA</small></strong></article>
       <article><span>Déjà payé</span><strong>{{ d.paid | number:'1.0-2' }} <small>FCFA</small></strong></article>
       <article class="outstanding"><span>Reste à payer</span><strong>{{ d.remaining | number:'1.0-2' }} <small>FCFA</small></strong></article>
       <article class="late"><span>Dont en retard</span><strong>{{ d.overdue | number:'1.0-2' }} <small>FCFA</small></strong></article>
     </div>
+    }
     @if (formKind) {
       <section class="panel">
         <h3>{{ formKind === 'fixed' ? 'Nouvelle charge mensuelle' : 'Nouvelle dépense à payer' }}</h3>
         <form (ngSubmit)="save()" #expenseForm="ngForm">
-          <label>Libellé<input name="label" [(ngModel)]="form.label" maxlength="150" required placeholder="Loyer, achat de matériel…"></label>
-          <label>Catégorie<select name="category" [(ngModel)]="form.categoryId" required>
-            @for (c of manualCategories(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
-          </select></label>
-          <label>Bénéficiaire<input name="supplier" [(ngModel)]="form.supplier" maxlength="150" placeholder="Fournisseur ou bénéficiaire"></label>
-          <label>Montant total (FCFA)<input name="amount" type="number" min="0.01" max="9999999999.99" step="0.01" [(ngModel)]="form.amount" required></label>
+          <label>Libellé<input pInputText name="label" [(ngModel)]="form.label" maxlength="150" required placeholder="Loyer, achat de matériel…"></label>
+          <label>Catégorie<app-select-field name="category" [(ngModel)]="form.categoryId" required [ariaLabel]="(&quot;Catégorie&quot;).trim()">
+            @for (c of manualCategories(); track c.id) { <app-select-option [value]="c.id" [label]="((&quot;&quot; + ((c.name)) + &quot;&quot;)).trim()" /> }
+          </app-select-field></label>
+          <label>Bénéficiaire<input pInputText name="supplier" [(ngModel)]="form.supplier" maxlength="150" placeholder="Fournisseur ou bénéficiaire"></label>
+          <label>Montant total (FCFA)<app-number-field name="amount" min="0.01" max="9999999999.99" step="0.01" [(ngModel)]="form.amount" required [ariaLabel]="(&quot;Montant total (FCFA)&quot;).trim()" /></label>
+          <fieldset class="tax-details">
+            <legend>Taxes facturées par le fournisseur, dont TVA</legend>
+            <p>Le montant total est le TTC. La TVA facturée par le fournisseur est incluse dans ce total et alimente l’état de TVA fournisseurs ; elle ne constitue pas à elle seule une TVA à reverser au fisc.</p>
+            @for(tax of taxes;track $index;let i=$index){
+              <div class="tax-line">
+                <label>Libellé de la taxe<input pInputText [name]="'taxLabel'+i" [(ngModel)]="tax.label" maxlength="100" required [disabled]="busy()" /></label>
+                <label>Montant de la taxe (FCFA)<app-number-field [name]="'taxAmount'+i" [(ngModel)]="tax.amount" min="0.01" max="9999999999.99" step="0.01" required [disabled]="busy()" [ariaLabel]="'Montant de taxe '+(i+1)" /></label>
+                <button pButton severity="danger" variant="text" type="button" (click)="taxes.splice(i,1)" [disabled]="busy()">Retirer cette taxe</button>
+              </div>
+            }
+            <button pButton type="button" severity="secondary" (click)="addTax()" [disabled]="busy()||taxes.length>=20">Ajouter la TVA / une taxe</button>
+            @if(taxes.length){
+              <p><strong>HT : {{(form.amount||0)-taxTotal()|number:'1.0-2'}} FCFA · Taxes : {{taxTotal()|number:'1.0-2'}} FCFA · TTC : {{form.amount||0|number:'1.0-2'}} FCFA</strong></p>
+              <div class="tax-line">
+                @if(formKind==='manual'){
+                  <label>Numéro de facture (facultatif)<input pInputText name="invoiceNumber" [(ngModel)]="taxInvoice.invoiceNumber" maxlength="100" /></label>
+                  <label>Date de facture (facultative)<app-date-field name="invoiceDate" [(ngModel)]="taxInvoice.invoiceDate" ariaLabel="Date de facture" /></label>
+                }
+                <label>IFU fournisseur (facultatif)<input pInputText name="supplierIfu" [(ngModel)]="taxInvoice.supplierIfu" maxlength="50" /></label>
+              </div>
+            }
+          </fieldset>
           @if (formKind === 'fixed') {
-            <label>Jour d’échéance<input name="dueDay" type="number" min="1" max="31" step="1" [(ngModel)]="form.dueDay" required></label>
+            <label>Jour d’échéance<app-number-field name="dueDay" min="1" max="31" step="1" [(ngModel)]="form.dueDay" required [ariaLabel]="(&quot;Jour d’échéance&quot;).trim()" /></label>
             <p>À partir de {{ month }}, une échéance sera préparée chaque mois. Les jours 29 à 31 sont ramenés au dernier jour des mois plus courts.</p>
           } @else {
-            <label>Échéance<input name="dueDate" type="date" [(ngModel)]="form.dueDate" required></label>
-            <label>Notes<input name="notes" [(ngModel)]="form.notes" maxlength="500"></label>
+            <label>Échéance<app-date-field mode="date" name="dueDate" [(ngModel)]="form.dueDate" required [ariaLabel]="(&quot;Échéance&quot;).trim()" /></label>
+            <label>Notes<input pInputText name="notes" [(ngModel)]="form.notes" maxlength="500"></label>
           }
-          <div class="actions"><button class="primary" type="submit" [disabled]="busy() || expenseForm.invalid">Enregistrer</button>
-            <button type="button" (click)="formKind = null" [disabled]="busy()">Fermer</button></div>
+          <div class="actions"><button pButton class="primary" type="submit" [disabled]="busy() || expenseForm.invalid">Enregistrer</button>
+            @if (!formOnly()) { <button pButton severity="secondary" variant="outlined" type="button" (click)="formKind = null" [disabled]="busy()">Fermer</button> }</div>
         </form>
       </section>
     }
+    @if (!formOnly()) {
     <div class="filters">
-      <label>Statut<select [(ngModel)]="filter"><option value="OPEN">À payer et paiements partiels</option><option value="OVERDUE">En retard</option>
-        <option value="PAID">Soldées</option><option value="CANCELLED">Annulées</option><option value="NOT_DUE">Sans montant dû</option><option value="ALL">Toutes les dépenses</option></select></label>
-      <label>Rechercher<input type="search" [(ngModel)]="search" placeholder="Libellé, bénéficiaire, catégorie…"></label>
+      <label>Statut<app-select-field [(ngModel)]="filter" [ariaLabel]="(&quot;Statut&quot;).trim()"><app-select-option [value]="&quot;OPEN&quot;" [label]="(&quot;À payer et paiements partiels&quot;).trim()" /><app-select-option [value]="&quot;OVERDUE&quot;" [label]="(&quot;En retard&quot;).trim()" />
+        <app-select-option [value]="&quot;PAID&quot;" [label]="(&quot;Soldées&quot;).trim()" /><app-select-option [value]="&quot;CANCELLED&quot;" [label]="(&quot;Annulées&quot;).trim()" /><app-select-option [value]="&quot;NOT_DUE&quot;" [label]="(&quot;Sans montant dû&quot;).trim()" /><app-select-option [value]="&quot;ALL&quot;" [label]="(&quot;Toutes les dépenses&quot;).trim()" /></app-select-field></label>
+      <label>Rechercher<input pInputText type="search" [(ngModel)]="search" placeholder="Libellé, bénéficiaire, catégorie…"></label>
       <span>{{ rows().length }} dépense(s)</span>
     </div>
     <div class="table-wrap"><table>
@@ -52,33 +77,44 @@
       <tbody>
         @for (r of rows(); track r.id) {
           <tr [class.overdue]="r.overdue">
-            <td><strong>{{ r.label }}</strong><small>{{ sources[r.source] }} · {{ r.categoryName }}</small>@if (r.supplier) { <small>{{ r.supplier }}</small> }</td>
+            <td><strong>{{ r.label }}</strong><small>{{ sources[r.source] }} · {{ r.categoryName }}</small>@if (r.supplier) { <small>{{ r.supplier }}</small> }@if(r.taxDetails;as details){<small>HT {{details.excludingTax|number:'1.0-2'}} FCFA</small>@for(tax of details.taxes;track $index){<small>{{tax.label}} : {{tax.amount|number:'1.0-2'}} FCFA incluse</small>}}</td>
             <td>{{ r.dueDate | date:'dd/MM/yyyy' }}@if (r.period !== month) { <small>Report de {{ r.period }}</small> }</td>
             <td>{{ r.amount | number:'1.0-2' }}</td><td>{{ r.paid | number:'1.0-2' }}</td><td class="remaining">{{ r.remaining | number:'1.0-2' }}</td>
             <td><span class="badge" [attr.data-status]="r.status">{{ status[r.status] }}</span>@if (r.overdue) { <small class="danger">En retard</small> }</td>
-            <td><div class="row-actions"><button type="button" (click)="openDetail(r)" [disabled]="busy()">{{ r.remaining > 0 && r.status !== 'CANCELLED' ? 'Payer / détails' : 'Détails' }}</button>
-              @if (canCancel(r)) { <button type="button" class="danger" (click)="cancel(r)" [disabled]="busy()">Annuler</button> }</div></td>
+            <td><div class="row-actions">
+<app-row-actions>
+<button pButton type="button" (click)="openDetail(r)" [disabled]="busy()">{{ r.remaining > 0 && r.status !== 'CANCELLED' ? 'Payer / détails' : 'Détails' }}</button>
+              @if (canCancel(r)) { <button pButton severity="danger" type="button" class="danger ui-row-action ui-row-action--danger" (click)="cancel(r)" [disabled]="busy()" pTooltip="Annuler" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Annuler"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12 M6 18L18 6" /></svg><span class="ui-actions-label">Annuler</span></button> }
+</app-row-actions>
+</div></td>
           </tr>
         } @empty { <tr><td colspan="7" class="empty">Aucune dépense pour ce filtre. Choisissez « Toutes les dépenses » pour consulter les échéances soldées ou annulées.</td></tr> }
       </tbody>
     </table></div>
     @if (selected(); as r) {
       <section class="panel" aria-label="Détails de la dépense">
-        <div class="toolbar"><h3>{{ r.label }}</h3><button type="button" (click)="closeDetail()" [disabled]="busy()">Fermer</button></div>
+        <div class="toolbar"><h3>{{ r.label }}</h3><button pButton severity="secondary" variant="outlined" type="button" (click)="closeDetail()" [disabled]="busy()">Fermer</button></div>
         <p>Échéance : {{ r.dueDate | date:'dd/MM/yyyy' }} · {{ status[r.status] }} · Reste à payer : <strong>{{ r.remaining | number:'1.0-2' }} FCFA</strong></p>
         @if (r.notes) { <p>{{ r.notes }}</p> }
+        @if(r.taxDetails;as details){
+          <div class="tax-details"><strong>Détail des taxes comprises dans le TTC</strong><p>HT : {{details.excludingTax|number:'1.0-2'}} FCFA · TTC : {{r.amount|number:'1.0-2'}} FCFA</p>
+            @for(tax of details.taxes;track $index){<p>{{tax.label}} : {{tax.amount|number:'1.0-2'}} FCFA</p>}
+            @if(details.invoiceNumber){<p>Facture : {{details.invoiceNumber}} @if(details.invoiceDate){· {{details.invoiceDate|date:'dd/MM/yyyy'}}}</p>}
+            @if(details.supplierIfu){<p>IFU : {{details.supplierIfu}}</p>}
+          </div>
+        }
         @if (r.remaining > 0 && r.status !== 'CANCELLED') {
           <form (ngSubmit)="recordPayment()" #paymentForm="ngForm">
-            <label>Versement (FCFA)<input name="payAmount" type="number" min="0.01" [max]="r.remaining" step="0.01" [(ngModel)]="pay.amount" required></label>
-            <label>Date du paiement<input name="payDate" type="date" [max]="today" [(ngModel)]="pay.date" required></label>
-            <label>Mode<select name="method" [(ngModel)]="pay.method">@for (m of methods; track m) { <option [value]="m">{{ methodLabels[m] }}</option> }</select></label>
-            <label>Référence<input name="reference" [(ngModel)]="pay.reference" maxlength="100" placeholder="N° de transaction ou pièce"></label>
-            <div class="actions"><button class="primary" type="submit" [disabled]="busy() || paymentForm.invalid">Enregistrer le versement</button></div>
+            <label>Versement (FCFA)<app-number-field name="payAmount" min="0.01" [max]="r.remaining" step="0.01" [(ngModel)]="pay.amount" required [ariaLabel]="(&quot;Versement (FCFA)&quot;).trim()" /></label>
+            <label>Date du paiement<app-date-field mode="date" name="payDate" [max]="today" [(ngModel)]="pay.date" required [ariaLabel]="(&quot;Date du paiement&quot;).trim()" /></label>
+            <label>Mode<app-select-field name="method" [(ngModel)]="pay.method" [ariaLabel]="(&quot;Mode&quot;).trim()">@for (m of methods; track m) { <app-select-option [value]="m" [label]="((&quot;&quot; + ((methodLabels[m])) + &quot;&quot;)).trim()" /> }</app-select-field></label>
+            <label>Référence<input pInputText name="reference" [(ngModel)]="pay.reference" maxlength="100" placeholder="N° de transaction ou pièce"></label>
+            <div class="actions"><button pButton class="primary" type="submit" [disabled]="busy() || paymentForm.invalid">Enregistrer le versement</button></div>
           </form>
         }
         <h4>Historique des versements</h4>
-        @if (historyLoading()) { <p role="status">Chargement des versements…</p> }
-        @else if (historyError()) { <p class="error" role="alert">{{ historyError() }}</p> }
+        @if (historyLoading()) { <app-loading-state message="Chargement des versements…" /> }
+        @else if (historyError()) { <app-error-alert [message]="historyError()" (dismissed)="historyError.set('')">{{ historyError() }}</app-error-alert> }
         @else {
           <div class="table-wrap"><table><thead><tr><th>Date</th><th>Montant (FCFA)</th><th>Mode</th><th>Référence</th></tr></thead>
             <tbody>@for (p of history(); track p.id) { <tr><td>{{ p.date | date:'dd/MM/yyyy' }}</td><td>{{ p.amount | number:'1.0-2' }}</td><td>{{ p.method ? methodLabels[p.method] : 'Fiche enseignant' }}</td><td>{{ p.reference || '—' }}</td></tr> }
@@ -86,14 +122,15 @@
         }
       </section>
     }
-    @if (!salariesOnly()) {
+    }
+    @if (!salariesOnly() && (mode() === 'all' || mode() === 'fixed')) {
       <section class="panel">
         <h3>Charges fixes mensuelles</h3><p>Arrêter une charge empêche la préparation de nouvelles échéances. Les dépenses déjà préparées restent à régler ou peuvent être annulées si elles n’ont aucun versement.</p>
         <div class="fixed-list">
           @for (f of d.fixedCharges; track f.id) {
             <article [class.inactive]="!f.active"><div><strong>{{ f.label }}</strong><small>{{ f.supplier || 'Charge mensuelle' }} · Échéance le {{ f.dueDay }} · Depuis {{ f.startMonth }}</small></div>
               <strong>{{ f.amount | number:'1.0-2' }} FCFA</strong><span class="badge">{{ f.active ? 'Active' : 'Arrêtée' }}</span>
-              <button type="button" (click)="toggleFixed(f.id,!f.active)" [disabled]="busy()">{{ f.active ? 'Arrêter' : 'Réactiver' }}</button></article>
+              <button pButton type="button" (click)="toggleFixed(f.id,!f.active)" [disabled]="busy()">{{ f.active ? 'Arrêter' : 'Réactiver' }}</button></article>
           } @empty { <p>Aucune charge fixe configurée. Ajoutez le loyer, l’eau, l’électricité ou vos autres charges mensuelles.</p> }
         </div>
       </section>

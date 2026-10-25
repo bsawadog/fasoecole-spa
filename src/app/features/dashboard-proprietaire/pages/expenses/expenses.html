@@ -1,19 +1,14 @@
 <section class="dep">
-  <header class="dep__header">
+  <header class="module-help-header dep__header">
+    <app-module-help />
     <div class="dep__identity">
       <span class="dep__header-icon" aria-hidden="true">⇄</span>
       <div>
         <h1>Dépenses &amp; budget</h1>
-        <p>Salaires, charges fixes, dépenses à payer, versements et bilan de l’établissement.</p>
+        <p>Saisissez vos dépenses, enregistrez les paiements et suivez le budget de l’établissement.</p>
       </div>
     </div>
-    @if (schools().length > 1) {
-      <label class="dep__school-picker">Choisir un établissement
-        <select class="dep__select" [ngModel]="schoolId()" (change)="changeSchool($event)">
-          @for (school of schools(); track school.id) { <option [value]="school.id">{{ school.name }}</option> }
-        </select>
-      </label>
-    }
+
   </header>
 
   <nav class="dep__tabs" aria-label="Sections dépenses">
@@ -23,23 +18,22 @@
     }
   </nav>
 
-  @if (error()) { <div class="dep__alert dep__alert--error" role="alert">{{ error() }}</div> }
-  @if (success()) { <div class="dep__alert dep__alert--success" role="status">{{ success() }}</div> }
+  <aside class="dep__guide" aria-label="À quoi sert cette rubrique ?">
+    <h2>{{ activeSection().label }}</h2>
+    <p>{{ explanations[tab()] }}</p>
+  </aside>
+
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
+  @if (success()) { <p-message severity="success" class="dep__alert dep__alert--success" role="status">{{ success() }}</p-message> }
 
   @if (loading()) {
-    <p class="dep__state">Chargement…</p>
+    <app-loading-state message="Chargement…" />
   } @else if (!schools().length) {
     <p class="dep__state">Aucun établissement associé à votre compte.</p>
   } @else {
     @if ((tab() === 'summary' || tab() === 'budget') && summary(); as s) {
       <div class="dep__toolbar dep__toolbar--bare">
-        @if (s.years.length) {
-          <label>Année scolaire
-            <select [(ngModel)]="yearId" (change)="changeYear()">
-              @for (y of s.years; track y.id) { <option [ngValue]="y.id">{{ y.label }}{{ y.current ? ' (en cours)' : '' }}</option> }
-            </select>
-          </label>
-        } @else {
+        @if (!s.years.length) {
           <p class="dep__muted">Aucune année scolaire : le bilan porte sur l’année civile. Créez une année scolaire pour définir un budget.</p>
         }
         <span class="dep__muted">Période du {{ s.from }} au {{ s.to }}</span>
@@ -47,8 +41,9 @@
     }
 
     @switch (tab()) {
-      @case ('salaries') { @if (schoolId(); as id) { <app-payables [schoolId]="id" [salariesOnly]="true" /> } }
-      @case ('payables') { @if (schoolId(); as id) { <app-payables [schoolId]="id" /> } }
+      @case ('create') { @if (schoolId(); as id) { <app-payables [schoolId]="id" mode="manual" (saved)="setTab('payables'); success.set('Dépense enregistrée. Vous pouvez maintenant enregistrer un versement.')" /> } }
+      @case ('fixed') { @if (schoolId(); as id) { <app-payables [schoolId]="id" mode="fixed" /> } }
+      @case ('payables') { @if (schoolId(); as id) { <app-payables [schoolId]="id" mode="list" /> } }
       @case ('summary') {
         @if (summary(); as s) {
           <div class="dep__kpis">
@@ -88,7 +83,7 @@
           <div class="dep__grid">
             <div class="dep__card">
               <div class="dep__card-head"><h2>Budget par catégorie</h2>
-                <button type="button" class="dep__link" (click)="setTab('budget')">Modifier le budget →</button></div>
+                <button pButton severity="secondary" variant="text" type="button" class="dep__link" (click)="setTab('budget')">Modifier le budget →</button></div>
               <div class="dep__table-wrap"><table class="dep__table">
                 <thead><tr><th>Catégorie</th><th>Prévu</th><th>Dépensé</th><th>Reste</th><th>Consommation</th></tr></thead>
                 <tbody>
@@ -107,37 +102,37 @@
             </div>
             <div class="dep__card">
               <div class="dep__card-head"><h2>Dernières dépenses</h2>
-                <button type="button" class="dep__link" (click)="setTab('expenses')">Voir tout →</button></div>
+                <button pButton severity="secondary" variant="text" type="button" class="dep__link" (click)="setTab('expenses')">Voir tout →</button></div>
               <div class="dep__table-wrap"><table class="dep__table">
                 <thead><tr><th>Date</th><th>Libellé</th><th>Catégorie</th><th>Montant</th></tr></thead>
                 <tbody>
                   @for (e of s.recentExpenses; track e.source + e.id) {
                     <tr><td>{{ e.expenseDate }}</td><td>{{ e.label }}@if (e.supplier) { <div class="dep__muted">{{ e.supplier }}</div> }</td>
-                      <td>{{ e.categoryName }}</td><td><strong>{{ e.amount | number:'1.0-0' }}</strong></td></tr>
+                      <td>{{ e.categoryName }}</td><td><strong>{{ e.amount | number:'1.0-2' }}</strong></td></tr>
                   } @empty { <tr><td colspan="4" class="dep__muted">Aucune dépense sur la période.</td></tr> }
                 </tbody>
               </table></div>
             </div>
           </div>
-        } @else { <p class="dep__state">Chargement du bilan…</p> }
+        } @else { <app-loading-state message="Chargement du bilan…" /> }
       }
 
       @case ('expenses') {
         <div class="dep__card">
           <div class="dep__card-head"><h2>Dépenses</h2><span class="dep__count">{{ filteredExpenses().length }} · {{ expensesTotal() | number:'1.0-0' }} FCFA</span></div>
           <div class="dep__toolbar">
-            <label>Du<input type="date" [(ngModel)]="from" (change)="loadExpenses()"></label>
-            <label>Au<input type="date" [(ngModel)]="to" (change)="loadExpenses()"></label>
+            <label>Du<app-date-field mode="date" [(ngModel)]="from" (change)="loadExpenses()" [ariaLabel]="(&quot;Du&quot;).trim()" /></label>
+            <label>Au<app-date-field mode="date" [(ngModel)]="to" (change)="loadExpenses()" [ariaLabel]="(&quot;Au&quot;).trim()" /></label>
             <label>Catégorie
-              <select [(ngModel)]="categoryFilter" (change)="loadExpenses()">
-                <option [ngValue]="null">Toutes les catégories</option>
-                @for (c of categories(); track c.id) { <option [ngValue]="c.id">{{ c.name }}{{ c.active ? '' : ' (archivée)' }}</option> }
-              </select>
+              <app-select-field [(ngModel)]="categoryFilter" (change)="loadExpenses()" [ariaLabel]="(&quot;Catégorie &quot;).trim()">
+                <app-select-option [value]="null" [label]="(&quot;Toutes les catégories&quot;).trim()" />
+                @for (c of categories(); track c.id) { <app-select-option [value]="c.id" [label]="((&quot;&quot; + (c.name) + &quot;&quot; + (c.active ? '' : ' (archivée)') + &quot;&quot;)).trim()" /> }
+              </app-select-field>
             </label>
-            <label>Rechercher<input type="search" [(ngModel)]="search" placeholder="Libellé, bénéficiaire, référence"></label>
+            <label>Rechercher<input pInputText type="search" [(ngModel)]="search" placeholder="Libellé, bénéficiaire, référence"></label>
             <div class="dep__actions">
-              <button type="button" class="dep__btn" (click)="openExpense()" [disabled]="!manualCategories().length">+ Dépense déjà payée</button>
-              <button type="button" class="dep__btn dep__btn--ghost" (click)="exportCsv()">Exporter (CSV)</button>
+              <button pButton type="button" class="dep__btn" (click)="openExpense()" [disabled]="!manualCategories().length">+ Dépense déjà payée</button>
+              <button pButton severity="secondary" variant="outlined" type="button" class="dep__btn dep__btn--ghost" (click)="exportCsv()">Exporter (CSV)</button>
             </div>
           </div>
 
@@ -146,26 +141,46 @@
               <h3>{{ editingId ? 'Modifier la dépense' : 'Enregistrer une dépense déjà payée' }}</h3>
               <div class="dep__form">
                 <label>Catégorie
-                  <select name="category" [(ngModel)]="form.categoryId" required>
-                    @for (c of manualCategories(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
-                  </select>
+                  <app-select-field name="category" [(ngModel)]="form.categoryId" required [ariaLabel]="(&quot;Catégorie &quot;).trim()">
+                    @for (c of manualCategories(); track c.id) { <app-select-option [value]="c.id" [label]="((&quot;&quot; + (c.name) + &quot;&quot;)).trim()" /> }
+                  </app-select-field>
                 </label>
-                <label>Date<input type="date" name="date" [(ngModel)]="form.expenseDate" [max]="todayIso" required></label>
-                <label>Montant (FCFA)<input type="number" name="amount" min="1" step="1" [(ngModel)]="form.amount" required></label>
+                <label>Date<app-date-field mode="date" name="date" [(ngModel)]="form.expenseDate" [max]="todayIso" required [ariaLabel]="(&quot;Date&quot;).trim()" /></label>
+                <label>{{invoiceEnabled?'Total TTC facture (FCFA)':'Montant (FCFA)'}}<app-number-field name="amount" min="0.01" step="0.01" [(ngModel)]="form.amount" required ariaLabel="Montant (FCFA)" /></label>
                 <label>Mode de paiement
-                  <select name="method" [(ngModel)]="form.method">
-                    @for (m of methods; track m) { <option [value]="m">{{ methodLabels[m] }}</option> }
-                  </select>
+                  <app-select-field name="method" [(ngModel)]="form.method" [ariaLabel]="(&quot;Mode de paiement &quot;).trim()">
+                    @for (m of methods; track m) { <app-select-option [value]="m" [label]="((&quot;&quot; + (methodLabels[m]) + &quot;&quot;)).trim()" /> }
+                  </app-select-field>
                 </label>
-                <label class="dep__wide">Libellé<input name="label" [(ngModel)]="form.label" maxlength="150" placeholder="Loyer d’octobre" required></label>
-                <label>Bénéficiaire / fournisseur<input name="supplier" [(ngModel)]="form.supplier" maxlength="150"></label>
-                <label>Référence (facture, reçu)<input name="reference" [(ngModel)]="form.reference" maxlength="100"></label>
-                <label class="dep__wide">Note<input name="notes" [(ngModel)]="form.notes" maxlength="500"></label>
+                <label class="dep__wide">Libellé<input pInputText name="label" [(ngModel)]="form.label" maxlength="150" placeholder="Loyer d’octobre" required></label>
+                <label>Bénéficiaire / fournisseur<input pInputText name="supplier" [(ngModel)]="form.supplier" maxlength="150"></label>
+                <label>Référence (facture, reçu)<input pInputText name="reference" [(ngModel)]="form.reference" maxlength="100"></label>
+                <label class="dep__wide">Note<input pInputText name="notes" [(ngModel)]="form.notes" maxlength="500"></label>
+                <label class="dep__wide"><span><input type="checkbox" name="invoiceEnabled" [(ngModel)]="invoiceEnabled" /> Facture avec références et taxes</span></label>
+                @if(invoiceEnabled){
+                  <label>Numéro de facture<input pInputText name="invoiceNumber" [(ngModel)]="invoice.number" maxlength="100" required /></label>
+                  <label>Date de facture<app-date-field name="invoiceDate" [(ngModel)]="invoice.date" [max]="form.expenseDate" ariaLabel="Date de facture" required /></label>
+                  <label>IFU du fournisseur<input pInputText name="supplierIfu" [(ngModel)]="invoice.supplierIfu" maxlength="50" /></label>
+                  <label>Échéance de reversement des retenues<app-date-field name="taxDueDate" [(ngModel)]="invoice.taxDueDate" [min]="form.expenseDate" ariaLabel="Échéance de reversement" /></label>
+                  <div class="dep__wide"><p>Les taxes facturées, dont la TVA, sont déjà comprises dans le TTC. Les retenues sont déduites du paiement fournisseur et restent à reverser. Renseignez les montants et le régime applicables à cette facture.</p>
+                    @for(tax of invoiceTaxes;track $index;let i=$index){
+                      <div class="dep__form">
+                        <label>Impôt / taxe<app-select-field [name]="'taxCode'+i" [(ngModel)]="tax.code" [ariaLabel]="'Impôt de la ligne '+(i+1)"><app-select-option value="TVA" label="TVA"/><app-select-option value="INCOME" label="Retenue sur prestation"/><app-select-option value="PROPERTY" label="Retenue foncière"/><app-select-option value="OTHER" label="Autre taxe"/></app-select-field></label>
+                        <label>Libellé de la taxe<input pInputText [name]="'taxLabel'+i" [(ngModel)]="tax.label" maxlength="100" required /></label>
+                        <label>Traitement<app-select-field [name]="'taxTreatment'+i" [(ngModel)]="tax.treatment" [ariaLabel]="'Traitement de la ligne '+(i+1)"><app-select-option value="INCLUDED" label="Taxe facturée incluse dans le TTC"/><app-select-option value="WITHHELD" label="Retenue sur le paiement fournisseur"/></app-select-field></label>
+                        <label>Montant de la taxe (FCFA)<app-number-field [name]="'taxAmount'+i" [(ngModel)]="tax.amount" min="0.01" step="0.01" [ariaLabel]="'Montant de taxe '+(i+1)" required /></label>
+                        <button pButton severity="danger" variant="text" type="button" (click)="invoiceTaxes.splice(i,1)">Retirer cette taxe</button>
+                      </div>
+                    }
+                    <button pButton severity="secondary" type="button" (click)="addInvoiceTax()" [disabled]="invoiceTaxes.length>=20">Ajouter une taxe</button>
+                    <p><strong>HT : {{(form.amount||0)-invoiceIncluded()|number:'1.0-2'}} FCFA · Retenues : {{invoiceWithheld()|number:'1.0-2'}} FCFA · Net fournisseur : {{(form.amount||0)-invoiceWithheld()|number:'1.0-2'}} FCFA</strong></p>
+                  </div>
+                }
               </div>
               <p class="dep__muted">Les salaires des enseignants sont ajoutés automatiquement depuis leur paie : inutile de les saisir ici.</p>
               <div class="dep__actions">
-                <button type="submit" class="dep__btn dep__btn--green" [disabled]="busy()">Enregistrer</button>
-                <button type="button" class="dep__btn dep__btn--ghost" (click)="formOpen.set(false)">Annuler</button>
+                <button pButton type="submit" class="dep__btn dep__btn--green" [disabled]="busy()">Enregistrer</button>
+                <button pButton severity="secondary" variant="outlined" type="button" class="dep__btn dep__btn--ghost" (click)="formOpen.set(false)">Annuler</button>
               </div>
             </form>
           }
@@ -176,13 +191,17 @@
               @for (e of filteredExpenses(); track e.source + e.id) {
                 <tr><td>{{ e.expenseDate }}</td><td>{{ e.categoryName }}</td>
                   <td><strong>{{ e.label }}</strong>@if (e.reference) { <div class="dep__muted">Réf. {{ e.reference }}</div> }
+                    @if(e.taxDetails;as details){<div>Taxes comprises dans ce versement · HT {{details.excludingTax|number:'1.0-2'}} FCFA</div>@for(tax of details.taxes;track $index){<div>{{tax.label}} : {{tax.amount|number:'1.0-2'}} FCFA</div>}@if(details.invoiceNumber){<div class="dep__muted">Facture {{details.invoiceNumber}}</div>}}
+                    @if(e.invoice;as invoice){<div class="dep__muted">Facture {{invoice.number}} · {{invoice.date}} · IFU {{invoice.supplierIfu||'non renseigné'}}</div><div>HT {{invoice.excludingTax|number:'1.0-2'}} · TTC {{invoice.total|number:'1.0-2'}} FCFA</div>@for(tax of invoice.taxes;track $index){<div>{{tax.label}} : {{tax.amount|number:'1.0-2'}} FCFA · {{tax.treatment==='INCLUDED'?'incluse au TTC':'retenue à reverser'}}</div>}@if(hasInvoiceWithholding(e)){<button pButton severity="secondary" variant="text" type="button" (click)="createInvoiceObligations(e)" [disabled]="busy()">Créer les reversements fiscaux</button>}}
                     @if (e.notes) { <div class="dep__muted">{{ e.notes }}</div> }</td>
                   <td>{{ e.supplier ?? '—' }}</td><td>{{ e.method ? methodLabels[e.method] : '—' }}</td>
                   <td><strong>{{ e.amount | number:'1.0-0' }}</strong></td>
                   <td>@if (e.source === 'MANUAL') {
                       <div class="dep__row-actions">
-                        <button type="button" class="dep__mini" (click)="openExpense(e)" [disabled]="busy()">Modifier</button>
-                        <button type="button" class="dep__mini dep__mini--danger" (click)="deleteExpense(e)" [disabled]="busy()">Supprimer</button>
+                        <app-row-actions>
+                          <button pButton severity="secondary" variant="outlined" type="button" class="dep__mini ui-row-action" (click)="openExpense(e)" [disabled]="busy()" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Modifier"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9 M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z" /></svg><span class="ui-actions-label">Modifier</span></button>
+                          <button pButton severity="danger" variant="outlined" type="button" class="dep__mini dep__mini--danger ui-row-action ui-row-action--danger" (click)="deleteExpense(e)" [disabled]="busy()" pTooltip="Supprimer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Supprimer"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18 M9 6V4h6v2 M5 6l1 14h12l1-14 M10 10v6 M14 10v6" /></svg><span class="ui-actions-label">Supprimer</span></button>
+                        </app-row-actions>
                       </div>
                     } @else { <span class="dep__badge" title="Paiement suivi dans les dépenses à payer">{{ e.source === 'PAYABLE' ? 'Versement' : 'Paie' }}</span> }</td></tr>
               } @empty { <tr><td colspan="7" class="dep__muted">Aucune dépense sur cette période.</td></tr> }
@@ -204,17 +223,17 @@
                 <tbody>
                   @for (c of s.categories; track c.categoryId) {
                     <tr><td><strong>{{ c.name }}</strong>@if (!c.active) { <span class="dep__muted"> (archivée)</span> }</td>
-                      <td><input type="number" min="0" step="1000" class="dep__num" [(ngModel)]="budget[c.categoryId]" [attr.aria-label]="'Budget ' + c.name"></td>
+                      <td><app-number-field min="0" step="1000" class="dep__num" [(ngModel)]="budget[c.categoryId]" [ariaLabel]="'Budget ' + c.name" /></td>
                       <td>{{ c.spent | number:'1.0-0' }}</td>
                       <td>@if (c.usedRate !== null) { {{ c.usedRate | number:'1.0-1' }} % } @else { <span class="dep__muted">—</span> }</td></tr>
                   }
                 </tbody>
                 <tfoot><tr><td>Total</td><td>{{ budgetTotal() | number:'1.0-0' }}</td><td>{{ s.expenses | number:'1.0-0' }}</td><td></td></tr></tfoot>
               </table></div>
-              <div class="dep__actions dep__pad"><button type="button" class="dep__btn dep__btn--green" (click)="saveBudget()" [disabled]="busy()">Enregistrer le budget</button></div>
+              <div class="dep__actions dep__pad"><button pButton type="button" class="dep__btn dep__btn--green" (click)="saveBudget()" [disabled]="busy()">Enregistrer le budget</button></div>
             }
           </div>
-        } @else { <p class="dep__state">Chargement du budget…</p> }
+        } @else { <app-loading-state message="Chargement du budget…" /> }
       }
 
       @case ('categories') {
@@ -222,11 +241,11 @@
           <div class="dep__card">
             <div class="dep__card-head"><h2>{{ editingCategoryId ? 'Modifier la catégorie' : 'Nouvelle catégorie' }}</h2></div>
             <form class="dep__body" (ngSubmit)="saveCategory()">
-              <label>Nom<input name="catName" [(ngModel)]="categoryForm.name" maxlength="100" required placeholder="Cantine"></label>
-              <label>Description<input name="catDesc" [(ngModel)]="categoryForm.description" maxlength="255"></label>
+              <label>Nom<input pInputText name="catName" [(ngModel)]="categoryForm.name" maxlength="100" required placeholder="Cantine"></label>
+              <label>Description<input pInputText name="catDesc" [(ngModel)]="categoryForm.description" maxlength="255"></label>
               <div class="dep__actions">
-                <button type="submit" class="dep__btn" [disabled]="busy()">{{ editingCategoryId ? 'Enregistrer' : 'Ajouter' }}</button>
-                @if (editingCategoryId) { <button type="button" class="dep__btn dep__btn--ghost" (click)="editCategory()">Annuler</button> }
+                <button pButton type="submit" class="dep__btn" [disabled]="busy()">{{ editingCategoryId ? 'Enregistrer' : 'Ajouter' }}</button>
+                @if (editingCategoryId) { <button pButton severity="secondary" variant="outlined" type="button" class="dep__btn dep__btn--ghost" (click)="editCategory()">Annuler</button> }
               </div>
             </form>
           </div>
@@ -241,11 +260,13 @@
                     <td>{{ c.systemCode === 'PAYROLL' ? 'Automatique' : c.expenseCount }}</td>
                     <td><span class="dep__badge" [class.dep__badge--on]="c.active">{{ c.active ? 'Active' : 'Archivée' }}</span></td>
                     <td><div class="dep__row-actions">
-                      <button type="button" class="dep__mini" (click)="editCategory(c)" [disabled]="busy()">Modifier</button>
-                      @if (c.systemCode !== 'PAYROLL') {
-                        <button type="button" class="dep__mini" (click)="toggleCategory(c)" [disabled]="busy()">{{ c.active ? 'Archiver' : 'Réactiver' }}</button>
-                        <button type="button" class="dep__mini dep__mini--danger" (click)="deleteCategory(c)" [disabled]="busy()">Supprimer</button>
-                      }
+                      <app-row-actions>
+                        <button pButton severity="secondary" variant="outlined" type="button" class="dep__mini ui-row-action ui-row-action--warning" (click)="editCategory(c)" [disabled]="busy()" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Modifier"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9 M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z" /></svg><span class="ui-actions-label">Modifier</span></button>
+                        @if (c.systemCode !== 'PAYROLL') {
+                          <button pButton severity="secondary" variant="outlined" type="button" class="dep__mini ui-row-action" (click)="toggleCategory(c)" [disabled]="busy()" pTooltip="{{ c.active ? 'Archiver' : 'Réactiver' }}" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="{{ c.active ? 'Archiver' : 'Réactiver' }}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v10 M6 5a9 9 0 1 0 12 0" /></svg><span class="ui-actions-label">{{ c.active ? 'Archiver' : 'Réactiver' }}</span></button>
+                          <button pButton severity="danger" variant="outlined" type="button" class="dep__mini dep__mini--danger ui-row-action ui-row-action--danger" (click)="deleteCategory(c)" [disabled]="busy()" pTooltip="Supprimer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Supprimer"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18 M9 6V4h6v2 M5 6l1 14h12l1-14 M10 10v6 M14 10v6" /></svg><span class="ui-actions-label">Supprimer</span></button>
+                        }
+                      </app-row-actions>
                     </div></td></tr>
                 }
               </tbody>

@@ -1,7 +1,8 @@
+@layer legacy {
 .approvals {
   max-width: 68rem;
   margin: 0 auto;
-  color: #18342c;
+  color: var(--theme-ink, #18342c);
 
   &__heading {
     margin-bottom: 1.75rem;
@@ -23,14 +24,14 @@
 
     > p:last-child {
       margin: 0.6rem 0 0;
-      color: #718078;
+      color: var(--theme-muted, #718078);
       line-height: 1.6;
     }
   }
 
   &__eyebrow {
     margin: 0 0 0.45rem;
-    color: #1f765e;
+    color: var(--theme-success, #1f765e);
     font-size: 0.75rem;
     font-weight: 750;
     letter-spacing: 0.12em;
@@ -47,9 +48,9 @@
     grid-template-columns: minmax(15rem, 1fr) minmax(18rem, 1.25fr);
     gap: 1.5rem;
     padding: 1.25rem;
-    border: 1px solid #e2e9e3;
+    border: 1px solid var(--theme-border, #e2e9e3);
     border-radius: 1rem;
-    background: #fff;
+    background: var(--theme-surface, #fff);
     box-shadow: 0 0.4rem 1.5rem rgb(24 52 44 / 5%);
   }
 
@@ -65,7 +66,7 @@
 
     p {
       margin: 0.2rem 0;
-      color: #718078;
+      color: var(--theme-muted, #718078);
       font-size: 0.87rem;
       overflow-wrap: anywhere;
     }
@@ -78,14 +79,14 @@
     aspect-ratio: 1;
     place-items: center;
     border-radius: 0.85rem;
-    color: #1f765e;
-    background: #eaf5ee;
+    color: var(--theme-success, #1f765e);
+    background: var(--theme-success-soft, #eaf5ee);
     font-weight: 750;
   }
 
   &__requested-role {
     margin-top: 0.55rem !important;
-    color: #1f765e !important;
+    color: var(--theme-success, #1f765e) !important;
   }
 
   &__badge {
@@ -93,15 +94,15 @@
     margin-left: 0.4rem;
     padding: 0.1rem 0.5rem;
     border-radius: 999px;
-    color: #1d4ed8;
-    background: #e0ebff;
+    color: var(--theme-link, #1d4ed8);
+    background: var(--theme-soft, #e0ebff);
     font-size: 0.72rem;
     font-weight: 700;
     vertical-align: middle;
   }
 
   &__card--auto {
-    border-color: #c7d7fe;
+    border-color: var(--theme-soft, #c7d7fe);
   }
 
   &__controls {
@@ -113,7 +114,7 @@
     label {
       display: grid;
       gap: 0.4rem;
-      color: #53645a;
+      color: var(--theme-muted, #53645a);
       font-size: 0.8rem;
       font-weight: 650;
     }
@@ -122,10 +123,10 @@
       min-width: 0;
       min-height: 2.7rem;
       padding: 0.55rem 0.7rem;
-      border: 1px solid #dce3dd;
+      border: 1px solid var(--theme-border, #dce3dd);
       border-radius: 0.6rem;
-      color: #18342c;
-      background: #fff;
+      color: var(--theme-ink, #18342c);
+      background: var(--theme-surface, #fff);
       font: inherit;
     }
 
@@ -134,8 +135,8 @@
       min-height: 2.8rem;
       border: 0;
       border-radius: 0.65rem;
-      color: #fff;
-      background: #1f765e;
+      color: var(--theme-button-ink, #fff);
+      background: var(--theme-success, #1f765e);
       font: inherit;
       font-weight: 700;
       cursor: pointer;
@@ -147,23 +148,23 @@
     }
 
     .approvals__reject {
-      border: 1px solid #f1b9b2;
-      color: #963c35;
-      background: #fff;
+      border: 1px solid var(--theme-danger-border, #f1b9b2);
+      color: var(--theme-danger, #963c35);
+      background: var(--theme-surface, #fff);
     }
   }
 
   &__empty {
     padding: 3rem 1.5rem;
-    border: 1px dashed #d7e2d9;
+    border: 1px dashed var(--theme-border, #d7e2d9);
     border-radius: 1rem;
-    color: #718078;
-    background: #fff;
+    color: var(--theme-muted, #718078);
+    background: var(--theme-surface, #fff);
     text-align: center;
 
     h2 {
       margin: 0;
-      color: #18342c;
+      color: var(--theme-ink, #18342c);
       font-size: 1.1rem;
     }
 
@@ -178,13 +179,13 @@
     border-radius: 0.65rem;
 
     &--error {
-      color: #963c35;
-      background: #fff0ed;
+      color: var(--theme-danger, #963c35);
+      background: var(--theme-danger-soft, #fff0ed);
     }
 
     &--success {
-      color: #236347;
-      background: #eaf6ee;
+      color: var(--theme-success, #236347);
+      background: var(--theme-success-soft, #eaf6ee);
     }
   }
 }
@@ -203,4 +204,6 @@
       grid-column: auto;
     }
   }
+}
+
 }

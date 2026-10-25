@@ -1,24 +1,25 @@
-<div class="ss portal" [class.portal--receipt]="receipt()">
-  <header class="ss__header portal-no-print">
+<div class="ss portal" [class.portal--receipt]="receipt()" [class.ui-academic-blue]="module() === 'notes'">
+  <header class="module-help-header ss__header portal-no-print">
+    <app-module-help />
     <div><h1>{{ title() }}</h1><p>Suivez les informations de votre enfant.</p></div>
     @if (children().length) {
       <label class="ss__picker">Enfant
-        <select [value]="selectedId()" [disabled]="saving()" (change)="choose($any($event.target).value)">
-          @for (child of children(); track child.studentId) { <option [value]="child.studentId">{{ child.fullName }} · {{ child.schoolName }}</option> }
-        </select>
+        <app-select-field [value]="selectedId()" [disabled]="saving()" (change)="choose($any($event.target).value)" [ariaLabel]="(&quot;Enfant &quot;).trim()">
+          @for (child of children(); track child.studentId) { <app-select-option [value]="child.studentId" [label]="((&quot;&quot; + ((child.fullName)) + &quot; · &quot; + ((child.schoolName)) + &quot;&quot;)).trim()" /> }
+        </app-select-field>
       </label>
-      <button type="button" class="ss__mini" [disabled]="loading() || saving()" (click)="load()">Actualiser</button>
+      <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" [disabled]="loading() || saving()" (click)="load()">Actualiser</button>
     }
   </header>
-  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
-  @if (success()) { <p class="ss__alert ss__alert--success" role="status">{{ success() }}</p> }
-  @if (loadingChildren()) { <p class="ss__state">Chargement de vos enfants…</p> }
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
+  @if (success()) { <p-message severity="success" class="ss__alert ss__alert--success" role="status">{{ success() }}</p-message> }
+  @if (loadingChildren()) { <app-loading-state message="Chargement de vos enfants…" /> }
   @else if (!children().length && !error()) { <p class="ss__state">Aucun enfant accessible n’est rattaché à votre compte.</p> }
   @for (entry of detail(); track entry.key) {
     <app-parent-child-detail [selectedStudentId]="entry.id" [initialTab]="entry.tab" [embedded]="true" />
   }
   @if (selected(); as child) {
-    @if (loading()) { <p class="ss__state">Chargement…</p> }
+    @if (loading()) { <app-loading-state message="Chargement…" /> }
     @else {
       @if (module() === 'annonces' || module() === 'documents' || module() === 'devoirs') {
         <app-portal-posts [posts]="posts()" [scopeId]="child.studentId" />
@@ -40,7 +41,7 @@
               <tbody>@for (payment of payments(); track payment.id) {
                 <tr><td>{{ payment.paymentDate | date:'dd/MM/yyyy' }}</td><td>{{ payment.feeName }}</td>
                   <td>{{ payment.amount | number:'1.0-0' }} F</td><td>{{ paymentLabels[payment.method] || payment.method }}</td>
-                  <td>{{ payment.reference || '—' }}</td><td><button type="button" class="ss__mini" (click)="receipt.set(payment)">Voir le reçu</button></td></tr>
+                  <td>{{ payment.reference || '—' }}</td><td><button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" (click)="receipt.set(payment)">Voir le reçu</button></td></tr>
               }</tbody>
             </table></div>
           }
@@ -51,13 +52,13 @@
           <h2>Demander un rendez-vous</h2>
           <p class="ss__muted">L’établissement confirme la date proposée et coordonne la rencontre avec l’enseignant.</p>
           <div class="ss__form">
-            <label>Interlocuteur<select name="teacher" [(ngModel)]="teacherUserId"><option [ngValue]="null">Administration</option>
-              @for (teacher of teachers(); track teacher.userId) { <option [ngValue]="teacher.userId">{{ teacher.fullName }}</option> }
-            </select></label>
-            <label>Date et heure proposées<input name="proposedAt" type="datetime-local" [(ngModel)]="proposedAt" required /></label>
-            <label class="ss__wide">Motif<textarea name="reason" [(ngModel)]="reason" rows="3" maxlength="1000" required></textarea></label>
+            <label>Interlocuteur<app-select-field name="teacher" [(ngModel)]="teacherUserId" [ariaLabel]="(&quot;Interlocuteur&quot;).trim()"><app-select-option [value]="null" [label]="(&quot;Administration&quot;).trim()" />
+              @for (teacher of teachers(); track teacher.userId) { <app-select-option [value]="teacher.userId" [label]="((&quot;&quot; + ((teacher.fullName)) + &quot;&quot;)).trim()" /> }
+            </app-select-field></label>
+            <label>Date et heure proposées<app-date-field mode="datetime-local" name="proposedAt" [(ngModel)]="proposedAt" required [ariaLabel]="(&quot;Date et heure proposées&quot;).trim()" /></label>
+            <label class="ss__wide">Motif<textarea pTextarea name="reason" [(ngModel)]="reason" rows="3" maxlength="1000" required></textarea></label>
           </div>
-          <button class="ss__btn" type="submit" [disabled]="saving()">{{ saving() ? 'Envoi…' : 'Envoyer la demande' }}</button>
+          <button pButton class="ss__btn" type="submit" [disabled]="saving()">{{ saving() ? 'Envoi…' : 'Envoyer la demande' }}</button>
         </form>
         <app-appointments [showHeading]="false" [legacyRequests]="appointments()" legacyKind="parent" (changed)="load(true)" />
       }
@@ -70,8 +71,8 @@
         <p>Date : {{ payment.paymentDate | date:'dd/MM/yyyy' }}</p><p>Frais : {{ payment.feeName }}</p>
         <p>Montant payé : <strong>{{ payment.amount | number:'1.0-0' }} F</strong></p>
         <p>Mode : {{ paymentLabels[payment.method] || payment.method }}</p>
-        <div class="portal-no-print ss__actions"><button type="button" class="ss__btn" (click)="printReceipt()">Imprimer / enregistrer en PDF</button>
-          <button type="button" class="ss__mini" (click)="receipt.set(null)">Fermer</button></div>
+        <div class="portal-no-print ss__actions"><button pButton type="button" class="ss__btn" (click)="printReceipt()">Imprimer / enregistrer en PDF</button>
+          <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" (click)="receipt.set(null)">Fermer</button></div>
       </section>
     }
   }

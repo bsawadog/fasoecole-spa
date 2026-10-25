@@ -1,25 +1,39 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { RowActions } from '../../../../shared/ui/row-actions';
+import { TooltipModule } from 'primeng/tooltip';
+import { DateField } from '../../../../shared/ui/date-field';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, effect, inject, input, OnDestroy, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable, Subscription, forkJoin, switchMap } from 'rxjs';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
-import { ExpenseCategory } from '../../expenses.service';
+import { ExpenseCategory, ExpenseTaxDetails } from '../../expenses.service';
 import { METHOD_LABELS, PaymentMethod } from '../../finance.service';
 import { PayableOverview, PayablePayment, PayableRow, PayablesService } from '../../payables.service';
 
 const date = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 export const PAYABLE_STATUS = { UNPAID: 'À payer', PARTIAL: 'Partiellement payée', PAID: 'Soldée', CANCELLED: 'Annulée', NOT_DUE: 'Aucun montant dû' };
-export const PAYABLE_SOURCE = { MANUAL: 'Dépense ponctuelle', FIXED: 'Charge fixe', STAFF_SALARY: 'Salaire du personnel', TEACHER_SALARY: 'Salaire enseignant' };
+export const PAYABLE_SOURCE = { MANUAL: 'Dépense ponctuelle', FIXED: 'Charge fixe', STAFF_SALARY: 'Salaire du personnel', TEACHER_SALARY: 'Salaire enseignant', TAX:'Impôt / taxe' };
 
 @Component({
   selector: 'app-payables', standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, FormValidationDirective],
+  imports: [ErrorAlert, RowActions, TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormsModule, DatePipe, DecimalPipe, FormValidationDirective],
   templateUrl: './payables.html', styleUrl: './payables.scss',
 })
 export class Payables implements OnDestroy {
   readonly schoolId = input.required<number>();
   readonly salariesOnly = input(false);
+  readonly mode = input<'all' | 'manual' | 'fixed' | 'list'>('all');
+  readonly saved = output<void>();
+  readonly formOnly = computed(() => this.mode() === 'manual' || this.mode() === 'fixed');
   private readonly api = inject(PayablesService);
   private readonly confirmation = inject(ConfirmationService);
   private requests = new Subscription();
@@ -44,6 +58,10 @@ export class Payables implements OnDestroy {
   search = '';
   filter = 'OPEN';
   formKind: 'manual' | 'fixed' | null = null;
+  taxes:{label:string;amount:number}[]=[];
+  taxInvoice={invoiceNumber:'',invoiceDate:'',supplierIfu:''};
+  taxTotal():number{return Math.round(this.taxes.reduce((sum,tax)=>sum+Number(tax.amount||0),0)*100)/100;}
+  addTax():void{if(this.taxes.length<20)this.taxes.push({label:this.taxes.length===0?'TVA':'',amount:0});}
   form = this.emptyForm();
   pay = this.emptyPayment();
   private requestId = '';
@@ -51,7 +69,7 @@ export class Payables implements OnDestroy {
 
   constructor() {
     effect(() => {
-      const school = this.schoolId(); this.salariesOnly();
+      const school = this.schoolId(); this.salariesOnly(); this.mode();
       this.requests.unsubscribe(); this.requests = new Subscription();
       this.busy.set(false); this.data.set(null); this.categories.set([]); this.closeDetail(); this.formKind = null;
       if (school) this.load(true);
@@ -66,7 +84,7 @@ export class Payables implements OnDestroy {
     const load = () => forkJoin({ data: this.api.overview(school,month,salaries), categories: this.api.categories(school) });
     const request = prepare ? this.api.prepare(school,month).pipe(switchMap(load)) : load();
     this.requests.add(request.subscribe({
-      next: result => { this.data.set(result.data); this.categories.set(result.categories); this.loading.set(false); },
+      next: result => { this.data.set(result.data); this.categories.set(result.categories); this.loading.set(false); if(this.formOnly()) { const message=this.success(); this.openForm(this.mode() === 'fixed' ? 'fixed' : 'manual'); this.success.set(message); } },
       error: err => { this.loading.set(false); this.data.set(null); this.fail(err,'Impossible de charger les dépenses à payer.'); },
     }));
   }
@@ -79,17 +97,20 @@ export class Payables implements OnDestroy {
   }
   openForm(kind: 'manual' | 'fixed') {
     this.closeDetail(); this.formKind = kind; this.form = this.emptyForm();
+    this.taxes=[];this.taxInvoice={invoiceNumber:"",invoiceDate:"",supplierIfu:""};
     this.form.categoryId = this.manualCategories()[0]?.id ?? 0; this.error.set(''); this.success.set('');
   }
   save() {
     if (this.busy() || !this.formKind) return;
     const f = this.form, school = this.schoolId();
     if (!f.label.trim() || !f.categoryId || f.amount == null || f.amount <= 0) { this.error.set('Renseignez le libellé, la catégorie et un montant positif.'); return; }
-    const common = { categoryId: Number(f.categoryId), label: f.label.trim(), supplier: f.supplier.trim() || null, amount: f.amount };
+    if(this.taxes.some(t=>!t.label.trim()||!Number.isFinite(Number(t.amount))||Number(t.amount)<=0)||this.taxTotal()>f.amount){this.error.set('Vérifiez les taxes : montants positifs et total des taxes inférieur ou égal au TTC.');return;}
+    const taxDetails:ExpenseTaxDetails|null=this.taxes.length?{invoiceNumber:this.formKind==='manual'?(this.taxInvoice.invoiceNumber.trim()||null):null,invoiceDate:this.formKind==='manual'?(this.taxInvoice.invoiceDate||null):null,supplierIfu:this.taxInvoice.supplierIfu.trim()||null,excludingTax:Math.round((f.amount-this.taxTotal())*100)/100,taxes:this.taxes.map(t=>({label:t.label.trim(),amount:Number(t.amount)}))}:null;
+    const common = { ...(taxDetails?{taxDetails}:{}), categoryId: Number(f.categoryId), label: f.label.trim(), supplier: f.supplier.trim() || null, amount: f.amount };
     const request = this.formKind === 'fixed' ? this.api.fixed(school,{...common,dueDay: f.dueDay,startMonth:this.month})
       : this.api.create(school,{...common,dueDate:f.dueDate,notes:f.notes.trim()||null});
     const targetMonth = this.formKind === 'manual' ? f.dueDate.slice(0,7) : this.month;
-    this.run(request,'Dépense enregistrée.', () => { this.formKind = null; this.month = targetMonth; this.load(true); });
+    this.run(request,'Dépense enregistrée.', () => { this.formKind = null; this.month = targetMonth; if(this.mode() !== 'manual') this.load(true); this.saved.emit(); });
   }
   openDetail(row: PayableRow) {
     this.detailRequest?.unsubscribe(); this.formKind = null; this.selected.set(row); this.history.set([]);

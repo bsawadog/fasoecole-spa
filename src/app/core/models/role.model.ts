@@ -35,3 +35,13 @@ export function resolveRole(backendRoles: string[]): Role | null {
   }
   return null;
 }
+
+export const ROLE_LABEL: Record<Role, string> = {
+  admin: 'Administration', proprietaire: 'Propriétaire', enseignant: 'Enseignant',
+  parent: 'Parent', etudiant: 'Élève / étudiant',
+};
+
+export function resolveRoles(backendRoles: string[]): Role[] {
+  return [...new Set(BACKEND_ROLE_PRIORITY.filter(role => backendRoles.includes(role))
+    .map(role => BACKEND_ROLE_TO_ROLE[role]))];
+}

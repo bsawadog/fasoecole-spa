@@ -84,3 +84,17 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
 # fasoecole-spa
+
+## Sitemap Google
+
+Le fichier `public/sitemap.xml` recense les pages publiques stables sur
+`https://app.dev.fasoecole.com`. `public/robots.txt` déclare son adresse et
+demande aux robots de ne pas explorer les espaces connectés et les formulaires
+de compte. Ces directives ne remplacent pas les contrôles d’accès du backend.
+
+Angular copie ces deux fichiers à la racine du build. Le déploiement existant
+sur S3/CloudFront les publie à `/sitemap.xml` et `/robots.txt`. Après déploiement,
+soumettre `https://app.dev.fasoecole.com/sitemap.xml` dans la rubrique Sitemaps
+de Google Search Console. Vérifier que cette URL renvoie le XML plutôt que la
+page HTML de l’application. Adapter les URL absolues si le domaine change et
+ajouter les nouvelles pages publiques lors de leur création.

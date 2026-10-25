@@ -1,0 +1,172 @@
+<main class="payroll ui-workspace" [class.payroll--document-print]="printMode() === 'document' && document()">
+  <header class="module-help-header ui-page-header">
+    <app-module-help /><h1>Salaires</h1><p>Personnel et enseignants : rémunérations mensuelles, versements, fiches de paie et attestations de travail.</p></header>
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}</app-error-alert> }
+  @if (success()) { <p-message severity="success" role="status" class="payroll-controls">{{ success() }}</p-message> }
+  <div class="payroll__toolbar payroll-controls">
+    <label>Mois de paie<app-date-field mode="month" [(ngModel)]="month" (ngModelChange)="changeMonth()" [disabled]="busy()" ariaLabel="Mois de paie" /></label>
+    <button pButton type="button" [disabled]="busy() || loading() || !data() || month > currentMonth" (click)="prepare()">Préparer les salaires du mois</button>
+    <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy() || loading()" (click)="load()">Actualiser</button>
+    <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy() || !data()" (click)="exportCsv()">Exporter CSV</button>
+    <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy() || !data()" (click)="print('register')">Imprimer le registre</button>
+  </div>
+  <p class="payroll-controls">La préparation calcule l’IUTS et la TPA et alimente leurs obligations fiscales. Sans paramètres fiscaux enregistrés, le calcul utilise le régime salarié, le brut comme salaire de base, aucune charge familiale et aucune exonération TPA. Vérifiez les paramètres de chaque employé. Les paiements antérieurs sont conservés ; un versement supérieur au net recalculé doit être régularisé.</p>
+  @if (loading()) { <app-loading-state message="Chargement des salaires…" /> }
+  @else if (!schools().length) { <p>Aucun établissement accessible pour ce module.</p> }
+  @if (data(); as d) {
+    <h2>{{ d.school.name }} — {{ d.month + '-01' | date:'MM/yyyy' }}</h2>
+    <div class="payroll__kpis">
+      <div><span>Employés enregistrés</span><strong>{{ d.employees.length }}</strong></div>
+      <div><span>Rémunérations du mois</span><strong>{{ d.due | number:'1.0-2' }} FCFA</strong></div>
+      <div><span>IUTS retenu</span><strong>{{ registerTax('iuts') | number:'1.0-2' }} FCFA</strong></div>
+      <div><span>Autres retenues salariales</span><strong>{{ registerTax('deductions') | number:'1.0-2' }} FCFA</strong></div>
+      <div><span>Net à verser aux employés</span><strong>{{ registerNet() | number:'1.0-2' }} FCFA</strong></div>
+      <div><span>TPA à la charge de l’employeur</span><strong>{{ registerTax('tpa') | number:'1.0-2' }} FCFA</strong></div>
+      <div><span>Versements enregistrés</span><strong>{{ d.paid | number:'1.0-2' }} FCFA</strong></div>
+      <div><span>Reste à payer</span><strong>{{ d.remaining | number:'1.0-2' }} FCFA</strong></div>
+    </div>
+    <p class="payroll__muted payroll-controls">Une ligne par personne. Les rémunérations de fonctions distinctes restent détaillées et sont additionnées. Les totaux couvrent tout le registre du mois, y compris les anciens employés ayant encore un solde.</p>
+    <p class="payroll__notice payroll-controls">Avant préparation, les salaires du personnel sont indicatifs et utilisent la rémunération actuellement renseignée. La préparation conserve les montants du personnel déjà préparés ; la paie des enseignants suit leurs tarifs et présences du mois. Les salaires et tarifs se configurent depuis la création des employés et leurs fiches.</p>
+    <p class="payroll__notice payroll-controls">Après préparation, ouvrez la fiche d’un employé puis « Calculer la paie ». Le calcul regroupe ses rémunérations du mois et propose le net à payer et la TPA selon les paramètres renseignés. Validez l’aperçu avant les versements. Le calcul se verrouille après le premier paiement. Les déclarations et règlements fiscaux restent gérés dans « Impôts et taxes ».</p>
+
+    @if (selectedUser()) {
+      <section class="payroll__panel payroll-controls" aria-label="Fiche de rémunération">
+        <div class="payroll__toolbar"><h2 class="payroll__detail-title" tabindex="-1">Fiche de l’employé</h2><button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy()" (click)="closeDetail()">Fermer la fiche</button></div>
+        @if (detailLoading()) { <app-loading-state message="Chargement de la fiche et des mois enregistrés…" /> }
+        @if (detail(); as detail) {
+          <h3>{{ personName(detail.employee) }}</h3>
+          <p>{{ jobs(detail.employee) }} · {{ detail.employee.email || 'Courriel non renseigné' }} · {{ detail.employee.phone || 'Téléphone non renseigné' }}</p>
+          @if (detail.employee.subjects.length) { <p><strong>Matières enseignées :</strong> {{ detail.employee.subjects.join(', ') }}</p> }
+          <div class="payroll__toolbar">
+            <button pButton type="button" [disabled]="busy() || !canIssueSlip() || month > currentMonth" (click)="issue('PAYSLIP')">Éditer la fiche de paie</button>
+            <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy() || !detail.employee.active" (click)="issue('EMPLOYMENT_CERTIFICATE')">Éditer une attestation de travail</button>
+          </div>
+          @if(canCalculate()) { <button pButton type="button" severity="success" [disabled]="busy()" (click)="openCalculator()">Calculer la paie — IUTS et TPA</button> }
+          @if(calculatorOpen()) { <app-payroll-calculator [school]="schoolId()!" [month]="month" [employee]="detail.employee" (working)="busy.set($event)" (saved)="calculationSaved()" (cancelled)="calculatorOpen.set(false)" /> }
+          @if(calculation(detail.employee);as calculation) {
+            <p class="payroll__notice">Calcul validé : {{ calculation.ruleVersion }} · Net à payer : {{ calculation.net | number:'1.0-2' }} FCFA · Coût établissement : {{ calculation.employerCost | number:'1.0-2' }} FCFA · {{ calculation.input.tpaExempt ? 'Établissement exonéré de TPA' : 'Établissement assujetti à la TPA' }}.</p>
+          }
+          <div class="payroll__contracts">
+            @for (contract of detail.employee.contracts; track contract.key) {
+              <article>
+                <h3>{{ contract.jobTitle }} @if (contract.employeeNumber) { <small>{{ contract.employeeNumber }}</small> }</h3>
+                <p>{{ rates[contract.rateType || ''] || 'Rémunération non définie' }} : <strong>{{ contract.rate != null ? (contract.rate | number:'1.0-2') + ' FCFA' : 'À définir' }}</strong>{{ contract.rateType === 'HOURLY' ? ' / heure' : '' }}</p>
+                <p>{{ contract.prepared ? 'Salaire préparé pour ce mois' : 'Salaire non préparé pour ce mois' }} @if (!contract.active) { · Fonction / compte inactif } @if (!contract.eligible) { · Emploi non commencé pour ce mois }</p>
+                @if (contract.kind === 'TEACHER' && contract.rateType !== 'FIXED_MONTHLY') { <p>Présence : {{ contract.workedHours | number:'1.0-2' }} h · Heures supplémentaires : {{ contract.extraHours | number:'1.0-2' }} h</p> }
+                <div class="payroll__amounts"><span>Avant retenue : <strong>{{ contract.due | number:'1.0-2' }}</strong></span><span>IUTS : <strong>{{ (contract.iuts ?? 0) | number:'1.0-2' }}</strong></span><span>Net à verser : <strong>{{ (contract.net ?? contract.due) | number:'1.0-2' }}</strong></span><span>Versé : <strong>{{ contract.paid | number:'1.0-2' }}</strong></span><span>Reste : <strong>{{ contract.remaining | number:'1.0-2' }} FCFA</strong></span></div>
+                <p>Autres retenues : {{ (contract.deductions ?? 0) | number:'1.0-2' }} FCFA · TPA patronale : {{ (contract.tpa ?? 0) | number:'1.0-2' }} FCFA (hors net à verser)</p>
+                @if (contract.prepared && contract.paid === 0 && !contract.calculation && month <= currentMonth) { <button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy()" (click)="openTaxes(contract)">Saisir IUTS / TPA — {{ contract.jobTitle }}</button> }
+                @if (contract.paid > 0) { <p class="payroll__muted">IUTS / TPA verrouillés après le premier versement.</p> }
+                @if (canPay(contract)) { <button pButton type="button" [disabled]="busy()" (click)="openPayment(contract)">Enregistrer un versement — {{ contract.jobTitle }}</button> }
+                @if (contract.payments.length) {
+                  <div class="payroll__table-wrap"><table><thead><tr><th>Date</th><th>Montant</th><th>Mode</th><th>Référence</th></tr></thead><tbody>
+                    @for (payment of contract.payments; track payment.id) { <tr><td>{{ payment.date | date:'dd/MM/yyyy' }}</td><td>{{ payment.amount | number:'1.0-2' }} FCFA</td><td>{{ payment.method ? methodLabels[payment.method] : 'Non renseigné' }}</td><td>{{ payment.reference || '—' }}</td></tr> }
+                  </tbody></table></div>
+                }
+              </article>
+            }
+          </div>
+          @if (taxContract(); as contract) {
+            <form class="payroll__payment" #taxes="ngForm" (ngSubmit)="taxes.valid && saveTaxes()" aria-label="Saisir IUTS et TPA">
+              <h3 class="payroll__tax-title" tabindex="-1">Saisie manuelle IUTS / TPA — {{ contract.jobTitle }}</h3>
+              <fieldset [disabled]="busy()" class="payroll__form">
+                <label>IUTS retenu sur salaire (FCFA)<app-number-field name="iuts" [(ngModel)]="taxForm.iuts" min="0" [max]="contract.due" step="0.01" required ariaLabel="IUTS retenu sur salaire (FCFA)" /></label>
+                <label>TPA à la charge de l’employeur (FCFA)<app-number-field name="tpa" [(ngModel)]="taxForm.tpa" min="0" max="9999999999.99" step="0.01" required ariaLabel="TPA à la charge de l’employeur (FCFA)" /></label>
+                <label>Motif / référence du calcul<input pInputText name="taxReason" [(ngModel)]="taxForm.reason" maxlength="300" required /></label>
+              </fieldset>
+              <p>Net à verser : {{ contract.due - (contract.deductions ?? 0) - (taxForm.iuts ?? 0) | number:'1.0-2' }} FCFA. Les montants saisis sont à vérifier par votre comptable. Ils s’appliquent uniquement à cette rémunération pour {{ month }}.</p>
+              <div class="payroll__toolbar"><button pButton type="submit" [disabled]="busy()">Enregistrer IUTS / TPA</button><button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy()" (click)="taxContract.set(null)">Annuler la saisie fiscale</button></div>
+            </form>
+          }
+          @if (paymentContract(); as contract) {
+            <form class="payroll__payment" #payForm="ngForm" (ngSubmit)="payForm.valid && recordPayment()" aria-label="Enregistrer un versement">
+              <h3 class="payroll__payment-title" tabindex="-1">Versement — {{ contract.jobTitle }}</h3>
+              <fieldset [disabled]="busy()" class="payroll__form">
+                <label>Montant du versement (FCFA)<app-number-field name="amount" [(ngModel)]="payment.amount" min="0.01" [max]="contract.remaining" step="0.01" required ariaLabel="Montant du versement (FCFA)" /></label>
+                <label>Date du versement<app-date-field name="date" [(ngModel)]="payment.date" [max]="currentDate" required ariaLabel="Date du versement" /></label>
+                <label>Mode de paiement<app-select-field name="method" [(ngModel)]="payment.method" ariaLabel="Mode de paiement">@for (method of methods; track method) { <app-select-option [value]="method" [label]="methodLabels[method]" /> }</app-select-field></label>
+                <label>Référence du versement<input pInputText name="reference" [(ngModel)]="payment.reference" maxlength="100" /></label>
+              </fieldset>
+              <p class="payroll__muted">Le versement sera repris dans les dépenses et, pour un paiement en espèces, dans la caisse selon sa période d’ouverture. Ne le ressaisissez pas ailleurs.</p>
+              <div class="payroll__toolbar"><button pButton type="submit" [disabled]="busy()">Enregistrer le versement</button><button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy()" (click)="paymentContract.set(null)">Annuler le versement</button></div>
+            </form>
+          }
+          <details class="payroll__section" open><summary>Mois enregistrés et payés</summary>
+            <p class="payroll__muted">Les 24 derniers mois avec un salaire préparé ou un versement sont affichés. Un mois absent de cette liste n’atteste pas d’un paiement.</p>
+            <div class="payroll__table-wrap"><table><thead><tr><th>Mois</th><th>Avant retenue</th><th>IUTS</th><th>Net à verser</th><th>TPA patronale</th><th>Versé</th><th>Reste</th><th>Statut</th></tr></thead><tbody>
+              @for (month of detail.history; track month.month) { <tr><td>{{ month.month + '-01' | date:'MM/yyyy' }}</td><td>{{ month.due | number:'1.0-2' }}</td><td>{{ (month.iuts ?? 0) | number:'1.0-2' }}</td><td>{{ (month.net ?? month.due) | number:'1.0-2' }}</td><td>{{ (month.tpa ?? 0) | number:'1.0-2' }}</td><td>{{ month.paid | number:'1.0-2' }}</td><td>{{ month.remaining | number:'1.0-2' }}</td><td>{{ statuses[month.status] || month.status }}</td></tr> }
+              @empty { <tr><td colspan="8">Aucun mois enregistré pour cet employé.</td></tr> }
+            </tbody></table></div>
+          </details>
+          <details class="payroll__section" open><summary>Fiches de paie et attestations conservées</summary>
+            <p class="payroll__muted">Les 50 dernières éditions sont disponibles. Chaque document conserve les données enregistrées au moment de son édition.</p>
+            @for (document of detail.documents; track document.id) { <div class="payroll__document-link"><span>{{ document.kind === 'PAYSLIP' ? 'Fiche de paie' : 'Attestation de travail' }} · {{ document.month || (document.createdAt | date:'dd/MM/yyyy') }} · {{ document.reference }}</span><button pButton severity="secondary" variant="outlined" type="button" [disabled]="busy()" (click)="openDocument(document.id)">Consulter {{ document.reference }}</button></div> }
+            @empty { <p>Aucun document édité.</p> }
+          </details>
+        }
+      </section>
+    }
+
+    <div class="payroll__filters payroll-controls" aria-label="Filtrer les employés">
+      <label>Rechercher un employé<input pInputText type="search" [value]="search()" (input)="search.set($any($event.target).value)" placeholder="Nom, fonction, matière, numéro…" /></label>
+      <label>Afficher<app-select-field [ngModel]="filter()" (ngModelChange)="filter.set($event)" ariaLabel="Afficher les employés"><app-select-option value="ACTIVE" label="Employés actifs" /><app-select-option value="ALL" label="Tous les employés" /><app-select-option value="OPEN" label="Avec un reste à payer" /><app-select-option value="PAID" label="Mois payé" /><app-select-option value="UNCONFIGURED" label="Salaire à définir" /></app-select-field></label>
+    </div>
+    <p class="payroll__muted">{{ employees().length }} employé(s) dans le registre filtré · Montants en FCFA</p>
+    <p-table [value]="employees()" dataKey="userId" [paginator]="!printing() && employees().length > 25" [rows]="25" [rowsPerPageOptions]="[25,50,100]" [rowHover]="true">
+      <ng-template #header><tr><th>Employé / fonctions</th><th>Matières enseignées</th><th>Rémunération de référence</th><th>Avant retenue / IUTS / net</th><th>Versé</th><th>Reste</th><th>Suivi</th><th class="payroll-controls">Fiche</th></tr></ng-template>
+      <ng-template #body [appTableRow]="employees()" let-employee><tr>
+        <td><strong>{{ personName(employee) }}</strong><small>{{ jobs(employee) }}</small>@if (!employee.active) { <small>Inactif</small> }</td>
+        <td>{{ employee.subjects.join(', ') || '—' }}</td>
+        <td>@for (contract of employee.contracts; track contract.key) { <small>{{ contract.jobTitle }} : {{ contract.rate != null ? (contract.rate | number:'1.0-2') : 'À définir' }} {{ rates[contract.rateType || ''] || '' }}{{ contract.rateType === 'HOURLY' ? ' / h' : '' }}</small> }</td>
+        <td>{{ employee.due | number:'1.0-2' }}<small>IUTS : {{ sumTax(employee,'iuts') | number:'1.0-2' }}</small><strong>Net : {{ net(employee) | number:'1.0-2' }}</strong><small>TPA patronale : {{ sumTax(employee,'tpa') | number:'1.0-2' }}</small></td><td>{{ employee.paid | number:'1.0-2' }}</td><td>{{ employee.remaining | number:'1.0-2' }}</td>
+        <td><span class="payroll__badge" [class.payroll__badge--paid]="employee.status === 'PAID'" [class.payroll__badge--warning]="employee.status === 'OVERPAID' || employee.status === 'UNCONFIGURED'">{{ statuses[employee.status] || employee.status }}</span></td>
+        <td class="payroll-controls"><button pButton variant="text" type="button" class="ui-row-action ui-row-action--info" [disabled]="busy()" (click)="openDetail(employee.userId)" [attr.aria-label]="'Ouvrir la paie : ' + personName(employee)" pTooltip="Versements, fiches de paie et attestations" tooltipPosition="top" tooltipEvent="both" appendTo="body" [showDelay]="500"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h10l4 4v14H5ZM14 3v5h5M8 12h8M8 16h6" /></svg></button></td>
+      </tr></ng-template>
+      <ng-template #emptymessage><tr><td colspan="8">Aucun employé pour ces filtres. Ajoutez les enseignants et le personnel depuis « Créer un employé ».</td></tr></ng-template>
+    </p-table>
+  }
+
+  @if (document(); as doc) {
+    <article class="payroll__document" aria-label="Aperçu du document">
+      <div class="payroll__toolbar payroll-controls"><button pButton type="button" [disabled]="busy()" (click)="print('document')">Imprimer / PDF le document</button><button pButton severity="secondary" variant="outlined" type="button" (click)="document.set(null); printMode.set('register')">Fermer l’aperçu</button></div>
+      <header><div><strong>{{ doc.snapshot.school.name }}</strong><p>{{ doc.snapshot.school.address }}</p><p>{{ doc.snapshot.school.phone }} {{ doc.snapshot.school.email }}</p></div><div><small>{{ doc.reference }}</small><small>Édité le {{ doc.snapshot.issuedOn | date:'dd/MM/yyyy' }}</small></div></header>
+      <h2 class="payroll__document-title" tabindex="-1">{{ doc.kind === 'PAYSLIP' ? 'Fiche de paie' : 'Attestation de travail' }}</h2>
+      @if (doc.kind === 'PAYSLIP') {
+        <p class="payroll__document-subtitle">Rémunération et versements enregistrés · {{ doc.month + '-01' | date:'MM/yyyy' }} · FCFA</p>
+        <h3>{{ personName(doc.snapshot.employee) }}</h3><p>{{ jobs(doc.snapshot.employee) }}</p>
+        @if (doc.snapshot.employee.subjects.length) { <p>Matières enseignées : {{ doc.snapshot.employee.subjects.join(', ') }}</p> }
+        <p><strong>État au jour de l’édition : {{ statuses[doc.snapshot.employee.status] || doc.snapshot.employee.status }}</strong></p>
+        <div class="payroll__table-wrap"><table><thead><tr><th>Fonction / matricule</th><th>Base de rémunération</th><th>Avant retenue</th><th>Versé</th><th>Reste net</th></tr></thead><tbody>
+          @for (contract of doc.snapshot.employee.contracts; track contract.key) { <tr><td>{{ contract.jobTitle }}<small>{{ contract.employeeNumber }}</small></td><td>{{ rates[contract.rateType || ''] || 'Non renseigné' }} : {{ contract.rate | number:'1.0-2' }}@if (contract.rateType === 'HOURLY') { / h }@if (contract.kind === 'TEACHER' && contract.rateType !== 'FIXED_MONTHLY') { <small>{{ contract.workedHours | number:'1.0-2' }} h présentes · {{ contract.extraHours | number:'1.0-2' }} h supplémentaires</small> }</td><td>{{ contract.due | number:'1.0-2' }}</td><td>{{ contract.paid | number:'1.0-2' }}</td><td>{{ contract.remaining | number:'1.0-2' }}</td></tr> }
+        </tbody><tfoot><tr><th colspan="2">Total (FCFA)</th><td>{{ doc.snapshot.employee.due | number:'1.0-2' }}</td><td>{{ doc.snapshot.employee.paid | number:'1.0-2' }}</td><td>{{ doc.snapshot.employee.remaining | number:'1.0-2' }}</td></tr></tfoot></table></div>
+        @if (doc.snapshot.employee.contracts[0]?.net != null) {
+          <h3>Retenues et net à verser (FCFA)</h3>
+          <div class="payroll__table-wrap"><table><thead><tr><th>Fonction</th><th>IUTS retenu</th><th>Autres retenues</th><th>Net à verser</th><th>TPA patronale (hors net)</th></tr></thead><tbody>
+            @for (contract of doc.snapshot.employee.contracts; track contract.key) { <tr><td>{{ contract.jobTitle }}</td><td>{{ (contract.iuts ?? 0) | number:'1.0-2' }}</td><td>{{ (contract.deductions ?? 0) | number:'1.0-2' }}</td><td>{{ (contract.net ?? contract.due) | number:'1.0-2' }}</td><td>{{ (contract.tpa ?? 0) | number:'1.0-2' }}</td></tr> }
+          </tbody><tfoot><tr><th>Total</th><td>{{ sumTax(doc.snapshot.employee,'iuts') | number:'1.0-2' }}</td><td>{{ sumTax(doc.snapshot.employee,'deductions') | number:'1.0-2' }}</td><td>{{ net(doc.snapshot.employee) | number:'1.0-2' }}</td><td>{{ sumTax(doc.snapshot.employee,'tpa') | number:'1.0-2' }}</td></tr></tfoot></table></div>
+        }
+        @if(calculation(doc.snapshot.employee);as calculation) {
+          <h3>Détail du calcul validé</h3>
+          <p>{{ calculation.ruleVersion }} · {{ calculation.input.regime === 'SALARIED' ? 'Salarié' : 'Vacations d’enseignement' }} · Base imposable : {{ calculation.taxableBase | number:'1.0-2' }} FCFA · Abattement professionnel : {{ calculation.professionalAllowance | number:'1.0-2' }} FCFA · Indemnités exonérées : {{ calculation.exemptions | number:'1.0-2' }} FCFA · Réduction familiale : {{ calculation.familyReduction }} %.</p>
+          <p>Retraite : {{ calculation.input.pension | number:'1.0-2' }} · Autres cotisations salariales : {{ calculation.input.otherSocial | number:'1.0-2' }} · Avances et autres retenues : {{ calculation.input.otherDeductions | number:'1.0-2' }} · Retenue sur vacations : {{ calculation.vacationWithholding | number:'1.0-2' }} FCFA.</p>
+          <p>Coût de l’établissement : {{ calculation.employerCost | number:'1.0-2' }} FCFA, dont {{ calculation.input.employerContributions | number:'1.0-2' }} FCFA d’autres cotisations patronales. Statut TPA : {{ calculation.input.tpaExempt ? 'exonéré' : 'assujetti' }}. Motif : {{ calculation.input.reason }}</p>
+        }
+        <h3>Versements enregistrés pour ce mois</h3>
+        <div class="payroll__table-wrap"><table><thead><tr><th>Date</th><th>Fonction</th><th>Montant</th><th>Mode / référence</th></tr></thead><tbody>
+          @for (contract of doc.snapshot.employee.contracts; track contract.key) { @for (payment of contract.payments; track payment.id) { <tr><td>{{ payment.date | date:'dd/MM/yyyy' }}</td><td>{{ contract.jobTitle }}</td><td>{{ payment.amount | number:'1.0-2' }}</td><td>{{ payment.method ? methodLabels[payment.method] : 'Mode non renseigné' }} {{ payment.reference }}</td></tr> } }
+        </tbody></table></div>
+        @if (doc.snapshot.employee.paid === 0) { <p>Aucun versement enregistré au jour de cette édition.</p> }
+        <p class="payroll__muted">État établi à partir des rémunérations et versements enregistrés dans Faso École. Les retenues proviennent du calcul validé ou de la saisie manuelle conservée pour ce mois. La TPA est à la charge de l’employeur. Les corrections ultérieures nécessitent une nouvelle édition.</p>
+        <div class="payroll__signatures"><div>L’employé</div><div>Le responsable de l’établissement<br>Signature et cachet</div></div>
+      } @else {
+        <div class="payroll__certificate"><p>La direction de <strong>{{ doc.snapshot.school.name }}</strong> atteste que <strong>{{ personName(doc.snapshot.employee) }}</strong> exerce au sein de l’établissement les fonctions suivantes :</p>
+          <ul>@for (contract of doc.snapshot.employee.contracts; track contract.key) { <li>{{ contract.jobTitle }}@if (contract.employeeNumber) { · Numéro d’employé : {{ contract.employeeNumber }} }@if (contract.hireDate) { · Depuis le {{ contract.hireDate | date:'dd/MM/yyyy' }} }</li> }</ul>
+          @if (doc.snapshot.employee.subjects.length) { <p>Matières enseignées : {{ doc.snapshot.employee.subjects.join(', ') }}.</p> }
+          <p>La présente attestation est établie à la demande de l’intéressé(e) pour servir et valoir ce que de droit.</p>
+          <p>Fait le {{ doc.snapshot.issuedOn | date:'dd/MM/yyyy' }}.</p>
+        </div>
+        <div class="payroll__certificate-signature">La direction de l’établissement<br>Nom, fonction, signature et cachet</div>
+      }
+    </article>
+  }
+</main>

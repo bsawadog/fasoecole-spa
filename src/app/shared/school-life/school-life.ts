@@ -1,10 +1,21 @@
+import { ErrorAlert } from '../error-alert';
+import { ModuleHelpButton } from '../help/module-help-button';
+import { DateField } from '../ui/date-field';
+import { NumberField } from '../ui/number-field';
+import { SelectField } from '../ui/select-field';
+import { SelectOption } from '../ui/select-field';
+import { LoadingState } from '../ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { DatePipe } from '@angular/common';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
-import { AuthService } from '../../core/auth';
+import { AuthService, OWNER_LIFE_MODULES } from '../../core/auth';
 import { ConfirmationService } from '../confirmation/confirmation.service';
 import { apiError, SelfSpaceService } from '../self-space/self-space.service';
 import { FormValidationDirective } from '../form-validation.directive';
@@ -15,7 +26,7 @@ const empty = (): LifeOverview => ({ students: [], events: [], observations: [],
 
 @Component({
   selector: 'app-school-life', standalone: true,
-  imports: [DatePipe, FormsModule, RouterLink, FormValidationDirective],
+  imports: [ErrorAlert, ModuleHelpButton, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, DatePipe, FormsModule, RouterLink, FormValidationDirective],
   templateUrl: './school-life.html', styleUrls: ['../self-space/self-space.scss', './school-life.scss'],
 })
 export class SchoolLifePage implements OnInit {
@@ -71,7 +82,7 @@ export class SchoolLifePage implements OnInit {
     if (this.owner()) {
       const userId = this.auth.user()?.id;
       if (!userId) { this.loading.set(false); return; }
-      this.auth.getOwnedSchools(userId, 'STUDENTS').pipe(takeUntilDestroyed(this.destroy)).subscribe({
+      this.auth.getOwnedSchools(userId, OWNER_LIFE_MODULES[this.module()]).pipe(takeUntilDestroyed(this.destroy)).subscribe({
         next: schools => { if (version === this.version) this.initialize(schools); },
         error: err => this.contextFailure(err, version),
       });
@@ -93,7 +104,9 @@ export class SchoolLifePage implements OnInit {
   }
   private initialize(contexts: { id: number; name: string }[]): void {
     this.contexts.set(contexts);
-    if (contexts[0]) this.choose(contexts[0].id); else this.loading.set(false);
+    const savedSchool = this.owner() ? Number(localStorage.getItem('fasoecole_owner_school')) : Number(this.route.snapshot.queryParamMap.get(this.teacher()?'classe':'studentId'))||null;
+    const selected = contexts.find(context => context.id === savedSchool) ?? contexts[0];
+    if (selected) this.choose(selected.id); else this.loading.set(false);
   }
   choose(id: number): void {
     if (this.saving() || !this.contexts().some(c => c.id === id)) return;

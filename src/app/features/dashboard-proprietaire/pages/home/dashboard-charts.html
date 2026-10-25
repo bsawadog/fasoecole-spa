@@ -1,0 +1,28 @@
+@if (receivables(); as data) {
+<section class="chart" aria-labelledby="receivables-title">
+  <header><div><span class="eyebrow">Scolarité · {{ data.yearLabel }}</span><h2 id="receivables-title">Recouvrement par classe</h2></div><span>Au {{ data.asOf | date:'dd/MM/yyyy' }}</span></header>
+  <div class="totals"><div><span>Frais nets</span><strong>{{ amount(data.expected) }}</strong></div><div class="green"><span>Encaissé sur frais actifs</span><strong>{{ amount(data.received) }}</strong></div><div class="red"><span>Impayés échus</span><strong>{{ amount(data.overdue) }}</strong></div><div class="amber"><span>Reste non échu</span><strong>{{ amount(data.upcoming) }}</strong></div></div>
+  <p class="hint">Réductions déduites, factures annulées exclues. Échéance du jour incluse dans le reste non échu. Les paiements sont rattachés à l’année des frais, contrairement au graphique mensuel de trésorerie.</p>
+  <div class="legend"><span><i class="paid"></i>Encaissé</span><span><i class="overdue"></i>Impayés échus</span><span><i class="upcoming"></i>Reste non échu</span></div>
+  @if (data.expected === 0) { <p class="empty" role="status">Aucun frais actif à recouvrer pour cette année.</p> }
+  <div class="class-list" tabindex="0" aria-label="Recouvrement par classe, liste défilante">
+    @for (row of data.classes; track row.classId) {
+      <details class="class-row"><summary><span class="row-heading"><strong>{{ row.label }}</strong><span>{{ amount(row.expected) }}</span></span><span class="track" aria-hidden="true"><i class="paid" [style.width.%]="percent(row.received, maximum())"></i><i class="overdue" [style.width.%]="percent(row.overdue, maximum())"></i><i class="upcoming" [style.width.%]="percent(row.upcoming, maximum())"></i></span><span class="row-caption">{{ amount(row.overdue) }} échus · Afficher le détail</span></summary><dl><dt>Encaissé</dt><dd>{{ amount(row.received) }}</dd><dt>Impayés échus</dt><dd>{{ amount(row.overdue) }}</dd><dt>Reste non échu</dt><dd>{{ amount(row.upcoming) }}</dd><dt>Trop-perçu</dt><dd>{{ amount(row.credit) }}</dd></dl></details>
+    }
+  </div>
+  @if (data.credit > 0) { <p class="hint">Trop-perçu : {{ amount(data.credit) }} (hors barres).</p> }
+</section>
+}
+@if (attendance(); as data) {
+<section class="chart" aria-labelledby="weekly-attendance-title">
+  <header><div><span class="eyebrow">Assiduité · {{ data.yearLabel }}</span><h2 id="weekly-attendance-title">Présences et absences par semaine</h2></div><span>Du {{ data.fromDate | date:'dd/MM/yyyy' }} au {{ data.toDate | date:'dd/MM/yyyy' }}</span></header>
+  <p class="hint">Les huit dernières semaines au maximum. Chaque unité représente un élève pour une journée et une classe. Les saisies manquantes concernent uniquement les appels commencés, selon les inscriptions actuelles ; elles ne sont jamais comptées comme des absences.</p>
+  <div class="legend"><span><i class="paid"></i>Présents</span><span><i class="overdue"></i>Absents</span><span><i class="upcoming"></i>Retards</span><span><i class="excused"></i>Excusés</span><span><i class="missing"></i>Non renseignés</span></div>
+  <div class="weeks" tabindex="0" aria-label="Évolution des présences par semaine, graphique défilant">
+    @for (week of data.weeks; track week.fromDate) {
+      <div class="week"><div class="week-bar" aria-hidden="true"><span class="stack" [style.height.%]="percent(recorded(week) + week.missing, attendanceMaximum())"><i class="paid" [style.flex-grow]="week.present"></i><i class="overdue" [style.flex-grow]="week.absent"></i><i class="upcoming" [style.flex-grow]="week.late"></i><i class="excused" [style.flex-grow]="week.excused"></i><i class="missing" [style.flex-grow]="week.missing"></i></span></div><span>{{ week.fromDate | date:'dd/MM' }}</span><small>{{ week.observedCalls ? recorded(week) + ' saisies' : 'Sans données' }}</small></div>
+    } @empty { <p class="empty" role="status">Cette année scolaire n’a pas encore commencé.</p> }
+  </div>
+  <details class="weekly-details"><summary>Consulter les chiffres par semaine</summary><div class="table-wrap" tabindex="0" aria-label="Détail des présences hebdomadaires"><table><caption>Comptages par semaine et statut</caption><thead><tr><th>Semaine</th><th>Présents</th><th>Absents</th><th>Retards</th><th>Excusés</th><th>Non renseignés</th><th>Appels commencés</th></tr></thead><tbody>@for (w of data.weeks; track w.fromDate) { <tr><th>{{ w.fromDate | date:'dd/MM' }} – {{ w.toDate | date:'dd/MM' }}</th><td>{{ w.present }}</td><td>{{ w.absent }}</td><td>{{ w.late }}</td><td>{{ w.excused }}</td><td>{{ w.missing }}</td><td>{{ w.observedCalls }}{{ w.observedCalls ? '' : ' · Sans données' }}</td></tr> }</tbody></table></div></details>
+</section>
+}

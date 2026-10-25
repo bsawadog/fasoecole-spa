@@ -1,6 +1,14 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { MessageActivityService } from '../../../../shared/message-activity.service';
+import { CashBookService, CashOverview } from '../../cash-book.service';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { DashboardCharts } from './dashboard-charts';
+import { MonthlyFinanceChart } from './monthly-finance';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { Component, computed, DestroyRef, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, Subscription, timer } from 'rxjs';
+import { catchError, EMPTY, switchMap, filter, forkJoin, Subscription, timer } from 'rxjs';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import {
@@ -31,7 +39,7 @@ import { DatedAppointment, pendingAppointmentCount } from '../../../../shared/ap
 @Component({
   selector: 'app-proprietaire-home',
   standalone: true,
-  imports: [
+  imports: [ErrorAlert, ModuleHelpButton, MonthlyFinanceChart, DashboardCharts, ButtonModule, MessageModule,
     DatePipe,
     DecimalPipe,
     RouterLink,
@@ -55,6 +63,14 @@ import { DatedAppointment, pendingAppointmentCount } from '../../../../shared/ap
   styleUrl: './home.scss',
 })
 export class ProprietaireHome implements OnDestroy, OnInit {
+  private readonly messageActivity = inject(MessageActivityService);
+  private unreadSubscription?: Subscription;
+  private readonly cashApi = inject(CashBookService);
+  private cashRequest?: Subscription;
+  readonly cash = signal<CashOverview | null>(null);
+  readonly cashLoading = signal(false);
+  readonly cashError = signal(false);
+  readonly canViewCash = computed(() => this.auth.isSchoolOwner() || (this.auth.ownerAccess() ?? []).some(a => a.schoolId === this.selectedSchoolId() && a.modules.includes('CASH_BOOK')));
   private readonly appointmentsApi = inject(AppointmentsService);
   private readonly parentPortal = inject(ParentPortalService);
   private appointmentRequest?: Subscription;
@@ -76,6 +92,10 @@ export class ProprietaireHome implements OnDestroy, OnInit {
   readonly showAttendanceHistory = signal(false);
   readonly canRecordReport = computed(() => this.auth.isSchoolOwner()
     || (this.auth.ownerAccess() ?? []).some(access => access.schoolId === this.selectedSchoolId() && access.modules.includes('STUDENTS')));
+  readonly canManageAppointments = computed(() => this.auth.isSchoolOwner()
+    || (this.auth.ownerAccess() ?? []).some(access => access.schoolId === this.selectedSchoolId() && access.modules.includes('PARENT_PORTAL')));
+  readonly canUseMessages = computed(() => this.auth.isSchoolOwner()
+    || (this.auth.ownerAccess() ?? []).some(access => access.schoolId === this.selectedSchoolId() && access.modules.includes('MESSAGES')));
   readonly sync = inject(SchoolDataSyncService);
   private syncSubscription?: Subscription;
   readonly lastUpdated = signal<Date | null>(null);
@@ -89,6 +109,8 @@ export class ProprietaireHome implements OnDestroy, OnInit {
   readonly errorMessage = signal<string | null>(null);
 
   ngOnDestroy(): void {
+    this.unreadSubscription?.unsubscribe();
+    this.cashRequest?.unsubscribe();
     this.appointmentRequest?.unsubscribe();
     this.dashboardRequest?.unsubscribe();
     this.syncSubscription?.unsubscribe();
@@ -134,7 +156,7 @@ export class ProprietaireHome implements OnDestroy, OnInit {
 
   schoolTypeLabel(type: string): string {
     const labels: Record<string, string> = {
-      PRESCOLAIRE: 'Établissement préscolaire',
+      PRESCOLAIRE: 'École maternelle',
       PRIMAIRE: 'École primaire',
       SECONDAIRE: 'Établissement secondaire',
       MIXTE: 'Établissement mixte',
@@ -151,7 +173,7 @@ export class ProprietaireHome implements OnDestroy, OnInit {
     this.dashboardRequest?.unsubscribe();
     this.syncSubscription?.unsubscribe();
     this.selectedSchoolId.set(schoolId);
-    this.auth.selectSchoolContext(schoolId);
+
     this.loading.set(true);
     this.dashboard.set(null);
     this.lastUpdated.set(null);
@@ -160,10 +182,28 @@ export class ProprietaireHome implements OnDestroy, OnInit {
     this.reportSuccess.set(null);
     this.showAttendanceHistory.set(false);
     this.refreshDashboard(schoolId);
+    this.unreadSubscription?.unsubscribe();
+    this.unreadSubscription = this.messageActivity.refresh.pipe(
+      filter(() => this.canUseMessages()),
+      switchMap(() => this.family.summary(schoolId).pipe(catchError(() => EMPTY))),
+    ).subscribe(summary => {
+      if (schoolId === this.selectedSchoolId()) this.dashboard.update(data => data ? {...data, unreadMessages: summary.unreadMessages} : data);
+    });
     this.syncSubscription = this.sync.watch(schoolId).subscribe(() => this.refreshDashboard(schoolId));
   }
 
   refreshDashboard(schoolId: number): void {
+    this.cashRequest?.unsubscribe();
+    this.cash.set(null); this.cashError.set(false); this.cashLoading.set(false);
+    if (this.canViewCash()) {
+      this.cashLoading.set(true);
+      const now = new Date();
+      const month = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+      this.cashRequest = this.cashApi.overview(schoolId, month).subscribe({
+        next: data => { if (schoolId !== this.selectedSchoolId()) return; this.cash.set(data); this.cashLoading.set(false); },
+        error: () => { if (schoolId !== this.selectedSchoolId()) return; this.cashError.set(true); this.cashLoading.set(false); },
+      });
+    }
     this.refreshAppointmentCount(schoolId);
     this.auth.loadOwnerAccess(true).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ error: () => {} });
     this.dashboardRequest?.unsubscribe();
@@ -186,7 +226,7 @@ export class ProprietaireHome implements OnDestroy, OnInit {
   }
 
   private refreshAppointmentCount(schoolId: number): void {
-    if (!this.canRecordReport()) return;
+    if (!this.canManageAppointments()) return;
     this.appointmentRequest?.unsubscribe();
     this.appointmentRequest = forkJoin({
       incoming: this.appointmentsApi.received(),

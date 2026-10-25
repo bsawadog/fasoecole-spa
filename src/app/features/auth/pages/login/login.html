@@ -1,30 +1,14 @@
-<main class="auth-page">
+<main class="auth-page auth-page--background">
   <a class="auth-page__brand" routerLink="/" aria-label="Retour à l’accueil Faso École">
-    <img class="auth-page__brand-logo" src="assets/images/fasoecole-logo-alt.svg" alt="FasoEcole" />
+    <img class="auth-page__brand-logo" src="assets/images/logofe.png" alt="FasoEcole" />
   </a>
 
-    <aside class="auth-card__visual" [class.auth-card__visual--paused]="imagePaused()">
+    <aside class="auth-card__visual auth-card__visual--illustration">
       <img
-        src="assets/images/login_image.PNG"
-        alt="Une élève qui apprend en classe"
+        src="assets/images/login-background-gradient.png"
+        alt="Une enseignante accompagne des élèves en classe, sur un fond dégradé bleu nuit."
         class="auth-card__image"
       />
-      <div class="auth-card__image-shade"></div>
-      <button
-        class="auth-card__animation-toggle"
-        type="button"
-        [attr.aria-pressed]="imagePaused()"
-        [attr.aria-label]="imagePaused() ? 'Reprendre le défilement de l’image' : 'Mettre le défilement de l’image en pause'"
-        (click)="imagePaused.set(!imagePaused())"
-      >
-        {{ imagePaused() ? 'Animer l’image' : 'Pause' }}
-      </button>
-      <div class="auth-card__visual-copy">
-        <span class="auth-card__visual-label">FasoÉcole</span>
-        <h1>Chaque parcours mérite les bons outils.</h1>
-        <p>Un espace simple pour apprendre, enseigner et accompagner la réussite.</p>
-        <div class="auth-card__image-dots" aria-hidden="true"><span></span><span></span><span></span></div>
-      </div>
     </aside>
 
   <section class="auth-card" aria-label="Authentification FasoÉcole">
@@ -32,8 +16,12 @@
 
     <div class="auth-card__form-panel">
       <div class="auth-card__form-content">
+        <a class="auth-card__home-link" routerLink="/">
+          <svg lucideArrowLeft [size]="17" aria-hidden="true"></svg>
+          Retour à l’accueil
+        </a>
         @if (mode() !== 'login') {
-          <button class="auth-card__back" type="button" (click)="setMode('login')">
+          <button pButton severity="secondary" variant="text" class="auth-card__back" type="button" (click)="setMode('login')">
             <svg lucideArrowLeft [size]="17" aria-hidden="true"></svg>
             Retour à la connexion
           </button>
@@ -47,16 +35,16 @@
           </div>
 
           @if (successMessage()) {
-            <p class="auth-card__notice" role="status">{{ successMessage() }}</p>
+            <p-message severity="success" class="auth-card__notice" role="status">{{ successMessage() }}</p-message>
           }
           @if (errorMessage()) {
-            <p class="auth-card__error" role="alert">{{ errorMessage() }}</p>
+            <app-error-alert [message]="errorMessage()" (dismissed)="errorMessage.set(null)">{{ errorMessage() }}</app-error-alert>
           }
 
           <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
             <div class="auth-card__field">
               <label for="login-email">Adresse e-mail</label>
-              <input
+              <input pInputText
                 id="login-email"
                 type="email"
                 formControlName="email"
@@ -68,12 +56,12 @@
             <div class="auth-card__field">
               <div class="auth-card__label-row">
                 <label for="login-password">Mot de passe</label>
-                <button class="auth-card__text-button" type="button" (click)="setMode('forgot')">
+                <button pButton severity="secondary" variant="text" class="auth-card__text-button" type="button" (click)="setMode('forgot')">
                   Mot de passe oublié ?
                 </button>
               </div>
               <div class="auth-card__password">
-                <input
+                <input pInputText
                   id="login-password"
                   [type]="showPassword() ? 'text' : 'password'"
                   formControlName="password"
@@ -96,7 +84,7 @@
                 </button>
               </div>
             </div>
-            <button class="auth-card__submit" type="submit" [disabled]="loading()">
+            <button pButton class="auth-card__submit" type="submit" [disabled]="loading()">
               @if (loading()) {
                 <span class="auth-card__spinner" aria-hidden="true"></span>
                 Connexion…
@@ -106,9 +94,10 @@
             </button>
           </form>
 
+          <p class="auth-card__switch"><button pButton severity="secondary" variant="text" class="auth-card__text-button" type="button" (click)="setMode('recover')">Courriel et mot de passe oubliés ? Récupérer mon compte</button></p>
           <p class="auth-card__switch">
             Vous n’avez pas encore de compte ?
-            <button class="auth-card__text-button" type="button" (click)="setMode('register')">Créer un compte</button>
+            <button pButton severity="secondary" variant="text" class="auth-card__text-button" type="button" (click)="setMode('register')">Créer un compte</button>
           </p>
         } @else if (mode() === 'register') {
           <div class="auth-card__heading">
@@ -117,30 +106,30 @@
             <p>Un propriétaire d’établissement validera votre demande et définira votre accès.</p>
           </div>
           @if (errorMessage()) {
-            <p class="auth-card__error" role="alert">{{ errorMessage() }}</p>
+            <app-error-alert [message]="errorMessage()" (dismissed)="errorMessage.set(null)">{{ errorMessage() }}</app-error-alert>
           }
           @if (successMessage()) {
-            <p class="auth-card__notice" role="status">{{ successMessage() }}</p>
+            <p-message severity="success" class="auth-card__notice" role="status">{{ successMessage() }}</p-message>
           } @else {
             @if (schoolsError()) {
-              <p class="auth-card__error" role="alert">{{ schoolsError() }}</p>
+              <app-error-alert [message]="schoolsError()" (dismissed)="schoolsError.set(null)">{{ schoolsError() }}</app-error-alert>
             }
             <form [formGroup]="registerForm" (ngSubmit)="submitRegistration()" novalidate>
               <div class="auth-card__field-row">
                 <div class="auth-card__field">
                   <label for="register-first-name">Prénom</label>
-                  <input id="register-first-name" formControlName="firstName" autocomplete="given-name" required [attr.aria-invalid]="!!registrationFieldError('firstName')" aria-describedby="register-first-name-error" />
+                  <input pInputText id="register-first-name" formControlName="firstName" autocomplete="given-name" required [attr.aria-invalid]="!!registrationFieldError('firstName')" aria-describedby="register-first-name-error" />
                   @if (registrationFieldError('firstName'); as error) { <small class="auth-card__field-error" id="register-first-name-error">{{ error }}</small> }
                 </div>
                 <div class="auth-card__field">
                   <label for="register-last-name">Nom</label>
-                  <input id="register-last-name" formControlName="lastName" autocomplete="family-name" required [attr.aria-invalid]="!!registrationFieldError('lastName')" aria-describedby="register-last-name-error" />
+                  <input pInputText id="register-last-name" formControlName="lastName" autocomplete="family-name" required [attr.aria-invalid]="!!registrationFieldError('lastName')" aria-describedby="register-last-name-error" />
                   @if (registrationFieldError('lastName'); as error) { <small class="auth-card__field-error" id="register-last-name-error">{{ error }}</small> }
                 </div>
               </div>
               <div class="auth-card__field">
                 <label for="register-email">Adresse e-mail</label>
-                <input
+                <input pInputText
                   id="register-email"
                   type="email"
                   formControlName="email"
@@ -154,54 +143,48 @@
               </div>
               <div class="auth-card__field">
                 <label for="register-school">Établissement concerné</label>
-                <select id="register-school" formControlName="schoolId" required [disabled]="schoolsLoading() || schools().length === 0" [attr.aria-invalid]="!!registrationFieldError('schoolId')" aria-describedby="register-school-error">
-                  <option [ngValue]="0" disabled>
-                    @if (schoolsLoading()) {
-                      Chargement des établissements…
-                    } @else {
-                      Choisissez votre établissement
-                    }
-                  </option>
+                <app-select-field inputId="register-school" formControlName="schoolId" required [disabled]="schoolsLoading() || schools().length === 0" [attr.aria-invalid]="!!registrationFieldError('schoolId')" ariaDescribedBy="register-school-error">
+                  <app-select-option [value]="0" [label]="((schoolsLoading() ? (&quot; Chargement des établissements… &quot;) : (&quot; Choisissez votre établissement &quot;))).trim()" disabled />
                   @for (school of schools(); track school.id) {
-                    <option [ngValue]="school.id">{{ school.name }}</option>
+                    <app-select-option [value]="school.id" [label]="((&quot;&quot; + ((school.name)) + &quot;&quot;)).trim()" />
                   }
-                </select>
+                </app-select-field>
                 @if (registrationFieldError('schoolId'); as error) { <small class="auth-card__field-error" id="register-school-error">{{ error }}</small> }
                 <small>Le propriétaire de cet établissement validera votre demande.</small>
               </div>
               <div class="auth-card__field">
                 <label for="register-role">Profil demandé</label>
-                <select id="register-role" formControlName="requestedRole" required [attr.aria-invalid]="!!registrationFieldError('requestedRole')" aria-describedby="register-role-error">
-                  <option value="TEACHER">Enseignant</option>
-                  <option value="PARENT">Parent</option>
-                  <option value="STUDENT">Étudiant</option>
-                </select>
+                <app-select-field inputId="register-role" formControlName="requestedRole" required [attr.aria-invalid]="!!registrationFieldError('requestedRole')" ariaDescribedBy="register-role-error">
+                  <app-select-option [value]="&quot;TEACHER&quot;" [label]="(&quot;Enseignant&quot;).trim()" />
+                  <app-select-option [value]="&quot;PARENT&quot;" [label]="(&quot;Parent&quot;).trim()" />
+                  <app-select-option [value]="&quot;STUDENT&quot;" [label]="(&quot;Étudiant&quot;).trim()" />
+                </app-select-field>
                 @if (registrationFieldError('requestedRole'); as error) { <small class="auth-card__field-error" id="register-role-error">{{ error }}</small> }
                 <small>Le profil pourra être confirmé ou ajusté par le propriétaire.</small>
               </div>
               @if (registerForm.controls.requestedRole.value !== 'PARENT') {
                 <div class="auth-card__field">
                   <label for="register-identifier">{{ registerForm.controls.requestedRole.value === 'STUDENT' ? 'Matricule élève / étudiant' : 'Numéro d’employé' }}</label>
-                  <input id="register-identifier" type="text" formControlName="schoolIdentifier" maxlength="50" required />
+                  <input pInputText id="register-identifier" type="text" formControlName="schoolIdentifier" maxlength="50" required />
                   <small>Indiquez le numéro attribué par cet établissement. Si vous n’en avez pas, contactez l’administration pour une invitation.</small>
                 </div>
               }
               @if (registerForm.controls.requestedRole.value === 'PARENT') {
                 <div class="auth-card__field">
                   <label for="register-child-matricules">Matricules de vos enfants dans cet établissement</label>
-                  <input id="register-child-matricules" type="text" formControlName="childMatricules" maxlength="1100" aria-describedby="register-child-hint" />
+                  <input pInputText id="register-child-matricules" type="text" formControlName="childMatricules" maxlength="1100" aria-describedby="register-child-hint" />
                   <small id="register-child-hint">Séparez les matricules par une virgule. L’établissement vérifiera votre lien avec les enfants avant de vous donner accès à leurs informations.</small>
                 </div>
               }
               <div class="auth-card__field">
                 <label for="register-phone">Téléphone <span>(facultatif)</span></label>
-                <input id="register-phone" type="tel" inputmode="tel" formControlName="phone" autocomplete="tel" maxlength="30" [attr.aria-invalid]="!!registrationFieldError('phone')" aria-describedby="register-phone-error" />
+                <input pInputText id="register-phone" type="tel" inputmode="tel" formControlName="phone" autocomplete="tel" maxlength="30" [attr.aria-invalid]="!!registrationFieldError('phone')" aria-describedby="register-phone-error" />
                 @if (registrationFieldError('phone'); as error) { <small class="auth-card__field-error" id="register-phone-error">{{ error }}</small> }
               </div>
               <div class="auth-card__field-row">
                 <div class="auth-card__field">
                   <label for="register-password">Mot de passe</label>
-                  <input
+                  <input pInputText
                     id="register-password"
                     [attr.aria-invalid]="!!registrationFieldError('password')"
                     aria-describedby="register-password-error register-password-hint"
@@ -216,7 +199,7 @@
                 </div>
                 <div class="auth-card__field">
                   <label for="register-confirm">Confirmer</label>
-                  <input
+                  <input pInputText
                     id="register-confirm"
                     [attr.aria-invalid]="!!registrationFieldError('confirmPassword')"
                     aria-describedby="register-confirm-error"
@@ -228,7 +211,7 @@
                   @if (registrationFieldError('confirmPassword'); as error) { <small class="auth-card__field-error" id="register-confirm-error">{{ error }}</small> }
                 </div>
               </div>
-              <button class="auth-card__submit" type="submit" [disabled]="loading() || schoolsLoading() || schools().length === 0">
+              <button pButton class="auth-card__submit" type="submit" [disabled]="loading() || schoolsLoading() || schools().length === 0">
                 @if (loading()) {
                   <span class="auth-card__spinner" aria-hidden="true"></span>
                   Envoi…
@@ -238,6 +221,34 @@
               </button>
             </form>
           }
+        } @else if (mode() === 'recover') {
+          <div class="auth-card__heading">
+            <h2>Récupérer mon compte apprenant</h2>
+            <p>Votre école vérifiera votre identité avant d’autoriser le changement du courriel et du mot de passe. Ce formulaire ne modifie pas votre compte.</p>
+          </div>
+          @if (errorMessage()) { <app-error-alert [message]="errorMessage()" (dismissed)="errorMessage.set(null)">{{ errorMessage() }}</app-error-alert> }
+          @if (successMessage()) {
+            <p-message severity="success" role="status">{{ successMessage() }}</p-message>
+          } @else {
+            @if (schoolsError()) { <p>Liste des écoles indisponible. Réessayez plus tard ou contactez votre établissement.</p> }
+            <form [formGroup]="recoveryForm" (ngSubmit)="submitRecovery()">
+              <div class="auth-card__field"><label for="recovery-school">Établissement</label>
+                <app-select-field inputId="recovery-school" ariaLabel="Établissement" formControlName="schoolId" required [disabled]="schoolsLoading() || schools().length === 0">
+                  <app-select-option [value]="0" label="Choisir mon établissement" />
+                  @for (school of schools(); track school.id) { <app-select-option [value]="school.id" [label]="school.name" /> }
+                </app-select-field>
+              </div>
+              <div class="auth-card__field"><label for="recovery-number">Matricule dans cet établissement</label><input pInputText id="recovery-number" formControlName="registrationNumber" maxlength="50" required /></div>
+              <div class="auth-card__field-row">
+                <div class="auth-card__field"><label for="recovery-first-name">Prénom</label><input pInputText id="recovery-first-name" formControlName="firstName" maxlength="100" required autocomplete="given-name" /></div>
+                <div class="auth-card__field"><label for="recovery-last-name">Nom</label><input pInputText id="recovery-last-name" formControlName="lastName" maxlength="100" required autocomplete="family-name" /></div>
+              </div>
+              <div class="auth-card__field"><label for="recovery-email">Nouvelle adresse courriel accessible</label><input pInputText id="recovery-email" type="email" formControlName="newEmail" maxlength="150" required autocomplete="email" /></div>
+              <div class="auth-card__field"><label for="recovery-reason">Motif de la récupération (10 caractères minimum)</label><textarea pInputText id="recovery-reason" formControlName="reason" minlength="10" maxlength="1000" rows="3" required></textarea></div>
+              <p>Ne transmettez aucun mot de passe ni document d’identité ici. Pour un mineur, l’école pourra contacter le responsable légal aux coordonnées déjà enregistrées. Contactez votre école pour le suivi.</p>
+              <button pButton class="auth-card__submit" type="submit" [disabled]="loading() || schoolsLoading() || recoveryForm.invalid">{{ loading() ? 'Envoi…' : 'Envoyer ma demande de récupération' }}</button>
+            </form>
+          }
         } @else if (mode() === 'forgot') {
           <div class="auth-card__heading">
             <p class="auth-card__eyebrow">Récupération de compte</p>
@@ -245,15 +256,16 @@
             <p>Indiquez l’adresse e-mail associée à votre compte. Nous vous enverrons un lien sécurisé.</p>
           </div>
           @if (errorMessage()) {
-            <p class="auth-card__error" role="alert">{{ errorMessage() }}</p>
+            <app-error-alert [message]="errorMessage()" (dismissed)="errorMessage.set(null)">{{ errorMessage() }}</app-error-alert>
           }
           @if (successMessage()) {
-            <p class="auth-card__notice" role="status">{{ successMessage() }}</p>
+            <p-message severity="success" class="auth-card__notice" role="status">{{ successMessage() }}</p-message>
           }
+          <p><button pButton severity="secondary" variant="text" type="button" (click)="setMode('recover')">Je n’ai plus accès à mon courriel : récupérer mon compte</button></p>
           <form [formGroup]="emailForm" (ngSubmit)="submitForgotPassword()" novalidate>
             <div class="auth-card__field">
               <label for="forgot-email">Adresse e-mail</label>
-              <input
+              <input pInputText
                 id="forgot-email"
                 type="email"
                 formControlName="email"
@@ -262,7 +274,7 @@
                 required
               />
             </div>
-            <button class="auth-card__submit" type="submit" [disabled]="loading()">
+            <button pButton class="auth-card__submit" type="submit" [disabled]="loading()">
               @if (loading()) {
                 <span class="auth-card__spinner" aria-hidden="true"></span>
                 Envoi…
@@ -274,7 +286,10 @@
         } @else {
           <div class="auth-card__heading">
             <p class="auth-card__eyebrow">Presque terminé</p>
-            @if (mode() === 'activate') {
+            @if (mode() === 'recover-complete') {
+              <h2>Confirmer la récupération</h2>
+              <p>Votre école ou le support a autorisé cette récupération. Choisissez un nouveau mot de passe pour confirmer votre nouvelle adresse. Vos dossiers et accès seront conservés.</p>
+            } @else if (mode() === 'activate') {
               <h2>Activez votre compte</h2>
               <p>Votre adresse est confirmée. Choisissez votre mot de passe (8 caractères minimum) pour accéder à l’espace parent.</p>
             } @else {
@@ -283,12 +298,12 @@
             }
           </div>
           @if (errorMessage()) {
-            <p class="auth-card__error" role="alert">{{ errorMessage() }}</p>
+            <app-error-alert [message]="errorMessage()" (dismissed)="errorMessage.set(null)">{{ errorMessage() }}</app-error-alert>
           }
           <form [formGroup]="resetForm" (ngSubmit)="submitPasswordReset()" novalidate>
             <div class="auth-card__field">
               <label for="reset-password">Nouveau mot de passe</label>
-              <input
+              <input pInputText
                 id="reset-password"
                 type="password"
                 formControlName="password"
@@ -299,7 +314,7 @@
             </div>
             <div class="auth-card__field">
               <label for="reset-confirm">Confirmer le mot de passe</label>
-              <input
+              <input pInputText
                 id="reset-confirm"
                 type="password"
                 formControlName="confirmPassword"
@@ -307,10 +322,12 @@
                 required
               />
             </div>
-            <button class="auth-card__submit" type="submit" [disabled]="loading()">
+            <button pButton class="auth-card__submit" type="submit" [disabled]="loading()">
               @if (loading()) {
                 <span class="auth-card__spinner" aria-hidden="true"></span>
                 Modification…
+              } @else if (mode() === 'recover-complete') {
+                Confirmer mon adresse et récupérer mon compte
               } @else if (mode() === 'activate') {
                 Activer mon compte <svg lucideArrowRight [size]="18" aria-hidden="true"></svg>
               } @else {

@@ -1,18 +1,19 @@
-<div class="ss life">
-  <header class="ss__header">
+<div class="ss life ui-academic-blue">
+  <header class="module-help-header ss__header">
+    <app-module-help />
     <div><h1>{{ title() }}</h1><p>Les informations de votre établissement, de votre classe ou de votre enfant.</p></div>
-    <button class="ss__btn ss__btn--ghost" type="button" (click)="reload()" [disabled]="loading() || saving() || contextId() === null">Actualiser</button>
+    <button pButton severity="secondary" variant="outlined" class="ss__btn ss__btn--ghost" type="button" (click)="reload()" [disabled]="loading() || saving() || contextId() === null">Actualiser</button>
   </header>
-  @if (error()) { <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p> }
-  @if (success()) { <p class="ss__alert ss__alert--success" role="status">{{ success() }}</p> }
-  @if (contexts().length) {
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
+  @if (success()) { <p-message severity="success" class="ss__alert ss__alert--success" role="status">{{ success() }}</p-message> }
+  @if (contexts().length && !owner()) {
     <label class="ss__field">{{ owner() ? 'Établissement' : teacher() ? 'Classe' : 'Élève' }}
-      <select name="context" [ngModel]="contextId()" (ngModelChange)="choose($event)" [disabled]="saving()">
-        @for (context of contexts(); track context.id) { <option [ngValue]="context.id">{{ context.name }}</option> }
-      </select>
+      <app-select-field name="context" [ngModel]="contextId()" (ngModelChange)="choose($event)" [disabled]="saving()" [ariaLabel]="((&quot;&quot; + ((owner() ? 'Établissement' : teacher() ? 'Classe' : 'Élève')) + &quot; &quot;)).trim()">
+        @for (context of contexts(); track context.id) { <app-select-option [value]="context.id" [label]="((&quot;&quot; + ((context.name)) + &quot;&quot;)).trim()" /> }
+      </app-select-field>
     </label>
   }
-  @if (loading()) { <p role="status">Chargement…</p> }
+  @if (loading()) { <app-loading-state message="Chargement…" /> }
   @else if (contextId() === null) { <p class="ss__state">Aucun établissement, classe ou élève accessible.</p> }
   @else {
     @switch (module()) {
@@ -20,13 +21,13 @@
         @if (owner()) {
           <form class="ss__card ss__body life__form" (ngSubmit)="createEvent()">
             <h2>Ajouter un événement</h2>
-            <label class="ss__field">Titre<input name="title" [(ngModel)]="event.title" maxlength="160" required /></label>
-            <label class="ss__field">Type<select name="kind" [(ngModel)]="event.kind"><option value="EVENT">Événement</option><option value="EXAM">Examen</option><option value="HOLIDAY">Vacances</option><option value="MEETING">Réunion</option></select></label>
-            <label class="ss__field">Destinataires<select name="class" [(ngModel)]="event.classId"><option [ngValue]="null">Tout l’établissement</option>@for (cls of classChoices(); track cls.id) { <option [ngValue]="cls.id">{{ cls.name }}</option> }</select></label>
-            <label class="ss__field">Début<input type="date" name="start" [(ngModel)]="event.startsOn" required /></label>
-            <label class="ss__field">Fin<input type="date" name="end" [(ngModel)]="event.endsOn" [min]="event.startsOn" required /></label>
-            <label class="ss__field">Informations<textarea name="description" [(ngModel)]="event.description" maxlength="2000" rows="3"></textarea></label>
-            <button class="ss__btn" type="submit" [disabled]="saving()">Ajouter</button>
+            <label class="ss__field">Titre<input pInputText name="title" [(ngModel)]="event.title" maxlength="160" required /></label>
+            <label class="ss__field">Type<app-select-field name="kind" [(ngModel)]="event.kind" [ariaLabel]="(&quot;Type&quot;).trim()"><app-select-option [value]="&quot;EVENT&quot;" [label]="(&quot;Événement&quot;).trim()" /><app-select-option [value]="&quot;EXAM&quot;" [label]="(&quot;Examen&quot;).trim()" /><app-select-option [value]="&quot;HOLIDAY&quot;" [label]="(&quot;Vacances&quot;).trim()" /><app-select-option [value]="&quot;MEETING&quot;" [label]="(&quot;Réunion&quot;).trim()" /></app-select-field></label>
+            <label class="ss__field">Destinataires<app-select-field name="class" [(ngModel)]="event.classId" [ariaLabel]="(&quot;Destinataires&quot;).trim()"><app-select-option [value]="null" [label]="(&quot;Tout l’établissement&quot;).trim()" />@for (cls of classChoices(); track cls.id) { <app-select-option [value]="cls.id" [label]="((&quot;&quot; + (cls.name) + &quot;&quot;)).trim()" /> }</app-select-field></label>
+            <label class="ss__field">Début<app-date-field mode="date" name="start" [(ngModel)]="event.startsOn" required [ariaLabel]="(&quot;Début&quot;).trim()" /></label>
+            <label class="ss__field">Fin<app-date-field mode="date" name="end" [(ngModel)]="event.endsOn" [min]="event.startsOn" required [ariaLabel]="(&quot;Fin&quot;).trim()" /></label>
+            <label class="ss__field">Informations<textarea pTextarea name="description" [(ngModel)]="event.description" maxlength="2000" rows="3"></textarea></label>
+            <button pButton class="ss__btn" type="submit" [disabled]="saving()">Ajouter</button>
           </form>
         }
         <div class="life__list">
@@ -34,7 +35,7 @@
             <article class="ss__card ss__body"><h2>{{ item.title }}</h2><span class="ss__chip">{{ labels[item.kind] }}</span>
               <p>{{ item.startsOn | date:'dd/MM/yyyy' }} — {{ item.endsOn | date:'dd/MM/yyyy' }} · {{ item.className ?? 'Tout l’établissement' }}</p>
               <p class="life__text">{{ item.description }}</p>
-              @if (owner()) { <button type="button" class="ss__mini" (click)="deleteEvent(item)" [disabled]="saving()">Retirer</button> }
+              @if (owner()) { <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" (click)="deleteEvent(item)" [disabled]="saving()">Retirer</button> }
             </article>
           } @empty { <p class="ss__state">Aucun événement prévu.</p> }
         </div>
@@ -43,13 +44,13 @@
         @if (canObserve()) {
           <form class="ss__card ss__body life__form" (ngSubmit)="createObservation()">
             <h2>Ajouter une observation</h2>
-            <label class="ss__field">Élève<select name="student" [(ngModel)]="observation.studentId" required><option [ngValue]="null">Choisir un élève</option>@for (student of data().students; track student.id) { <option [ngValue]="student.id">{{ student.name }} · {{ student.className }}</option> }</select></label>
-            <label class="ss__field">Type<select name="kind" [(ngModel)]="observation.kind"><option value="INCIDENT">Incident</option><option value="POSITIVE">Observation positive</option></select></label>
-            <label class="ss__field">Date<input type="date" name="date" [(ngModel)]="observation.observedOn" [max]="today" required /></label>
-            <label class="ss__field">Observation<textarea name="description" [(ngModel)]="observation.description" maxlength="2000" rows="3" required></textarea></label>
-            <label class="ss__field">Mesure prise / accompagnement<textarea name="action" [(ngModel)]="observation.action" maxlength="2000" rows="2"></textarea></label>
+            <label class="ss__field">Élève<app-select-field name="student" [(ngModel)]="observation.studentId" required [ariaLabel]="(&quot;Élève&quot;).trim()"><app-select-option [value]="null" [label]="(&quot;Choisir un élève&quot;).trim()" />@for (student of data().students; track student.id) { <app-select-option [value]="student.id" [label]="((&quot;&quot; + (student.name) + &quot; · &quot; + (student.className) + &quot;&quot;)).trim()" /> }</app-select-field></label>
+            <label class="ss__field">Type<app-select-field name="kind" [(ngModel)]="observation.kind" [ariaLabel]="(&quot;Type&quot;).trim()"><app-select-option [value]="&quot;INCIDENT&quot;" [label]="(&quot;Incident&quot;).trim()" /><app-select-option [value]="&quot;POSITIVE&quot;" [label]="(&quot;Observation positive&quot;).trim()" /></app-select-field></label>
+            <label class="ss__field">Date<app-date-field mode="date" name="date" [(ngModel)]="observation.observedOn" [max]="today" required [ariaLabel]="(&quot;Date&quot;).trim()" /></label>
+            <label class="ss__field">Observation<textarea pTextarea name="description" [(ngModel)]="observation.description" maxlength="2000" rows="3" required></textarea></label>
+            <label class="ss__field">Mesure prise / accompagnement<textarea pTextarea name="action" [(ngModel)]="observation.action" maxlength="2000" rows="2"></textarea></label>
             <label><input type="checkbox" name="shared" [(ngModel)]="observation.sharedWithFamily" /> Partager cette observation et la mesure prise avec la famille</label>
-            <button class="ss__btn" type="submit" [disabled]="saving()">Enregistrer</button>
+            <button pButton class="ss__btn" type="submit" [disabled]="saving()">Enregistrer</button>
           </form>
         }
         <div class="life__list">
@@ -59,9 +60,9 @@
               @if (item.action) { <p class="life__text">Mesure prise : {{ item.action }}</p> }
               @if (canObserve()) { <p class="ss__muted">{{ item.sharedWithFamily ? 'Partagé avec la famille' : 'Observation interne' }}</p> }
               @if (owner()) {
-                <label class="ss__field">Suivi<textarea [name]="'observation-' + item.id" [(ngModel)]="observationActions[item.id]" maxlength="2000" rows="2"></textarea></label>
-                <div class="ss__actions"><button type="button" class="ss__btn" (click)="resolve(item)" [disabled]="saving()">Marquer comme traité</button>
-                  @if (!item.sharedWithFamily) { <button type="button" class="ss__btn ss__btn--ghost" (click)="resolve(item, true)" [disabled]="saving()">Traiter et partager avec la famille</button> }
+                <label class="ss__field">Suivi<textarea pTextarea [name]="'observation-' + item.id" [(ngModel)]="observationActions[item.id]" maxlength="2000" rows="2"></textarea></label>
+                <div class="ss__actions"><button pButton type="button" class="ss__btn" (click)="resolve(item)" [disabled]="saving()">Marquer comme traité</button>
+                  @if (!item.sharedWithFamily) { <button pButton severity="secondary" variant="outlined" type="button" class="ss__btn ss__btn--ghost" (click)="resolve(item, true)" [disabled]="saving()">Traiter et partager avec la famille</button> }
                 </div>
               }
             </article>
@@ -71,10 +72,10 @@
       @case ('demandes-administratives') {
         @if (!owner()) {
           <form class="ss__card ss__body life__form" (ngSubmit)="requestDocument()"><h2>Demander un document</h2>
-            <label class="ss__field">Document<select name="kind" [(ngModel)]="document.kind"><option value="SCHOOL_CERTIFICATE">Certificat de scolarité</option><option value="ATTESTATION">Attestation</option><option value="OTHER">Autre document</option></select></label>
-            <label class="ss__field">Motif / précisions<textarea name="reason" [(ngModel)]="document.reason" maxlength="1000" rows="3" required></textarea></label>
+            <label class="ss__field">Document<app-select-field name="kind" [(ngModel)]="document.kind" [ariaLabel]="(&quot;Document&quot;).trim()"><app-select-option [value]="&quot;SCHOOL_CERTIFICATE&quot;" [label]="(&quot;Certificat de scolarité&quot;).trim()" /><app-select-option [value]="&quot;ATTESTATION&quot;" [label]="(&quot;Attestation&quot;).trim()" /><app-select-option [value]="&quot;OTHER&quot;" [label]="(&quot;Autre document&quot;).trim()" /></app-select-field></label>
+            <label class="ss__field">Motif / précisions<textarea pTextarea name="reason" [(ngModel)]="document.reason" maxlength="1000" rows="3" required></textarea></label>
             <p class="ss__muted">L’établissement vous précisera les modalités de retrait du document.</p>
-            <button class="ss__btn" type="submit" [disabled]="saving()">Envoyer la demande</button>
+            <button pButton class="ss__btn" type="submit" [disabled]="saving()">Envoyer la demande</button>
           </form>
         }
         <div class="life__list">
@@ -83,12 +84,12 @@
               <p>{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</p><p class="life__text">{{ item.reason }}</p>
               @if (item.response) { <p class="life__text">Réponse de l’établissement : {{ item.response }}</p> }
               @if (owner() && (item.status === 'PENDING' || item.status === 'IN_PROGRESS')) {
-                <label class="ss__field">Réponse / modalités de retrait<textarea [name]="'response-' + item.id" [(ngModel)]="responses[item.id]" maxlength="2000" rows="2"></textarea></label>
-                <div class="ss__actions"><button type="button" class="ss__btn ss__btn--ghost" (click)="decide(item, 'IN_PROGRESS')" [disabled]="saving()">En cours</button>
-                  <button type="button" class="ss__btn" (click)="decide(item, 'READY')" [disabled]="saving()">Prêt à retirer</button>
-                  <button type="button" class="ss__mini" (click)="decide(item, 'REJECTED')" [disabled]="saving()">Refuser</button></div>
+                <label class="ss__field">Réponse / modalités de retrait<textarea pTextarea [name]="'response-' + item.id" [(ngModel)]="responses[item.id]" maxlength="2000" rows="2"></textarea></label>
+                <div class="ss__actions"><button pButton severity="secondary" variant="outlined" type="button" class="ss__btn ss__btn--ghost" (click)="decide(item, 'IN_PROGRESS')" [disabled]="saving()">En cours</button>
+                  <button pButton type="button" class="ss__btn" (click)="decide(item, 'READY')" [disabled]="saving()">Prêt à retirer</button>
+                  <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" (click)="decide(item, 'REJECTED')" [disabled]="saving()">Refuser</button></div>
               }
-              @if (!owner() && item.mine && item.status === 'PENDING') { <button type="button" class="ss__mini" (click)="cancel(item)" [disabled]="saving()">Annuler ma demande</button> }
+              @if (!owner() && item.mine && item.status === 'PENDING') { <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" (click)="cancel(item)" [disabled]="saving()">Annuler ma demande</button> }
             </article>
           } @empty { <p class="ss__state">Aucune demande administrative.</p> }
         </div>
@@ -97,21 +98,21 @@
         @if (owner()) {
           <div class="life__forms">
             <form class="ss__card ss__body life__form" (ngSubmit)="createBook()"><h2>Ajouter un livre</h2>
-              <label class="ss__field">Titre<input name="title" [(ngModel)]="book.title" maxlength="200" required /></label>
-              <label class="ss__field">Auteur<input name="author" [(ngModel)]="book.author" maxlength="160" /></label>
-              <label class="ss__field">Référence / ISBN<input name="reference" [(ngModel)]="book.reference" maxlength="80" required /></label>
-              <label class="ss__field">Nombre d’exemplaires<input type="number" name="copies" [(ngModel)]="book.copies" min="1" max="10000" required /></label>
-              <button class="ss__btn" type="submit" [disabled]="saving()">Ajouter</button>
+              <label class="ss__field">Titre<input pInputText name="title" [(ngModel)]="book.title" maxlength="200" required /></label>
+              <label class="ss__field">Auteur<input pInputText name="author" [(ngModel)]="book.author" maxlength="160" /></label>
+              <label class="ss__field">Référence / ISBN<input pInputText name="reference" [(ngModel)]="book.reference" maxlength="80" required /></label>
+              <label class="ss__field">Nombre d’exemplaires<app-number-field name="copies" [(ngModel)]="book.copies" min="1" max="10000" required [ariaLabel]="(&quot;Nombre d’exemplaires&quot;).trim()" /></label>
+              <button pButton class="ss__btn" type="submit" [disabled]="saving()">Ajouter</button>
             </form>
             <form class="ss__card ss__body life__form" (ngSubmit)="lend()"><h2>Enregistrer un prêt</h2>
-              <label class="ss__field">Livre<select name="book" [(ngModel)]="loan.bookId" required><option [ngValue]="null">Choisir un livre</option>@for (item of data().books; track item.id) { <option [ngValue]="item.id" [disabled]="item.available < 1">{{ item.title }} · {{ item.available }} disponible(s)</option> }</select></label>
-              <label class="ss__field">Élève<select name="student" [(ngModel)]="loan.studentId" required><option [ngValue]="null">Choisir un élève</option>@for (student of data().students; track student.id) { <option [ngValue]="student.id">{{ student.name }} · {{ student.className }}</option> }</select></label>
-              <label class="ss__field">Retour prévu<input type="date" name="due" [(ngModel)]="loan.dueOn" [min]="today" required /></label>
-              <button class="ss__btn" type="submit" [disabled]="saving()">Prêter</button>
+              <label class="ss__field">Livre<app-select-field name="book" [(ngModel)]="loan.bookId" required [ariaLabel]="(&quot;Livre&quot;).trim()"><app-select-option [value]="null" [label]="(&quot;Choisir un livre&quot;).trim()" />@for (item of data().books; track item.id) { <app-select-option [value]="item.id" [label]="((&quot;&quot; + (item.title) + &quot; · &quot; + (item.available) + &quot; disponible(s)&quot;)).trim()" [disabled]="item.available < 1" /> }</app-select-field></label>
+              <label class="ss__field">Élève<app-select-field name="student" [(ngModel)]="loan.studentId" required [ariaLabel]="(&quot;Élève&quot;).trim()"><app-select-option [value]="null" [label]="(&quot;Choisir un élève&quot;).trim()" />@for (student of data().students; track student.id) { <app-select-option [value]="student.id" [label]="((&quot;&quot; + (student.name) + &quot; · &quot; + (student.className) + &quot;&quot;)).trim()" /> }</app-select-field></label>
+              <label class="ss__field">Retour prévu<app-date-field mode="date" name="due" [(ngModel)]="loan.dueOn" [min]="today" required [ariaLabel]="(&quot;Retour prévu&quot;).trim()" /></label>
+              <button pButton class="ss__btn" type="submit" [disabled]="saving()">Prêter</button>
             </form>
           </div>
         }
-        <h2>Catalogue</h2><label class="ss__field">Rechercher un livre<input name="bookSearch" [ngModel]="bookSearch()" (ngModelChange)="bookSearch.set($event)" /></label>
+        <h2>Catalogue</h2><label class="ss__field">Rechercher un livre<input pInputText name="bookSearch" [ngModel]="bookSearch()" (ngModelChange)="bookSearch.set($event)" /></label>
         <div class="life__list">@for (item of visibleBooks(); track item.id) {
           <article class="ss__card ss__body"><h3>{{ item.title }}</h3><p>{{ item.author }} · {{ item.reference }}</p><span class="ss__chip">{{ item.available }} / {{ item.copies }} disponible(s)</span></article>
         } @empty { <p class="ss__state">Aucun livre disponible dans le catalogue.</p> }</div>
@@ -119,7 +120,7 @@
           <article class="ss__card ss__body"><h3>{{ item.title }} · {{ item.studentName }}</h3><p>Emprunté le {{ item.borrowedOn | date:'dd/MM/yyyy' }} · Retour prévu le {{ item.dueOn | date:'dd/MM/yyyy' }}</p>
             @if (item.returnedOn) { <span class="ss__chip">Retourné le {{ item.returnedOn | date:'dd/MM/yyyy' }}</span> }
             @else { <span class="ss__chip" [class.ss__chip--red]="overdue(item)">{{ overdue(item) ? 'En retard' : 'En prêt' }}</span>
-              @if (owner()) { <button type="button" class="ss__btn" (click)="returnBook(item)" [disabled]="saving()">Enregistrer le retour</button> } }
+              @if (owner()) { <button pButton type="button" class="ss__btn" (click)="returnBook(item)" [disabled]="saving()">Enregistrer le retour</button> } }
           </article>
         } @empty { <p class="ss__state">Aucun prêt enregistré.</p> }</div>
       }
@@ -133,9 +134,9 @@
             <p class="life__text">{{ item.content }}</p><span class="ss__chip">{{ labels[item.status] }}</span>
             @if (item.feedback) { <p class="life__text">Retour : {{ item.feedback }}</p> }
             @if (item.editable) {
-              <label class="ss__field">Statut<select [name]="'status-' + key(item)" [(ngModel)]="statuses[key(item)]"><option value="TO_DO">À faire</option><option value="SUBMITTED">Remis</option><option value="CORRECTED">Corrigé</option></select></label>
-              <label class="ss__field">Retour de correction<textarea [name]="'feedback-' + key(item)" [(ngModel)]="feedback[key(item)]" maxlength="2000" rows="2"></textarea></label>
-              <button type="button" class="ss__btn" (click)="homework(item)" [disabled]="saving()">Enregistrer le suivi</button>
+              <label class="ss__field">Statut<app-select-field [name]="'status-' + key(item)" [(ngModel)]="statuses[key(item)]" [ariaLabel]="(&quot;Statut&quot;).trim()"><app-select-option [value]="&quot;TO_DO&quot;" [label]="(&quot;À faire&quot;).trim()" /><app-select-option [value]="&quot;SUBMITTED&quot;" [label]="(&quot;Remis&quot;).trim()" /><app-select-option [value]="&quot;CORRECTED&quot;" [label]="(&quot;Corrigé&quot;).trim()" /></app-select-field></label>
+              <label class="ss__field">Retour de correction<textarea pTextarea [name]="'feedback-' + key(item)" [(ngModel)]="feedback[key(item)]" maxlength="2000" rows="2"></textarea></label>
+              <button pButton type="button" class="ss__btn" (click)="homework(item)" [disabled]="saving()">Enregistrer le suivi</button>
             }
           </article>
         } @empty { <p class="ss__state">Aucun devoir pour les élèves inscrits dans cette classe.</p> }</div>

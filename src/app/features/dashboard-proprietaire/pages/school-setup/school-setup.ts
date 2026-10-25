@@ -1,3 +1,12 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -11,7 +20,7 @@ import { apiError } from '../../../../shared/self-space/self-space.service';
 
 @Component({
   selector: 'app-school-setup', standalone: true,
-  imports: [FormValidationDirective, FormsModule, RouterLink],
+  imports: [ErrorAlert, ModuleHelpButton, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink],
   templateUrl: './school-setup.html', styleUrl: './school-setup.scss',
 })
 export class SchoolSetup implements OnInit {
@@ -28,20 +37,6 @@ export class SchoolSetup implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
-  readonly module = signal('Organisation scolaire');
-  readonly modules = [
-    { name: 'Organisation scolaire', description: 'Années scolaires, niveaux, classes et matières.' },
-    { name: 'Élèves / étudiants', description: 'Inscriptions, listes par classe, matricules, parents et import Excel / CSV.' },
-    { name: 'Enseignants', description: 'Fiches, affectations par classe et matière, emplois du temps et import des enseignants.' },
-    { name: 'Employés et accès', description: 'Enseignants, comptables, secrétaires et autres employés, avec leurs droits d’accès.' },
-    { name: 'Présences et signalements', description: 'Absences, retards, signalements des parents et suivi quotidien.' },
-    { name: 'Notes et bulletins', description: 'Évaluations, résultats, moyennes et bulletins.' },
-    { name: 'Recouvrement', description: 'Tarifs, factures, paiements et soldes des élèves.' },
-    { name: 'Dépenses et budget', description: 'Dépenses, comptes et suivi financier.' },
-    { name: 'Communication', description: 'Messages individuels ou groupés, documents et échanges avec les familles.' },
-    { name: 'Clôture annuelle', description: 'Passages, redoublements et report des soldes vers la nouvelle année, sans recopier les notes.' },
-    { name: 'Export des données', description: 'Export Excel et documents pour conserver les informations de votre établissement.' },
-  ];
   form = this.emptyForm();
   private emptyForm() { return { name: '', type: 'PRIMAIRE', address: '', phone: '', email: '', expectedStudentCount: null as number | null, expectedClassCount: null as number | null, expectedTeacherCount: null as number | null }; }
   private get draftKey() { return `fasoecole_school_draft_${this.auth.user()?.id}`; }
@@ -58,7 +53,6 @@ export class SchoolSetup implements OnInit {
     this.form = { name: school.name, type: school.type, address: school.address ?? '', phone: school.phone ?? '', email: school.email ?? '', expectedStudentCount: school.expectedStudentCount ?? null, expectedClassCount: school.expectedClassCount ?? null, expectedTeacherCount: school.expectedTeacherCount ?? null };
     this.active.set(school.status === 'ACTIVE');
     this.finalized.set(school.status !== 'DRAFT');
-    this.auth.selectSchoolContext(school.id);
     if (school.status === 'ACTIVE') {
       localStorage.removeItem(this.draftKey);
       this.success.set('Établissement approuvé. Vous pouvez maintenant configurer votre année scolaire et ajouter vos classes, enseignants et élèves.');

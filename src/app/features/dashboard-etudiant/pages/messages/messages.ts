@@ -1,3 +1,9 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { TextareaModule } from 'primeng/textarea';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
@@ -10,7 +16,7 @@ import { ConversationFiles, MessageAttachments } from '../../../../shared/self-s
 @Component({
   selector: 'app-student-messages',
   standalone: true,
-  imports: [FormValidationDirective, FormsModule, DatePipe, ConversationFiles, MessageAttachments],
+  imports: [ErrorAlert, ModuleHelpButton, LoadingState, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DatePipe, ConversationFiles, MessageAttachments],
   templateUrl: './messages.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })

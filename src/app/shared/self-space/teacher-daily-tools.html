@@ -1,0 +1,62 @@
+<section class="ss__card ss__body" [attr.aria-label]="mode() === 'lessons' ? 'Cahier de textes' : mode() === 'support' ? 'Élèves à accompagner' : mode() === 'notes' ? 'Carnet personnel' : 'Disponibilités et absences'">
+ <h2>{{ mode() === 'lessons' ? 'Cahier de textes' : mode() === 'support' ? 'Élèves à accompagner' : mode() === 'notes' ? 'Carnet personnel' : 'Disponibilités et absences' }}</h2>
+ @if(error()){<app-error-alert [message]="error()" (dismissed)="error.set(null)">{{error()}}</app-error-alert>}
+ @if(success()){<p-message severity="success" role="status">{{success()}}</p-message>}
+ <button pButton type="button" severity="secondary" variant="outlined" (click)="load()" [disabled]="loading()||saving()">Actualiser</button>
+ @if(loading()){<p role="status">Chargement…</p>}
+ @else {
+ @switch(mode()){
+ @case('lessons'){
+  <p>Consignez les séances réalisées. Cochez le partage pour les rendre visibles aux élèves et à leurs parents dans Cours et ressources.</p>
+  <form #lessonForm="ngForm" (ngSubmit)="saveLesson(lessonForm)" class="ss__form">
+   <label class="ss__field">Matière<app-select-field name="subjectId" [(ngModel)]="lesson.subjectId" ariaLabel="Matière du cahier" required [disabled]="saving()">@for(s of subjects();track s.subjectId){<app-select-option [value]="s.subjectId" [label]="s.subjectName"/>}</app-select-field></label>
+   <label class="ss__field">Date de la séance<app-date-field name="lessonOn" [(ngModel)]="lesson.lessonOn" [max]="today" required ariaLabel="Date de la séance" [disabled]="saving()"/></label>
+   <label class="ss__field">Titre de la séance<input pInputText name="title" [(ngModel)]="lesson.title" maxlength="160" required [disabled]="saving()"/></label>
+   <label class="ss__field">Contenu réalisé<textarea pTextarea name="content" [(ngModel)]="lesson.content" rows="3" maxlength="4000" required [disabled]="saving()"></textarea></label>
+   <label class="ss__field">Objectifs pédagogiques<textarea pTextarea name="objectives" [(ngModel)]="lesson.objectives" rows="2" maxlength="2000" [disabled]="saving()"></textarea></label>
+   <label class="ss__field">Prochaine séance<textarea pTextarea name="nextWork" [(ngModel)]="lesson.nextWork" rows="2" maxlength="2000" [disabled]="saving()"></textarea></label>
+   <label><input type="checkbox" name="shared" [(ngModel)]="lesson.shared" [disabled]="saving()"/>Partager cette séance avec les élèves et les parents</label>
+   <div class="ss__actions"><button pButton type="submit" [disabled]="saving()">{{editing?'Enregistrer la séance':'Ajouter la séance'}}</button>@if(editing){<button pButton type="button" severity="secondary" (click)="reset();lessonForm.resetForm(lesson)" [disabled]="saving()">Annuler la modification</button>}</div>
+  </form>
+  <div class="daily-list">@for(row of lessons();track row.id){<article><h3>{{row.title}} · {{row.subjectName}}</h3><p>{{row.lessonOn|date:'dd/MM/yyyy'}} · {{row.shared?'Partagée avec la famille':'Privée'}}</p><p class="daily-text">{{row.content}}</p><p class="daily-text">Objectifs : {{row.objectives||'Non renseignés'}}</p><p class="daily-text">Prochaine séance : {{row.nextWork||'Non renseignée'}}</p><div class="ss__actions"><button pButton type="button" severity="secondary" (click)="editLesson(row)" [disabled]="saving()">Modifier la séance</button><button pButton type="button" severity="danger" variant="outlined" (click)="remove(row.id)" [disabled]="saving()">Supprimer la séance</button></div></article>}@empty{<p>Aucune séance consignée.</p>}</div>
+ }
+ @case('support'){
+  <p>Repères : au moins 3 absences (hors absences excusées) sur les 30 derniers jours, vos devoirs arrivés à échéance non remis, ou moyenne indicative inférieure à 10/20 dans vos évaluations. Ce sont des pistes à vérifier, pas des sanctions.</p>
+  <div class="daily-list">@for(row of support();track row.studentId){<article><h3>{{row.studentName}}</h3><p>{{row.absences}} absence(s) · {{row.overdue}} devoir(s) non remis · Moyenne indicative : {{row.average===null?'Sans note':(row.average|number:'1.0-2')+' / 20'}}</p>@if(row.id){<p>{{row.resolved?'Accompagnement terminé':'À suivre'}} @if(row.reviewOn){· Bilan le {{row.reviewOn|date:'dd/MM/yyyy'}}}</p><p class="daily-text">Note privée : {{row.action}}</p><p>{{row.shared?'Message partagé avec la famille':'Aucun message partagé'}}</p>}<button pButton type="button" severity="secondary" (click)="chooseStudent(row.studentId)" [disabled]="saving()">Accompagner {{row.studentName}}</button></article>}@empty{<p>Aucun élève signalé selon ces repères. Vous pouvez ajouter un accompagnement ci-dessous.</p>}</div>
+  <form #planForm="ngForm" (ngSubmit)="savePlan(planForm)" class="ss__form">
+   <label class="ss__field">Élève à accompagner<app-select-field name="studentId" [ngModel]="studentId" (ngModelChange)="chooseStudent(+$event)" ariaLabel="Élève à accompagner" required [disabled]="saving()"><app-select-option [value]="null" label="Choisir un élève"/>@for(s of roster();track s.studentId){<app-select-option [value]="s.studentId" [label]="s.fullName"/>}</app-select-field></label>
+   <label class="ss__field">Observations et actions privées<textarea pTextarea name="action" [(ngModel)]="plan.action" rows="3" maxlength="4000" required [disabled]="saving()"></textarea></label>
+   <label class="ss__field">Date du prochain bilan<app-date-field name="reviewOn" [(ngModel)]="plan.reviewOn" ariaLabel="Date du prochain bilan" [disabled]="saving()"/></label>
+   <label><input type="checkbox" name="resolved" [(ngModel)]="plan.resolved" [disabled]="saving()"/>Accompagnement terminé</label>
+   <label class="ss__field">Message destiné à la famille<textarea pTextarea name="familyMessage" [(ngModel)]="plan.familyMessage" rows="2" maxlength="2000" [required]="plan.shared" [disabled]="saving()"></textarea></label>
+   <label><input type="checkbox" name="shared" [(ngModel)]="plan.shared" [disabled]="saving()"/>Partager ce message et le bilan dans Cours et ressources de l’élève et des parents</label>
+   <button pButton type="submit" [disabled]="saving()||!studentId">Enregistrer l’accompagnement</button>
+  </form>
+ }
+ @case('notes'){
+  <p>Vos préparations, observations et rappels restent privés à votre compte.</p>
+  <form #noteForm="ngForm" (ngSubmit)="saveNote(noteForm)" class="ss__form">
+   <label class="ss__field">Titre du rappel<input pInputText name="title" [(ngModel)]="note.title" maxlength="160" required [disabled]="saving()"/></label>
+   <label class="ss__field">Note personnelle<textarea pTextarea name="content" [(ngModel)]="note.content" rows="3" maxlength="4000" required [disabled]="saving()"></textarea></label>
+   <label class="ss__field">Me le rappeler le<app-date-field name="remindOn" [(ngModel)]="note.remindOn" ariaLabel="Me le rappeler le" [disabled]="saving()"/></label>
+   <button pButton type="submit" [disabled]="saving()">{{editing?'Enregistrer la note':'Ajouter la note'}}</button>
+   @if(editing){<button pButton type="button" severity="secondary" (click)="reset();noteForm.resetForm(note)" [disabled]="saving()">Annuler la modification</button>}
+  </form>
+  <div class="daily-list">@for(row of notes();track row.id){<article><h3>{{row.title}}</h3><p>{{row.done?'Terminé':'À faire'}} @if(row.remindOn){· {{row.remindOn|date:'dd/MM/yyyy'}}}</p><p class="daily-text">{{row.content}}</p><div class="ss__actions"><button pButton type="button" severity="secondary" (click)="editNote(row)" [disabled]="saving()">Modifier la note</button><button pButton type="button" (click)="toggleNote(row)" [disabled]="saving()">{{row.done?'Réouvrir':'Terminer'}}</button><button pButton type="button" severity="danger" variant="outlined" (click)="remove(row.id)" [disabled]="saving()">Supprimer la note</button></div></article>}@empty{<p>Aucune note personnelle.</p>}</div>
+ }
+ @case('availability'){
+  <p>Prévenez l’administration ou demandez un remplacement. La réponse se consulte dans Messages. L’envoi ne vaut pas validation et ne modifie pas votre planning.</p>
+  @if(profiles().length){
+  <form #requestForm="ngForm" (ngSubmit)="sendRequest(requestForm)" class="ss__form">
+   <label class="ss__field">Établissement concerné<app-select-field name="teacherId" [(ngModel)]="request.teacherId" ariaLabel="Établissement concerné" required [disabled]="saving()">@for(p of profiles();track p.teacherId){<app-select-option [value]="p.teacherId" [label]="p.schoolName"/>}</app-select-field></label>
+   <label class="ss__field">Début de l’indisponibilité<app-date-field mode="datetime-local" name="startsAt" [(ngModel)]="request.startsAt" ariaLabel="Début de l’indisponibilité" required [disabled]="saving()"/></label>
+   <label class="ss__field">Fin de l’indisponibilité<app-date-field mode="datetime-local" name="endsAt" [(ngModel)]="request.endsAt" ariaLabel="Fin de l’indisponibilité" required [disabled]="saving()"/></label>
+   <label class="ss__field">Motif de la demande<textarea pTextarea name="reason" [(ngModel)]="request.reason" maxlength="2000" rows="3" required [disabled]="saving()"></textarea></label>
+   <label><input type="checkbox" name="replacement" [(ngModel)]="request.replacementRequested" [disabled]="saving()"/>Demander un remplacement</label>
+   <button pButton type="submit" [disabled]="saving()">Envoyer à l’administration</button>
+  </form>}@else{<p>Aucune fiche employé disponible.</p>}
+  <div class="daily-list">@for(row of requests();track row.id){<article><h3>{{row.schoolName}} · Demande transmise</h3><p>Du {{row.startsAt|date:'dd/MM/yyyy HH:mm'}} au {{row.endsAt|date:'dd/MM/yyyy HH:mm'}}</p><p class="daily-text">{{row.reason}}</p><p>Remplacement demandé : {{row.replacementRequested?'Oui':'Non'}}</p><a routerLink="/enseignant/messages" [queryParams]="{conversationId:row.conversationId}">Consulter la réponse dans Messages</a></article>}@empty{<p>Aucune demande transmise.</p>}</div>
+ }
+ }
+ }
+</section>

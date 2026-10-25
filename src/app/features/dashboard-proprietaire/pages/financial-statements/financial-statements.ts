@@ -1,3 +1,7 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { ButtonModule } from 'primeng/button';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -7,7 +11,7 @@ import { ExpensesService, ExpenseSummary } from '../../expenses.service';
 
 @Component({
   selector: 'app-financial-statements', standalone: true,
-  imports: [FormsModule, DecimalPipe, DatePipe],
+  imports: [ErrorAlert, ModuleHelpButton, LoadingState, ButtonModule, FormsModule, DecimalPipe, DatePipe],
   templateUrl: './financial-statements.html',
   styleUrls: ['../expenses/expenses.scss', './financial-statements.scss'],
 })
@@ -25,7 +29,7 @@ export class FinancialStatements implements OnInit, OnDestroy {
   ngOnInit(): void {
     const owner = this.auth.user()?.id;
     if (!owner) { this.loading.set(false); return; }
-    this.requests.add(this.auth.getOwnedSchools(owner, 'EXPENSES').subscribe({
+    this.requests.add(this.auth.getOwnedSchools(owner, 'FINANCIAL_STATEMENTS').subscribe({
       next: schools => {
         this.schools.set(schools);
         const stored = Number(localStorage.getItem('fasoecole_owner_school'));
@@ -37,8 +41,9 @@ export class FinancialStatements implements OnInit, OnDestroy {
   }
   selectSchool(id: number): void {
     if (!this.schools().some(s => s.id === id)) return;
-    this.schoolId.set(id); this.auth.selectSchoolContext(id);
-    this.yearId = null; this.summary.set(null); this.load();
+    this.schoolId.set(id);
+    this.yearId = Number(localStorage.getItem(`fasoecole_year_${id}`)) || null;
+    this.summary.set(null); this.load();
   }
   load(): void {
     const id = this.schoolId();

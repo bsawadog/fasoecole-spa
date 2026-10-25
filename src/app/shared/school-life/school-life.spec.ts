@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { AuthService } from '../../core/auth';
 import { SelfSpaceService } from '../self-space/self-space.service';
@@ -10,17 +10,18 @@ const data: LifeOverview = { students: [{ id: 4, name: 'Awa', classId: 2, classN
   events: [], observations: [], requests: [], books: [], loans: [], homeworks: [] };
 
 describe('School life modules', () => {
-  function setup(scope = 'schools', module = 'calendrier') {
-    const route = { data: of({ lifeScope: scope, lifeModule: module }) };
+  afterEach(() => localStorage.removeItem('fasoecole_owner_school'));
+  function setup(scope = 'schools', module = 'calendrier', schools = [{ id: 1, name: 'School' }], queryParams: Record<string, string> = {}) {
+    const route = { data: of({ lifeScope: scope, lifeModule: module }), snapshot: { queryParamMap: convertToParamMap(queryParams) } };
     const api = { overview: vi.fn(() => of(data)), create: vi.fn(() => of(undefined)), update: vi.fn(() => of(undefined)) };
     const self = { teacherClasses: vi.fn(() => of([])), myStudents: vi.fn(() => of([{ studentId: 4, fullName: 'Awa', schoolName: 'School' }])) };
     TestBed.configureTestingModule({ imports: [SchoolLifePage], providers: [provideRouter([]),
       { provide: ActivatedRoute, useValue: route }, { provide: SchoolLifeService, useValue: api },
       { provide: SelfSpaceService, useValue: self },
-      { provide: AuthService, useValue: { user: () => ({ id: 7, role: 'parent' }), getOwnedSchools: () => of([{ id: 1, name: 'School' }]) } },
+      { provide: AuthService, useValue: { user: () => ({ id: 7, role: 'parent' }), getOwnedSchools: () => of(schools) } },
     ] });
     const fixture = TestBed.createComponent(SchoolLifePage); fixture.detectChanges();
-    return { fixture, page: fixture.componentInstance, api };
+    return { fixture, page: fixture.componentInstance, api, self };
   }
 
   it('shows the calendar creation form to authorized school staff', () => {
@@ -28,12 +29,35 @@ describe('School life modules', () => {
     expect(api.overview).toHaveBeenCalledWith('schools', 1, 'calendrier');
     expect(fixture.nativeElement.textContent).toContain('Ajouter un événement');
   });
+
+  it('uses the school selected in the shared header without a duplicate school selector', () => {
+    localStorage.setItem('fasoecole_owner_school', '2');
+    const { fixture, api } = setup('schools', 'calendrier', [{ id: 1, name: 'A' }, { id: 2, name: 'B' }]);
+    expect(api.overview).toHaveBeenCalledWith('schools', 2, 'calendrier');
+    expect(fixture.nativeElement.querySelector('select[name="context"]')).toBeNull();
+  });
   it('lets families request documents without exposing school decision controls', () => {
     const { fixture, page, api } = setup('students', 'demandes-administratives');
     expect(fixture.nativeElement.textContent).toContain('Demander un document');
     page.document.reason = 'Application'; page.requestDocument();
     expect(api.create).toHaveBeenCalledWith('students', 4, 'requests', { kind: 'SCHOOL_CERTIFICATE', reason: 'Application' });
     expect(page.document.reason).toBe('');
+  });
+  it('opens the child requested by a dashboard link', () => {
+    const { page, api, self } = setup('students', 'demandes-administratives', undefined, { studentId: '5' });
+    self.myStudents.mockReturnValue(of([
+      { studentId: 4, fullName: 'Awa', schoolName: 'School' },
+      { studentId: 5, fullName: 'Ali', schoolName: 'School' },
+    ]));
+    page.ngOnInit();
+    expect(page.contextId()).toBe(5);
+    expect(api.overview).toHaveBeenLastCalledWith('students', 5, 'demandes-administratives');
+  });
+  it('ignores a dashboard child identifier outside accessible contexts', () => {
+    const { page, api } = setup('students', 'demandes-administratives', undefined, { studentId: '999' });
+    expect(page.contextId()).toBe(4);
+    expect(api.overview).toHaveBeenCalledWith('students', 4, 'demandes-administratives');
+    expect(api.overview).not.toHaveBeenCalledWith('students', 999, 'demandes-administratives');
   });
   it('preserves form input when an operation fails so it can be retried', () => {
     const { page, api } = setup();

@@ -1,7 +1,8 @@
+import { MessageActivityService } from '../message-activity.service';
 import { HttpClient } from '@angular/common/http';
 import { conversationBody } from './message-attachments';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   EvaluationInfo,
@@ -273,6 +274,7 @@ export const DAY_LABELS: Record<number, string> = {
 /** API des espaces personnels : enseignant (/me/teacher) et élève / parent (/me/students). */
 @Injectable({ providedIn: 'root' })
 export class SelfSpaceService {
+  private readonly activity = inject(MessageActivityService);
   private readonly http = inject(HttpClient);
   private readonly teacherUrl = `${environment.apiUrl}/me/teacher`;
   private readonly studentsUrl = `${environment.apiUrl}/me/students`;
@@ -292,7 +294,7 @@ export class SelfSpaceService {
   }
 
   sendTeacherMessage(payload: { schoolId: number; classId: number; subject: string; content: string; recipientUserIds: number[] }, files: File[] = []): Observable<ConversationSummary[]> {
-    return this.http.post<ConversationSummary[]>(`${this.apiConversations}/teacher/messages`, conversationBody(payload, files));
+    return this.http.post<ConversationSummary[]>(`${this.apiConversations}/teacher/messages`, conversationBody(payload, files)).pipe(tap(() => this.activity.changed()));
   }
 
   unreadConversationCount(): Observable<number> {
@@ -316,6 +318,10 @@ export class SelfSpaceService {
   }
   saveTeacherAttendance(classId: number, studentId: number, payload: { date: string; status: AttendanceItem['status']; justification: string | null }): Observable<void> {
     return this.http.put<void>(`${this.teacherUrl}/classes/${classId}/students/${studentId}/attendance`, payload);
+  }
+
+  saveTeacherAttendanceBatch(classId:number,payload:{date:string;entries:{studentId:number;status:AttendanceItem['status'];justification:string|null;expectedStatus:AttendanceItem['status']|null}[]}):Observable<TeacherAttendanceItem[]> {
+    return this.http.put<TeacherAttendanceItem[]>(`${this.teacherUrl}/classes/${classId}/attendance`,payload);
   }
 
   teacherFamilyReports(classId: number, date: string): Observable<AbsenceReport[]> {
@@ -420,23 +426,19 @@ export class SelfSpaceService {
   }
 
   startConversation(payload: NewConversationPayload, files: File[] = []): Observable<ConversationThread> {
-    return this.http.post<ConversationThread>(this.apiConversations, conversationBody({ ...payload, recipientSchool: payload.recipientSchool ?? true }, files));
+    return this.http.post<ConversationThread>(this.apiConversations, conversationBody({ ...payload, recipientSchool: payload.recipientSchool ?? true }, files)).pipe(tap(() => this.activity.changed()));
   }
 
   conversation(conversationId: number): Observable<ConversationThread> {
-    return this.http.get<ConversationThread>(`${this.apiConversations}/${conversationId}`);
+    return this.http.get<ConversationThread>(`${this.apiConversations}/${conversationId}`).pipe(tap(() => this.activity.changed()));
   }
 
   replyToConversation(conversationId: number, content: string, files: File[] = []): Observable<ConversationThread> {
-    return this.http.post<ConversationThread>(`${this.apiConversations}/${conversationId}/messages`, conversationBody({ content }, files));
+    return this.http.post<ConversationThread>(`${this.apiConversations}/${conversationId}/messages`, conversationBody({ content }, files)).pipe(tap(() => this.activity.changed()));
   }
 }
 
-/** Message d'erreur lisible renvoyé par l'API (ou message par défaut). */
-export function apiError(error: unknown, fallback: string): string {
-  const message = (error as { error?: { message?: unknown } } | null)?.error?.message;
-  return typeof message === 'string' && message ? message : fallback;
-}
+export { apiError } from '../api-error';
 
 export interface TeacherMessageRecipient {
   userId: number; fullName: string; email?: string | null; role: 'ELEVE' | 'PARENT' | 'PROPRIETAIRE';

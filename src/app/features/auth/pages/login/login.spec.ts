@@ -10,6 +10,8 @@ describe('Login', () => {
       getRegistrationSchools: vi.fn(() => of([{ id: 1, name: 'École A', type: 'PRIMAIRE' }])),
       register: vi.fn(() => of({ activationRequired: true, message: 'Consultez votre boîte courriel.' })),
       verifyEmail: vi.fn(() => of(undefined)),
+      submitAccountRecovery: vi.fn(() => of({ message: 'Demande reçue. Votre école vérifiera votre identité.' })),
+      completeAccountRecovery: vi.fn(() => of(undefined)),
       redirectAfterLogin: vi.fn(),
     };
     TestBed.configureTestingModule({
@@ -24,6 +26,29 @@ describe('Login', () => {
     fixture.detectChanges();
     return { fixture, auth };
   }
+
+  it('submits recovery details without opening a session or changing credentials', () => {
+    const { fixture, auth } = setup(); const page = fixture.componentInstance;
+    page.setMode('recover');
+    page.recoveryForm.setValue({ schoolId: 1, registrationNumber: ' 001 ', firstName: ' Ali ', lastName: 'Diallo',
+      newEmail: 'new@example.test', reason: 'Courriel et mot de passe perdus' });
+    page.submitRecovery();
+    expect(auth.submitAccountRecovery).toHaveBeenCalledWith(expect.objectContaining({ schoolId: 1, registrationNumber: '001', firstName: 'Ali' }));
+    expect(auth.redirectAfterLogin).not.toHaveBeenCalled();
+    expect(page.successMessage()).toContain('vérifiera');
+  });
+
+  it('requires matching passwords before consuming a recovery link', () => {
+    const { fixture, auth } = setup({ recover: 'temporary-proof' }); const page = fixture.componentInstance;
+    expect(page.mode()).toBe('recover-complete');
+    page.resetForm.setValue({ password: 'new-password', confirmPassword: 'different-password' });
+    page.submitPasswordReset(); expect(auth.completeAccountRecovery).not.toHaveBeenCalled();
+    page.resetForm.setValue({ password: 'new-password', confirmPassword: 'new-password' });
+    page.submitPasswordReset();
+    expect(auth.completeAccountRecovery).toHaveBeenCalledWith('temporary-proof', 'new-password');
+    expect(page.mode()).toBe('login'); expect(page.successMessage()).toContain('nouvelle adresse');
+    expect(auth.redirectAfterLogin).not.toHaveBeenCalled();
+  });
 
   it('does not open a session when the email belongs to a school-created account', () => {
     const { fixture, auth } = setup();

@@ -1,16 +1,58 @@
-<div class="dashboard-home">
-  <h1>Bienvenue, {{ user()?.firstName }} 👋</h1>
-  <p class="dashboard-home__subtitle">Espace Élève</p>
+<div class="dashboard-home student-home">
+ <header class="ui-page-header module-help-header"><app-module-help/><div><p class="student-home__eyebrow">Espace élève et étudiant</p><h1>Bienvenue, {{user()?.firstName}}</h1><p>Mes cours, mon travail et mes progrès, au même endroit.</p></div></header>
+ @if(profilesError()){<app-error-alert [message]="profilesError()" (dismissed)="profilesError.set(null)">{{profilesError()}}</app-error-alert><button pButton type="button" (click)="loadProfiles()">Réessayer le chargement du dossier</button>}
+ @if(loadingProfiles()){<app-loading-state message="Chargement de mon dossier…"/>}
+ @else if(!profiles().length&&!profilesError()){<section class="student-home__panel"><h2>Mon dossier n’est pas encore disponible</h2><p>Vérifiez l’établissement sélectionné ou contactez l’administration pour faire rattacher votre compte à votre dossier élève.</p><a routerLink="/profil" fragment="school-access">Consulter mes accès aux établissements</a></section>}
+ @if(profiles().length){<section class="student-home__context" aria-label="Dossier suivi"><label>Mon établissement<app-select-field [ngModel]="selectedId()" (ngModelChange)="choose(+$event)" ariaLabel="Mon dossier élève">@for(profile of profiles();track profile.studentId){<app-select-option [value]="profile.studentId" [label]="profile.schoolName+' · '+(profile.className||'Classe non renseignée')"/>}</app-select-field></label>@if(selected();as p){<div><strong>{{p.fullName}}</strong><span>{{p.className||'Classe non renseignée'}} · {{p.academicYearLabel||'Année non renseignée'}}</span></div>}<button pButton type="button" severity="secondary" variant="outlined" (click)="reload()" [disabled]="loading()">Actualiser mon suivi</button></section>}
+ @if(error()){<app-error-alert [message]="error()" (dismissed)="error.set(null)">{{error()}} @if(data()){Les dernières informations chargées restent affichées.}</app-error-alert>}
+ @if(loading()){<app-loading-state message="Chargement de mon suivi…"/>}
+ @if(data();as d){
+ <section class="student-home__metrics" aria-label="Mes points à suivre">
+  <a routerLink="/etudiant/devoirs" [queryParams]="params()"><span>Devoirs à faire</span><strong>{{d.homework.todo}}</strong><small>{{d.homework.overdue}} échéance(s) dépassée(s)</small></a>
+  <a routerLink="/etudiant/organisation" [queryParams]="params()"><span>Mes rappels personnels</span><strong>{{d.pendingTasks}}</strong><small>{{d.overdueTasks}} rappel(s) en retard</small></a>
+  <a routerLink="/etudiant/presences" [queryParams]="params()"><span>Mes retards enregistrés</span><strong>{{d.attendance.late}}</strong><small>sur l’année consultée</small></a>
+  <a routerLink="/etudiant/accompagnement" [queryParams]="params()"><span>Conseils partagés</span><strong>{{d.sharedSupport}}</strong><small>accompagnements en cours</small></a>
+ </section>
+ <section class="student-home__agenda" aria-label="Ma journée et mon travail">
+  <article class="student-home__panel"><h2>Mes cours aujourd’hui</h2><p class="student-home__muted">{{d.asOf|date:'EEEE dd MMMM yyyy'}}</p>@for(c of d.courses;track c.id){<a class="student-home__agenda-item" routerLink="/etudiant/emploi-du-temps" [queryParams]="params()"><strong>{{c.startTime.slice(0,5)}}–{{c.endTime.slice(0,5)}} · {{c.subjects||'Cours de la classe'}}</strong><span>{{c.teacherName}} · {{c.className}}</span></a>}@empty{<p class="student-home__empty">Aucun cours prévu aujourd’hui dans mon planning.</p>}<a routerLink="/etudiant/emploi-du-temps" [queryParams]="params()">Consulter toute la semaine</a></article>
+  <article class="student-home__panel"><h2>Mes devoirs à préparer</h2>@for(w of d.dueHomework;track w.id){<a class="student-home__agenda-item" routerLink="/etudiant/devoirs" [queryParams]="params()"><strong>{{w.title}}</strong><span [class.student-home__overdue]="w.overdue">{{w.overdue?'Échéance dépassée · ':''}}{{w.dueOn|date:'dd/MM/yyyy'}}</span></a>}@empty{<p class="student-home__empty">Aucun devoir à faire signalé.</p>}</article>
+ </section>
+ }
+ <section aria-labelledby="study-title"><h2 id="study-title" class="student-home__section-title">Mes études au quotidien</h2><div class="student-home__shortcuts">@for(item of education;track item.route){<a class="student-home__shortcut" [routerLink]="link(item)" [queryParams]="params()"><ng-container [ngTemplateOutlet]="shortcutIcon" [ngTemplateOutletContext]="{icon:item.icon}"/><div><h3>{{item.title}}</h3><p>{{item.description}}</p></div></a>}</div></section>
+ @if(data();as d){
+ <section class="student-home__charts" aria-label="Graphiques du suivi scolaire">
+  <article class="student-home__panel"><h2>Résultats par période</h2><p class="student-home__muted">Moyennes officielles des bulletins publiés, sur 20.</p>
+   @if(d.periods.length){<div class="student-home__periods">@for(period of d.periods;track period.id){<div class="student-home__period"><strong>{{period.average===null?'—':(period.average|number:'1.0-2')}}</strong><div class="student-home__period-track" aria-hidden="true">@if(period.average!==null){<span [style.height.%]="percent(period.average)" [class.student-home__below]="period.average<10"></span>}</div><span>{{period.name}}</span>@if(period.average===null){<small>{{period.published?'Résultat indisponible':'Non publié'}}</small>}</div>}</div>}@else{<p class="student-home__empty">Aucune période disponible.</p>}
+   <a routerLink="/etudiant/notes" [queryParams]="params()">Voir les bulletins et appréciations</a>
+  </article>
+  <article class="student-home__panel" aria-labelledby="subject-success-title"><h2 id="subject-success-title">Réussite par matière</h2><p class="student-home__muted">Moyenne de toutes mes notes de l’année consultée, ramenées sur 100. Chaque note compte à parts égales ; sans note : 0 %.</p>
+   <div class="student-home__subject-scale" aria-hidden="true"><span>0 %</span><span>50 %</span><span>100 %</span></div>
+   <div class="student-home__subjects">@for(subject of d.subjectSuccess;track subject.subjectId){<div><div class="student-home__bar-label"><span>{{subject.name}}</span><strong>{{subject.percentage|number:'1.0-2'}} %</strong></div><div class="student-home__subject-track" role="meter" [attr.aria-label]="subject.name" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="subject.percentage" [attr.aria-valuetext]="subject.percentage+' % — '+(subject.gradeCount?subject.gradeCount+' note(s)':'Aucune note')"><span [style.width.%]="percent(subject.percentage,100)" [class.student-home__below]="subject.percentage<50"></span></div><small class="student-home__muted">{{subject.gradeCount?subject.gradeCount+' note(s)':'Aucune note'}}</small></div>}@empty{<p class="student-home__empty">Aucune matière associée à ma classe pour le moment.</p>}</div>
+  </article>
+  <article class="student-home__panel"><h2>Présences des dernières semaines</h2><p class="student-home__muted">Uniquement les appels enregistrés. Une absence de saisie ne signifie pas que vous était absent.</p>
+   <div class="student-home__legend"><span class="student-home__present">Présent</span><span class="student-home__absent">Absent</span><span class="student-home__late">Retard</span><span class="student-home__excused">Excusé</span></div>
+   @for(week of d.weeks;track week.start){<div class="student-home__week"><span>{{week.start|date:'dd/MM'}}</span><div class="student-home__week-track" aria-hidden="true"><span class="student-home__present" [style.width.%]="percent(week.attendance.present,maxWeek())"></span><span class="student-home__absent" [style.width.%]="percent(week.attendance.absent,maxWeek())"></span><span class="student-home__late" [style.width.%]="percent(week.attendance.late,maxWeek())"></span><span class="student-home__excused" [style.width.%]="percent(week.attendance.excused,maxWeek())"></span></div><small>{{total(week.attendance)||'Sans saisie'}}</small></div>}@empty{<p class="student-home__empty">Aucun appel disponible dans cette période.</p>}
+   <details class="student-home__details"><summary>Détail accessible des présences</summary><div class="student-home__table"><table><thead><tr><th>Semaine</th><th>Présent</th><th>Absent</th><th>Retard</th><th>Excusé</th></tr></thead><tbody>@for(w of d.weeks;track w.start){<tr><td>{{w.start|date:'dd/MM'}}–{{w.end|date:'dd/MM'}}</td><td>{{w.attendance.present}}</td><td>{{w.attendance.absent}}</td><td>{{w.attendance.late}}</td><td>{{w.attendance.excused}}</td></tr>}</tbody></table></div></details>
+   <p class="student-home__muted">{{recorded()}} appel(s) renseigné(s) sur l’année consultée.</p>
+  </article>
+  <article class="student-home__panel"><h2>Suivi des devoirs de maison</h2><p class="student-home__muted">Le statut est renseigné par le professeur lors de la remise et de la correction.</p>
+   @if(homeworkTotal()){<div class="student-home__homework"><div class="student-home__donut" [style.background]="donut()" aria-hidden="true"><div><strong>{{homeworkTotal()}}</strong><span>devoirs</span></div></div><dl><div><dt>À faire</dt><dd>{{d.homework.todo}}</dd></div><div><dt>Remis</dt><dd>{{d.homework.submitted}}</dd></div><div><dt>Corrigés</dt><dd>{{d.homework.corrected}}</dd></div></dl></div>}@else{<p class="student-home__empty">Aucun devoir publié pour cette classe.</p>}
+   <a routerLink="/etudiant/devoirs" [queryParams]="params()">Consulter les consignes et retours</a>
+  </article>
+ </section>
 
-  <div class="dashboard-home__grid">
-    <app-appointment-counter profile="personal" pageLink="/etudiant/rendez-vous" />
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/etudiant/notes">
-      <h2>Mes notes</h2>
-      <p>Consultez vos résultats et bulletins.</p>
-    </a>
-    <a class="dashboard-home__card dashboard-home__card--link" routerLink="/etudiant/emploi-du-temps">
-      <h2>Emploi du temps</h2>
-      <p>Votre planning de cours.</p>
-    </a>
-  </div>
+ <section class="student-home__agenda" aria-label="Mes prochaines échéances">
+  <article class="student-home__panel"><h2>Mes révisions et rappels</h2><p class="student-home__muted">Mes tâches personnelles, visibles uniquement par moi.</p>@for(t of d.tasks;track t.id){<a class="student-home__agenda-item" routerLink="/etudiant/organisation" [queryParams]="params()"><strong>{{t.title}}</strong><span>{{t.dueOn?(t.dueOn|date:'dd/MM/yyyy'):'Sans date limite'}}</span></a>}@empty{<p class="student-home__empty">Je peux préparer mon travail dans Mon organisation.</p>}</article>
+  <article class="student-home__panel"><h2>Mes évaluations à venir</h2><p class="student-home__muted">Les 14 prochains jours.</p>@for(e of d.evaluations;track $index){<p class="student-home__agenda-item"><strong>{{e.title}}</strong><span>{{e.subject}} · {{e.date|date:'dd/MM/yyyy'}}</span></p>}@empty{<p class="student-home__empty">Aucune évaluation annoncée sur cette période.</p>}</article>
+  <article class="student-home__panel"><h2>Les dernières annonces</h2>@for(a of d.announcements;track a.id){<a class="student-home__agenda-item" routerLink="/etudiant/annonces" [queryParams]="params()"><strong>{{a.title}}</strong><span>{{a.createdAt|date:'dd/MM/yyyy'}}</span></a>}@empty{<p class="student-home__empty">Aucune annonce dans l’année consultée.</p>}</article>
+  <article class="student-home__panel"><h2>Les dates importantes</h2>@for(e of d.events;track $index){<a class="student-home__agenda-item" routerLink="/etudiant/calendrier" [queryParams]="params()"><strong>{{e.title}}</strong><span>{{e.startsOn|date:'dd/MM/yyyy'}}–{{e.endsOn|date:'dd/MM/yyyy'}}</span></a>}@empty{<p class="student-home__empty">Aucun événement à venir.</p>}</article>
+ </section>
+ }
+ <section aria-labelledby="exchange-title"><h2 id="exchange-title" class="student-home__section-title">Échanger et demander de l’aide</h2><div class="student-home__shortcuts">
+  <a class="student-home__shortcut" routerLink="/etudiant/messages"><svg lucideMessageCircle [size]="24" aria-hidden="true"/><div><h3>Mes messages</h3><p>{{unread()===null?'Compteur indisponible':unread()+' message(s) non lu(s)'}}. Échanger avec mes interlocuteurs autorisés.</p></div></a>
+  <app-appointment-counter profile="personal" pageLink="/etudiant/rendez-vous"/>
+ </div></section>
+ <section aria-labelledby="life-title"><h2 id="life-title" class="student-home__section-title">Ma vie dans l’établissement</h2><div class="student-home__shortcuts">@for(item of schoolLife;track item.route){<a class="student-home__shortcut" [routerLink]="link(item)" [queryParams]="params()"><ng-container [ngTemplateOutlet]="shortcutIcon" [ngTemplateOutletContext]="{icon:item.icon}"/><div><h3>{{item.title}}</h3><p>{{item.description}}</p></div></a>}</div></section>
+ <footer class="student-home__footer"><a routerLink="/profil">Gérer mon compte</a>@if(data();as d){<span>Situation au {{d.asOf|date:'dd/MM/yyyy'}} · Actualisation automatique</span>}</footer>
 </div>
+<ng-template #shortcutIcon let-icon="icon">@switch(icon){@case('users'){<svg lucideUsers [size]="24" aria-hidden="true"/>}@case('notes'){<svg lucideNotebookPen [size]="24" aria-hidden="true"/>}@case('book'){<svg lucideBookOpen [size]="24" aria-hidden="true"/>}@case('calendar'){<svg lucideCalendarDays [size]="24" aria-hidden="true"/>}@case('shield'){<svg lucideShieldCheck [size]="24" aria-hidden="true"/>}}</ng-template>

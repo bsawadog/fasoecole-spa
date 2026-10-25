@@ -1,21 +1,16 @@
 <section class="dep">
-  <header class="dep__header"><div><h1>États financiers</h1><p>Encaissements, décaissements et suivi financier de l’établissement.</p></div></header>
+  <header class="module-help-header dep__header">
+    <app-module-help /><div><h1>États financiers</h1><p>Encaissements, décaissements et suivi financier de l’établissement.</p></div></header>
   <div class="dep__toolbar report-controls">
-    <label>Établissement<select [ngModel]="schoolId()" (ngModelChange)="selectSchool($event)">
-      @for (school of schools(); track school.id) { <option [ngValue]="school.id">{{ school.name }}</option> }
-    </select></label>
+
     @if (summary(); as s) {
-      @if (s.years.length) {
-        <label>Année scolaire<select [(ngModel)]="yearId" (ngModelChange)="load()" [disabled]="loading()">
-          @for (year of s.years; track year.id) { <option [ngValue]="year.id">{{ year.label }}</option> }
-        </select></label>
-      }
-      <button type="button" class="dep__btn" (click)="exportCsv()" [disabled]="loading()">Exporter CSV</button>
-      <button type="button" class="dep__btn" (click)="print()" [disabled]="loading()">Imprimer / PDF</button>
+
+      <button pButton type="button" class="dep__btn" (click)="exportCsv()" [disabled]="loading()">Exporter CSV</button>
+      <button pButton type="button" class="dep__btn" (click)="print()" [disabled]="loading()">Imprimer / PDF</button>
     }
   </div>
-  @if (error()) { <p class="dep__alert dep__alert--error" role="alert">{{ error() }} <button type="button" (click)="load()">Réessayer</button></p> }
-  @if (loading()) { <p role="status">Chargement des états…</p> }
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }} <button pButton type="button" (click)="load()">Réessayer</button></app-error-alert> }
+  @if (loading()) { <app-loading-state message="Chargement des états…" /> }
   @else if (!schools().length) { <p>Aucun établissement accessible.</p> }
   @else if (summary(); as s) {
     <h2>{{ s.schoolName }}</h2><p>Du {{ s.from | date:'dd/MM/yyyy' }} au {{ s.to | date:'dd/MM/yyyy' }} · {{ s.year?.label ?? 'Année civile' }} · FCFA</p>

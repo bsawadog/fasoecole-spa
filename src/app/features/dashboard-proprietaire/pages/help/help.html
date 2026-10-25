@@ -1,19 +1,29 @@
 <main class="help">
-  <header><span class="help__eyebrow">GUIDE DU PROPRIÉTAIRE</span><h1>Aide</h1>
-    <p>Sélectionnez une question pour afficher les étapes à suivre.</p></header>
+  <header><span class="help__eyebrow">{{ guideTitle() }}</span><h1>Aide</h1>
+    <p>Retrouvez le fonctionnement des modules et les étapes à suivre. L’icône Aide de l’en-tête ouvre les explications du module affiché.</p>
+    <button pButton type="button" class="help__print" (click)="print()" [disabled]="questions().length === 0">Imprimer l’aide</button>
+    <p class="help__print-hint">L’impression inclut toutes les réponses correspondant aux filtres. Effacez les filtres pour imprimer le guide complet.</p>
+  </header>
+  @if(context();as module){
+    <section class="help__context" aria-label="Aide du module">
+      <div><strong>{{ module.title }}</strong><p>Les questions ci-dessous concernent ce module. L’explication principale est ouverte automatiquement.</p></div>
+      <a [routerLink]="module.route">Revenir au module</a>
+      <button pButton severity="secondary" variant="outlined" type="button" (click)="showAll()">Consulter toute l’aide</button>
+    </section>
+  }
   @if (waitingApproval()) {
-    <p class="help__notice" role="status">Vous pouvez consulter cette aide pendant l’attente d’approbation. La saisie des informations de l’établissement commencera après activation par le SUPER_ADMIN.</p>
+    <p-message severity="info" class="help__notice" role="status">Vous pouvez consulter cette aide pendant l’attente d’approbation. La saisie des informations de l’établissement commencera après activation par le SUPER_ADMIN.</p-message>
   }
   <section class="help__filters" aria-label="Rechercher dans l’aide">
     <label for="help-search">Votre objectif
-      <input id="help-search" type="search" placeholder="Ex. ajouter un parent, importer, paiement…" [value]="search()" (input)="search.set($any($event.target).value)" />
+      <input pInputText id="help-search" type="search" placeholder="Ex. ajouter un parent, importer, paiement…" [value]="search()" (input)="search.set($any($event.target).value)" />
     </label>
     <label for="help-category">Rubrique
-      <select id="help-category" [value]="category()" (change)="category.set($any($event.target).value)">
-        @for (item of categories; track item) { <option [value]="item">{{ item }}</option> }
-      </select>
+      <app-select-field inputId="help-category" [value]="category()" (change)="category.set($any($event.target).value)" [ariaLabel]="(&quot;Rubrique &quot;).trim()">
+        @for (item of categories(); track item) { <app-select-option [value]="item" [label]="item" /> }
+      </app-select-field>
     </label>
-    @if (search() || category() !== 'Toutes') { <button type="button" class="help__reset" (click)="reset()">Effacer les filtres</button> }
+    @if (search() || category() !== 'Toutes') { <button pButton type="button" class="help__reset" (click)="reset()">Effacer les filtres</button> }
   </section>
   <p class="help__count" role="status">{{ questions().length }} question{{ questions().length > 1 ? 's' : '' }}</p>
   <section aria-label="Questions et réponses">

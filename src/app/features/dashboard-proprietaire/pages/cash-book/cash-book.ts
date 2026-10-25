@@ -1,3 +1,15 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { TooltipModule } from 'primeng/tooltip';
+import { DateField } from '../../../../shared/ui/date-field';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectorRef, Component, computed, HostListener, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -13,7 +25,7 @@ const today = () => {
 };
 @Component({
   selector: 'app-cash-book', standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, FormValidationDirective],
+  imports: [ErrorAlert, ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormsModule, DatePipe, DecimalPipe, FormValidationDirective],
   templateUrl: './cash-book.html', styleUrls: ['../expenses/expenses.scss', './cash-book.scss'],
 })
 export class CashBookPage implements OnInit, OnDestroy {
@@ -57,7 +69,7 @@ export class CashBookPage implements OnInit, OnDestroy {
   ngOnInit(): void {
     const id = this.auth.user()?.id;
     if (!id) { this.loading.set(false); return; }
-    this.requests.add(this.auth.getOwnedSchools(id,'EXPENSES').subscribe({
+    this.requests.add(this.auth.getOwnedSchools(id,'CASH_BOOK').subscribe({
       next: schools => {
         this.schools.set(schools);
         const stored=Number(localStorage.getItem('fasoecole_owner_school'));
@@ -69,7 +81,7 @@ export class CashBookPage implements OnInit, OnDestroy {
   }
   selectSchool(id: number): void {
     if(this.busy() || !this.schools().some(s=>s.id===id)) return;
-    this.schoolId.set(id); this.auth.selectSchoolContext(id); this.data.set(null); this.month=this.currentMonth;
+    this.schoolId.set(id); this.data.set(null); this.month=this.currentMonth;
     this.success.set(''); this.resetEntry(); this.load();
   }
   load(): void {

@@ -45,6 +45,21 @@ import {
 export class Home {
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
 
+  protected openOnHover(event: PointerEvent): void {
+    if (event.pointerType !== 'mouse') return;
+    const target = event.currentTarget as HTMLDetailsElement;
+    for (const dropdown of this.openDropdowns()) {
+      if (dropdown !== target) dropdown.open = false;
+    }
+    target.open = true;
+  }
+
+  protected closeOnLeave(event: PointerEvent): void {
+    if (event.pointerType !== 'mouse') return;
+    const dropdown = event.currentTarget as HTMLDetailsElement;
+    if (!dropdown.contains(dropdown.ownerDocument.activeElement)) dropdown.open = false;
+  }
+
   protected onDocumentClick(event: MouseEvent): void {
     const target = event.target;
     if (!(target instanceof Node)) return;

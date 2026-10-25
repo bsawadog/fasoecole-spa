@@ -1,0 +1,38 @@
+<main class="contact">
+  <header class="contact__header">
+    <a routerLink="/" aria-label="FasoEcole, accueil"><img src="assets/images/logofe.png" alt="FasoEcole" /></a>
+    <a class="contact__back" routerLink="/"><svg lucideArrowLeft [size]="17" aria-hidden="true"></svg> Retour à l’accueil</a>
+  </header>
+
+  <section class="contact__content" aria-labelledby="contact-title">
+    <p class="contact__eyebrow">Contact</p>
+    <h1 id="contact-title">Une équipe à votre écoute.</h1>
+    <p class="contact__intro">Pour découvrir FasoEcole, installer la solution ou obtenir du soutien, retrouvez vos interlocuteurs.</p>
+
+    <div class="contact__cards">
+      <article class="contact__card" aria-labelledby="commercial-name">
+        <p class="contact__service">Service commercial</p>
+        <img class="contact__portrait" src="assets/images/balamoussa.jpeg" alt="Balamoussa Traoré" width="112" height="112" />
+        <h2 id="commercial-name">Balamoussa Traoré</h2>
+        <p class="contact__role">Directeur de vente, accompagnement et installation</p>
+        <p class="contact__description">Votre interlocuteur pour choisir FasoEcole et vous accompagner dans sa mise en place.</p>
+        <a class="contact__whatsapp" href="https://wa.me/22666739524" target="_blank" rel="noopener noreferrer" aria-label="Contacter Balamoussa Traoré sur WhatsApp (nouvel onglet)">
+          <svg lucideMessageCircle [size]="20" aria-hidden="true"></svg>
+          <span>Écrire sur WhatsApp <small>+226 66 73 95 24</small></span>
+        </a>
+      </article>
+
+      <article class="contact__card" aria-labelledby="technical-name">
+        <p class="contact__service">Service de soutien technique</p>
+        <img class="contact__portrait" src="assets/images/boubacar.jpeg" alt="Boubacar Sawadogo" width="112" height="112" />
+        <h2 id="technical-name">Boubacar Sawadogo</h2>
+        <p class="contact__role">Développeur</p>
+        <p class="contact__description">Votre interlocuteur pour les questions techniques et le fonctionnement de FasoEcole.</p>
+        <a class="contact__whatsapp" href="https://wa.me/14389217823" target="_blank" rel="noopener noreferrer" aria-label="Contacter Boubacar Sawadogo sur WhatsApp (nouvel onglet)">
+          <svg lucideMessageCircle [size]="20" aria-hidden="true"></svg>
+          <span>Écrire sur WhatsApp <small>+1 438 921 7823</small></span>
+        </a>
+      </article>
+    </div>
+  </section>
+</main>

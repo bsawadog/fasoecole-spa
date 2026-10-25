@@ -1,3 +1,5 @@
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { LoadingState } from '../../../../shared/ui/loading-state';
 import { DecimalPipe } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -6,18 +8,19 @@ import { MyStudentsState } from '../../../../shared/self-space/my-students.state
 @Component({
   selector: 'app-parent-children',
   standalone: true,
-  imports: [DecimalPipe, RouterLink],
+  imports: [ModuleHelpButton, LoadingState, DecimalPipe, RouterLink],
   providers: [MyStudentsState],
   template: `
     <div class="ss">
-      <header class="ss__header">
+      <header class="module-help-header ss__header">
+    <app-module-help />
         <div>
           <h1>Mes enfants</h1>
           <p>Suivez la scolarité, les notes, les absences et les frais de vos enfants.</p>
         </div>
       </header>
       @if (state.loading()) {
-        <p class="ss__state">Chargement…</p>
+        <app-loading-state message="Chargement…" />
       } @else if (state.error()) {
         <p class="ss__alert ss__alert--error" role="alert">{{ state.error() }}</p>
       } @else if (!state.students().length) {

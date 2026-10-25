@@ -1,5 +1,6 @@
 <div class="ss">
-  <header class="ss__header">
+  <header class="module-help-header ss__header">
+    <app-module-help />
     <div>
       <h1>Mes classes</h1>
       <p>Les classes et matières qui vous sont confiées, vos élèves et votre emploi du temps.</p>
@@ -7,9 +8,9 @@
   </header>
 
   @if (loading()) {
-    <p class="ss__state">Chargement…</p>
+    <app-loading-state message="Chargement…" />
   } @else if (error()) {
-    <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p>
+    <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert>
   } @else if (!classes().length) {
     <p class="ss__state">Aucune classe ne vous est encore affectée. L’établissement doit vous attribuer une matière dans une classe.</p>
   } @else {
@@ -28,20 +29,21 @@
     </div>
 
     @if (selected(); as c) {
+      <details (toggle)="supportOpen.set($any($event.target).open)"><summary>Élèves à accompagner</summary>@if(supportOpen()){<app-teacher-daily-tools mode="support" [classId]="c.classId"/>}</details>
       <section class="ss__card" aria-labelledby="roster-title">
         <header class="ss__card-head">
           <h2 id="roster-title">Élèves de {{ c.className }}</h2>
           <div class="ss__actions">
-            <input type="search" placeholder="Rechercher un élève" aria-label="Rechercher un élève"
+            <input pInputText type="search" placeholder="Rechercher un élève" aria-label="Rechercher un élève"
                    [value]="filter()" (input)="filter.set($any($event.target).value)" />
             <a class="ss__mini" routerLink="/enseignant/notes" [queryParams]="{ classe: c.classId }">Saisir des notes</a>
           </div>
         </header>
         <div class="ss__body">
           @if (studentsLoading()) {
-            <p class="ss__state">Chargement des élèves…</p>
+            <app-loading-state message="Chargement des élèves…" />
           } @else if (studentsError()) {
-            <p class="ss__alert ss__alert--error" role="alert">{{ studentsError() }}</p>
+            <app-error-alert [message]="studentsError()" (dismissed)="studentsError.set(null)">{{ studentsError() }}</app-error-alert>
           } @else if (!filteredStudents().length) {
             <p class="ss__state">Aucun élève.</p>
           } @else {
@@ -70,16 +72,16 @@
           <h2 id="family-reports-title">Signalements des parents · {{ c.className }}</h2>
           <div class="ss__actions">
             <label class="ss__field">Date
-              <input type="date" [value]="reportDate()" (change)="changeReportDate($any($event.target).value)" />
+              <app-date-field mode="date" [value]="reportDate()" (change)="changeReportDate($any($event.target).value)" [ariaLabel]="(&quot;Date &quot;).trim()" />
             </label>
-            <button class="ss__mini" type="button" (click)="refreshFamilyReports()">Actualiser</button>
+            <button pButton severity="secondary" variant="outlined" class="ss__mini" type="button" (click)="refreshFamilyReports()">Actualiser</button>
           </div>
         </header>
         <div class="ss__body">
-          @if (reportError()) { <p class="ss__alert ss__alert--error" role="alert">{{ reportError() }}</p> }
-          @if (reportSuccess()) { <p class="ss__alert ss__alert--success" role="status">{{ reportSuccess() }}</p> }
+          @if (reportError()) { <app-error-alert [message]="reportError()" (dismissed)="reportError.set(null)">{{ reportError() }}</app-error-alert> }
+          @if (reportSuccess()) { <p-message severity="success" class="ss__alert ss__alert--success" role="status">{{ reportSuccess() }}</p-message> }
           @if (reportsLoading()) {
-            <p class="ss__state">Chargement des signalements…</p>
+            <app-loading-state message="Chargement des signalements…" />
           } @else if (!familyReports().length) {
             <p class="ss__state">Aucun signalement en attente pour cette date.</p>
           } @else {
@@ -92,7 +94,7 @@
                       <td>{{ report.studentName }} <small>· {{ report.registrationNumber }}</small></td>
                       <td>{{ familyAttendanceLabels[report.attendanceType] }}</td>
                       <td>{{ report.reason }}</td>
-                      <td><button class="ss__mini" type="button" [disabled]="reportBusyId() === report.id"
+                      <td><button pButton severity="secondary" variant="outlined" class="ss__mini" type="button" [disabled]="reportBusyId() === report.id"
                                   (click)="recordFamilyReport(report)">
                         {{ reportBusyId() === report.id ? 'Enregistrement…' : 'Enregistrer ' + familyAttendanceLabels[report.attendanceType].toLowerCase() }}
                       </button></td>
@@ -123,7 +125,7 @@
             }
           </div>
           <div class="ss__body">
-            @if (conversationError()) { <p class="ss__alert ss__alert--error" role="alert">{{ conversationError() }}</p> }
+            @if (conversationError()) { <app-error-alert [message]="conversationError()" (dismissed)="conversationError.set(null)">{{ conversationError() }}</app-error-alert> }
             @if (conversation(); as thread) {
               <h3>{{ thread.conversation.subject }} · {{ thread.conversation.parentName }}</h3>
               <div class="ss__thread" aria-live="polite">
@@ -137,9 +139,9 @@
               </div>
               <form class="ss__body" (ngSubmit)="sendReply()">
                 <label class="ss__field">Répondre au parent
-                  <textarea name="replyText" [ngModel]="replyText()" (ngModelChange)="replyText.set($event)" rows="3" maxlength="4000" required></textarea>
+                  <textarea pTextarea name="replyText" [ngModel]="replyText()" (ngModelChange)="replyText.set($event)" rows="3" maxlength="4000" required></textarea>
                 </label>
-                <button class="ss__btn" type="submit" [disabled]="replyBusy() || !replyText().trim()">
+                <button pButton class="ss__btn" type="submit" [disabled]="replyBusy() || !replyText().trim()">
                   {{ replyBusy() ? 'Envoi…' : 'Envoyer la réponse' }}
                 </button>
               </form>

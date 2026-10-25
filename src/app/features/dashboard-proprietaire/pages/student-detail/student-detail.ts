@@ -1,3 +1,16 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { apiError } from '../../../../shared/api-error';
+import { RowActions } from '../../../../shared/ui/row-actions';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { TooltipModule } from 'primeng/tooltip';
+import { DateField } from '../../../../shared/ui/date-field';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { TagModule } from 'primeng/tag';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -39,7 +52,7 @@ interface PaymentForm {
 @Component({
   selector: 'app-student-detail',
   standalone: true,
-  imports: [FormValidationDirective, DecimalPipe, FormsModule, NgClass],
+  imports: [ErrorAlert, RowActions, ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, TagModule, LoadingState, InputTextModule, ButtonModule, FormValidationDirective, DecimalPipe, FormsModule, NgClass],
   templateUrl: './student-detail.html',
   styleUrl: './student-detail.scss',
 })
@@ -88,6 +101,13 @@ export class StudentDetailPage implements OnInit {
     this.api.getStudentDetail(this.studentId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (detail) => {
         if (version !== this.detailVersion) return;
+        const schoolId = Number(localStorage.getItem('fasoecole_owner_school'));
+        if (schoolId && detail.schoolId !== schoolId) {
+          this.detail.set(null);
+          this.loading.set(false);
+          this.errorMessage.set('Cet élève appartient à un autre établissement. Ouvrez sa fiche depuis la liste de l’établissement sélectionné.');
+          return;
+        }
         this.detail.set(detail);
         this.errorMessage.set(null);
         this.loading.set(false);
@@ -102,9 +122,9 @@ export class StudentDetailPage implements OnInit {
           error: () => undefined,
         });
       },
-      error: () => {
+      error: (err) => {
         if (version !== this.detailVersion) return;
-        this.errorMessage.set('Impossible de charger la fiche de l’élève.');
+        this.errorMessage.set(apiError(err, 'Impossible de charger la fiche de l’élève.'));
         this.loading.set(false);
       },
     });
@@ -251,7 +271,7 @@ export class StudentDetailPage implements OnInit {
         this.successMessage.set(editingId ? 'La présence a été mise à jour.' : 'La présence a été ajoutée.');
         this.loadDetail();
       },
-      error: () => this.fail('L’enregistrement de la présence a échoué.'),
+      error: (err) => this.fail(apiError(err, 'L’enregistrement de la présence a échoué.')),
     });
   }
 
@@ -269,7 +289,7 @@ export class StudentDetailPage implements OnInit {
         this.successMessage.set('L’enregistrement a été supprimé.');
         this.loadDetail();
       },
-      error: () => this.fail('La suppression a échoué.'),
+      error: (err) => this.fail(apiError(err, 'La suppression a échoué.')),
     });
   }
 
@@ -329,7 +349,7 @@ export class StudentDetailPage implements OnInit {
         this.successMessage.set('Le frais a été annulé.');
         this.loadDetail();
       },
-      error: () => this.fail('L’annulation a échoué.'),
+      error: (err) => this.fail(apiError(err, 'L’annulation a échoué.')),
     });
   }
 

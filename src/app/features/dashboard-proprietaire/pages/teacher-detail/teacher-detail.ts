@@ -1,6 +1,18 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { RowActions } from '../../../../shared/ui/row-actions';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { TooltipModule } from 'primeng/tooltip';
+import { DateField } from '../../../../shared/ui/date-field';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { DecimalPipe } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
@@ -11,7 +23,7 @@ import { TeacherDetail, TeacherSession, TeacherWorkService } from '../../teacher
 @Component({
   selector: 'app-teacher-detail',
   standalone: true,
-  imports: [FormValidationDirective, FormsModule, DecimalPipe, RouterLink],
+  imports: [ErrorAlert, RowActions, ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DecimalPipe, RouterLink],
   templateUrl: './teacher-detail.html',
   styleUrl: './teacher-detail.scss',
 })
@@ -33,6 +45,8 @@ export class TeacherDetailPage implements OnInit, OnDestroy {
   readonly saving = signal(false);
   readonly sending = signal(false);
   readonly error = signal<string | null>(null);
+  readonly errorDialogMessage = signal<string | null>(null);
+  private readonly errorDialog = viewChild.required<ElementRef<HTMLDialogElement>>('errorDialog');
   readonly success = signal<string | null>(null);
   readonly weekdays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
@@ -41,9 +55,30 @@ export class TeacherDetailPage implements OnInit, OnDestroy {
   extraForm = { classId: 0, date: this.localDate(), hours: 1, description: '' };
   paymentForm = { date: this.localDate(), amount: 0, reference: '' };
 
+  constructor() {
+    effect(() => {
+      const message = this.errorDialogMessage(), dialog = this.errorDialog().nativeElement;
+      if (message && !dialog.open) dialog.showModal();
+      if (!message && dialog.open) dialog.close();
+    });
+  }
+
+  private reportError(message: string): void {
+    this.error.set(message);
+    this.success.set(null);
+    this.errorDialogMessage.set(message);
+  }
+
+  dismissError(): void {
+    this.errorDialogMessage.set(null);
+    if (this.errorDialog().nativeElement.open) this.errorDialog().nativeElement.close();
+  }
+
+  onErrorCancel(event: Event): void { event.preventDefault(); this.dismissError(); }
+
   ngOnInit(): void {
     if (!Number.isInteger(this.teacherId) || this.teacherId <= 0) {
-      this.error.set('Enseignant introuvable.');
+      this.reportError('Enseignant introuvable.');
       this.loading.set(false);
       return;
     }
@@ -59,7 +94,7 @@ export class TeacherDetailPage implements OnInit, OnDestroy {
   changeMonth(event: Event): void {
     const month = (event.target as HTMLInputElement).value;
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
-      this.error.set('Sélectionnez un mois valide.');
+      this.reportError('Sélectionnez un mois valide.');
       return;
     }
     this.month.set(month);
@@ -71,7 +106,7 @@ export class TeacherDetailPage implements OnInit, OnDestroy {
 
   setRate(): void {
     if (!Number.isFinite(this.rateForm.amount) || this.rateForm.amount <= 0 || !this.rateForm.effectiveFrom) {
-      this.error.set('Indiquez un taux positif et une date d’effet.');
+      this.reportError('Indiquez un taux positif et une date d’effet.');
       return;
     }
     this.mutate(this.api.setRate(this.teacherId, this.rateForm), 'Rémunération enregistrée.');
@@ -81,7 +116,7 @@ export class TeacherDetailPage implements OnInit, OnDestroy {
     if (!this.classes().some(item => item.id === this.slotForm.classId) ||
         !this.slotForm.effectiveFrom || !this.slotForm.startTime || !this.slotForm.endTime ||
         this.slotForm.endTime <= this.slotForm.startTime) {
-      this.error.set('Sélectionnez une classe, une date et un horaire de fin après le début.');
+      this.reportError('Sélectionnez une classe, une date et un horaire de fin après le début.');
       return;
     }
     this.mutate(this.api.addSlot(this.teacherId, this.slotForm), 'Créneau ajouté au planning.');
@@ -107,7 +142,7 @@ export class TeacherDetailPage implements OnInit, OnDestroy {
         !this.extraForm.date.startsWith(this.month()) ||
         !this.isPast(this.extraForm.date) ||
         !Number.isFinite(this.extraForm.hours) || this.extraForm.hours <= 0) {
-      this.error.set('Choisissez une classe, une date passée du mois et un nombre d’heures positif.');
+      this.reportError('Choisissez une classe, une date passée du mois et un nombre d’heures positif.');
       return;
     }
     this.mutate(this.api.addExtra(this.teacherId, this.extraForm), 'Heures supplémentaires enregistrées.');
@@ -127,7 +162,7 @@ export class TeacherDetailPage implements OnInit, OnDestroy {
     if (!this.paymentForm.date ||
         !Number.isFinite(this.paymentForm.amount) || this.paymentForm.amount <= 0 ||
         this.paymentForm.amount > remaining) {
-      this.error.set('Indiquez la date du versement et un montant positif inférieur ou égal au solde.');
+      this.reportError('Indiquez la date du versement et un montant positif inférieur ou égal au solde.');
       return;
     }
     this.mutate(this.api.addPayment(this.teacherId, { ...this.paymentForm, month: this.month() }),
@@ -150,6 +185,7 @@ export class TeacherDetailPage implements OnInit, OnDestroy {
   async sendToTeacher(): Promise<void> {
     const teacher = this.detail()?.teacher;
     if (!teacher || this.sending()) return;
+    if (!teacher.email) { this.reportError('Renseignez le courriel de l’enseignant avant d’envoyer sa fiche.'); return; }
     if (!await this.confirmation.confirm({
       title: 'Envoyer la fiche à l’enseignant ?',
       message: `Le récapitulatif du mois ${this.month()} (planning, séances, heures, montant dû et versements) sera envoyé à ${teacher.email}.`,
@@ -165,7 +201,7 @@ export class TeacherDetailPage implements OnInit, OnDestroy {
       },
       error: err => {
         this.sending.set(false);
-        this.error.set(err?.error?.message ?? 'Impossible d’envoyer la fiche par courriel.');
+        this.reportError(err?.error?.message ?? 'Impossible d’envoyer la fiche par courriel.');
       },
     });
   }
@@ -185,6 +221,13 @@ export class TeacherDetailPage implements OnInit, OnDestroy {
     this.error.set(null);
     this.request = this.api.detail(this.teacherId, this.month()).subscribe({
       next: detail => {
+        const schoolId = Number(localStorage.getItem('fasoecole_owner_school'));
+        if (schoolId && detail.teacher.schoolId !== schoolId) {
+          this.detail.set(null);
+          this.loading.set(false);
+          this.reportError('Cet enseignant appartient à un autre établissement. Ouvrez sa fiche depuis la liste de l’établissement sélectionné.');
+          return;
+        }
         this.detail.set(detail);
         this.loading.set(false);
         if (detail.rateType && detail.rate != null) {
@@ -195,7 +238,7 @@ export class TeacherDetailPage implements OnInit, OnDestroy {
       },
       error: err => {
         this.loading.set(false);
-        this.error.set(err?.error?.message ?? 'Impossible de charger la fiche de cet enseignant.');
+        this.reportError(err?.error?.message ?? 'Impossible de charger la fiche de cet enseignant.');
       },
     });
   }
@@ -208,12 +251,12 @@ export class TeacherDetailPage implements OnInit, OnDestroy {
         if (!classes.some(item => item.id === this.slotForm.classId)) this.slotForm.classId = classes[0]?.id ?? 0;
         if (!classes.some(item => item.id === this.extraForm.classId)) this.extraForm.classId = classes[0]?.id ?? 0;
       },
-      error: () => this.error.set('Impossible de charger les classes pour le planning.'),
+      error: err => this.reportError(err?.error?.message ?? 'Impossible de charger les classes pour le planning.'),
     });
     this.levelsRequest?.unsubscribe();
     this.levelsRequest = this.management.getLevels(schoolId).subscribe({
       next: levels => this.levels.set(levels),
-      error: () => this.error.set('Impossible de charger les niveaux des classes.'),
+      error: err => this.reportError(err?.error?.message ?? 'Impossible de charger les niveaux des classes.'),
     });
   }
 
@@ -230,7 +273,7 @@ export class TeacherDetailPage implements OnInit, OnDestroy {
       },
       error: err => {
         this.saving.set(false);
-        this.error.set(err?.error?.message ?? 'Opération impossible. Vérifiez les informations et réessayez.');
+        this.reportError(err?.error?.message ?? 'Opération impossible. Vérifiez les informations et réessayez.');
       },
     });
   }

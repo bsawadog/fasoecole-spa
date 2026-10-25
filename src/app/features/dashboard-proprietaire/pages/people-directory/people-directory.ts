@@ -1,4 +1,13 @@
-import { Component, DestroyRef, computed, inject, OnInit, signal } from '@angular/core';
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { TooltipModule } from 'primeng/tooltip';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
+import { Component, DestroyRef, computed, inject, OnInit, signal, viewChild } from '@angular/core';
+import { Table, TableModule } from 'primeng/table';
+import { TableRow } from '../../../../shared/ui/table-row';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -10,11 +19,16 @@ interface ParentRow extends RosterParent { children: StudentRecord[]; }
 
 @Component({
   selector: 'app-people-directory', standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [ErrorAlert, ModuleHelpButton, TooltipModule, TableModule, TableRow, LoadingState, InputTextModule, ButtonModule, MessageModule, FormsModule, RouterLink],
   templateUrl: './people-directory.html',
   styleUrl: '../class-roster/class-roster.scss',
 })
 export class PeopleDirectory implements OnInit {
+  private readonly table = viewChild(Table);
+  searchPeople(value: string): void {
+    this.search.set(value);
+    this.table()?.reset();
+  }
   private readonly auth = inject(AuthService);
   private readonly api = inject(OwnerManagementService);
   private readonly destroyRef = inject(DestroyRef);
@@ -50,7 +64,7 @@ export class PeopleDirectory implements OnInit {
   selectSchool(id: number): void {
     if (!this.schools().some(s => s.id === id)) return;
     this.request?.unsubscribe();
-    this.schoolId.set(id); this.auth.selectSchoolContext(id);
+    this.schoolId.set(id);
     this.students.set([]); this.parents.set([]); this.search.set(''); this.error.set(null); this.loading.set(true);
     this.request = forkJoin({
       students: this.api.getStudents(id),

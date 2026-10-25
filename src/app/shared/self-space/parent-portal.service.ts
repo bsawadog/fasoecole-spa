@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 
 export type PostKind = 'ANNOUNCEMENT' | 'HOMEWORK' | 'DOCUMENT';
+export interface PortalStudent { studentId: number; firstName: string; lastName: string; registrationNumber: string; }
 export interface PortalFile { id: number; filename: string; sizeBytes: number; }
 export interface PortalPost { id: number; kind: PostKind; classId: number | null; className: string | null; studentId: number | null; title: string; content: string; dueDate: string | null; createdAt: string; files: PortalFile[]; mine: boolean; }
 export interface ParentAppointment { id: number; studentId: number; studentName: string; parentName: string; teacherName: string; proposedAt: string; reason: string; status: string; response: string | null; }
@@ -35,6 +36,9 @@ export class ParentPortalService {
   request(studentId: number, payload: { teacherUserId: number | null; proposedAt: string; reason: string }) { return this.http.post<ParentAppointment>(`${this.studentUrl(studentId)}/appointments`, payload); }
   cancel(studentId: number, id: number) { return this.http.post<void>(`${this.studentUrl(studentId)}/appointments/${id}/cancel`, {}); }
   schoolPosts(schoolId: number) { return this.http.get<PortalPost[]>(`${this.schoolUrl(schoolId)}/posts`); }
+  schoolStudents(schoolId: number, classId: number) {
+    return this.http.get<PortalStudent[]>(`${this.schoolUrl(schoolId)}/students`, { params: { classId } });
+  }
   schoolAppointments(schoolId: number) { return this.http.get<ParentAppointment[]>(`${this.schoolUrl(schoolId)}/appointments`); }
   publish(schoolId: number, payload: { kind: PostKind; classId: number | null; studentId: number | null; title: string; content: string; dueDate: string | null }, files: File[]) {
     const body = new FormData();

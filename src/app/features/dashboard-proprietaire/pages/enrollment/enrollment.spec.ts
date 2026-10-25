@@ -5,6 +5,8 @@ import { AuthService } from '../../../../core/auth';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import { EnrollmentService, PromotionPlan, YearInfo } from '../../enrollment.service';
 import { EnrollmentPage } from './enrollment';
+import { By } from '@angular/platform-browser';
+import { SelectField } from '../../../../shared/ui/select-field';
 
 const years: YearInfo[] = [
   { id: 2, label: '2026-2027', startDate: '2026-10-01', endDate: '2027-07-30', current: false,
@@ -141,14 +143,17 @@ describe('EnrollmentPage', () => {
     expect(page.newStudentClasses().map((c) => c.id)).toEqual([11, 12, 21]);
     expect(page.newStudentForm.classId).toBe(12);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('(complète)');
+    const classes = fixture.debugElement.queryAll(By.directive(SelectField))
+      .map(field => field.componentInstance as SelectField).find(field => field.name === 'nsClass')!;
+    expect(classes.choices().find(option => option.value() === 11)?.label()).toContain('(complète)');
+    expect(classes.choices().find(option => option.value() === 11)?.disabled()).toBe(true);
 
     page.registerStudent();
     expect(api.registerStudent).not.toHaveBeenCalled();
-    expect(page.error()).toContain('courriel');
+    expect(page.error()).toContain('prénom');
 
     Object.assign(page.newStudentForm, {
-      firstName: ' Sali ', lastName: 'Ouédraogo', email: 'sali@ecole.bf',
+      firstName: ' Sali ', lastName: 'Ouédraogo', email: '',
     });
     page.registerStudent();
     expect(api.registerStudent).not.toHaveBeenCalled();
@@ -166,13 +171,15 @@ describe('EnrollmentPage', () => {
     expect(api.registerStudent).not.toHaveBeenCalled();
     expect(page.error()).toContain('Scolarité CP1');
 
+    expect(page.feeChoices[31].amountPaid).toBe(0);
+    page.feeChoices[31].amountPaid = 10000;
     page.feeChoices[32].amountPaid = 20000;
     expect(page.totalDue()).toBe(60000);
     expect(page.totalPaid()).toBe(30000);
     const print = vi.spyOn(page, 'printEnrollmentReceipt').mockImplementation(() => undefined);
     page.registerStudent();
     expect(api.registerStudent).toHaveBeenCalledWith(5, expect.objectContaining({
-      classId: 12, firstName: 'Sali', registrationNumber: null, phone: null,
+      classId: 12, firstName: 'Sali', registrationNumber: null, email: '', phone: null,
       fees: [{ feeTypeId: 31, amountPaid: 10000 }, { feeTypeId: 32, amountPaid: 20000 }],
       paymentMethod: 'CASH',
       guardians: [{ parentId: null, firstName: 'Issa', lastName: 'Ouédraogo', email: null, phone: '70112233', relationship: 'Père' }],

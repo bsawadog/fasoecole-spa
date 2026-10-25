@@ -1,3 +1,11 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { AccountRecoveryQueue } from '../../../../shared/account-recovery-queue';
+import { apiError } from '../../../../shared/api-error';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService, ApprovalRole, RegistrationSchool, SchoolAccessRequest, SchoolAccessService } from '../../../../core/auth';
@@ -10,6 +18,7 @@ interface ApprovalSelection {
 }
 
 @Component({
+  imports: [AccountRecoveryQueue, ErrorAlert, ModuleHelpButton, SelectField, SelectOption, ButtonModule, MessageModule],
   selector: 'app-approvals',
   standalone: true,
   templateUrl: './approvals.html',
@@ -46,14 +55,17 @@ export class Approvals implements OnInit {
         this.schools.set(schools);
         this.loadRequests(schools);
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set('Impossible de charger vos établissements.');
+        this.errorMessage.set(apiError(err, 'Impossible de charger vos établissements.'));
       },
     });
     this.schoolAccess.pending().subscribe({
-      next: (requests) => this.accessRequests.set(requests),
-      error: () => this.errorMessage.set('Impossible de charger les demandes d’accès à vos établissements.'),
+      next: (requests) => {
+        const schoolId = this.auth.schoolContextId();
+        this.accessRequests.set(requests.filter(request => schoolId === null || request.schoolId === schoolId));
+      },
+      error: (err) => this.errorMessage.set(apiError(err, 'Impossible de charger les demandes d’accès à vos établissements.')),
     });
   }
 
@@ -139,7 +151,7 @@ export class Approvals implements OnInit {
         this.successMessage.set(result.emailSent ? 'Lien envoyé au titulaire du compte.' : null);
         this.errorMessage.set(result.emailSent ? null : 'Le courriel n’a pas pu être envoyé. Réessayez ultérieurement.');
       },
-      error: () => { this.resendingId.set(null); this.errorMessage.set('Impossible de renvoyer le lien.'); },
+      error: (err) => { this.resendingId.set(null); this.errorMessage.set(apiError(err, 'Impossible de renvoyer le lien.')); },
     });
   }
 
@@ -181,6 +193,8 @@ export class Approvals implements OnInit {
   private loadRequests(schools: RegistrationSchool[]): void {
     this.auth.getPendingApprovals().subscribe({
       next: (requests) => {
+        const schoolId = this.auth.schoolContextId();
+        requests = requests.filter(request => schoolId === null || request.requestedSchoolId === schoolId);
         this.pending.set(requests);
         const defaultSchoolId = schools[0]?.id ?? 0;
         this.selections.set(
@@ -196,9 +210,9 @@ export class Approvals implements OnInit {
         );
         this.loading.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set('Impossible de charger les demandes de compte.');
+        this.errorMessage.set(apiError(err, 'Impossible de charger les demandes de compte.'));
       },
     });
   }

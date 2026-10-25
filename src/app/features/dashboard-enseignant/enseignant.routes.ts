@@ -1,7 +1,11 @@
 import { Routes } from '@angular/router';
 
 export const ENSEIGNANT_ROUTES: Routes = [
-  ...["calendrier","discipline","bibliotheque","suivi-devoirs"].map(lifeModule => ({
+  {path:'carnet',loadComponent:()=>import('../../shared/self-space/teacher-notebook-page').then(m=>m.TeacherNotebookPage)},
+  { path: 'suivi-devoirs', redirectTo: 'devoirs', pathMatch: 'full' },
+
+  {path:'ma-fiche',loadComponent:()=>import('./pages/employee-file/employee-file').then(m=>m.TeacherEmployeeFilePage)},
+  ...["calendrier","discipline","bibliotheque"].map(lifeModule => ({
     path: lifeModule, data: { lifeModule, lifeScope: 'classes' },
 
     loadComponent: () => import('../../shared/school-life/school-life').then(m => m.SchoolLifePage),

@@ -1,7 +1,7 @@
 @if (loading()) {
-  <p class="ss__state">Chargement des notes…</p>
+  <app-loading-state message="Chargement des notes…" />
 } @else if (error()) {
-  <p class="ss__alert ss__alert--error" role="alert">{{ error() }}</p>
+  <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert>
 } @else if (data(); as d) {
   @if (!d.className) {
     <p class="ss__state">Aucune inscription en cours : les notes s’afficheront dès l’inscription dans une classe.</p>
@@ -25,7 +25,7 @@
         </header>
         <div class="ss__body">
           @if (p.bulletin; as b) {
-            <button type="button" class="ss__btn ss__no-print" (click)="printBulletin()">Imprimer / enregistrer le bulletin en PDF</button>
+            <button pButton type="button" class="ss__btn ss__no-print" (click)="printBulletin()">Imprimer / enregistrer le bulletin en PDF</button>
             <p><strong>{{ d.fullName }}</strong> · {{ d.academicYearLabel }}</p>
             <div class="ss__summary">
               <div><span>Moyenne générale</span><strong>{{ b.average === null ? '—' : (b.average | number: '1.2-2') }}</strong></div>
@@ -59,7 +59,7 @@
             <p class="ss__alert ss__alert--info">Les moyennes et le bulletin seront disponibles après la publication des résultats par l’école.</p>
           }
 
-          <h3 style="margin:0;font-size:.95rem;color:#14532d">Détail des notes</h3>
+          <h3 style="margin:0;font-size:.95rem">Détail des notes</h3>
           @if (!p.grades.length) {
             <p class="ss__state">Aucune note pour cette période.</p>
           } @else {

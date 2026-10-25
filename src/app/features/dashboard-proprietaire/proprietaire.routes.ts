@@ -1,28 +1,39 @@
 import { Routes } from '@angular/router';
-import { ownerModuleGuard } from '../../core/auth';
+import { ownerModuleGuard, OWNER_LIFE_MODULES } from '../../core/auth';
 
 export const PROPRIETAIRE_ROUTES: Routes = [
-  { path: 'caisse', canActivate: [ownerModuleGuard('EXPENSES')],
+  { path: 'emplois-du-temps', canActivate: [ownerModuleGuard('CALENDAR')], loadComponent: () => import('./pages/class-timetable/class-timetable').then(m => m.ClassTimetablePage) },
+  { path: 'impots-taxes', canActivate: [ownerModuleGuard('TAXES')],
+    loadComponent: () => import('./pages/taxes/taxes').then(m => m.SchoolTaxesPage) },
+  { path: 'salaires', canActivate: [ownerModuleGuard('PAYROLL')],
+    loadComponent: () => import('./pages/payroll/payroll').then(m => m.PayrollPage) },
+  { path: 'patrimoine', data: { resourceKind: 'assets' }, canActivate: [ownerModuleGuard('ASSETS')],
+    loadComponent: () => import('./pages/resources/resources').then(m => m.SchoolResourcesPage) },
+  { path: 'stocks', data: { resourceKind: 'stock' }, canActivate: [ownerModuleGuard('INVENTORY')],
+    loadComponent: () => import('./pages/resources/resources').then(m => m.SchoolResourcesPage) },
+  { path: 'caisse', canActivate: [ownerModuleGuard('CASH_BOOK')],
     loadComponent: () => import('./pages/cash-book/cash-book').then(m => m.CashBookPage) },
-  { path: 'etats-financiers', canActivate: [ownerModuleGuard('EXPENSES')],
+  { path: 'banque', canActivate: [ownerModuleGuard('BANK_BOOK')],
+    loadComponent: () => import('./pages/bank-book/bank-book').then(m => m.BankBookPage) },
+  { path: 'etats-financiers', canActivate: [ownerModuleGuard('FINANCIAL_STATEMENTS')],
     loadComponent: () => import('./pages/financial-statements/financial-statements').then(m => m.FinancialStatements) },
   { path: 'tous-les-employes', canActivate: [ownerModuleGuard(null)],
     loadComponent: () => import('./pages/employee-directory/employee-directory').then(m => m.EmployeeDirectory) },
   {
-    path: 'rendez-vous', canActivate: [ownerModuleGuard('STUDENTS')],
+    path: 'rendez-vous', canActivate: [ownerModuleGuard('PARENT_PORTAL')],
     loadComponent: () => import('./pages/appointments/appointments').then(m => m.OwnerAppointmentsPage),
   },
   ...['eleves', 'parents'].map(path => ({
     path, canActivate: [ownerModuleGuard('STUDENTS')],
     loadComponent: () => import('./pages/people-directory/people-directory').then(m => m.PeopleDirectory),
   })),
-  ...["calendrier","discipline","demandes-administratives","bibliotheque","suivi-devoirs"].map(lifeModule => ({
+  ...Object.entries(OWNER_LIFE_MODULES).map(([lifeModule, module]) => ({
     path: lifeModule, data: { lifeModule, lifeScope: 'schools' },
-    canActivate: [ownerModuleGuard('STUDENTS')],
+    canActivate: [ownerModuleGuard(module)],
     loadComponent: () => import('../../shared/school-life/school-life').then(m => m.SchoolLifePage),
   })),
  { path: 'incidents', canActivate: [ownerModuleGuard(null)], loadComponent: () => import('../../shared/support-incidents').then(m => m.SupportIncidents) },
-  { path: 'aide', canActivate: [ownerModuleGuard(null)],
+  { path: 'aide',
     loadComponent: () => import('./pages/help/help').then(m => m.OwnerHelp) },
   { path: 'export', canActivate: [ownerModuleGuard(null)],
     loadComponent: () => import('./pages/data-export/data-export').then(m => m.SchoolDataExport) },
@@ -32,7 +43,7 @@ export const PROPRIETAIRE_ROUTES: Routes = [
     loadComponent: () => import('./pages/employees/employees').then(m => m.EmployeesPage) },
   {
     path: 'portail-parents',
-    canActivate: [ownerModuleGuard('STUDENTS')],
+    canActivate: [ownerModuleGuard('PARENT_PORTAL')],
     loadComponent: () => import('./pages/parent-portal/parent-portal').then(m => m.OwnerParentPortal),
   },
   {
@@ -47,7 +58,7 @@ export const PROPRIETAIRE_ROUTES: Routes = [
   },
   {
     path: 'messages',
-    canActivate: [ownerModuleGuard('STUDENTS')],
+    canActivate: [ownerModuleGuard('MESSAGES')],
     loadComponent: () => import('./pages/messages/messages').then((m) => m.OwnerMessages),
   },
   {

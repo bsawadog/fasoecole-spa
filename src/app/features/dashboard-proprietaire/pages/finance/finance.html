@@ -1,5 +1,6 @@
 <section class="fin" [class.fin--receipt]="receipt()">
-  <header class="fin__header">
+  <header class="module-help-header fin__header">
+    <app-module-help />
     <div class="fin__identity">
       <span class="fin__header-icon" aria-hidden="true">₣</span>
       <div>
@@ -7,18 +8,10 @@
         <p>Frais scolaires, encaissements, impayés et reçus.</p>
       </div>
     </div>
-    @if (schools().length > 1) {
-      <label class="fin__school-picker">Choisir un établissement
-        <select class="fin__select" [ngModel]="schoolId()" (change)="changeSchool($event)">
-          @for (school of schools(); track school.id) {
-            <option [value]="school.id">{{ school.name }}</option>
-          }
-        </select>
-      </label>
-    }
+
   </header>
 
-  @if (balanceError()) { <p role="alert">{{ balanceError() }}</p> }
+  @if (balanceError()) { <app-error-alert [message]="balanceError()" (dismissed)="balanceError.set('')">{{ balanceError() }}</app-error-alert> }
   @if (balances(); as b) {
     @if (b.accounts.length || b.receivables.length) {
       <section class="fin__card">
@@ -27,14 +20,14 @@
         <p>Les impayés ci-dessous restent sur leurs factures originales ; ils ne sont pas inclus dans les nouveaux frais facturés.</p>
         @for (debt of b.receivables; track debt.invoice_id) {
           <p>{{ debt.first_name }} {{ debt.last_name }} · {{ debt.registration_number }} : {{ debt.remaining | number:'1.0-2' }} FCFA restant ({{ debt.amount_at_closure | number:'1.0-2' }} reporté)</p>
-          @if (debt.remaining > 0) { <button type="button" (click)="carriedPayment.set(debt.invoice_id); carriedAmount = null">Encaisser</button> }
+          @if (debt.remaining > 0) { <button pButton type="button" (click)="carriedPayment.set(debt.invoice_id); carriedAmount = null">Encaisser</button> }
           @if (carriedPayment() === debt.invoice_id) {
             <form (ngSubmit)="settleCarried(debt.invoice_id)" #carryForm="ngForm">
-              <label>Montant<input type="number" name="carriedAmount" min="0.01" [max]="debt.remaining" step="0.01" [(ngModel)]="carriedAmount" required></label>
-              <label>Date<input type="date" name="carriedDate" [(ngModel)]="pay.paymentDate" required></label>
-              <label>Mode<select name="carriedMethod" [(ngModel)]="pay.method">@for (method of methods; track method) { <option [value]="method">{{ methodLabels[method] }}</option> }</select></label>
-              <button type="submit" [disabled]="busy()">Enregistrer le paiement</button>
-              <button type="button" (click)="carriedPayment.set(null)">Annuler</button>
+              <label>Montant<app-number-field name="carriedAmount" min="0.01" [max]="debt.remaining" step="0.01" [(ngModel)]="carriedAmount" required [ariaLabel]="(&quot;Montant&quot;).trim()" /></label>
+              <label>Date<app-date-field mode="date" name="carriedDate" [(ngModel)]="pay.paymentDate" required [ariaLabel]="(&quot;Date&quot;).trim()" /></label>
+              <label>Mode<app-select-field name="carriedMethod" [(ngModel)]="pay.method" [ariaLabel]="(&quot;Mode&quot;).trim()">@for (method of methods; track method) { <app-select-option [value]="method" [label]="((&quot;&quot; + ((methodLabels[method])) + &quot;&quot;)).trim()" /> }</app-select-field></label>
+              <button pButton type="submit" [disabled]="busy()">Enregistrer le paiement</button>
+              <button pButton severity="secondary" variant="outlined" type="button" (click)="carriedPayment.set(null)">Annuler</button>
             </form>
           }
         }
@@ -49,11 +42,11 @@
     }
   </nav>
 
-  @if (error()) { <div class="fin__alert fin__alert--error" role="alert">{{ error() }}</div> }
-  @if (success()) { <div class="fin__alert fin__alert--success" role="status">{{ success() }}</div> }
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
+  @if (success()) { <p-message severity="success" class="fin__alert fin__alert--success" role="status">{{ success() }}</p-message> }
 
   @if (loading()) {
-    <p class="fin__state">Chargement…</p>
+    <app-loading-state message="Chargement…" />
   } @else if (!schools().length) {
     <p class="fin__state">Aucun établissement associé à votre compte.</p>
   } @else {
@@ -72,49 +65,46 @@
           </div>
           <div class="fin__card">
             <div class="fin__card-head"><h2>Taux de recouvrement</h2><span class="fin__count">{{ o.collectionRate }} %</span></div>
-            <div class="fin__body"><div class="fin__bar fin__bar--big"><span [style.width.%]="o.collectionRate"></span></div></div>
+            <div class="fin__body"><p-progressbar [value]="o.collectionRate" [showValue]="false" ariaLabel="Taux de recouvrement" /></div>
           </div>
           <div class="fin__grid">
             <div class="fin__card">
               <div class="fin__card-head"><h2>Par classe</h2></div>
-              <div class="fin__table-wrap"><table class="fin__table">
-                <thead><tr><th>Classe</th><th>Élèves</th><th>Attendu</th><th>Encaissé</th><th>Reste</th><th>Recouvrement</th></tr></thead>
-                <tbody>
-                  @for (c of o.perClass; track c.classId) {
+              <div class="fin__table-wrap"><p-table class="fin__table ui-data-table" [value]="o.perClass" dataKey="classId" [rowHover]="true" [paginator]="(o.perClass).length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
+      <ng-template #header><tr><th>Classe</th><th>Élèves</th><th>Attendu</th><th>Encaissé</th><th>Reste</th><th>Recouvrement</th></tr></ng-template>
+      <ng-template #body [appTableRow]="o.perClass" let-c>
                     <tr><td><strong>{{ c.className }}</strong></td><td>{{ c.students }}</td><td>{{ c.expected | number:'1.0-0' }}</td>
                       <td>{{ c.collected | number:'1.0-0' }}</td><td [class.fin__neg]="c.remaining > 0">{{ c.remaining | number:'1.0-0' }}</td>
                       <td><div class="fin__bar"><span [style.width.%]="ratio(c.collected, c.expected)"></span></div>{{ ratio(c.collected, c.expected) }} %</td></tr>
-                  } @empty { <tr><td colspan="6" class="fin__muted">Aucune classe.</td></tr> }
-                </tbody>
-              </table></div>
+                  </ng-template>
+      <ng-template #emptymessage><tr><td colspan="6" class="fin__muted">Aucune classe.</td></tr></ng-template>
+    </p-table></div>
             </div>
             <div class="fin__card">
               <div class="fin__card-head"><h2>Par type de frais</h2></div>
-              <div class="fin__table-wrap"><table class="fin__table">
-                <thead><tr><th>Frais</th><th>Attendu</th><th>Encaissé</th><th>Reste</th></tr></thead>
-                <tbody>
-                  @for (f of o.perFeeType; track f.feeTypeId) {
+              <div class="fin__table-wrap"><p-table class="fin__table ui-data-table" [value]="o.perFeeType" dataKey="feeTypeId" [rowHover]="true" [paginator]="(o.perFeeType).length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
+      <ng-template #header><tr><th>Frais</th><th>Attendu</th><th>Encaissé</th><th>Reste</th></tr></ng-template>
+      <ng-template #body [appTableRow]="o.perFeeType" let-f>
                     <tr><td><strong>{{ f.feeTypeName }}</strong></td><td>{{ f.expected | number:'1.0-0' }}</td>
                       <td>{{ f.collected | number:'1.0-0' }}</td><td [class.fin__neg]="f.remaining > 0">{{ f.remaining | number:'1.0-0' }}</td></tr>
-                  } @empty { <tr><td colspan="4" class="fin__muted">Aucun frais facturé. Commencez par « Facturer ».</td></tr> }
-                </tbody>
-              </table></div>
+                  </ng-template>
+      <ng-template #emptymessage><tr><td colspan="4" class="fin__muted">Aucun frais facturé. Commencez par « Facturer ».</td></tr></ng-template>
+    </p-table></div>
             </div>
           </div>
           <div class="fin__card">
             <div class="fin__card-head"><h2>Derniers paiements</h2>
-              <button type="button" class="fin__link" (click)="setTab('payments')">Voir tout →</button></div>
-            <div class="fin__table-wrap"><table class="fin__table">
-              <thead><tr><th>Date</th><th>Reçu</th><th>Élève</th><th>Frais</th><th>Mode</th><th>Montant</th></tr></thead>
-              <tbody>
-                @for (p of o.recentPayments; track p.id) {
+              <button pButton severity="secondary" variant="text" type="button" class="fin__link" (click)="setTab('payments')">Voir tout →</button></div>
+            <div class="fin__table-wrap"><p-table class="fin__table ui-data-table" [value]="o.recentPayments" dataKey="id" [rowHover]="true" [paginator]="(o.recentPayments).length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
+      <ng-template #header><tr><th>Date</th><th>Reçu</th><th>Élève</th><th>Frais</th><th>Mode</th><th>Montant</th></tr></ng-template>
+      <ng-template #body [appTableRow]="o.recentPayments" let-p>
                   <tr><td>{{ p.paymentDate }}</td><td>{{ p.reference }}</td><td>{{ p.studentName }}</td><td>{{ p.feeTypeName }}</td>
                     <td>{{ methodLabels[p.method] }}</td><td><strong>{{ p.amount | number:'1.0-0' }}</strong></td></tr>
-                } @empty { <tr><td colspan="6" class="fin__muted">Aucun paiement enregistré.</td></tr> }
-              </tbody>
-            </table></div>
+                </ng-template>
+      <ng-template #emptymessage><tr><td colspan="6" class="fin__muted">Aucun paiement enregistré.</td></tr></ng-template>
+    </p-table></div>
           </div>
-        } @else { <p class="fin__state">Chargement du tableau financier…</p> }
+        } @else { <app-loading-state message="Chargement du tableau financier…" /> }
       }
 
       @case ('invoices') {
@@ -122,22 +112,22 @@
           <div class="fin__card-head"><h2>Frais facturés</h2><span class="fin__count">{{ filteredInvoices().length }}</span></div>
           <div class="fin__toolbar">
             <label>Statut
-              <select [(ngModel)]="invoiceFilter" (change)="loadTab()">
-                <option value="UNPAID">Impayés (à payer + en retard)</option>
-                <option value="OVERDUE">En retard</option>
-                <option value="PENDING">À payer (non échus)</option>
-                <option value="PAID">Payés</option>
-                <option value="CANCELLED">Annulés</option>
-                <option value="ALL">Tous</option>
-              </select>
+              <app-select-field [(ngModel)]="invoiceFilter" (change)="loadTab()" [ariaLabel]="(&quot;Statut &quot;).trim()">
+                <app-select-option [value]="&quot;UNPAID&quot;" [label]="(&quot;Impayés (à payer + en retard)&quot;).trim()" />
+                <app-select-option [value]="&quot;OVERDUE&quot;" [label]="(&quot;En retard&quot;).trim()" />
+                <app-select-option [value]="&quot;PENDING&quot;" [label]="(&quot;À payer (non échus)&quot;).trim()" />
+                <app-select-option [value]="&quot;PAID&quot;" [label]="(&quot;Payés&quot;).trim()" />
+                <app-select-option [value]="&quot;CANCELLED&quot;" [label]="(&quot;Annulés&quot;).trim()" />
+                <app-select-option [value]="&quot;ALL&quot;" [label]="(&quot;Tous&quot;).trim()" />
+              </app-select-field>
             </label>
             <label>Classe
-              <select [(ngModel)]="invoiceClassId" (change)="loadTab()">
-                <option [ngValue]="null">Toutes les classes</option>
-                @for (c of classes(); track c.id) { <option [ngValue]="c.id">{{ classLabel(c) }}</option> }
-              </select>
+              <app-select-field [(ngModel)]="invoiceClassId" (change)="loadTab()" [ariaLabel]="(&quot;Classe &quot;).trim()">
+                <app-select-option [value]="null" [label]="(&quot;Toutes les classes&quot;).trim()" />
+                @for (c of classes(); track c.id) { <app-select-option [value]="c.id" [label]="((&quot;&quot; + (classLabel(c)) + &quot;&quot;)).trim()" /> }
+              </app-select-field>
             </label>
-            <label>Rechercher<input type="search" [(ngModel)]="search" placeholder="Élève, matricule, frais"></label>
+            <label>Rechercher<input pInputText type="search" [(ngModel)]="search" placeholder="Élève, matricule, frais"></label>
           </div>
 
           @if (panel(); as p) {
@@ -147,32 +137,31 @@
                 · versé {{ p.invoice.paid | number:'1.0-0' }} · reste <strong>{{ p.invoice.balance | number:'1.0-0' }} FCFA</strong></p>
               <div class="fin__form">
                 @if (p.kind === 'pay') {
-                  <label>Montant (FCFA)<input type="number" min="1" [max]="p.invoice.balance" name="amount" [(ngModel)]="pay.amount" required></label>
-                  <label>Date<input type="date" name="date" [(ngModel)]="pay.paymentDate"></label>
+                  <label>Montant (FCFA)<app-number-field min="1" [max]="p.invoice.balance" name="amount" [(ngModel)]="pay.amount" required [ariaLabel]="(&quot;Montant (FCFA)&quot;).trim()" /></label>
+                  <label>Date<app-date-field mode="date" name="date" [(ngModel)]="pay.paymentDate" [ariaLabel]="(&quot;Date&quot;).trim()" /></label>
                   <label>Mode
-                    <select name="method" [(ngModel)]="pay.method">
-                      @for (m of methods; track m) { <option [value]="m">{{ methodLabels[m] }}</option> }
-                    </select>
+                    <app-select-field name="method" [(ngModel)]="pay.method" [ariaLabel]="(&quot;Mode &quot;).trim()">
+                      @for (m of methods; track m) { <app-select-option [value]="m" [label]="((&quot;&quot; + (methodLabels[m]) + &quot;&quot;)).trim()" /> }
+                    </app-select-field>
                   </label>
                 } @else {
-                  <label>Montant de la réduction<input type="number" min="0" name="discount" [(ngModel)]="discount.amount"></label>
-                  <label class="fin__wide">Motif<input name="reason" maxlength="255" [(ngModel)]="discount.reason" placeholder="Fratrie, bourse, enfant du personnel…"></label>
+                  <label>Montant de la réduction<app-number-field min="0" name="discount" [(ngModel)]="discount.amount" [ariaLabel]="(&quot;Montant de la réduction&quot;).trim()" /></label>
+                  <label class="fin__wide">Motif<input pInputText name="reason" maxlength="255" [(ngModel)]="discount.reason" placeholder="Fratrie, bourse, enfant du personnel…"></label>
                 }
               </div>
               <div class="fin__actions">
-                <button type="submit" class="fin__btn" [disabled]="busy()">Valider</button>
+                <button pButton type="submit" class="fin__btn" [disabled]="busy()">Valider</button>
                 @if (p.kind === 'discount') {
-                  <button type="button" class="fin__btn fin__btn--ghost" (click)="exemptAll(p.invoice)">Exonération totale</button>
+                  <button pButton severity="secondary" variant="outlined" type="button" class="fin__btn fin__btn--ghost" (click)="exemptAll(p.invoice)">Exonération totale</button>
                 }
-                <button type="button" class="fin__btn fin__btn--ghost" (click)="panel.set(null)">Fermer</button>
+                <button pButton severity="secondary" variant="outlined" type="button" class="fin__btn fin__btn--ghost" (click)="panel.set(null)">Fermer</button>
               </div>
             </form>
           }
 
-          <div class="fin__table-wrap"><table class="fin__table">
-            <thead><tr><th>Élève</th><th>Classe</th><th>Frais</th><th>Échéance</th><th>Net</th><th>Versé</th><th>Reste</th><th>Statut</th><th>Actions</th></tr></thead>
-            <tbody>
-              @for (row of filteredInvoices(); track row.id) {
+          <div class="fin__table-wrap"><p-table class="fin__table ui-data-table" [value]="filteredInvoices()" dataKey="id" [rowHover]="true" [paginator]="(filteredInvoices()).length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
+      <ng-template #header><tr><th>Élève</th><th>Classe</th><th>Frais</th><th>Échéance</th><th>Net</th><th>Versé</th><th>Reste</th><th>Statut</th><th>Actions</th></tr></ng-template>
+      <ng-template #body [appTableRow]="filteredInvoices()" let-row>
                 <tr>
                   <td><a [routerLink]="['/proprietaire/eleves', row.studentId]"><strong>{{ row.studentName }}</strong></a>
                     <div class="fin__muted">{{ row.registrationNumber }}</div></td>
@@ -183,23 +172,25 @@
                     @if (row.discountAmount > 0) { <div class="fin__muted" [title]="row.discountReason ?? ''">−{{ row.discountAmount | number:'1.0-0' }} ({{ row.discountReason }})</div> }</td>
                   <td>{{ row.paid | number:'1.0-0' }}</td>
                   <td [class.fin__neg]="row.balance > 0"><strong>{{ row.balance | number:'1.0-0' }}</strong></td>
-                  <td><span class="fin__badge fin__badge--{{ row.status }}">{{ statusLabels[row.status] }}</span></td>
+                  <td><p-tag [severity]="row.status === 'PAID' ? 'success' : row.status === 'OVERDUE' ? 'danger' : row.status === 'CANCELLED' ? 'secondary' : 'warn'" [value]="statusLabels[row.status]" /></td>
                   <td class="fin__row-actions">
-                    @if (row.status !== 'CANCELLED') {
-                      @if (row.balance > 0) {
-                        <button type="button" class="fin__mini fin__mini--ok" (click)="openPanel('pay', row)">Encaisser</button>
-                        <button type="button" class="fin__mini" (click)="remind(row)" [disabled]="busy()">Relancer</button>
+                    <app-row-actions>
+                      @if (row.status !== 'CANCELLED') {
+                        @if (row.balance > 0) {
+                          <button pButton severity="secondary" variant="outlined" type="button" class="fin__mini fin__mini--ok ui-row-action" (click)="openPanel('pay', row)" pTooltip="Encaisser" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Encaisser"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v14H3Z M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8" /></svg><span class="ui-actions-label">Encaisser</span></button>
+                          <button pButton severity="secondary" variant="outlined" type="button" class="fin__mini ui-row-action ui-row-action--info" (click)="remind(row)" [disabled]="busy()" pTooltip="Relancer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Relancer"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L9 15 M22 2l-7 20-6-7-7-6Z" /></svg><span class="ui-actions-label">Relancer</span></button>
+                        }
+                        <button pButton severity="secondary" variant="outlined" type="button" class="fin__mini" (click)="openPanel('discount', row)">Réduction</button>
+                        @if (row.paid === 0) {
+                          <button pButton severity="danger" variant="outlined" type="button" class="fin__mini fin__mini--danger ui-row-action ui-row-action--danger" (click)="cancelInvoice(row)" pTooltip="Annuler" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Annuler"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12 M6 18L18 6" /></svg><span class="ui-actions-label">Annuler</span></button>
+                        }
                       }
-                      <button type="button" class="fin__mini" (click)="openPanel('discount', row)">Réduction</button>
-                      @if (row.paid === 0) {
-                        <button type="button" class="fin__mini fin__mini--danger" (click)="cancelInvoice(row)">Annuler</button>
-                      }
-                    }
+                    </app-row-actions>
                   </td>
                 </tr>
-              } @empty { <tr><td colspan="9" class="fin__muted">Aucun frais pour ce filtre.</td></tr> }
-            </tbody>
-          </table></div>
+              </ng-template>
+      <ng-template #emptymessage><tr><td colspan="9" class="fin__muted">Aucun frais pour ce filtre.</td></tr></ng-template>
+    </p-table></div>
         </div>
       }
 
@@ -208,26 +199,27 @@
           <div class="fin__card-head"><h2>Journal des paiements</h2>
             <span class="fin__count">{{ payments().length }} · {{ paymentsTotal() | number:'1.0-0' }} FCFA</span></div>
           <div class="fin__toolbar">
-            <label>Du<input type="date" [(ngModel)]="from"></label>
-            <label>Au<input type="date" [(ngModel)]="to"></label>
-            <button type="button" class="fin__btn" (click)="loadPayments()">Filtrer</button>
-            <button type="button" class="fin__btn fin__btn--green" (click)="exportCsv()">⬇ Exporter (CSV / Excel)</button>
+            <label>Du<app-date-field mode="date" [(ngModel)]="from" [ariaLabel]="(&quot;Du&quot;).trim()" /></label>
+            <label>Au<app-date-field mode="date" [(ngModel)]="to" [ariaLabel]="(&quot;Au&quot;).trim()" /></label>
+            <button pButton type="button" class="fin__btn" (click)="loadPayments()">Filtrer</button>
+            <button pButton type="button" class="fin__btn fin__btn--green" (click)="exportCsv()">⬇ Exporter (CSV / Excel)</button>
           </div>
-          <div class="fin__table-wrap"><table class="fin__table">
-            <thead><tr><th>Date</th><th>Reçu n°</th><th>Élève</th><th>Classe</th><th>Frais</th><th>Mode</th><th>Montant</th><th>Actions</th></tr></thead>
-            <tbody>
-              @for (p of payments(); track p.id) {
+          <div class="fin__table-wrap"><p-table class="fin__table ui-data-table" [value]="payments()" dataKey="id" [rowHover]="true" [paginator]="(payments()).length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
+      <ng-template #header><tr><th>Date</th><th>Reçu n°</th><th>Élève</th><th>Classe</th><th>Frais</th><th>Mode</th><th>Montant</th><th>Actions</th></tr></ng-template>
+      <ng-template #body [appTableRow]="payments()" let-p>
                 <tr><td>{{ p.paymentDate }}</td><td>{{ p.reference }}</td>
                   <td><a [routerLink]="['/proprietaire/eleves', p.studentId]">{{ p.studentName }}</a></td>
                   <td>{{ p.className }}</td><td>{{ p.feeTypeName }}</td><td>{{ methodLabels[p.method] }}</td>
                   <td><strong>{{ p.amount | number:'1.0-0' }}</strong></td>
                   <td class="fin__row-actions">
-                    <button type="button" class="fin__mini fin__mini--ok" (click)="printReceipt(p)">🧾 Reçu</button>
-                    <button type="button" class="fin__mini fin__mini--danger" (click)="deletePayment(p)">Supprimer</button>
+                    <app-row-actions>
+                      <button pButton severity="secondary" variant="outlined" type="button" class="fin__mini fin__mini--ok" (click)="printReceipt(p)">🧾 Reçu</button>
+                      <button pButton severity="danger" variant="outlined" type="button" class="fin__mini fin__mini--danger ui-row-action ui-row-action--danger" (click)="deletePayment(p)" pTooltip="Supprimer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Supprimer"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18 M9 6V4h6v2 M5 6l1 14h12l1-14 M10 10v6 M14 10v6" /></svg><span class="ui-actions-label">Supprimer</span></button>
+                    </app-row-actions>
                   </td></tr>
-              } @empty { <tr><td colspan="8" class="fin__muted">Aucun paiement sur cette période.</td></tr> }
-            </tbody>
-          </table></div>
+              </ng-template>
+      <ng-template #emptymessage><tr><td colspan="8" class="fin__muted">Aucun paiement sur cette période.</td></tr></ng-template>
+    </p-table></div>
         </div>
       }
 
@@ -240,40 +232,40 @@
             <div class="fin__body">
               <div class="fin__form">
                 <label>Frais
-                  <select name="fee" [(ngModel)]="bulk.feeTypeId">
+                  <app-select-field name="fee" [(ngModel)]="bulk.feeTypeId" [ariaLabel]="(&quot;Frais &quot;).trim()">
                     @for (f of activeFees(); track f.id) {
-                      <option [ngValue]="f.id">{{ f.name }} — {{ f.amount | number:'1.0-0' }} FCFA{{ f.levelName ? ' · ' + f.levelName : '' }}</option>
+                      <app-select-option [value]="f.id" [label]="((&quot;&quot; + (f.name) + &quot; — &quot; + (f.amount | number:'1.0-0') + &quot; FCFA&quot; + (f.levelName ? ' · ' + f.levelName : '') + &quot;&quot;)).trim()" />
                     }
-                  </select>
+                  </app-select-field>
                 </label>
                 <label>Élèves concernés
-                  <select name="scope" [(ngModel)]="bulk.scope">
-                    <option value="school">Tout l’établissement (ou le niveau du frais)</option>
-                    <option value="level">Un niveau</option>
-                    <option value="class">Une classe</option>
-                  </select>
+                  <app-select-field name="scope" [(ngModel)]="bulk.scope" [ariaLabel]="(&quot;Élèves concernés &quot;).trim()">
+                    <app-select-option [value]="&quot;school&quot;" [label]="(&quot;Tout l’établissement (ou le niveau du frais)&quot;).trim()" />
+                    <app-select-option [value]="&quot;level&quot;" [label]="(&quot;Un niveau&quot;).trim()" />
+                    <app-select-option [value]="&quot;class&quot;" [label]="(&quot;Une classe&quot;).trim()" />
+                  </app-select-field>
                 </label>
                 @if (bulk.scope === 'level') {
                   <label>Niveau
-                    <select name="level" [(ngModel)]="bulk.levelId">
-                      <option [ngValue]="0" disabled>Choisir…</option>
-                      @for (l of levels(); track l.id) { <option [ngValue]="l.id">{{ l.name }}</option> }
-                    </select>
+                    <app-select-field name="level" [(ngModel)]="bulk.levelId" [ariaLabel]="(&quot;Niveau &quot;).trim()">
+                      <app-select-option [value]="0" [label]="(&quot;Choisir…&quot;).trim()" disabled />
+                      @for (l of levels(); track l.id) { <app-select-option [value]="l.id" [label]="((&quot;&quot; + (l.name) + &quot;&quot;)).trim()" /> }
+                    </app-select-field>
                   </label>
                 }
                 @if (bulk.scope === 'class') {
                   <label>Classe
-                    <select name="class" [(ngModel)]="bulk.classId">
-                      <option [ngValue]="0" disabled>Choisir…</option>
-                      @for (c of classes(); track c.id) { <option [ngValue]="c.id">{{ classLabel(c) }}</option> }
-                    </select>
+                    <app-select-field name="class" [(ngModel)]="bulk.classId" [ariaLabel]="(&quot;Classe &quot;).trim()">
+                      <app-select-option [value]="0" [label]="(&quot;Choisir…&quot;).trim()" disabled />
+                      @for (c of classes(); track c.id) { <app-select-option [value]="c.id" [label]="((&quot;&quot; + (classLabel(c)) + &quot;&quot;)).trim()" /> }
+                    </app-select-field>
                   </label>
                 }
-                <label>Échéance<input type="date" name="due" [(ngModel)]="bulk.dueDate" required></label>
-                <label>Montant spécifique (optionnel)<input type="number" min="1" name="amount" [(ngModel)]="bulk.amount" placeholder="Tarif du catalogue"></label>
+                <label>Échéance<app-date-field mode="date" name="due" [(ngModel)]="bulk.dueDate" required [ariaLabel]="(&quot;Échéance&quot;).trim()" /></label>
+                <label>Montant spécifique (optionnel)<app-number-field min="1" name="amount" [(ngModel)]="bulk.amount" placeholder="Tarif du catalogue" [ariaLabel]="(&quot;Montant spécifique (optionnel)&quot;).trim()" /></label>
               </div>
               <p class="fin__muted">Seuls les élèves inscrits (actifs) de l’année en cours sont facturés. Pour un frais mensuel, générez une échéance par mois.</p>
-              <div class="fin__actions"><button type="submit" class="fin__btn" [disabled]="busy()">Générer les factures</button></div>
+              <div class="fin__actions"><button pButton type="submit" class="fin__btn" [disabled]="busy()">Générer les factures</button></div>
             </div>
           }
         </form>
@@ -284,47 +276,48 @@
           <div class="fin__card-head"><h2>{{ editingFeeId ? 'Modifier le frais' : 'Nouveau frais' }}</h2></div>
           <div class="fin__body">
             <div class="fin__form">
-              <label>Nom<input name="name" maxlength="150" [(ngModel)]="feeForm.name" placeholder="Scolarité, Inscription, Cantine…" required></label>
-              <label>Montant (FCFA)<input type="number" min="0" name="amount" [(ngModel)]="feeForm.amount" required></label>
+              <label>Nom<input pInputText name="name" maxlength="150" [(ngModel)]="feeForm.name" placeholder="Scolarité, Inscription, Cantine…" required></label>
+              <label>Montant (FCFA)<app-number-field min="0" name="amount" [(ngModel)]="feeForm.amount" required [ariaLabel]="(&quot;Montant (FCFA)&quot;).trim()" /></label>
               <label>Fréquence
-                <select name="frequency" [(ngModel)]="feeForm.frequency">
-                  @for (f of frequencies; track f) { <option [value]="f">{{ frequencyLabels[f] }}</option> }
-                </select>
+                <app-select-field name="frequency" [(ngModel)]="feeForm.frequency" [ariaLabel]="(&quot;Fréquence &quot;).trim()">
+                  @for (f of frequencies; track f) { <app-select-option [value]="f" [label]="((&quot;&quot; + (frequencyLabels[f]) + &quot;&quot;)).trim()" /> }
+                </app-select-field>
               </label>
               <label>Niveau (tarif par niveau)
-                <select name="level" [(ngModel)]="feeForm.levelId">
-                  <option [ngValue]="0">Tous les niveaux</option>
-                  @for (l of levels(); track l.id) { <option [ngValue]="l.id">{{ l.name }}</option> }
-                </select>
+                <app-select-field name="level" [(ngModel)]="feeForm.levelId" [ariaLabel]="(&quot;Niveau (tarif par niveau) &quot;).trim()">
+                  <app-select-option [value]="0" [label]="(&quot;Tous les niveaux&quot;).trim()" />
+                  @for (l of levels(); track l.id) { <app-select-option [value]="l.id" [label]="((&quot;&quot; + (l.name) + &quot;&quot;)).trim()" /> }
+                </app-select-field>
               </label>
-              <label class="fin__wide">Description<input name="description" maxlength="255" [(ngModel)]="feeForm.description"></label>
+              <label class="fin__wide">Description<input pInputText name="description" maxlength="255" [(ngModel)]="feeForm.description"></label>
             </div>
             <div class="fin__actions">
-              <button type="submit" class="fin__btn" [disabled]="busy()">{{ editingFeeId ? 'Enregistrer' : 'Ajouter' }}</button>
-              @if (editingFeeId) { <button type="button" class="fin__btn fin__btn--ghost" (click)="resetFee()">Annuler</button> }
+              <button pButton type="submit" class="fin__btn" [disabled]="busy()">{{ editingFeeId ? 'Enregistrer' : 'Ajouter' }}</button>
+              @if (editingFeeId) { <button pButton severity="secondary" variant="outlined" type="button" class="fin__btn fin__btn--ghost" (click)="resetFee()">Annuler</button> }
             </div>
           </div>
         </form>
         <div class="fin__card">
           <div class="fin__card-head"><h2>Catalogue</h2><span class="fin__count">{{ feeTypes().length }}</span></div>
-          <div class="fin__table-wrap"><table class="fin__table">
-            <thead><tr><th>Frais</th><th>Montant</th><th>Fréquence</th><th>Niveau</th><th>Facturé</th><th>Statut</th><th>Actions</th></tr></thead>
-            <tbody>
-              @for (f of feeTypes(); track f.id) {
+          <div class="fin__table-wrap"><p-table class="fin__table ui-data-table" [value]="feeTypes()" dataKey="id" [rowHover]="true" [paginator]="(feeTypes()).length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
+      <ng-template #header><tr><th>Frais</th><th>Montant</th><th>Fréquence</th><th>Niveau</th><th>Facturé</th><th>Statut</th><th>Actions</th></tr></ng-template>
+      <ng-template #body [appTableRow]="feeTypes()" let-f>
                 <tr [class.fin__off]="!f.active">
                   <td><strong>{{ f.name }}</strong>@if (f.description) { <div class="fin__muted">{{ f.description }}</div> }</td>
                   <td>{{ f.amount | number:'1.0-0' }} FCFA</td><td>{{ frequencyLabels[f.frequency] }}</td>
                   <td>{{ f.levelName ?? 'Tous' }}</td><td>{{ f.invoiceCount }} fois</td>
-                  <td><span class="fin__badge" [class.fin__badge--PAID]="f.active">{{ f.active ? 'Actif' : 'Archivé' }}</span></td>
+                  <td><p-tag [severity]="f.active ? 'success' : 'secondary'" [value]="f.active ? 'Actif' : 'Archivé'" /></td>
                   <td class="fin__row-actions">
-                    <button type="button" class="fin__mini" (click)="editFee(f)">Modifier</button>
-                    <button type="button" class="fin__mini" (click)="toggleFee(f)">{{ f.active ? 'Archiver' : 'Réactiver' }}</button>
-                    <button type="button" class="fin__mini fin__mini--danger" (click)="deleteFee(f)">Supprimer</button>
+                    <app-row-actions>
+                      <button pButton severity="secondary" variant="outlined" type="button" class="fin__mini ui-row-action ui-row-action--warning" (click)="editFee(f)" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Modifier"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9 M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z" /></svg><span class="ui-actions-label">Modifier</span></button>
+                      <button pButton severity="secondary" variant="outlined" type="button" class="fin__mini ui-row-action" (click)="toggleFee(f)" pTooltip="{{ f.active ? 'Archiver' : 'Réactiver' }}" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="{{ f.active ? 'Archiver' : 'Réactiver' }}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v10 M6 5a9 9 0 1 0 12 0" /></svg><span class="ui-actions-label">{{ f.active ? 'Archiver' : 'Réactiver' }}</span></button>
+                      <button pButton severity="danger" variant="outlined" type="button" class="fin__mini fin__mini--danger ui-row-action ui-row-action--danger" (click)="deleteFee(f)" pTooltip="Supprimer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Supprimer"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18 M9 6V4h6v2 M5 6l1 14h12l1-14 M10 10v6 M14 10v6" /></svg><span class="ui-actions-label">Supprimer</span></button>
+                    </app-row-actions>
                   </td>
                 </tr>
-              } @empty { <tr><td colspan="7" class="fin__muted">Aucun frais. Ajoutez la scolarité, l’inscription, la cantine…</td></tr> }
-            </tbody>
-          </table></div>
+              </ng-template>
+      <ng-template #emptymessage><tr><td colspan="7" class="fin__muted">Aucun frais. Ajoutez la scolarité, l’inscription, la cantine…</td></tr></ng-template>
+    </p-table></div>
         </div>
       }
     }

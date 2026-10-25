@@ -1,32 +1,36 @@
 <section class="class-roster">
-  <header class="class-roster__header">
-    <div><a routerLink="/proprietaire">Retour à l’accueil</a><h1>{{ title() }}</h1><p>{{ parentsMode ? 'Coordonnées des parents et accès aux fiches de leurs enfants inscrits dans les classes.' : 'Tous les élèves de l’établissement, avec ou sans classe. Ouvrez une fiche pour consulter les détails.' }}</p></div>
-    @if (schools().length > 1) {
-      <label>Établissement<select class="class-roster__select" [ngModel]="schoolId()" (ngModelChange)="selectSchool(+$event)">
-        @for (school of schools(); track school.id) { <option [ngValue]="school.id">{{ school.name }}</option> }
-      </select></label>
-    }
+  <header class="module-help-header class-roster__header">
+    <app-module-help />
+    <div><a routerLink="/proprietaire">Retour au tableau de bord</a><h1>{{ title() }}</h1><p>{{ parentsMode ? 'Coordonnées des parents et accès aux fiches de leurs enfants inscrits dans les classes.' : 'Tous les élèves de l’établissement, avec ou sans classe. Ouvrez une fiche pour consulter les détails.' }}</p></div>
+
   </header>
-  @if (error()) { <p class="class-roster__alert class-roster__alert--error" role="alert">{{ error() }}</p>@if (schoolId()) { <button type="button" (click)="selectSchool(schoolId()!)">Réessayer</button> } }
-  @if (loading()) { <p class="class-roster__state" role="status">Chargement…</p> }
+  @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert>@if (schoolId()) { <button pButton type="button" (click)="selectSchool(schoolId()!)">Réessayer</button> } }
+  @if (loading()) { <app-loading-state message="Chargement…" /> }
   @else if (!error()) {
     <section class="class-roster__card">
       <div class="class-roster__card-head"><h2>Liste des {{ title().toLowerCase() }}</h2><span role="status">{{ parentsMode ? filteredParents().length : filteredStudents().length }} / {{ parentsMode ? parents().length : students().length }}</span></div>
-      <div class="class-roster__search"><label for="people-search">Rechercher</label><input id="people-search" class="class-roster__select" type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Nom, prénom, matricule ou coordonnées" /></div>
-      <div class="class-roster__table-wrap"><table class="class-roster__table">
-        <thead><tr><th>Nom et prénom</th><th>Contact</th><th>{{ parentsMode ? 'Enfants' : 'Matricule' }}</th>@if (!parentsMode) { <th>Fiche</th> }</tr></thead>
-        <tbody>
-          @if (parentsMode) {
-            @for (parent of filteredParents(); track parent.parentId) {
-              <tr><td><strong>{{ parent.lastName }} {{ parent.firstName }}</strong></td><td>@if (parent.email) { <a [href]="'mailto:' + parent.email">{{ parent.email }}</a> }@if (parent.phone) { <div><a [href]="'tel:' + parent.phone">{{ parent.phone }}</a></div> }</td><td>@for (child of parent.children; track child.id) { <div><a [routerLink]="['/proprietaire/eleves', child.id]">{{ child.lastName }} {{ child.firstName }} — {{ child.registrationNumber }}</a></div> }</td></tr>
-            } @empty { <tr><td colspan="3">Aucun parent à afficher.</td></tr> }
-          } @else {
-            @for (student of filteredStudents(); track student.id) {
-              <tr><td><a [routerLink]="['/proprietaire/eleves', student.id]"><strong>{{ student.lastName }} {{ student.firstName }}</strong></a></td><td>{{ student.email || '—' }}@if (student.phone) { <div>{{ student.phone }}</div> }</td><td>{{ student.registrationNumber }}</td><td><a class="class-roster__action class-roster__action--primary" [routerLink]="['/proprietaire/eleves', student.id]">Voir la fiche</a></td></tr>
-            } @empty { <tr><td colspan="4">Aucun élève à afficher.</td></tr> }
-          }
-        </tbody>
-      </table></div>
+      <div class="class-roster__search"><label for="people-search">Rechercher</label><input pInputText id="people-search" class="class-roster__select" type="search" [ngModel]="search()" (ngModelChange)="searchPeople($event)" placeholder="Nom, prénom, matricule ou coordonnées" /></div>
+      @if (parentsMode) {
+        <p-table class="ui-data-table" [value]="filteredParents()" dataKey="parentId" [rowHover]="true" [paginator]="filteredParents().length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
+          <ng-template #header><tr><th pSortableColumn="lastName">Nom et prénom <p-sorticon field="lastName" /></th><th>Contact</th><th>Enfants</th></tr></ng-template>
+          <ng-template #body [appTableRow]="filteredParents()" let-parent>
+            <tr><td><strong>{{ parent.lastName }} {{ parent.firstName }}</strong></td>
+              <td>@if (parent.email) { <a [href]="'mailto:' + parent.email">{{ parent.email }}</a> }@if (parent.phone) { <div><a [href]="'tel:' + parent.phone">{{ parent.phone }}</a></div> }</td>
+              <td>@for (child of parent.children; track child.id) { <div><a [routerLink]="['/proprietaire/eleves', child.id]">{{ child.lastName }} {{ child.firstName }} · {{ child.registrationNumber }}</a></div> }</td></tr>
+          </ng-template>
+          <ng-template #emptymessage><tr><td colspan="3" class="ui-empty">Aucun parent à afficher. Modifiez votre recherche pour retrouver un dossier.</td></tr></ng-template>
+        </p-table>
+      } @else {
+        <p-table class="ui-data-table" [value]="filteredStudents()" dataKey="id" [rowHover]="true" [paginator]="filteredStudents().length > 15" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} sur {totalRecords}">
+          <ng-template #header><tr><th pSortableColumn="lastName">Nom et prénom <p-sorticon field="lastName" /></th><th>Contact</th><th pSortableColumn="registrationNumber">Matricule <p-sorticon field="registrationNumber" /></th><th>Fiche</th></tr></ng-template>
+          <ng-template #body [appTableRow]="filteredStudents()" let-student>
+            <tr><td><a [routerLink]="['/proprietaire/eleves', student.id]"><strong>{{ student.lastName }} {{ student.firstName }}</strong></a></td>
+              <td>{{ student.email || '—' }}@if (student.phone) { <div>{{ student.phone }}</div> }</td><td>{{ student.registrationNumber }}</td>
+              <td><a class="class-roster__action class-roster__action--primary ui-row-action" [routerLink]="['/proprietaire/eleves', student.id]" pTooltip="Voir la fiche" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" aria-label="Voir la fiche"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7 M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6" /></svg></a></td></tr>
+          </ng-template>
+          <ng-template #emptymessage><tr><td colspan="4" class="ui-empty">Aucun élève à afficher. Modifiez votre recherche pour retrouver un dossier.</td></tr></ng-template>
+        </p-table>
+      }
     </section>
   }
 </section>

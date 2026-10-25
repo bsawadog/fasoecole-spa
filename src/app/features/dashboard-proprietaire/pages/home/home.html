@@ -1,5 +1,6 @@
 <main class="owner-dashboard">
-  <header class="owner-dashboard__header" id="school">
+  <header class="module-help-header owner-dashboard__header" id="school">
+    <app-module-help />
     <div>
       <p class="owner-dashboard__eyebrow">Pilotage de l’établissement</p>
       <h1>Bonjour {{ user()?.firstName }}</h1>
@@ -11,16 +12,7 @@
         <p class="owner-dashboard__subtitle">Vue d’ensemble de vos établissements FasoÉcole.</p>
       }
     </div>
-    @if (schools().length > 1) {
-      <label class="owner-dashboard__school-picker">
-        <span>Choisir un établissement</span>
-        <select [value]="selectedSchoolId()" (change)="onSchoolChange($event)">
-          @for (school of schools(); track school.id) {
-            <option [value]="school.id">{{ school.name }}</option>
-          }
-        </select>
-      </label>
-    } @else if (schools().length === 1) {
+    @if (schools().length === 1) {
       <div class="owner-dashboard__school-badge">
         <svg lucideBuilding2 [size]="18" aria-hidden="true"></svg>
         {{ schools()[0].name }}
@@ -30,12 +22,12 @@
   </header>
 
   @if (schoolStatus() === 'PENDING_APPROVAL') {
-    <p class="owner-dashboard__message" role="status">Votre établissement est en attente de validation et d’activation par le SUPER_ADMIN.</p>
+    <p-message severity="warn" class="owner-dashboard__message owner-dashboard__message--pending" role="status">Votre établissement est en attente de validation et d’activation par le SUPER_ADMIN.</p-message>
   } @else if (schoolStatus() === 'DRAFT') {
     <p class="owner-dashboard__message" role="status">Votre établissement est en préparation. <a routerLink="/proprietaire/creer-ecole" [queryParams]="{schoolId:selectedSchoolId()}">Terminer et soumettre pour validation</a>.</p>
   }
   @if (errorMessage()) {
-    <p class="owner-dashboard__message owner-dashboard__message--error" role="alert">{{ errorMessage() }}</p>
+    <app-error-alert [message]="errorMessage()" (dismissed)="errorMessage.set(null)">{{ errorMessage() }}</app-error-alert>
   }
 
   @if (loading()) {
@@ -82,7 +74,7 @@
         <strong>{{ data.pendingAccountApprovals }}</strong>
         <span class="owner-dashboard__metric-action">Traiter les demandes <svg lucideArrowRight [size]="15" aria-hidden="true"></svg></span>
       </a>
-      @if (canRecordReport()) {
+      @if (canManageAppointments()) {
         <a class="owner-dashboard__metric owner-dashboard__metric--blue" routerLink="/proprietaire/rendez-vous">
           <span class="owner-dashboard__metric-icon"><svg lucideCalendarCheck2 [size]="21" aria-hidden="true"></svg></span>
           <span class="owner-dashboard__metric-label">Rendez-vous</span>
@@ -93,14 +85,91 @@
       }
     </section>
 
+    <div class="owner-dashboard__columns owner-dashboard__overview">
+      <section class="owner-dashboard__panel" id="academic">
+        <div class="owner-dashboard__panel-heading">
+          <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--violet"><svg lucideBookOpen [size]="20" aria-hidden="true"></svg></span>
+          <div><h2><a routerLink="/proprietaire/notes">Résultats scolaires</a></h2><p>{{ data.averagePeriodName ?? 'Aucune période de notation' }}</p></div>
+        </div>
+        <div class="owner-dashboard__average">
+          @if (data.schoolAverage !== null) {
+            <strong>{{ data.schoolAverage | number: '1.1-2' }}<small>/20</small></strong>
+            <span>Moyenne générale de l’établissement</span>
+          } @else {
+            <strong>—</strong>
+            <span>Aucune note saisie pour cette période</span>
+          }
+        </div>
+        <p class="owner-dashboard__hint">
+          {{ data.rankedStudents }} élève(s) noté(s)@if (data.passRate !== null) { · {{ data.passRate | number: '1.0-1' }} % de réussite }
+          · <a routerLink="/proprietaire/notes">Notes &amp; bulletins</a>
+        </p>
+      </section>
+
+      <section class="owner-dashboard__panel" id="communication">
+        <div class="owner-dashboard__panel-heading">
+          <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--amber"><svg lucideMessageCircle [size]="20" aria-hidden="true"></svg></span>
+          <div><h2>@if (canUseMessages()) { <a routerLink="/proprietaire/messages">Communication</a> } @else { Communication }</h2><p>Sur votre compte propriétaire</p></div>
+        </div>
+        <div class="owner-dashboard__unread">
+          <svg lucideMail [size]="20" aria-hidden="true"></svg>
+          <strong>{{ data.unreadMessages }}</strong>
+          <span>message(s) non lu(s)</span>
+        </div>
+        <div class="owner-dashboard__notification-list">
+          @for (notification of data.recentNotifications; track notification.id) {
+            <article [class.owner-dashboard__notification--unread]="!notification.read">
+              <span class="owner-dashboard__notification-dot"></span>
+              <div><strong>{{ notification.title }}</strong><p>{{ notification.content || 'Notification' }}</p></div>
+              <time>{{ notification.createdAt | date: 'dd/MM HH:mm' }}</time>
+            </article>
+          } @empty {
+            <p class="owner-dashboard__hint">Aucune notification récente.</p>
+          }
+        </div>
+      </section>
+    </div>
+
+    @if (canViewCash() || data.bankPosition) {
+      <section class="owner-dashboard__treasury" aria-label="Caisse et banque">
+        @if (canViewCash()) {
+          <article class="owner-dashboard__balance">
+            <h2><a routerLink="/proprietaire/caisse">Niveau de la caisse</a></h2>
+            @if (cashLoading()) { <p role="status">Chargement du solde…</p> }
+            @else if (cashError()) { <app-error-alert [message]="cashError()" (dismissed)="cashError.set(false)">Solde de caisse indisponible. <button type="button" (click)="refreshDashboard(data.schoolId)">Réessayer</button></app-error-alert> }
+            @else if (cash(); as report) {
+              @if (report.book) {
+                <strong class="owner-dashboard__balance-value" [class.owner-dashboard__balance-negative]="report.closingBalance < 0">{{ formatAmount(report.closingBalance) }}</strong>
+                <p>Solde du brouillard · {{ report.month }}@if (report.book.closedOn) { · Caisse clôturée le {{ report.book.closedOn | date:'dd/MM/yyyy' }} }</p>
+                <small>Solde d’ouverture et mouvements enregistrés. À comparer aux espèces réellement en caisse.</small>
+              } @else { <p>Caisse non ouverte</p><small>Ouvrez le brouillard de caisse pour renseigner le solde initial.</small> }
+            }
+          </article>
+        }
+        @if (data.bankPosition; as bank) {
+          <article class="owner-dashboard__balance">
+            <h2>Niveau de la banque</h2>
+            <strong class="owner-dashboard__balance-value" [class.owner-dashboard__balance-negative]="bank.balance < 0">{{ formatAmount(bank.balance) }}</strong>
+            <span class="owner-dashboard__bank-unverified">Solde non vérifié</span>
+            <p>{{ bank.yearLabel }} · Du {{ bank.fromDate | date:'dd/MM/yyyy' }} au {{ bank.asOf | date:'dd/MM/yyyy' }}</p>
+            <small>Estimation : report d’ouverture + virements reçus − virements payés. Hors paiements mobiles et cartes. Aucun rapprochement avec le relevé bancaire.</small>
+            @if (bank.openingBalance === null) { <p class="owner-dashboard__bank-unverified">Report d’ouverture non renseigné : seuls les mouvements sont comptabilisés.</p> }
+          </article>
+        }
+      </section>
+    }
+
+    @if (data.monthlyFinance; as finance) { <app-monthly-finance [data]="finance" /> }
+    <app-dashboard-charts [receivables]="data.classReceivables ?? null" [attendance]="data.weeklyAttendance ?? null" />
+
     <div class="owner-dashboard__columns">
       <section class="owner-dashboard__panel" id="attendance">
-        @if (syncError()) { <p class="owner-dashboard__hint" role="alert">Actualisation indisponible : les chiffres affichés peuvent être anciens.</p> }
+        @if (syncError()) { <app-error-alert [message]="syncError()" (dismissed)="syncError.set(false)">Actualisation indisponible : les chiffres affichés peuvent être anciens.</app-error-alert> }
         @if (lastUpdated()) { <small>Mise à jour : {{ lastUpdated() | date:'HH:mm:ss' }} · {{ sync.connections()[data.schoolId] ? 'Synchronisation active' : 'Reconnexion en cours' }}</small> }
         <div class="owner-dashboard__panel-heading">
           <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--blue"><svg lucideCalendarCheck2 [size]="20" aria-hidden="true"></svg></span>
           <div><h2><a routerLink="/proprietaire/eleves">Présences du jour</a></h2><p>{{ data.generatedDate | date: 'dd/MM/yyyy' }}</p></div>
-          <button class="owner-dashboard__refresh" type="button" (click)="refreshDashboard(data.schoolId)">Actualiser</button>
+          <button pButton class="owner-dashboard__refresh" type="button" (click)="refreshDashboard(data.schoolId)">Actualiser</button>
         </div>
         <div class="owner-dashboard__attendance-total">
           <strong>{{ data.attendanceRecorded }}</strong>
@@ -118,8 +187,8 @@
         }
         <div class="owner-dashboard__handled-reports">
           <h3>Signalements en attente pour cette journée <span class="owner-dashboard__pending-count">{{ data.pendingAttendanceReportsCount ?? 0 }}</span></h3>
-          @if (reportError()) { <p class="owner-dashboard__hint" role="alert">{{ reportError() }}</p> }
-          @if (reportSuccess()) { <p class="owner-dashboard__hint" role="status">{{ reportSuccess() }}</p> }
+          @if (reportError()) { <app-error-alert [message]="reportError()" (dismissed)="reportError.set(null)">{{ reportError() }}</app-error-alert> }
+          @if (reportSuccess()) { <p-message severity="success" class="owner-dashboard__hint" role="status">{{ reportSuccess() }}</p-message> }
           <p class="owner-dashboard__hint">Signalements des parents à traiter. Ils apparaîtront dans les compteurs après l’enregistrement d’une présence.</p>
           <ul>
             @for (report of data.pendingAttendanceReports ?? []; track report.id) {
@@ -128,7 +197,7 @@
                 <small>En attente · Signalé le {{ report.createdAt | date:'dd/MM/yyyy à HH:mm' }}</small>
                 @if (canRecordReport()) {
                   @if (report.startDate === report.endDate) {
-                    <button class="owner-dashboard__record-report" type="button" [disabled]="reportBusyId() !== null" (click)="recordReport(report)">{{ reportBusyId() === report.id ? 'Enregistrement…' : report.attendanceType === 'LATE' ? 'Enregistrer le retard' : 'Enregistrer l’absence' }}</button>
+                    <button pButton class="owner-dashboard__record-report" type="button" [disabled]="reportBusyId() !== null" (click)="recordReport(report)">{{ reportBusyId() === report.id ? 'Enregistrement…' : report.attendanceType === 'LATE' ? 'Enregistrer le retard' : 'Enregistrer l’absence' }}</button>
                   } @else {
                     <small>Plusieurs jours : saisir les présences depuis la fiche de l’élève.</small>
                   }
@@ -143,7 +212,7 @@
           }
         </div>
         <div class="owner-dashboard__handled-reports">
-          <button class="owner-dashboard__history-toggle" type="button" [attr.aria-expanded]="showAttendanceHistory()" aria-controls="attendance-history" (click)="showAttendanceHistory.set(!showAttendanceHistory())">
+          <button pButton class="owner-dashboard__history-toggle" type="button" [attr.aria-expanded]="showAttendanceHistory()" aria-controls="attendance-history" (click)="showAttendanceHistory.set(!showAttendanceHistory())">
             Historique <span aria-hidden="true">{{ showAttendanceHistory() ? '−' : '+' }}</span>
           </button>
           <div id="attendance-history" [hidden]="!showAttendanceHistory()" class="owner-dashboard__history-content">
@@ -183,48 +252,7 @@
         </div>
       </section>
 
-      <section class="owner-dashboard__panel" id="academic">
-        <div class="owner-dashboard__panel-heading">
-          <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--violet"><svg lucideBookOpen [size]="20" aria-hidden="true"></svg></span>
-          <div><h2><a routerLink="/proprietaire/notes">Résultats scolaires</a></h2><p>{{ data.averagePeriodName ?? 'Aucune période de notation' }}</p></div>
-        </div>
-        <div class="owner-dashboard__average">
-          @if (data.schoolAverage !== null) {
-            <strong>{{ data.schoolAverage | number: '1.1-2' }}<small>/20</small></strong>
-            <span>Moyenne générale de l’établissement</span>
-          } @else {
-            <strong>—</strong>
-            <span>Aucune note saisie pour cette période</span>
-          }
-        </div>
-        <p class="owner-dashboard__hint">
-          {{ data.rankedStudents }} élève(s) noté(s)@if (data.passRate !== null) { · {{ data.passRate | number: '1.0-1' }} % de réussite }
-          · <a routerLink="/proprietaire/notes">Notes &amp; bulletins</a>
-        </p>
-      </section>
 
-      <section class="owner-dashboard__panel" id="communication">
-        <div class="owner-dashboard__panel-heading">
-          <span class="owner-dashboard__panel-icon owner-dashboard__panel-icon--amber"><svg lucideMessageCircle [size]="20" aria-hidden="true"></svg></span>
-          <div><h2><a routerLink="/proprietaire/messages">Communication</a></h2><p>Sur votre compte propriétaire</p></div>
-        </div>
-        <div class="owner-dashboard__unread">
-          <svg lucideMail [size]="20" aria-hidden="true"></svg>
-          <strong>{{ data.unreadMessages }}</strong>
-          <span>message(s) non lu(s)</span>
-        </div>
-        <div class="owner-dashboard__notification-list">
-          @for (notification of data.recentNotifications; track notification.id) {
-            <article [class.owner-dashboard__notification--unread]="!notification.read">
-              <span class="owner-dashboard__notification-dot"></span>
-              <div><strong>{{ notification.title }}</strong><p>{{ notification.content || 'Notification' }}</p></div>
-              <time>{{ notification.createdAt | date: 'dd/MM HH:mm' }}</time>
-            </article>
-          } @empty {
-            <p class="owner-dashboard__hint">Aucune notification récente.</p>
-          }
-        </div>
-      </section>
     </div>
 
     <section class="owner-dashboard__panel owner-dashboard__payments">

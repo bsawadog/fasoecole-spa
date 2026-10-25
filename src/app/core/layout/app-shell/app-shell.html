@@ -1,7 +1,14 @@
 <div class="shell">
-  <aside class="shell__sidebar">
+  <app-navigation-activity />
+  <aside id="modules-menu" class="shell__sidebar" [hidden]="!modulesOpen()">
     <div class="shell__brand">
-      <img src="assets/images/fasoecole-logo-alt.svg" alt="FasoEcole" />
+      <img src="assets/images/logofe.png" alt="FasoEcole" />
+      <button class="shell__menu-close" type="button" aria-label="Fermer le menu des modules"
+              title="Fermer le menu des modules" (click)="modulesOpen.set(false)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="m6 6 12 12M6 18 18 6" />
+        </svg>
+      </button>
     </div>
 
     <nav class="shell__nav" aria-label="Navigation principale">
@@ -18,7 +25,7 @@
       <ng-template #navigationLinks let-items>
       @for (item of items; track item.routerLink) {
         <a [routerLink]="item.routerLink" class="shell__nav-link" routerLinkActive="shell__nav-link--active"
-           [routerLinkActiveOptions]="{ exact: item.icon === 'home' }">
+           [attr.data-icon]="item.icon" [routerLinkActiveOptions]="{ exact: item.icon === 'home' }">
           @switch (item.icon) {
             @case ('home') { <svg lucideHouse [size]="19" aria-hidden="true"></svg> }
             @case ('building') { <svg lucideBuilding2 [size]="19" aria-hidden="true"></svg> }
@@ -48,27 +55,22 @@
 
   <main class="shell__content">
     @if (platformIntervention()) {
-      <p role="status">Intervention SUPER_ADMIN · {{ selectedContextSchool()?.schoolName }}. Les actions sont effectuées avec votre identité d’administrateur.</p>
+      <p-message severity="success" role="status">Intervention SUPER_ADMIN · {{ selectedContextSchool()?.schoolName }}. Les actions sont effectuées avec votre identité d’administrateur.</p-message>
     }
     <header class="shell__topbar">
-      <div class="shell__academic-context">
-      @if (!schoolPreview()) { <app-academic-context /> }
-      @else {
-        <label>Établissement
-          <select aria-label="Établissement consulté" [value]="selectedContextSchool()?.schoolId" (change)="selectPreviewSchool($event)">
-            @for (school of contextSchools(); track school.schoolId) { <option [value]="school.schoolId">{{ school.schoolName }}</option> }
-          </select>
-        </label>
+      @if (!modulesOpen()) {
+      <button pButton severity="secondary" variant="outlined" class="shell__action shell__modules-toggle" type="button"
+              aria-controls="modules-menu" [attr.aria-expanded]="modulesOpen()"
+              aria-label="Ouvrir le menu des modules" title="Ouvrir le menu des modules"
+              (click)="modulesOpen.set(true)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 6h18M3 12h18M3 18h18" />
+        </svg>
+      </button>
       }
+      <div class="shell__school-context">
+        <app-academic-context />
       </div>
-      <a routerLink="/profil" class="shell__profile-link" routerLinkActive="shell__profile-link--active"
-         title="Voir mon profil">
-        <span class="shell__avatar" aria-hidden="true">{{ initials() }}</span>
-        <span class="shell__user-info">
-          <strong>{{ user()?.firstName }} {{ user()?.lastName }}</strong>
-          <small>{{ roleLabel() }}</small>
-        </span>
-      </a>
       @if (messageNavigation(); as messages) {
         <a [routerLink]="messages.routerLink" class="shell__action shell__messages" routerLinkActive="shell__action--active"
            title="Messages" [attr.aria-label]="messages.badge ? 'Messages, ' + messages.badge + ' non lu(s)' : 'Messages'">
@@ -78,21 +80,25 @@
           }
         </a>
       }
-      <a routerLink="/profil" class="shell__action" routerLinkActive="shell__action--active" title="Mon profil" aria-label="Mon profil">
-        <svg lucideUserRound [size]="18" aria-hidden="true"></svg>
-        <span>Mon profil</span>
-      </a>
-      <button class="shell__action shell__action--logout" type="button" (click)="logout()" title="Se déconnecter" aria-label="Se déconnecter">
-        <svg lucideLogOut [size]="18" aria-hidden="true"></svg>
-        <span>Se déconnecter</span>
-      </button>
+      <app-account-actions />
+      <nav class="shell__breadcrumbs" aria-label="Fil d’Ariane">
+        <ol>
+          @for (crumb of breadcrumbs(); track $index) {
+            <li>
+              @if (!$first) { <span aria-hidden="true">›</span> }
+              @if ($last) { <span aria-current="page">{{ crumb.label }}</span> }
+              @else { <a [routerLink]="crumb.url">{{ crumb.label }}</a> }
+            </li>
+          }
+        </ol>
+      </nav>
     </header>
 
     <div class="shell__page">
     @if (accountStatusError()) {
-      <section class="shell__status shell__status--error" role="alert">
+      <app-error-alert [message]="accountStatusError()" (dismissed)="accountStatusError.set(false)">
         Impossible de vérifier l’état du compte. Certaines informations peuvent ne pas être à jour.
-      </section>
+      </app-error-alert>
     }
     @if (user(); as currentUser) {
       @if (currentUser.emailVerified !== true) {
@@ -101,7 +107,7 @@
         </section>
       }
       @if (!currentUser.approved) {
-        <section class="shell__status" role="status">
+        <section class="shell__status shell__status--pending" role="status">
           <svg lucideClock3 [size]="22" aria-hidden="true"></svg>
           <div>
             <strong>Demande en attente d’approbation</strong>
@@ -117,11 +123,11 @@
         </section>
       }
     }
-    @if (ownerContextLoading()) { <p role="status">Chargement de vos établissements…</p> }
+    @if (ownerContextLoading()) { <app-loading-state message="Chargement de vos établissements…" /> }
     @else if (previewPage()) {
-      <section class="shell__status" role="status">
+      <section class="shell__status" [class.shell__status--pending]="schoolPreview()?.status === 'PENDING_APPROVAL'" role="status">
         <div>
-          <h1>{{ previewTitle() }}</h1>
+          <header class="ui-page-header module-help-header"><h1>{{ previewTitle() }}</h1><app-module-help /></header>
           <h2>{{ schoolPreview()?.schoolName }}</h2>
           <p>{{ previewDescription() }}</p>
           <strong>Les informations seront visibles et pourront être renseignées lorsque la demande de création d’établissement sera approuvée par le SUPER_ADMIN.</strong>

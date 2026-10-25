@@ -1,0 +1,57 @@
+@if (auth.user()?.approved && auth.user()?.emailVerified && !auth.user()?.mustChangePassword) {
+  <div class="account-control">
+    <button type="button" class="account-trigger" aria-controls="account-notifications" [attr.aria-expanded]="opened() === 'notifications'"
+      [attr.aria-label]="'Notifications, ' + unread() + ' non lues'" (click)="toggle('notifications')"
+      pTooltip="Notifications" tooltipPosition="top" tooltipEvent="both" [showDelay]="500" appendTo="body">
+      <svg lucideBell [size]="21" aria-hidden="true"></svg>
+      @if (unread()) { <span class="account-count" aria-hidden="true">{{ unread() > 99 ? '99+' : unread() }}</span> }
+    </button>
+    @if (opened() === 'notifications') {
+      <section id="account-notifications" class="account-panel account-panel--notifications" aria-label="Notifications">
+        <h2>Notifications <span>{{ unread() }} non lues</span></h2>
+        @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set('')">{{ error() }}</app-error-alert> }
+        @if (loading()) { <p role="status">Chargement des notifications…</p> }
+        @else if (!notifications().length && !error()) { <p>Aucune notification pour le moment.</p> }
+        <ul>
+          @for (item of notifications(); track item.id) {
+            <li [class.unread]="!item.isRead">
+              <strong>{{ item.title }}</strong>
+              <p>{{ item.content }}</p>
+              <time [attr.datetime]="item.createdAt">{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</time>
+              @if (!item.isRead) {
+                <button type="button" [disabled]="marking().includes(item.id)" (click)="markRead(item)">Marquer comme lue</button>
+              } @else { <span class="account-read">Lue</span> }
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  </div>
+}
+<div class="account-control">
+  <button type="button" class="account-trigger" aria-controls="account-profile" [attr.aria-expanded]="opened() === 'profile'" (click)="toggle('profile')">
+    <svg lucideUserRound [size]="19" aria-hidden="true"></svg><span class="account-identity">{{ auth.user()?.lastName }} {{ auth.user()?.firstName }}
+      @if (activeSpace(); as space) { <small>Espace {{ spaceLabel(space) }}</small> }
+    </span>
+  </button>
+  @if (opened() === 'profile') {
+    <section id="account-profile" class="account-panel" aria-label="Mon compte">
+      <p class="account-name">{{ auth.user()?.firstName }} {{ auth.user()?.lastName }}</p>
+      @if (refreshingSpaces()) { <p role="status">Actualisation des espaces…</p> }
+      @if (spaces().length > 1 && auth.user()?.approved && auth.user()?.emailVerified && !auth.user()?.mustChangePassword) {
+        <div class="account-spaces" role="group" aria-label="Changer d’espace">
+          <p>Changer d’espace</p>
+          @for (space of spaces(); track space) {
+            <button type="button" [attr.aria-pressed]="activeSpace() === space" [disabled]="switching() || refreshingSpaces()" (click)="changeSpace(space)">
+              {{ spaceLabel(space) }}
+              @if (activeSpace() === space) { <span class="account-space-current">Actif</span> }
+            </button>
+          }
+        </div>
+      }
+      @if (switchError()) { <app-error-alert [message]="switchError()" (dismissed)="switchError.set('')">{{ switchError() }}</app-error-alert> }
+      <a routerLink="/profil" (click)="opened.set(null)"><svg lucideUserRound [size]="18" aria-hidden="true"></svg>Mon profil</a>
+      <button type="button" class="account-logout" (click)="auth.logout()"><svg lucideLogOut [size]="18" aria-hidden="true"></svg>Se déconnecter</button>
+    </section>
+  }
+</div>

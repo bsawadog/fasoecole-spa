@@ -43,7 +43,10 @@ export interface ClassRecord {
   capacity: number;
 }
 
+export interface SubjectCatalogPack {id:string;label:string;subjects:{code:string;name:string;category:string}[];}
+export interface SubjectCatalogResult {created:number;completed:number;conflicts:string[];}
 export interface SubjectRecord {
+  category?: string|null;
   id: number;
   schoolId: number;
   name: string;
@@ -84,6 +87,8 @@ export interface TeacherRecord {
 }
 
 export interface RosterParent {
+  emailVerified?: boolean | null;
+  passwordSet?: boolean | null;
   parentId: number;
   userId: number;
   firstName: string;
@@ -94,13 +99,16 @@ export interface RosterParent {
 }
 
 export interface ClassRosterRow {
+  accountEmail?: string | null;
+  passwordSet?: boolean;
+  billingSummary?: { totalDue: number; totalPaid: number; totalBalance: number };
   emailVerified?: boolean;
   invitationDeliveryStatus?: string | null;
   studentId: number;
   userId: number;
   firstName: string;
   lastName: string;
-  email: string;
+  email: string | null;
   phone: string | null;
   registrationNumber: string;
   birthDate: string | null;
@@ -120,6 +128,7 @@ export interface UpdateStudentProfilePayload {
 }
 
 export interface UpdateParentProfilePayload {
+  studentId?: number;
   firstName: string;
   lastName: string;
   email: string | null;
@@ -237,6 +246,13 @@ export interface CreateStudentPaymentPayload {
 
 @Injectable({ providedIn: 'root' })
 export class OwnerManagementService {
+  importRosterStudent(classId: number, payload: CreateRosterStudentPayload & {
+    parent?: { firstName: string; lastName: string; email: string | null; phone: string | null; relationship: string | null } | null;
+    feeTypeName: string | null; fees: number | null; paid: number | null;
+    dueDate: string | null; paymentDate: string | null; paymentMethod: string | null;
+  }): Observable<ClassRosterRow> {
+    return this.http.post<ClassRosterRow>(`${this.apiUrl}/classes/${classId}/roster/import`, payload);
+  }
   createSchool(payload: Omit<SchoolRecord, 'id'>): Observable<SchoolRecord> {
     return this.http.post<SchoolRecord>(`${environment.apiUrl}/schools`, payload);
   }
@@ -300,6 +316,8 @@ export class OwnerManagementService {
     return this.http.delete<void>(`${this.apiUrl}/classes/${id}`);
   }
 
+  subjectCatalog(schoolId:number){return this.http.get<SubjectCatalogPack[]>(this.apiUrl+'/subjects/catalog',{params:{schoolId}});}
+  applySubjectCatalog(schoolId:number,packId:string){return this.http.post<SubjectCatalogResult>(this.apiUrl+'/subjects/catalog/'+encodeURIComponent(packId),null,{params:{schoolId}});}
   getSubjects(schoolId: number): Observable<SubjectRecord[]> {
     return this.http.get<SubjectRecord[]>(`${this.apiUrl}/subjects`, { params: { schoolId } });
   }
@@ -339,16 +357,16 @@ export class OwnerManagementService {
     return this.http.get<TeacherRecord[]>(`${this.apiUrl}/teachers`, { params: { schoolId } });
   }
 
+  getClassTeachers(classId: number): Observable<{ teacherId: number; teacherName: string; subjectName: string }[]> {
+    return this.http.get<{ teacherId: number; teacherName: string; subjectName: string }[]>(this.apiUrl + '/classes/' + classId + '/roster/teachers');
+  }
+
   getClassRoster(classId: number): Observable<ClassRosterRow[]> {
     return this.http.get<ClassRosterRow[]>(`${this.apiUrl}/classes/${classId}/roster`);
   }
 
   createRosterStudent(classId: number, payload: CreateRosterStudentPayload): Observable<ClassRosterRow> {
     return this.http.post<ClassRosterRow>(`${this.apiUrl}/classes/${classId}/roster/students`, payload);
-  }
-
-  removeRosterStudent(classId: number, studentId: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/classes/${classId}/roster/students/${studentId}`);
   }
 
   transferRosterStudent(classId: number, studentId: number, targetClassId: number): Observable<ClassRosterRow> {
@@ -364,6 +382,27 @@ export class OwnerManagementService {
 
   updateRosterParent(classId: number, parentId: number, payload: UpdateParentProfilePayload): Observable<ClassRosterRow> {
     return this.http.put<ClassRosterRow>(`${this.apiUrl}/classes/${classId}/roster/parents/${parentId}`, payload);
+  }
+
+  inviteStudentAccount(classId: number, studentId: number, email: string): Observable<{ student: ClassRosterRow; emailSent: boolean }> {
+    return this.http.post<{ student: ClassRosterRow; emailSent: boolean }>(
+      `${this.apiUrl}/classes/${classId}/roster/students/${studentId}/account-invitation`, { email });
+  }
+
+  deleteRosterStudent(classId: number, studentId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/classes/${classId}/roster/students/${studentId}`);
+  }
+
+  deleteTeacher(teacherId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/teachers/${teacherId}`);
+  }
+
+  getTeacher(teacherId: number): Observable<TeacherRecord> {
+    return this.http.get<TeacherRecord>(`${this.apiUrl}/teachers/${teacherId}`);
+  }
+
+  updateTeacher(teacherId: number, payload: Pick<TeacherRecord, 'specialty' | 'hireDate'>): Observable<TeacherRecord> {
+    return this.http.put<TeacherRecord>(`${this.apiUrl}/teachers/${teacherId}`, payload);
   }
 
   addRosterParent(classId: number, studentId: number,

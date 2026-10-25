@@ -1,29 +1,21 @@
 <main class="owner-management">
-  <header class="owner-management__header">
+  <header class="module-help-header owner-management__header">
+    <app-module-help />
     <div>
       <p class="owner-management__eyebrow">Administration de l’école</p>
-      <h1>Gestion de l’établissement</h1>
+      <h1>Configuration de l’école</h1>
       <p>Configurez l’école, organisez l’année scolaire et suivez vos effectifs et tarifs.</p>
     </div>
-    @if (schools().length > 1) {
-      <label class="owner-management__school-picker">
-        <span>Choisir un établissement</span>
-        <select [value]="selectedSchoolId()" (change)="onSchoolChange($event)">
-          @for (item of schools(); track item.id) {
-            <option [value]="item.id">{{ item.name }}</option>
-          }
-        </select>
-      </label>
-    } @else if (school(); as currentSchool) {
+    @if (school(); as currentSchool) {
       <div class="owner-management__school-badge">{{ currentSchool.name }} <span>{{ typeLabel(currentSchool.type) }}</span></div>
     }
   </header>
 
   @if (errorMessage()) {
-    <p class="owner-management__message owner-management__message--error" role="alert">{{ errorMessage() }}</p>
+    <app-error-alert [message]="errorMessage()" (dismissed)="errorMessage.set(null)">{{ errorMessage() }}</app-error-alert>
   }
   @if (successMessage()) {
-    <p class="owner-management__message owner-management__message--success" role="status">{{ successMessage() }}</p>
+    <p-message severity="success" class="owner-management__message owner-management__message--success" role="status">{{ successMessage() }}</p-message>
   }
 
   @if (loading()) {
@@ -31,10 +23,10 @@
   } @else if (schools().length === 0) {
     <section class="owner-management__empty">
       <h2>Aucun établissement associé</h2>
-      <p>Un établissement doit être associé à votre compte propriétaire pour accéder à sa gestion.</p>
+      <p>Un établissement doit être associé à votre compte propriétaire pour accéder à sa configuration.</p>
     </section>
   } @else {
-    <nav class="owner-management__tabs" aria-label="Sections de gestion">
+    <nav class="owner-management__tabs" aria-label="Sections de configuration">
       @for (item of sections; track item.id) {
         <button type="button" [class.owner-management__tab--active]="section() === item.id" (click)="selectSection(item.id)">
           {{ item.label }}
@@ -49,23 +41,23 @@
         </div>
         @if (school(); as currentSchool) {
           <form class="owner-management__form owner-management__form--school" (ngSubmit)="saveSchool()">
-            <label>Nom de l’école<input name="schoolName" [(ngModel)]="schoolForm.name" required maxlength="150"></label>
+            <label>Nom de l’école<input pInputText name="schoolName" [(ngModel)]="schoolForm.name" required maxlength="150"></label>
             <label>Type
-              <select name="schoolType" [(ngModel)]="schoolForm.type" required>
-                <option value="PRESCOLAIRE">Établissement préscolaire</option>
-                <option value="PRIMAIRE">École primaire</option>
-                <option value="SECONDAIRE">Établissement secondaire</option>
-                <option value="MIXTE">Établissement mixte (plusieurs cycles)</option>
-                <option value="UNIVERSITE">Université</option>
-                <option value="FORMATION">Centre de formation</option>
-              </select>
+              <app-select-field name="schoolType" [(ngModel)]="schoolForm.type" required [ariaLabel]="(&quot;Type &quot;).trim()">
+                <app-select-option [value]="&quot;PRESCOLAIRE&quot;" [label]="(&quot;École maternelle&quot;).trim()" />
+                <app-select-option [value]="&quot;PRIMAIRE&quot;" [label]="(&quot;École primaire&quot;).trim()" />
+                <app-select-option [value]="&quot;SECONDAIRE&quot;" [label]="(&quot;Établissement secondaire&quot;).trim()" />
+                <app-select-option [value]="&quot;MIXTE&quot;" [label]="(&quot;Établissement mixte (plusieurs cycles)&quot;).trim()" />
+                <app-select-option [value]="&quot;UNIVERSITE&quot;" [label]="(&quot;Université&quot;).trim()" />
+                <app-select-option [value]="&quot;FORMATION&quot;" [label]="(&quot;Centre de formation&quot;).trim()" />
+              </app-select-field>
             </label>
-            <label class="owner-management__wide">Adresse<input name="schoolAddress" [(ngModel)]="schoolForm.address" maxlength="255"></label>
-            <label>Téléphone<input name="schoolPhone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="schoolForm.phone" maxlength="30"></label>
-            <label>Email<input name="schoolEmail" type="email" email [(ngModel)]="schoolForm.email" maxlength="150"></label>
+            <label class="owner-management__wide">Adresse<input pInputText name="schoolAddress" [(ngModel)]="schoolForm.address" maxlength="255"></label>
+            <label>Téléphone<input pInputText name="schoolPhone" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="schoolForm.phone" maxlength="30"></label>
+            <label>Email<input pInputText name="schoolEmail" type="email" email [(ngModel)]="schoolForm.email" maxlength="150"></label>
             <div class="owner-management__form-actions owner-management__wide">
               <span>Établissement {{ currentSchool.status === 'ACTIVE' ? 'actif' : currentSchool.status.toLowerCase() }}</span>
-              <button type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer les coordonnées' }}</button>
+              <button pButton type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer les coordonnées' }}</button>
             </div>
           </form>
         }
@@ -79,7 +71,7 @@
       <section class="owner-management__panel">
         <div class="owner-management__panel-heading">
           <div><h2>Organisation académique</h2><p>Construisez la structure de l’école, de l’année scolaire aux classes et matières.</p></div>
-          <button class="owner-management__primary" type="button" (click)="editAcademic()">Ajouter</button>
+          <button pButton class="owner-management__primary" type="button" (click)="editAcademic()">Ajouter</button>
         </div>
         <div class="owner-management__subtabs" aria-label="Données académiques">
           <button type="button" [class.owner-management__subtab--active]="academicKind() === 'years'" (click)="setAcademicKind('years')">Années scolaires <span>{{ years().length }}</span></button>
@@ -97,7 +89,7 @@
                 <strong>{{ group.label }}</strong>
                 <div>
                   @for (name of group.levels; track name; let index = $index) {
-                    <button type="button" [disabled]="activatingLevel() || levelExists({ name, cycle: group.cycle, orderIndex: group.startOrder + index })"
+                    <button pButton type="button" [disabled]="activatingLevel() || levelExists({ name, cycle: group.cycle, orderIndex: group.startOrder + index })"
                       (click)="activateLevel({ name, cycle: group.cycle, orderIndex: group.startOrder + index })">
                       {{ name }} {{ levelExists({ name, cycle: group.cycle, orderIndex: group.startOrder + index }) ? '✓' : '+' }}
                     </button>
@@ -108,62 +100,71 @@
           </div>
         }
 
+        @if(academicKind()==='subjects'){
+          <section class="owner-management__level-catalog" aria-label="Catalogues de matières">
+            <h3>Matières suggérées</h3><p>Ajoutez le secondaire général ou les filières techniques enseignées ici. Les matières, codes personnalisés et coefficients existants sont conservés. Les catégories ne modifient pas le calcul des moyennes.</p>
+            <button pButton type="button" (click)="showSubjectCatalog()" [disabled]="catalogBusy()||saving()">Afficher les catalogues</button>
+            @if(catalogBusy()){<p role="status">Chargement du catalogue…</p>}
+            @if(catalogError()){<app-error-alert [message]="catalogError()" (dismissed)="catalogError.set(null)">{{catalogError()}}</app-error-alert>}
+            @if(catalogOpen()){@for(pack of subjectCatalog();track pack.id){<details><summary>{{pack.label}} · {{pack.subjects.length}} matières</summary>
+              <p>Coefficient initial : 1, modifiable par matière et par classe.</p>
+              <ul>@for(subject of pack.subjects;track subject.code){<li><strong>{{subject.code}}</strong> — {{subject.name}} · {{subject.category}}</li>}</ul>
+              <button pButton type="button" (click)="applySubjectCatalog(pack)" [disabled]="catalogBusy()||saving()">Ajouter : {{pack.label}}</button>
+            </details>}}
+            @if(catalogConflicts().length){<p-message severity="warn">Certaines matières n’ont pas été ajoutées :</p-message><ul>@for(conflict of catalogConflicts();track conflict){<li>{{conflict}}</li>}</ul>}
+          </section>
+        }
         @if (editorOpen()) {
           <form class="owner-management__editor" (ngSubmit)="saveAcademic()">
             <div class="owner-management__editor-heading">
               <h3>{{ academicForm.id ? 'Modifier' : 'Créer' }} — {{ academicTitle() }}</h3>
-              <button type="button" class="owner-management__text-button" (click)="cancelEdit()">Annuler</button>
+              <button pButton severity="secondary" variant="text" type="button" class="owner-management__text-button" (click)="cancelEdit()">Annuler</button>
             </div>
             @if (academicKind() === 'years') {
-              <label>Nom de l’année<input name="yearLabel" [(ngModel)]="academicForm.label" placeholder="2026–2027" required maxlength="80"></label>
-              <label>Date de début<input name="yearStart" type="date" [(ngModel)]="academicForm.startDate" required></label>
-              <label>Date de fin<input name="yearEnd" type="date" [(ngModel)]="academicForm.endDate" required></label>
+              <label>Nom de l’année<input pInputText name="yearLabel" [(ngModel)]="academicForm.label" placeholder="2026–2027" required maxlength="80"></label>
+              <label>Date de début<app-date-field mode="date" name="yearStart" [(ngModel)]="academicForm.startDate" required [ariaLabel]="(&quot;Date de début&quot;).trim()" /></label>
+              <label>Date de fin<app-date-field mode="date" name="yearEnd" [(ngModel)]="academicForm.endDate" required [ariaLabel]="(&quot;Date de fin&quot;).trim()" /></label>
               <label class="owner-management__checkbox"><input name="currentYear" type="checkbox" [(ngModel)]="academicForm.isCurrent"> Année en cours</label>
             }
             @if (academicKind() === 'levels') {
-              <label>Nom du niveau<input name="levelName" [(ngModel)]="academicForm.name" placeholder="Seconde" required maxlength="100"></label>
+              <label>Nom du niveau<input pInputText name="levelName" [(ngModel)]="academicForm.name" placeholder="Seconde" required maxlength="100"></label>
               <label>Cycle suggéré
-                <select name="levelCycleChoice" [ngModel]="isSuggestedCycle(academicForm.cycle) ? academicForm.cycle : 'PERSONNALISE'"
-                  (ngModelChange)="selectSuggestedCycle($event)">
+                <app-select-field name="levelCycleChoice" [ngModel]="isSuggestedCycle(academicForm.cycle) ? academicForm.cycle : 'PERSONNALISE'"
+                  (ngModelChange)="selectSuggestedCycle($event)" [ariaLabel]="(&quot;Cycle suggéré &quot;).trim()">
                   @for (group of suggestedCycles(); track group.cycle) {
-                    <option [value]="group.cycle">{{ group.label }}</option>
+                    <app-select-option [value]="group.cycle" [label]="((&quot;&quot; + ((group.label)) + &quot;&quot;)).trim()" />
                   }
-                  <option value="PERSONNALISE">Autre cycle (personnalisé)</option>
-                </select>
+                  <app-select-option [value]="&quot;PERSONNALISE&quot;" [label]="(&quot;Autre cycle (personnalisé)&quot;).trim()" />
+                </app-select-field>
               </label>
               @if (!isSuggestedCycle(academicForm.cycle)) {
-                <label>Nom du cycle<input name="levelCycle" [(ngModel)]="academicForm.cycle" placeholder="Cycle personnalisé" required maxlength="30"></label>
+                <label>Nom du cycle<input pInputText name="levelCycle" [(ngModel)]="academicForm.cycle" placeholder="Cycle personnalisé" required maxlength="30"></label>
               }
-              <label>Ordre<input name="levelOrder" type="number" min="0" [(ngModel)]="academicForm.orderIndex" required></label>
+              <label>Ordre<app-number-field name="levelOrder" min="0" [(ngModel)]="academicForm.orderIndex" required [ariaLabel]="(&quot;Ordre&quot;).trim()" /></label>
             }
             @if (academicKind() === 'classes') {
-              <label>Nom de la classe<input name="className" [(ngModel)]="academicForm.name" placeholder="2nde C" required maxlength="100"></label>
-              <label>Année scolaire
-                <select name="classYear" [(ngModel)]="academicForm.academicYearId" required>
-                  <option [ngValue]="null" disabled>Sélectionner</option>
-                  @for (year of years(); track year.id) { <option [ngValue]="year.id">{{ year.label }}</option> }
-                </select>
-              </label>
+              <label>Nom de la classe<input pInputText name="className" [(ngModel)]="academicForm.name" placeholder="2nde C" required maxlength="100"></label>
               <label>Niveau
-                <select name="classLevel" [(ngModel)]="academicForm.levelId" required>
-                  <option [ngValue]="null" disabled>Sélectionner</option>
-                  @for (level of levels(); track level.id) { <option [ngValue]="level.id">{{ level.cycle }} · {{ level.name }}</option> }
-                </select>
+                <app-select-field name="classLevel" [(ngModel)]="academicForm.levelId" required [ariaLabel]="(&quot;Niveau &quot;).trim()">
+                  <app-select-option [value]="null" [label]="(&quot;Sélectionner&quot;).trim()" disabled />
+                  @for (level of levels(); track level.id) { <app-select-option [value]="level.id" [label]="((&quot;&quot; + ((level.cycle)) + &quot; · &quot; + ((level.name)) + &quot;&quot;)).trim()" /> }
+                </app-select-field>
               </label>
-              <label>Capacité<input name="classCapacity" type="number" min="1" [(ngModel)]="academicForm.capacity" required></label>
+              <label>Capacité<app-number-field name="classCapacity" min="1" [(ngModel)]="academicForm.capacity" required [ariaLabel]="(&quot;Capacité&quot;).trim()" /></label>
             }
             @if (academicKind() === 'subjects') {
-              <label>Nom de la matière<input name="subjectName" [(ngModel)]="academicForm.name" placeholder="Mathématiques" required maxlength="100"></label>
-              <label>Code<input name="subjectCode" [(ngModel)]="academicForm.code" placeholder="MATH" maxlength="30"></label>
-              <label>Coefficient par défaut<input name="subjectCoefficient" type="number" min="0.25" max="20" step="0.25" [(ngModel)]="academicForm.coefficient" required></label>
+              <label>Nom de la matière<input pInputText name="subjectName" [(ngModel)]="academicForm.name" placeholder="Mathématiques" required maxlength="100"></label>
+              <label>Catégorie<input pInputText name="subjectCategory" [(ngModel)]="academicForm.category" maxlength="100" placeholder="Scientifique, Langue…" /></label>
+              <label>Code<input pInputText name="subjectCode" [(ngModel)]="academicForm.code" placeholder="MATH" maxlength="30"></label>
+              <label>Coefficient par défaut<app-number-field name="subjectCoefficient" min="0.25" max="20" step="0.25" [(ngModel)]="academicForm.coefficient" required [ariaLabel]="(&quot;Coefficient par défaut&quot;).trim()" /></label>
               <p class="owner-management__wide owner-management__hint">Appliqué à toutes les classes ; il reste ajustable par classe dans « Notes &amp; bulletins ».</p>
             }
             @if (academicError()) {
-              <p class="owner-management__message owner-management__message--error owner-management__wide" role="alert">{{ academicError() }}</p>
+              <app-error-alert [message]="academicError()" (dismissed)="academicError.set(null)">{{ academicError() }}</app-error-alert>
             }
             <div class="owner-management__form-actions owner-management__wide">
               <span>Renseignez les champs obligatoires avant d’enregistrer.</span>
-              <button type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer' }}</button>
+              <button pButton type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer' }}</button>
             </div>
           </form>
         }
@@ -179,8 +180,10 @@
                     <td><strong>{{ academicName(row) }}</strong></td>
                     <td>{{ academicDescription(row) }}</td>
                     <td class="owner-management__actions">
-                      <button type="button" (click)="editAcademic(row)">Modifier</button>
-                      <button type="button" class="owner-management__delete" (click)="deleteAcademic(row)">Supprimer</button>
+                      <app-row-actions>
+                        <button pButton variant="outlined" type="button" class="owner-management__icon-action ui-row-action--warning" [attr.aria-label]="'Modifier : ' + academicName(row)" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="editAcademic(row)"><svg lucidePencil [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">{{ 'Modifier : ' + academicName(row) }}</span></button>
+                        <button pButton severity="danger" variant="outlined" type="button" class="owner-management__icon-action owner-management__delete ui-row-action--danger" [attr.aria-label]="'Supprimer : ' + academicName(row)" pTooltip="Supprimer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="deleteAcademic(row)"><svg lucideTrash2 [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">{{ 'Supprimer : ' + academicName(row) }}</span></button>
+                      </app-row-actions>
                     </td>
                   </tr>
                 }
@@ -197,27 +200,27 @@
       <section class="owner-management__panel">
         <div class="owner-management__panel-heading">
           <div><h2>Frais scolaires</h2><p>Configurez les tarifs et leur fréquence pour cet établissement.</p></div>
-          <button class="owner-management__primary" type="button" (click)="editFee()">Créer un frais</button>
+          <button pButton class="owner-management__primary" type="button" (click)="editFee()">Créer un frais</button>
         </div>
         @if (editorOpen()) {
           <form class="owner-management__editor" (ngSubmit)="saveFee()">
             <div class="owner-management__editor-heading">
               <h3>{{ feeForm.id ? 'Modifier le tarif' : 'Nouveau tarif' }}</h3>
-              <button type="button" class="owner-management__text-button" (click)="cancelEdit()">Annuler</button>
+              <button pButton severity="secondary" variant="text" type="button" class="owner-management__text-button" (click)="cancelEdit()">Annuler</button>
             </div>
-            <label>Libellé<input name="feeName" [(ngModel)]="feeForm.name" placeholder="Frais de scolarité" required maxlength="120"></label>
-            <label>Montant (FCFA)<input name="feeAmount" type="number" min="1" step="1" [(ngModel)]="feeForm.amount" required></label>
+            <label>Libellé<input pInputText name="feeName" [(ngModel)]="feeForm.name" placeholder="Frais de scolarité" required maxlength="120"></label>
+            <label>Montant (FCFA)<app-number-field name="feeAmount" min="1" step="1" [(ngModel)]="feeForm.amount" required [ariaLabel]="(&quot;Montant (FCFA)&quot;).trim()" /></label>
             <label>Fréquence
-              <select name="feeFrequency" [(ngModel)]="feeForm.frequency">
-                <option value="ONE_TIME">Unique</option>
-                <option value="MONTHLY">Mensuelle</option>
-                <option value="TERM">Trimestrielle</option>
-                <option value="YEARLY">Annuelle</option>
-              </select>
+              <app-select-field name="feeFrequency" [(ngModel)]="feeForm.frequency" [ariaLabel]="(&quot;Fréquence &quot;).trim()">
+                <app-select-option [value]="&quot;ONE_TIME&quot;" [label]="(&quot;Unique&quot;).trim()" />
+                <app-select-option [value]="&quot;MONTHLY&quot;" [label]="(&quot;Mensuelle&quot;).trim()" />
+                <app-select-option [value]="&quot;TERM&quot;" [label]="(&quot;Trimestrielle&quot;).trim()" />
+                <app-select-option [value]="&quot;YEARLY&quot;" [label]="(&quot;Annuelle&quot;).trim()" />
+              </app-select-field>
             </label>
             <div class="owner-management__form-actions owner-management__wide">
               <span>Les tarifs par niveau et échéanciers ne sont pas encore gérés par l’API.</span>
-              <button type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer le tarif' }}</button>
+              <button pButton type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer le tarif' }}</button>
             </div>
           </form>
         }
@@ -232,8 +235,10 @@
                     <td>{{ frequencyLabel(fee.frequency) }}</td>
                     <td>{{ fee.amount | number: '1.0-0' }} FCFA</td>
                     <td class="owner-management__actions">
-                      <button type="button" (click)="editFee(fee)">Modifier</button>
-                      <button type="button" class="owner-management__delete" (click)="deleteFee(fee)">Supprimer</button>
+                      <app-row-actions>
+                        <button pButton variant="outlined" type="button" class="owner-management__icon-action ui-row-action--warning" [attr.aria-label]="'Modifier : ' + fee.name" pTooltip="Modifier" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="editFee(fee)"><svg lucidePencil [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">{{ 'Modifier : ' + fee.name }}</span></button>
+                        <button pButton severity="danger" variant="outlined" type="button" class="owner-management__icon-action owner-management__delete ui-row-action--danger" [attr.aria-label]="'Supprimer : ' + fee.name" pTooltip="Supprimer" tooltipEvent="both" [showDelay]="500" tooltipPosition="top" appendTo="body" (click)="deleteFee(fee)"><svg lucideTrash2 [size]="18" aria-hidden="true"></svg><span class="ui-actions-label">{{ 'Supprimer : ' + fee.name }}</span></button>
+                      </app-row-actions>
                     </td>
                   </tr>
                 }
@@ -290,5 +295,15 @@
         </div>
       </section>
     }
+    <nav class="owner-management__step-navigation" aria-label="Navigation des étapes de configuration">
+      @if (stepIndex() > 0) {
+        <button pButton severity="secondary" variant="outlined" type="button" class="owner-management__previous" [disabled]="stepNavigationDisabled()" (click)="changeStep(-1)">Précédent</button>
+      }
+      <span role="status">Étape {{ stepIndex() + 1 }} sur {{ steps.length }} · {{ steps[stepIndex()].label }}</span>
+      @if (stepIndex() < steps.length - 1) {
+        <button pButton type="button" class="owner-management__primary owner-management__next" [disabled]="stepNavigationDisabled()" (click)="changeStep(1)">Suivant : {{ steps[stepIndex() + 1].label }}</button>
+      }
+    </nav>
+    @if (editorOpen()) { <p class="owner-management__hint">Enregistrez ou annulez la saisie pour passer à l’étape suivante.</p> }
   }
 </main>

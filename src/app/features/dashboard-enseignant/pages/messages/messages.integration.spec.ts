@@ -4,6 +4,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { environment } from '../../../../../environments/environment';
 import { TeacherMessages } from './messages';
+import { By } from '@angular/platform-browser';
+import { SelectField } from '../../../../shared/ui/select-field';
 
 /** Component template + Angular forms + real SelfSpaceService; only the HTTP transport is simulated. */
 describe('Teacher messaging integration', () => {
@@ -32,8 +34,8 @@ describe('Teacher messaging integration', () => {
     const start = Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>)
       .find(button => button.textContent?.includes('Nouvelle conversation'))!;
     start.click(); fixture.detectChanges(); await fixture.whenStable();
-    const select = fixture.nativeElement.querySelector('select[name="classId"]') as HTMLSelectElement;
-    select.value = select.options[1].value; select.dispatchEvent(new Event('change'));
+    const select = fixture.debugElement.query(By.directive(SelectField)).componentInstance as SelectField;
+    select.update(2003);
     fixture.detectChanges();
     const recipients = http.expectOne(`${root}/conversations/teacher/recipients?schoolId=2001&classId=2003`);
     expect(recipients.request.method).toBe('GET');
@@ -77,9 +79,19 @@ describe('Teacher messaging integration', () => {
     await compose();
     submit().flush({ message: 'Recipient not authorized' }, { status: 403, statusText: 'Forbidden' });
     fixture.detectChanges(); await fixture.whenStable();
-    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('Recipient not authorized');
+    const alert = fixture.nativeElement.querySelector('[role="alertdialog"]') as HTMLDialogElement;
+    expect(alert.open).toBe(true);
+    expect(alert.textContent).toContain('Recipient not authorized');
     expect((fixture.nativeElement.querySelector('input[name="subject"]') as HTMLInputElement).value).toBe('Homework');
     expect(fixture.componentInstance.sending()).toBe(false);
     expect(fixture.componentInstance.selectedRecipientIds()).toEqual([2203]);
+    (alert.querySelector('.error-alert__ok') as HTMLButtonElement).click();
+    fixture.detectChanges(); await fixture.whenStable();
+    expect(fixture.componentInstance.error()).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('[role="alertdialog"]')).toBeNull();
+    submit().flush([summary]);
+    fixture.detectChanges(); await fixture.whenStable();
+    expect(fixture.componentInstance.error()).toBeFalsy();
+    expect(fixture.componentInstance.sending()).toBe(false);
   });
 });

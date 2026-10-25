@@ -1,3 +1,20 @@
+import { ErrorAlert } from '../../../../shared/error-alert';
+import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
+import { TooltipModule } from 'primeng/tooltip';
+import { DateField } from '../../../../shared/ui/date-field';
+import { NumberField } from '../../../../shared/ui/number-field';
+import { SelectField } from '../../../../shared/ui/select-field';
+import { SelectOption } from '../../../../shared/ui/select-field';
+import { LoadingState } from '../../../../shared/ui/loading-state';
+import { InputTextModule } from 'primeng/inputtext';
+import { TableModule } from 'primeng/table';
+import { CheckboxModule } from 'primeng/checkbox';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
+import { TableRow } from '../../../../shared/ui/table-row';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -56,7 +73,7 @@ interface Draft {
 @Component({
   selector: 'app-enrollment',
   standalone: true,
-  imports: [FormValidationDirective, FormsModule, RouterLink],
+  imports: [ErrorAlert, ModuleHelpButton, TooltipModule, DateField, NumberField, SelectField, SelectOption, TableRow, TableModule, CheckboxModule, InputNumberModule, SelectModule, TagModule, LoadingState, InputTextModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink],
   templateUrl: './enrollment.html',
   styleUrl: './enrollment.scss',
 })
@@ -349,7 +366,7 @@ export class EnrollmentPage implements OnInit {
   }
 
   toggleFee(fee: EnrollmentFee, selected: boolean): void {
-    this.feeChoices[fee.id] = { selected, amountPaid: selected ? fee.amount : null };
+    this.feeChoices[fee.id] = { selected, amountPaid: selected ? 0 : null };
   }
 
   selectedFees(): EnrollmentFee[] {
@@ -357,7 +374,7 @@ export class EnrollmentPage implements OnInit {
   }
 
   totalDue(): number {
-    return this.selectedFees().reduce((sum, f) => sum + Number(f.amount), 0);
+    return this.availableFees().reduce((sum, f) => sum + Number(f.amount), 0);
   }
 
   totalPaid(): number {
@@ -431,8 +448,8 @@ export class EnrollmentPage implements OnInit {
     const schoolId = this.schoolId();
     const f = this.newStudentForm;
     if (!schoolId) return;
-    if (!f.classId || !f.firstName.trim() || !f.lastName.trim() || !f.email.trim()) {
-      this.error.set('Renseignez la classe, le prénom, le nom et le courriel.');
+    if (!f.classId || !f.firstName.trim() || !f.lastName.trim()) {
+      this.error.set('Renseignez la classe, le prénom et le nom.');
       return;
     }
     if (this.guardians.some((g) => g.mode === 'existing' && !g.selected)) {
@@ -779,7 +796,7 @@ export class EnrollmentPage implements OnInit {
       this.refreshCounts();
     });
     this.schoolId.set(id);
-    this.auth.selectSchoolContext(id);
+
     this.yearFormOpen.set(false);
     this.plan.set(null);
     this.fromYearId.set(null);
@@ -799,8 +816,10 @@ export class EnrollmentPage implements OnInit {
         const ids = new Set(overview.years.map((y) => y.id));
         const current = overview.years.find((y) => y.current);
         const keepFrom = this.fromYearId();
+        const saved = Number(localStorage.getItem(`fasoecole_year_${schoolId}`));
         this.fromYearId.set(fromId && ids.has(fromId) ? fromId
           : keepFrom && ids.has(keepFrom) ? keepFrom
+          : saved && ids.has(saved) ? saved
           : (current?.id ?? overview.years[overview.years.length - 1]?.id ?? null));
         const candidates = this.nextYearCandidates();
         const keepTo = this.toYearId();

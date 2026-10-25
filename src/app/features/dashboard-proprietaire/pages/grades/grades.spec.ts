@@ -19,9 +19,10 @@ const evaluation: EvaluationInfo = {
 };
 
 describe('GradesPage', () => {
-  function setup() {
+  afterEach(() => localStorage.removeItem('fasoecole_year_5'));
+  function setup(withArchive = false) {
     const grades = {
-      periods: vi.fn(() => of([period])),
+      periods: vi.fn(() => of(withArchive ? [period, { ...period, id: 4, academicYearId: 8 }] : [period])),
       summary: vi.fn(() => of({
         period, average: 12.5, passRate: 75, studentCount: 4, rankedCount: 4,
         classes: [{ classId: 1, className: '6e A', levelName: '6e', studentCount: 4, rankedCount: 4, average: 12.5,
@@ -48,7 +49,7 @@ describe('GradesPage', () => {
         } },
         { provide: OwnerManagementService, useValue: {
           getAcademicYears: () => of([{ id: 9, schoolId: 5, label: '2026-2027', startDate: '2026-09-01',
-            endDate: '2027-06-30', isCurrent: true }]),
+            endDate: '2027-06-30', isCurrent: true }, ...(withArchive ? [{ id: 8, schoolId: 5, label: '2025-2026', startDate: '2025-09-01', endDate: '2026-06-30', isCurrent: false }] : [])]),
           getClasses: () => of([{ id: 1, schoolId: 5, name: '6e A', levelId: 8, academicYearId: 9, capacity: 30 }]),
           getLevels: () => of([{ id: 8, schoolId: 5, name: '6e', cycle: 'COLLEGE', orderIndex: 10 }]),
         } },
@@ -67,6 +68,15 @@ describe('GradesPage', () => {
     expect(text).toContain('Taux de réussite');
     expect(text).toContain('75 %');
     expect(text).toContain('6e · 6e A');
+  });
+
+  it('uses the header year for the period and creation defaults instead of the current year', () => {
+    localStorage.setItem('fasoecole_year_5', '8');
+    const { fixture } = setup(true);
+    const page = fixture.componentInstance;
+    expect(page.periodId()).toBe(4);
+    expect(page.defaults.academicYearId).toBe(8);
+    expect(page.periodForm.academicYearId).toBe(8);
   });
 
   it('requires a reason before changing an existing grade', () => {
@@ -88,5 +98,38 @@ describe('GradesPage', () => {
     page.saveSheet();
     expect(grades.saveGrades).toHaveBeenCalledWith(51,
       [{ studentId: 20, value: 15 }, { studentId: 21, value: 12 }], 'Erreur de report');
+  });
+
+  it('separates evaluation setup, grade entry and subject coefficients', () => {
+    const { fixture } = setup();
+    const page = fixture.componentInstance;
+    page.setTab('evaluations');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[placeholder="Devoir n°1"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.gr__table--sheet')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-label="Coefficient Mathématiques"]')).toBeNull();
+
+    page.openSheet(evaluation);
+    fixture.detectChanges();
+    expect(page.tab()).toBe('entry');
+    expect(fixture.nativeElement.querySelector('input[placeholder="Devoir n°1"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.gr__table--sheet')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Awa Kaboré');
+
+    page.setTab('coefficients');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[aria-label="Coefficient Mathématiques"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.gr__table--sheet')).toBeNull();
+  });
+
+  it('keeps a locked period read-only in the separate grade entry screen', () => {
+    const { fixture } = setup();
+    const page = fixture.componentInstance;
+    page.periods.set([{ ...period, status: 'LOCKED' }]);
+    page.openSheet(evaluation);
+    fixture.detectChanges();
+    expect(page.editable()).toBe(false);
+    expect(fixture.nativeElement.textContent).toContain('consultation seule');
+    expect(fixture.nativeElement.textContent).not.toContain('Enregistrer les notes');
   });
 });
