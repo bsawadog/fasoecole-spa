@@ -78,6 +78,27 @@
   animation: auth-image-pan 22s ease-in-out infinite alternate;
 }
 
+.auth-card__home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  align-self: flex-start;
+  margin-bottom: 1rem;
+  padding: .5rem .25rem;
+  color: var(--theme-link, #075c78);
+  font-size: .9rem;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: .2em;
+
+  &:hover { color: var(--theme-ink, #152c40); }
+  &:focus-visible {
+    outline: 3px solid var(--theme-focus, #087d9f);
+    outline-offset: 3px;
+    border-radius: .25rem;
+  }
+}
+
 @keyframes auth-image-pan {
   from { object-position: 0% 0%; }
   to { object-position: 100% 100%; }

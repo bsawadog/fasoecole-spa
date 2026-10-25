@@ -16,6 +16,10 @@
 
     <div class="auth-card__form-panel">
       <div class="auth-card__form-content">
+        <a class="auth-card__home-link" routerLink="/">
+          <svg lucideArrowLeft [size]="17" aria-hidden="true"></svg>
+          Retour à l’accueil
+        </a>
         @if (mode() !== 'login') {
           <button pButton severity="secondary" variant="text" class="auth-card__back" type="button" (click)="setMode('login')">
             <svg lucideArrowLeft [size]="17" aria-hidden="true"></svg>

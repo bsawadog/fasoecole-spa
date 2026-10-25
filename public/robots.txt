@@ -1,0 +1,14 @@
+User-agent: *
+Disallow: /api/
+Disallow: /login
+Disallow: /profil
+Disallow: /admin
+Disallow: /proprietaire
+Disallow: /enseignant
+Disallow: /etudiant
+Disallow: /parent
+Disallow: /aide
+Disallow: /unauthorized
+Disallow: /ajouter-etablissement
+
+Sitemap: https://app.dev.fasoecole.com/sitemap.xml
