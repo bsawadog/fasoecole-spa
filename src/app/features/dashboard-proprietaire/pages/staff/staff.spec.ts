@@ -13,7 +13,7 @@ const member: EmployeeMember = {
 };
 
 describe('StaffPage', () => {
-  function setup() {
+  function setup(allowCreate = false) {
     const api = {
       directory: vi.fn(() => of([member])),
       create: vi.fn(() => of({
@@ -38,9 +38,31 @@ describe('StaffPage', () => {
       ],
     });
     const fixture = TestBed.createComponent(StaffPage);
+    fixture.componentRef.setInput('allowCreate', allowCreate);
     fixture.detectChanges();
     return { fixture, api };
   }
+
+  it('opens employee creation from the visible button in the employee creation module', () => {
+    const { fixture, api } = setup(true);
+    const create = fixture.nativeElement.querySelector('.stf__card-head button') as HTMLButtonElement;
+    expect(create.textContent).toContain('Créer un employé');
+    expect(create.disabled).toBe(false);
+    create.click(); fixture.detectChanges();
+    expect(fixture.componentInstance.formOpen()).toBe(true);
+    expect(fixture.nativeElement.querySelector('form h3').textContent).toContain('Nouveau membre du personnel');
+    expect(fixture.nativeElement.querySelector('button[type="submit"]').textContent).toContain('Créer l’employé');
+    const page = fixture.componentInstance;
+    Object.assign(page.form, { firstName: 'Ali', lastName: 'Sawadogo', jobTitle: 'Gardien', monthlySalary: 75000 });
+    page.save();
+    expect(api.create).toHaveBeenCalledWith(5, expect.objectContaining({ firstName: 'Ali', jobTitle: 'Gardien', monthlySalary: 75000, modules: [] }));
+    expect(page.formOpen()).toBe(false);
+  });
+
+  it('keeps creation out of the standalone staff management page', () => {
+    const { fixture } = setup();
+    expect(fixture.nativeElement.querySelector('.stf__card-head button')).toBeNull();
+  });
 
   it('lists staff members with their delegated modules', () => {
     const { fixture, api } = setup();

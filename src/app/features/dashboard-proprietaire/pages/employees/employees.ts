@@ -35,7 +35,7 @@ interface InitialSlot {
     <section class="ui-context-bar">
     <label>Fonction <app-select-field [(ngModel)]="category" [ariaLabel]="(&quot;Fonction &quot;).trim()"><app-select-option [value]="&quot;teacher&quot;" [label]="(&quot;Enseignant&quot;).trim()" /><app-select-option [value]="&quot;staff&quot;" [label]="(&quot;Comptable, secrétaire, gardien et autres&quot;).trim()" /></app-select-field></label>
     </section>
-    @if (category === 'staff') { <app-staff /> } @else {
+    @if (category === 'staff') { <app-staff [allowCreate]="true" /> } @else {
       <section class="ui-panel">
       <h2 class="ui-panel-heading">Nouvel enseignant</h2>
       <form (ngSubmit)="teacherForm.valid && save()" #teacherForm="ngForm">

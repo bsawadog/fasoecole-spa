@@ -55,6 +55,7 @@ const MODULE_HINTS: Record<OwnerModule, string> = {
   styleUrl: './staff.scss',
 })
 export class StaffPage implements OnInit {
+  readonly allowCreate = input(false);
   readonly scopeSchoolId = input<number | null>(null);
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);

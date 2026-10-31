@@ -1,6 +1,8 @@
 <div class="ss">
   <header class="module-help-header ss__header">
-    <app-module-help /><div><h1>Messages</h1><p>Lisez les messages de votre établissement et répondez aux conversations.</p></div></header>
+    <app-module-help /><div><h1>Messages</h1><p>Écrivez à votre établissement et répondez aux conversations.</p></div>
+    <button pButton class="ss__btn" type="button" (click)="newConversation()" [disabled]="sending() || !profiles().length">Nouvelle conversation</button>
+  </header>
   @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
   <div class="ss__split">
     <aside class="ss__card" aria-label="Conversations">
@@ -15,7 +17,26 @@
       } @empty { @if (!loading()) { <p class="ss__body">Aucune conversation.</p> } }
     </aside>
     <section class="ss__card ss__body">
-      @if (thread(); as current) {
+      @if (showComposer()) {
+        <form (ngSubmit)="startConversation()" #composer="ngForm" class="ss__body">
+          <h2>Nouvelle conversation</h2>
+          <label class="ss__field">Établissement
+            <app-select-field name="studentId" [(ngModel)]="studentId" required ariaLabel="Établissement" [disabled]="sending()">
+              @for (profile of profiles(); track profile.studentId) {
+                <app-select-option [value]="profile.studentId" [label]="profile.schoolName + (profile.className ? ' · ' + profile.className : '')" />
+              }
+            </app-select-field>
+          </label>
+          <p class="ss__muted">Votre message sera envoyé à l’administration de cet établissement.</p>
+          <label class="ss__field">Objet<input pInputText name="subject" [(ngModel)]="subject" maxlength="160" required [disabled]="sending()" /></label>
+          <label class="ss__field">Votre message<textarea pTextarea name="message" [(ngModel)]="message" rows="5" maxlength="4000" [required]="!messageFiles.length" [disabled]="sending()"></textarea></label>
+          <app-conversation-files [(files)]="messageFiles" [disabled]="sending()" />
+          <div class="ss__actions">
+            <button pButton class="ss__btn" type="submit" [disabled]="sending() || !composer.valid || !subject.trim() || (!message.trim() && !messageFiles.length)">{{ sending() ? 'Envoi…' : 'Envoyer' }}</button>
+            <button pButton severity="secondary" variant="outlined" type="button" (click)="showComposer.set(false)" [disabled]="sending()">Annuler</button>
+          </div>
+        </form>
+      } @else if (thread(); as current) {
         <h2>{{ current.conversation.subject }}</h2><p class="ss__muted">{{ current.conversation.recipientCount ?? current.conversation.recipientNames?.length ?? 0 }} destinataire(s)</p>
         <div class="ss__thread" aria-live="polite">
           @for (message of current.messages; track message.id) {
@@ -31,7 +52,7 @@
           <app-conversation-files [(files)]="files" [disabled]="sending()" />
           <button pButton class="ss__btn" type="submit" [disabled]="sending() || (!reply.trim() && !files.length)">{{ sending() ? 'Envoi…' : 'Envoyer' }}</button>
         </form>
-      } @else { <p>Choisissez une conversation.</p> }
+      } @else { <p>Choisissez une conversation ou cliquez sur « Nouvelle conversation » pour écrire à votre établissement.</p> }
     </section>
   </div>
 </div>

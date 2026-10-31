@@ -23,6 +23,9 @@
       <div class="stf__card-head">
         <h2>Membres du personnel</h2>
         <span class="stf__count">{{ activeCount() }} actif(s) / {{ staff().length }}</span>
+        @if (allowCreate()) {
+          <button pButton type="button" class="stf__btn stf__btn--green" (click)="openCreate()" [disabled]="busy() || formOpen()">Créer un employé</button>
+        }
       </div>
 
       <div class="stf__filters"><label>Rechercher un employé<input pInputText [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Nom, courriel, fonction ou numéro d’employé" /></label><label>Accès aux modules<select aria-label="Filtrer les accès" [ngModel]="accessFilter()" (ngModelChange)="accessFilter.set($event)"><option value="ALL">Tous les employés</option><option value="WITH_ACCESS">Avec des accès attribués</option><option value="WITHOUT_ACCESS">Sans accès à la gestion</option></select></label></div>
@@ -99,14 +102,14 @@
           </fieldset>
           <p class="stf__muted">Chaque module se choisit séparément. La création d’établissements et d’employés, la validation des comptes, la clôture d’année, la gestion du personnel, l’export complet et l’assistance restent réservés au propriétaire.</p>
           <div class="stf__actions">
-            <button pButton type="submit" class="stf__btn" [disabled]="busy() || !employeeForm.valid">{{ editing ? 'Enregistrer' : 'Ajouter cette fonction' }}</button>
+            <button pButton type="submit" class="stf__btn" [disabled]="busy() || !employeeForm.valid">{{ editing ? 'Enregistrer' : allowCreate() ? 'Créer l’employé' : 'Ajouter cette fonction' }}</button>
             <button pButton severity="secondary" variant="outlined" type="button" class="stf__btn stf__btn--ghost" (click)="closeForm()" [disabled]="busy()">Annuler</button>
           </div>
         </form>
       }
 
       @if (!staff().length) {
-        <p class="stf__empty">Aucun employé pour le moment. Ajoutez les employés depuis le module « Créer un employé », puis gérez leurs informations et leurs accès ici.</p>
+        <p class="stf__empty">{{ allowCreate() ? 'Aucun employé pour le moment. Cliquez sur « Créer un employé » pour ajouter le premier membre du personnel.' : 'Aucun employé pour le moment. Ajoutez les employés depuis le module « Créer un employé », puis gérez leurs informations et leurs accès ici.' }}</p>
       } @else {
         <div class="stf__table-wrap">
           <table class="stf__table">

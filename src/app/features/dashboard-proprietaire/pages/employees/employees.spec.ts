@@ -25,6 +25,21 @@ describe('Teacher creation and initial compensation', () => {
     return { fixture, page, management, http: TestBed.inject(HttpTestingController) };
   }
 
+  it('offers employee creation when the non-teaching staff category is selected', async () => {
+    const { fixture, page, http } = setup();
+    await fixture.whenStable();
+    page.category = 'staff'; fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
+    http.expectOne(`${environment.apiUrl}/owner/staff/schools/1/employees`).flush([]);
+    fixture.detectChanges();
+    const create = fixture.nativeElement.querySelector('.stf__card-head button') as HTMLButtonElement;
+    expect(create).not.toBeNull();
+    expect(create.textContent).toContain('Créer un employé');
+    create.click(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.stf__panel')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('button[type="submit"]').textContent).toContain('Créer l’employé');
+    http.verify();
+  });
+
   it('sends a fixed monthly salary without an hourly rate or a timetable', () => {
     const { page, http, management } = setup();
     page.form.monthlySalary = 95000;
