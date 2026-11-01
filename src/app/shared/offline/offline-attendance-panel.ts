@@ -43,7 +43,7 @@ import { environment } from '../../../environments/environment';
     }
     </details>
   </section>`, styles: [`
-    .ss__card.ss__body { padding: 1rem 1.25rem; }
+    .ss__card.ss__body { padding: 1rem 1.25rem; border-color: #f97316; }
     .offline-pending > summary { cursor: pointer; padding: .5rem; font-weight: 600; }
     .offline-pending > summary:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
   `] })

@@ -35,7 +35,7 @@ import { OfflineAttendanceService } from './offline-attendance.service';
     </section>
     }
   `,
-  styles: [`.outbox{margin:.75rem 0;padding:.85rem 1rem;border:1px solid var(--theme-control-border,#49738f);border-radius:.75rem;background:var(--theme-surface,#fff)}.outbox>strong{display:block;margin-bottom:.5rem}.outbox>small{display:block;margin-top:.5rem}summary{cursor:pointer;font-weight:600}article{padding:.6rem 0;border-top:1px solid var(--theme-border,#ddd)}p{margin:.4rem 0}button{padding:.5rem .75rem;cursor:pointer}`],
+  styles: [`.outbox{margin:.75rem 0;padding:.85rem 1rem;border:1px solid #f97316;border-radius:.75rem;background:var(--theme-surface,#fff)}.outbox>strong{display:block;margin-bottom:.5rem}.outbox>small{display:block;margin-top:.5rem}summary{cursor:pointer;font-weight:600}article{padding:.6rem 0;border-top:1px solid var(--theme-border,#ddd)}p{margin:.4rem 0}button{padding:.5rem .75rem;cursor:pointer}`],
 })
 export class MessageOutboxPanel {
   readonly showStatus = input(false);

@@ -22,7 +22,7 @@ describe('AppShell account readiness', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  function setup(role: 'parent' | 'proprietaire' | 'enseignant' | 'etudiant' | 'admin') {
+  function setup(role: 'parent' | 'proprietaire' | 'enseignant' | 'etudiant' | 'admin', offlineOverrides: Record<string, unknown> = {}) {
     const ownerAccess = signal<SchoolAccess[]>([]);
     const schoolContextId = signal<number | null>(null);
     const user = signal({ id: 7, firstName: 'Awa', lastName: 'Diallo', email: 'awa@test.bf', role,
@@ -41,7 +41,7 @@ describe('AppShell account readiness', () => {
     TestBed.configureTestingModule({ imports: [AppShell], providers: [provideRouter([{ path: 'profil', component: AcademicContextStub },{path:'proprietaire',component:AcademicContextStub}]),
       { provide: AuthService, useValue: auth }, { provide: SelfSpaceService, useValue: self },
       { provide: OwnerFamilyMessagesService, useValue: messages },
-      { provide: OfflineAttendanceService, useValue: { enabled: () => false } },
+      { provide: OfflineAttendanceService, useValue: { enabled: () => false, ...offlineOverrides } },
       { provide: ModulePreloadService, useValue: { busy: () => false, failed: () => 0 } },
     ] });
     TestBed.overrideComponent(AppShell, { remove: { imports: [AcademicContextPicker] }, add: { imports: [AcademicContextStub] } });
@@ -157,6 +157,20 @@ describe('AppShell account readiness', () => {
     auth.ownerAccess.set([pendingSchool, approvedSchool]);
     fixture.detectChanges();
     expect(fixture.componentInstance.selectedContextSchool()?.schoolId).toBe(2);
+    fixture.destroy();
+  });
+
+  it('keeps pending sends collapsed and aligns the offline notice inside the module content', () => {
+    const { fixture } = setup('enseignant', { enabled: () => true, unlocked: () => true, online: () => false,
+      pending: () => [{ operationId: 'one' }], pendingMessages: () => [], pendingActions: () => [], publications: () => [],
+      lastActionSync: () => null, lastMessageSync: () => null, lastOfflineRead: () => '2026-11-01T04:19:00Z', readCacheIssue: () => null, busy: () => false,
+    });
+    const panel = fixture.nativeElement.querySelector('.shell__outbox') as HTMLDetailsElement;
+    expect(panel.open).toBe(false);
+    expect(panel.querySelector('summary')?.textContent).toContain('1 envoi(s) en attente');
+    expect(fixture.nativeElement.querySelector('.shell__page > .shell__offline-notice')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.shell__content > .shell__offline-notice')).toBeNull();
+    panel.querySelector('summary')!.click(); expect(panel.open).toBe(true);
     fixture.destroy();
   });
 

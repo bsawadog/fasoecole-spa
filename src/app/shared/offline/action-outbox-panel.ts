@@ -59,7 +59,7 @@ const FIELDS: Record<string, { label: string; type?: string; max?: number }> = {
       </section>
     }
   `,
-  styles: [`:host{display:block}.outbox{margin:.75rem 0;padding:1rem 1.25rem;border:1px solid var(--theme-control-border,#49738f);border-radius:.75rem;background:var(--theme-surface,#fff)}h2{font-size:1rem;margin:0 0 .5rem}article{padding:1rem 0;border-top:1px solid var(--theme-border,#ddd)}p{margin:.5rem 0;white-space:pre-wrap;overflow-wrap:anywhere}.pending{color:light-dark(#b45309,#fb923c)}.actions{display:flex;gap:.5rem;flex-wrap:wrap}button{padding:.5rem .75rem;cursor:pointer}label{display:grid;gap:.3rem;margin:.75rem 0}textarea,input{max-width:100%;box-sizing:border-box;padding:.5rem}input[type=checkbox]{justify-self:start}`],
+  styles: [`:host{display:block}.outbox{margin:.75rem 0;padding:1rem 1.25rem;border:1px solid #f97316;border-radius:.75rem;background:var(--theme-surface,#fff)}h2{font-size:1rem;margin:0 0 .5rem}article{padding:1rem 0;border-top:1px solid var(--theme-border,#ddd)}p{margin:.5rem 0;white-space:pre-wrap;overflow-wrap:anywhere}.pending{color:light-dark(#b45309,#fb923c)}.actions{display:flex;gap:.5rem;flex-wrap:wrap}button{padding:.5rem .75rem;cursor:pointer}label{display:grid;gap:.3rem;margin:.75rem 0}textarea,input{max-width:100%;box-sizing:border-box;padding:.5rem}input[type=checkbox]{justify-self:start}`],
 })
 export class ActionOutboxPanel {
   readonly offline = inject(OfflineAttendanceService);

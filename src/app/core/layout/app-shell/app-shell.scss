@@ -477,6 +477,29 @@
 @media (prefers-reduced-motion: reduce) {
   .shell__preparation-spinner { animation: none; }
 }
-.shell__content .shell__offline-warning {
-  color: light-dark(#b45309, #fb923c);
+.shell__content .shell__offline-warning,
+.shell__content .shell__offline-warning > p,
+.shell__content .shell__offline-warning > small {
+  color: var(--theme-warning, #b45309);
 }
+.shell__offline-notice {
+  margin: 0 0 1rem;
+  padding: .85rem 1rem;
+  border-left: 3px solid #f97316;
+  border-radius: .5rem;
+  background: var(--theme-surface, #fff);
+  overflow-wrap: anywhere;
+  p { margin: 0; }
+  small { display: block; margin-top: .5rem; }
+}
+.shell__outbox {
+  margin-bottom: 1rem;
+  border: 1px solid #f97316;
+  border-radius: .75rem;
+  background: var(--theme-surface, #fff);
+  > summary { cursor: pointer; padding: .8rem 1rem; font-weight: 600; overflow-wrap: anywhere; }
+  > summary > span + span { margin-left: .75rem; font-size: .85rem; font-weight: 400; }
+  > summary:focus-visible { outline: 2px solid #f97316; outline-offset: 3px; }
+}
+.shell__outbox-body { padding: 0 1rem 1rem; max-height: min(60vh, 32rem); overflow-y: auto; }
+.shell__publication-outbox { margin: .75rem 0; padding: .85rem 1rem; border: 1px solid #f97316; border-radius: .75rem; }

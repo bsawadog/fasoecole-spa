@@ -81,6 +81,7 @@ export class ModulePreloadService {
           for (const item of result.body) {
             if (result.url.endsWith('/me/teacher/classes') && Number.isSafeInteger(item?.classId)) {
               const base = `${api}/me/teacher/classes/${item.classId}`;
+              followups.push({ url: `${api}/school-life/classes/${item.classId}?module=HOMEWORK` });
               followups.push(...['students', `attendance?date=${date}`, `family-reports?date=${date}`, 'periods', 'conversations', 'portal/appointments',
                 ...['DOCUMENT', 'HOMEWORK', 'ANNOUNCEMENT'].map(kind => `portal/posts?kind=${kind}`)].map(path => ({ url: `${base}/${path}` })));
             } else if (result.url.endsWith('/me/students') && Number.isSafeInteger(item?.studentId)) {

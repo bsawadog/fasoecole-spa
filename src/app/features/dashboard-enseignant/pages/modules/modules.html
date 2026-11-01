@@ -9,6 +9,7 @@
     <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" [disabled]="loadingClasses() || loading() || saving()" (click)="reload()">Actualiser</button>
   </header>
   @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
+  @if (offlineNotice()) { <p-message severity="warn" role="status">{{ offlineNotice() }} Vous pouvez choisir une autre classe ou préparer une nouvelle publication.</p-message> }
   @if (module() === 'presences' && offline.enabled() && (offline.pending().length || !offline.online() || !offline.unlocked() || offline.issue())) { <app-offline-attendance /> }
   @if (success()) { <p-message severity="success" class="ss__alert ss__alert--success" role="status">{{ success() }}</p-message> }
   @if (loadingClasses()) { <app-loading-state message="Chargement de vos classes…" /> }
@@ -58,8 +59,9 @@
       @if (module() === 'documents') { <p class="ss__muted">Ajoutez un support de cours, des exercices ou un corrigé. Pour un travail avec une date de remise et un suivi, utilisez Devoirs de maison.</p> }
       @if (kind(); as postKind) {
         @if (postKind === 'HOMEWORK' || postKind === 'DOCUMENT' || postKind === 'ANNOUNCEMENT') {
-          <section class="ss__card ss__body" aria-label="Brouillons et publications en attente">
-            <h2>Brouillons et publications en attente</h2>
+          <details class="ss__card ss__body offline-publications" aria-label="Brouillons et publications en attente">
+            <summary>Brouillons et publications en attente · {{ localPublications().length }}</summary>
+            <div class="offline-publications__body">
             @if (!offline.enabled()) { <p>Activez le mode hors connexion dans Mon profil pour conserver automatiquement vos brouillons et envoyer vos publications au retour d’Internet.</p> }
             @else if (!offline.unlocked()) { <p>Retrouvez Internet pour déverrouiller les brouillons et la file d’attente de cet appareil.</p> }
             @else {
@@ -81,7 +83,8 @@
               } @empty { <p>Aucun brouillon ni publication en attente pour cette classe.</p> }
               @if (offline.lastPublicationSync()) { <p role="status">Dernière publication confirmée par le serveur : {{ offline.lastPublicationSync() }}</p> }
             }
-          </section>
+            </div>
+          </details>
         }
         <form class="ss__card ss__body"  #publicationForm="ngForm" (ngSubmit)="publish(publicationForm)"><h2>Publier pour les élèves et les parents de la classe</h2>
           <label class="ss__field">Titre<input pInputText name="title" [(ngModel)]="postTitle" (ngModelChange)="draftChanged()" [disabled]="saving()" maxlength="160" required /></label>
@@ -95,7 +98,7 @@
           <div><app-portal-posts [posts]="[post]" scope="teacher" [scopeId]="classId()!" />
             @if (post.mine && post.classId === classId()) { <button pButton severity="secondary" variant="outlined" type="button" class="ss__mini" [disabled]="saving()" (click)="remove(post)">Retirer ma publication</button> }
           </div>
-        } @empty { <p class="ss__state">Aucune publication disponible.</p> }
+        } @empty { @if (!offlineNotice()) { <p class="ss__state">Aucune publication disponible.</p> } }
         @if (postKind === 'HOMEWORK') { <app-homework-tracking scope="classes" [contextId]="classId()!" [revision]="posts()" /> }
       }
     }

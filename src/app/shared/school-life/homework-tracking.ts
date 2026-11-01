@@ -19,6 +19,7 @@ import { HomeworkProgress, LIFE_LABELS, SchoolLifeService } from './school-life.
       <h2>Remises et corrections</h2>
       <p class="ss__muted">Le professeur renseigne la remise et la correction en classe. Les parents et les élèves consultent le même suivi.</p>
       @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
+      @if (offlineNotice()) { <p-message severity="warn" role="status">{{ offlineNotice() }}</p-message> }
       @if (success()) { <p-message severity="success" role="status">{{ success() }}</p-message> }
       <button pButton type="button" severity="secondary" variant="outlined" (click)="load()" [disabled]="loading() || saving()">Actualiser le suivi</button>
       @if (loading()) { <p role="status">Chargement du suivi…</p> }
@@ -36,7 +37,7 @@ import { HomeworkProgress, LIFE_LABELS, SchoolLifeService } from './school-life.
             <button pButton type="button" (click)="save(item)" [disabled]="saving() || loading()">Enregistrer le suivi</button>
           }
         </article>
-      } @empty { @if (!loading() && !error()) { <p>Aucun devoir à suivre.</p> } }
+      } @empty { @if (!loading() && !error() && !offlineNotice()) { <p>Aucun devoir à suivre.</p> } }
     </section>
   `,
 })
@@ -50,6 +51,7 @@ export class HomeworkTracking implements OnChanges {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
+  readonly offlineNotice = signal<string | null>(null);
   readonly success = signal<string | null>(null);
   readonly labels = LIFE_LABELS;
   statuses: Record<string, string> = {};
@@ -65,7 +67,7 @@ export class HomeworkTracking implements OnChanges {
   key(item: HomeworkProgress): string { return item.postId + ':' + item.studentId; }
   load(preserveDrafts = false): void {
     const previous = new Map(this.rows().map(row => [this.key(row), row]));
-    const version = ++this.version; this.loading.set(true); this.error.set(null);
+    const version = ++this.version; this.loading.set(true); this.error.set(null); this.offlineNotice.set(null);
     this.api.overview(this.scope(), this.contextId(), 'suivi-devoirs').pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: data => {
         if (version !== this.version) return;
@@ -80,7 +82,12 @@ export class HomeworkTracking implements OnChanges {
         this.statuses = statuses; this.feedback = feedback;
         this.loading.set(false);
       },
-      error: err => { if (version === this.version) { this.loading.set(false); this.error.set(apiError(err, 'Impossible de charger le suivi.')); } },
+      error: err => {
+        if (version !== this.version) return;
+        this.loading.set(false);
+        if (err.status === 0 && err.error?.offline) this.offlineNotice.set(apiError(err, 'Le suivi de cette classe n’est pas disponible hors connexion.'));
+        else this.error.set(apiError(err, 'Impossible de charger le suivi.'));
+      },
     });
   }
   save(item: HomeworkProgress): void {

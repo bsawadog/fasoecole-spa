@@ -42,6 +42,7 @@ const today = () => new Date(Date.now()-new Date().getTimezoneOffset()*60_000).t
   selector: 'app-teacher-module', standalone: true,
   imports: [OfflineAttendancePanel, ErrorAlert, TeacherDailyTools, HomeworkTracking, ModuleHelpButton, TooltipModule, DateField, SelectField, SelectOption, TableRow, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, TableModule, FormValidationDirective, FormsModule, ConversationFiles, PortalPosts, ScheduleView, Appointments],
   templateUrl: './modules.html', styleUrl: '../../../../shared/self-space/self-space.scss',
+  styles: [`.ss__card.offline-publications{border-color:#f97316}.offline-publications>summary{cursor:pointer;font-weight:600;padding:.25rem 0}.offline-publications>summary:focus-visible{outline:2px solid #f97316;outline-offset:3px}.offline-publications__body{max-height:24rem;overflow-y:auto;margin-top:.75rem}`],
 })
 export class TeacherModule implements OnInit {
   private readonly auth = inject(AuthService);
@@ -66,6 +67,7 @@ export class TeacherModule implements OnInit {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
+  readonly offlineNotice = signal<string | null>(null);
   readonly success = signal<string | null>(null);
   readonly schedule = signal<ScheduleEntry[]>([]);
   readonly attendance = signal<TeacherAttendanceItem[]>([]);
@@ -133,6 +135,10 @@ export class TeacherModule implements OnInit {
   }
 
   ngOnInit(): void {
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      const requested = Number(params.get('classe'));
+      if (!this.saving() && requested !== this.classId() && this.classes().some(item => item.classId === requested)) this.choose(String(requested));
+    });
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       if (this.module() !== data['module']) {
         clearTimeout(this.draftTimer); this.persistDraft(); this.draftId = null;
@@ -196,7 +202,7 @@ export class TeacherModule implements OnInit {
     if (module !== 'emploi' && id === null) return;
     const version = ++this.version; const kind = this.kind();
     if (!background) {
-      this.loading.set(true); this.error.set(null); this.success.set(null);
+      this.loading.set(true); this.error.set(null); this.offlineNotice.set(null); this.success.set(null);
       this.attendance.set([]); this.reports.set([]); this.posts.set([]); this.appointments.set([]); this.attendanceDrafts = {};
     }
     forkJoin({
@@ -215,8 +221,14 @@ export class TeacherModule implements OnInit {
           if (!dirty) this.attendanceDrafts[row.studentId] = {status: row.status ?? 'PRESENT', justification: row.justification ?? ''};
         }
         this.schedule.set(data.schedule); this.attendance.set(data.attendance); this.reports.set(data.reports); this.posts.set(data.posts); this.appointments.set(data.appointments);
+        this.offlineNotice.set(null);
         this.loading.set(false);
-      }, error: err => { if (version === this.version) { this.loading.set(false); this.error.set(apiError(err, 'Impossible de charger ces informations.')); } },
+      }, error: err => {
+        if (version !== this.version) return;
+        this.loading.set(false);
+        if (err.status === 0 && err.error?.offline) this.offlineNotice.set(apiError(err, 'Ces informations ne sont pas disponibles hors connexion.'));
+        else this.error.set(apiError(err, 'Impossible de charger ces informations.'));
+      },
     });
   }
   saveCall(): void {
@@ -373,8 +385,11 @@ export class TeacherModule implements OnInit {
         await this.offline.savePublication(snapshot.item);
         this.draftId = null; this.postTitle = ''; this.content = ''; this.dueDate = ''; this.files = []; form?.resetForm(); this.draftStatus.set(null);
         this.success.set('Publication conservée sur cet appareil · en attente d’envoi. Elle n’est pas encore visible par les élèves.');
-        if (this.offline.online()) await this.offline.synchronize();
-        if (this.offline.publicationConfirmed(snapshot.item.operationId)) { this.success.set('Publication confirmée par le serveur.'); this.reload(true); }
+        if (this.offline.online()) void this.offline.synchronize().then(() => {
+          if (version === this.version && this.classId() === id && this.offline.publicationConfirmed(snapshot.item.operationId)) {
+            this.success.set('Publication confirmée par le serveur.'); this.reload(true);
+          }
+        });
       } catch (err) { this.error.set(apiError(err, 'Impossible de conserver la publication. Votre saisie reste dans le formulaire.')); }
       finally { this.saving.set(false); }
       return;

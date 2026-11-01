@@ -68,11 +68,6 @@
     }
     @if (moduleCache.refreshIssue()) { <small role="status">{{ moduleCache.refreshIssue() }}</small> }
     @if (moduleCache.latestRefresh()) { <small role="status">Cache actualisé en arrière-plan à {{ moduleCache.latestRefresh() | date:'HH:mm' }}.</small> }
-    @if (offline.enabled() && !offline.online()) {
-      <p class="ss__state shell__offline-warning" role="status">Hors connexion Internet · Consultation des dernières données chargées sur cet appareil. Les présences et messages peuvent être conservés pour un envoi au retour d’Internet. Les autres modifications nécessitent Internet. {{ offline.unlocked() ? '' : 'Retrouvez Internet pour déverrouiller les données.' }}</p>
-      @if (offline.lastOfflineRead()) { <small class="shell__offline-warning" role="status">Dernière copie consultée : {{ offline.lastOfflineRead() | date:'dd/MM/yyyy HH:mm' }}. Les données peuvent avoir changé sur le serveur.</small> }
-    }
-    @if (offline.enabled() && offline.readCacheIssue()) { <p class="ss__state" role="status">{{ offline.readCacheIssue() }}</p> }
     @if (platformIntervention()) {
       <p-message severity="success" role="status">Intervention SUPER_ADMIN · {{ selectedContextSchool()?.schoolName }}. Les actions sont effectuées avec votre identité d’administrateur.</p-message>
     }
@@ -114,10 +109,41 @@
     </header>
 
     <div class="shell__page">
-      @if (offline.enabled() && offline.unlocked()) { <app-action-outbox /> }
-    @if (messagesPage() || (offline.enabled() && offline.unlocked())) {
-      <app-message-outbox [showStatus]="messagesPage()" />
-    }
+      @if (offline.enabled() && !offline.online()) {
+        <section class="shell__offline-notice shell__offline-warning" role="status">
+          <p>Hors connexion Internet · Consultation des dernières données chargées sur cet appareil. Les présences, messages et autres ajouts compatibles peuvent être conservés pour un envoi au retour d’Internet. Les autres modifications nécessitent Internet. {{ offline.unlocked() ? '' : 'Retrouvez Internet pour déverrouiller les données.' }}</p>
+          @if (offline.lastOfflineRead()) { <small>Dernière copie consultée : {{ offline.lastOfflineRead() | date:'dd/MM/yyyy HH:mm' }}. Les données peuvent avoir changé sur le serveur.</small> }
+        </section>
+      }
+      @if (offline.enabled() && offline.readCacheIssue()) { <p class="ss__state" role="status">{{ offline.readCacheIssue() }}</p> }
+      @if (pendingOperationCount() || localDraftCount()) {
+        <details class="shell__outbox">
+          <summary>
+            <span aria-live="polite">{{ pendingOperationCount() }} envoi(s) en attente @if (localDraftCount()) { · {{ localDraftCount() }} brouillon(s) }
+              @if (pendingIssueCount()) { · {{ pendingIssueCount() }} à vérifier }
+            </span>
+            <span>{{ offline.busy() ? 'Synchronisation en cours…' : 'Afficher les détails' }}</span>
+          </summary>
+          <div class="shell__outbox-body">
+            <app-action-outbox />
+            <app-message-outbox [showStatus]="messagesPage()" />
+            @if (offline.publications().length) {
+              <section class="shell__publication-outbox" aria-label="Brouillons et publications en attente">
+                <strong>Brouillons et publications</strong>
+                @for (item of offline.publications(); track item.operationId) {
+                  <p><a [routerLink]="['/enseignant', item.payload.kind === 'HOMEWORK' ? 'devoirs' : item.payload.kind === 'DOCUMENT' ? 'documents' : 'annonces']" [queryParams]="{ classe: item.payload.classId }">{{ item.payload.title || 'Sans titre' }} · {{ item.className }}</a>
+                    · {{ item.issue || (item.draft ? 'Brouillon local · non publié' : 'En attente de confirmation') }}</p>
+                }
+              </section>
+            }
+            @if (offline.pending().length) {
+              <p><a routerLink="/enseignant/presences">Présences : {{ offline.pending().length }} envoi(s) en attente · ouvrir le module pour consulter les détails.</a></p>
+            }
+          </div>
+        </details>
+      } @else if (messagesPage()) {
+        <app-message-outbox [showStatus]="true" />
+      }
     @if (accountStatusError()) {
       <app-error-alert [message]="accountStatusError()" (dismissed)="accountStatusError.set(false)">
         Impossible de vérifier l’état du compte. Certaines informations peuvent ne pas être à jour.

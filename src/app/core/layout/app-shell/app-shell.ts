@@ -175,6 +175,11 @@ export class AppShell implements OnInit {
   readonly offline = inject(OfflineAttendanceService);
   readonly moduleCache = inject(ModuleQueryCache);
   readonly preload = inject(ModulePreloadService);
+  readonly pendingOperationCount = computed(() => this.offline.enabled() && this.offline.unlocked()
+    ? this.offline.pendingActions().length + this.offline.pendingMessages().length + this.offline.pending().length + this.offline.publications().filter(item => !item.draft).length : 0);
+  readonly localDraftCount = computed(() => this.offline.enabled() && this.offline.unlocked() ? this.offline.publications().filter(item => item.draft).length : 0);
+  readonly pendingIssueCount = computed(() => this.offline.enabled() && this.offline.unlocked()
+    ? [...this.offline.pendingActions(), ...this.offline.pendingMessages(), ...this.offline.pending(), ...this.offline.publications()].filter(item => item.issue).length : 0);
   readonly modulesOpen = signal(true);
   private readonly auth = inject(AuthService);
   private readonly supportHttp = inject(HttpClient);

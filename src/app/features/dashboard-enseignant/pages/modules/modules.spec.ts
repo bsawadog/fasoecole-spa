@@ -1,6 +1,6 @@
 import {TestBed} from '@angular/core/testing';
 import {signal} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute,convertToParamMap} from '@angular/router';
 import {of,Subject,throwError} from 'rxjs';
 import {TeacherModule} from './modules';
 import {SelfSpaceService,TeacherAttendanceItem} from '../../../../shared/self-space/self-space.service';
@@ -14,7 +14,7 @@ describe('Teacher attendance call',()=>{
   let rows:TeacherAttendanceItem[]=[{studentId:1,fullName:'Awa',registrationNumber:'1',status:null,justification:null},{studentId:2,fullName:'Issa',registrationNumber:'2',status:'ABSENT',justification:'Malade'},{studentId:3,fullName:'Ali',registrationNumber:'3',status:'LATE',justification:null},{studentId:4,fullName:'Fati',registrationNumber:'4',status:'EXCUSED',justification:'Motif'}];
   const updates=new Subject<void>();
   const api={teacherClasses:vi.fn(()=>of([{classId:11,schoolId:1,className:'CP1'}])),teacherAttendance:vi.fn(()=>of(structuredClone(rows))),saveTeacherAttendanceBatch:vi.fn(()=>of(rows))};
-  TestBed.configureTestingModule({imports:[TeacherModule],providers:[{provide:SelfSpaceService,useValue:api},{provide:ParentPortalService,useValue:{teacherPosts:()=>of([])}},{provide:SchoolDataSyncService,useValue:{watch:()=>updates}},{provide:ConfirmationService,useValue:{}},{provide:ActivatedRoute,useValue:{data:of({module:'presences'}),snapshot:{queryParamMap:{get:()=>null}}}}]});
+  TestBed.configureTestingModule({imports:[TeacherModule],providers:[{provide:SelfSpaceService,useValue:api},{provide:ParentPortalService,useValue:{teacherPosts:()=>of([])}},{provide:SchoolDataSyncService,useValue:{watch:()=>updates}},{provide:ConfirmationService,useValue:{}},{provide:ActivatedRoute,useValue:{data:of({module:'presences'}),queryParamMap:of(convertToParamMap({})),snapshot:{queryParamMap:{get:()=>null}}}}]});
   TestBed.overrideComponent(TeacherModule,{set:{template:''}});
   TestBed.overrideProvider(AuthService,{useValue:{user:()=>({id:7})}});
   TestBed.overrideProvider(OfflineAttendanceService,{useValue:{enabled:()=>false,unlocked:()=>false,pending:()=>[],revision:()=>0,rememberClasses:vi.fn(),cachedClasses:()=>[],rememberView:vi.fn(),cachedView:()=>null,...offlineOverrides}});
@@ -45,6 +45,17 @@ describe('Teacher attendance call',()=>{
   await page.publish();
   expect(savePublication).toHaveBeenCalledWith(expect.objectContaining({draft:false,userId:7,payload:expect.objectContaining({classId:11,kind:'HOMEWORK'}),files:[expect.objectContaining({name:'cours.txt'})]}));
   expect(page.postTitle).toBe('');expect(page.success()).toContain('en attente');expect(page.posts()).toEqual([]);fixture.destroy();
+ });
+ it('releases the class picker after local saving while synchronization is still waiting for the network',async()=>{
+  let finishSync!:()=>void;
+  const synchronize=vi.fn(()=>new Promise<void>(resolve=>{finishSync=resolve;}));
+  const {fixture,page}=setup({enabled:()=>true,unlocked:()=>true,online:()=>true,snapshot:()=>undefined,remember:vi.fn(async()=>{}),
+   publications:()=>[],publicationConfirmed:()=>true,savePublication:vi.fn(async()=>{}),synchronize});
+  page.module.set('devoirs');page.classes.update(classes=>[...classes,{...classes[0],classId:12,className:'CP2'}]);
+  page.postTitle='Devoir CP1';page.content='Exercices';page.dueDate='2099-11-30';
+  await page.publish();expect(page.saving()).toBe(false);expect(synchronize).toHaveBeenCalledOnce();
+  page.choose('12');expect(page.classId()).toBe(12);finishSync();await Promise.resolve();
+  expect(page.classId()).toBe(12);expect(page.success()).toBeNull();fixture.destroy();
  });
  it('prefills missing statuses without writing or replacing recorded absences, lates and excuses',()=>{
   const {fixture,page,api}=setup();expect(page.title()).toBe('Présences et retards');
