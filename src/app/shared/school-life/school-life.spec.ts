@@ -29,6 +29,19 @@ describe('School life modules', () => {
     expect(api.overview).toHaveBeenCalledWith('schools', 1, 'calendrier');
     expect(fixture.nativeElement.textContent).toContain('Ajouter un événement');
   });
+  it('clears an observation only after durable queueing and shows a pending notice instead of server success', () => {
+    const { page, api } = setup('schools', 'discipline');
+    page.observation.studentId = 4; page.observation.description = 'Observation à transmettre';
+    api.create.mockReturnValue(throwError(() => ({ status: 0, error: { offline: true, actionQueued: true, message: 'Action conservée · en attente d’envoi.' } })));
+    const loads = api.overview.mock.calls.length; page.createObservation();
+    expect(page.observation.description).toBe(''); expect(page.success()).toBeNull(); expect(page.error()).toBeNull();
+    expect(page.queuedNotice()).toContain('en attente'); expect(api.overview.mock.calls.length).toBe(loads);
+  });
+  it('keeps the discipline form when local persistence fails', () => {
+    const { page, api } = setup('schools', 'discipline'); page.observation.studentId = 4; page.observation.description = 'Ne pas perdre';
+    api.create.mockReturnValue(throwError(() => ({ status: 0, error: { offline: true, message: 'Coffre plein' } })));
+    page.createObservation(); expect(page.observation.description).toBe('Ne pas perdre'); expect(page.queuedNotice()).toBeNull(); expect(page.error()).toBe('Coffre plein');
+  });
 
   it('uses the school selected in the shared header without a duplicate school selector', () => {
     localStorage.setItem('fasoecole_owner_school', '2');

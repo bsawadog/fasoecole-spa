@@ -144,9 +144,13 @@ export class Login implements OnInit {
         if (this.route.snapshot.queryParamMap.get('next') === 'school-setup') this.auth.redirectAfterLogin('school-setup');
         else this.auth.redirectAfterLogin();
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.loading.set(false);
-        this.errorMessage.set('Adresse e-mail ou mot de passe incorrect.');
+        this.errorMessage.set(err.status === 401
+          ? 'Adresse e-mail ou mot de passe incorrect.'
+          : apiError(err, err.status === 403
+            ? 'Le serveur refuse la connexion depuis cette adresse. Contactez le support technique.'
+            : 'Le service de connexion est momentanément indisponible. Réessayez plus tard.'));
       },
     });
   }

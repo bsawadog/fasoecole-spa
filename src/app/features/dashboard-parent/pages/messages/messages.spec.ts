@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ParentMessages } from './messages';
+import { AuthService } from '../../../../core/auth';
 import { ConversationThread, SelfSpaceService } from '../../../../shared/self-space/self-space.service';
 
 describe('Parent conversation creation', () => {
@@ -15,6 +16,7 @@ describe('Parent conversation creation', () => {
     };
     TestBed.configureTestingModule({ imports: [ParentMessages], providers: [provideRouter([]),
       { provide: SelfSpaceService, useValue: api },
+      { provide: AuthService, useValue: { user: () => null } },
     ] });
     const fixture = TestBed.createComponent(ParentMessages); fixture.detectChanges();
     const page = fixture.componentInstance;

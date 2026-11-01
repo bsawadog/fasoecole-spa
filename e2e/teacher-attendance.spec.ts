@@ -20,7 +20,8 @@ test('teacher call defaults to present, preserves recorded statuses and saves th
  await awa.click();await page.getByRole('option',{name:'En retard',exact:true}).click();
  await page.getByPlaceholder('Nom ou matricule').fill('Awa');
  await page.getByRole('button',{name:'Enregistrer l’appel de la classe',exact:true}).click();
- await expect(page.getByRole('alert')).toContainText('Appel indisponible');await expect(awa).toContainText('En retard');
+ await expect(page.getByRole('alertdialog')).toContainText('Appel indisponible');await expect(awa).toContainText('En retard');
+ await page.getByRole('button',{name:'Fermer',exact:true}).click();
  fail=false;await page.getByRole('button',{name:'Enregistrer l’appel de la classe',exact:true}).click();
  await expect(page.getByText('Appel enregistré pour toute la classe.',{exact:true})).toBeVisible();expect(batches).toBe(2);
  await page.getByPlaceholder('Nom ou matricule').fill('');

@@ -1,12 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../../core/auth';
 import { Login } from './login';
 
 describe('Login', () => {
   function setup(queryParams: Record<string, string> = {}) {
     const auth = {
+      login: vi.fn(() => of(undefined)),
       getRegistrationSchools: vi.fn(() => of([{ id: 1, name: 'École A', type: 'PRIMAIRE' }])),
       register: vi.fn(() => of({ activationRequired: true, message: 'Consultez votre boîte courriel.' })),
       verifyEmail: vi.fn(() => of(undefined)),
@@ -26,6 +28,23 @@ describe('Login', () => {
     fixture.detectChanges();
     return { fixture, auth };
   }
+
+  it.each([
+    [0, 'Connexion au serveur impossible'],
+    [401, 'Adresse e-mail ou mot de passe incorrect.'],
+    [403, 'Le serveur refuse la connexion depuis cette adresse.'],
+    [503, 'Le service de connexion est momentanément indisponible.'],
+    [504, 'Le service de connexion est momentanément indisponible.'],
+  ])('distinguishes login failures with HTTP status %s', (status, message) => {
+    const { fixture, auth } = setup();
+    auth.login.mockReturnValue(throwError(() => new HttpErrorResponse({ status: Number(status) })));
+    const page = fixture.componentInstance;
+    page.loginForm.setValue({ email: 'test@example.test', password: 'password-test' });
+    page.submitLogin();
+    expect(page.errorMessage()).toContain(message);
+    expect(page.loading()).toBe(false);
+    expect(auth.redirectAfterLogin).not.toHaveBeenCalled();
+  });
 
   it('submits recovery details without opening a session or changing credentials', () => {
     const { fixture, auth } = setup(); const page = fixture.componentInstance;

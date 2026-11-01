@@ -8,6 +8,8 @@ import { OwnerFamilyMessagesService } from '../../../features/dashboard-propriet
 import { SelfSpaceService } from '../../../shared/self-space/self-space.service';
 import { AcademicContextPicker } from '../../../shared/academic-context';
 import { AppShell } from './app-shell';
+import { OfflineAttendanceService } from '../../../shared/offline/offline-attendance.service';
+import { ModulePreloadService } from '../../../shared/offline/module-preload.service';
 
 // These tests exercise shell account gates; academic context has its own API lifecycle.
 @Component({ selector: 'app-academic-context', standalone: true, template: '' })
@@ -29,6 +31,7 @@ describe('AppShell account readiness', () => {
     const auth = {
       user, role: computed(() => user().role), isSchoolOwner: () => user().rawRoles.includes('SCHOOL_ADMIN'), selectedSchoolType: () => 'PRIMAIRE',
       ownerModules: () => new Set(), ownerAccess, schoolContextId, logout: vi.fn(),
+      getToken: () => 'test-session',
       refreshCurrentUser: vi.fn(() => of(user())),
       getOwnedSchools: vi.fn(() => of([{ id: 2, name: 'École', type: 'PRIMAIRE' }])),
       loadOwnerAccess: vi.fn(() => of(ownerAccess())),
@@ -38,6 +41,8 @@ describe('AppShell account readiness', () => {
     TestBed.configureTestingModule({ imports: [AppShell], providers: [provideRouter([{ path: 'profil', component: AcademicContextStub },{path:'proprietaire',component:AcademicContextStub}]),
       { provide: AuthService, useValue: auth }, { provide: SelfSpaceService, useValue: self },
       { provide: OwnerFamilyMessagesService, useValue: messages },
+      { provide: OfflineAttendanceService, useValue: { enabled: () => false } },
+      { provide: ModulePreloadService, useValue: { busy: () => false, failed: () => 0 } },
     ] });
     TestBed.overrideComponent(AppShell, { remove: { imports: [AcademicContextPicker] }, add: { imports: [AcademicContextStub] } });
     const fixture = TestBed.createComponent(AppShell); fixture.detectChanges(); vi.advanceTimersByTime(1);

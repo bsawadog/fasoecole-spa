@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, Subject } from 'rxjs';
 import { StudentMessages } from './messages';
+import { AuthService } from '../../../../core/auth';
 import { ConversationThread, SelfSpaceService } from '../../../../shared/self-space/self-space.service';
 import { StudentDashboardService, StudyProfile } from '../../../../shared/self-space/student-dashboard.service';
 
@@ -16,6 +17,7 @@ describe('StudentMessages', () => {
     };
     TestBed.configureTestingModule({ imports: [StudentMessages], providers: [provideRouter([]),
       { provide: SelfSpaceService, useValue: api },
+      { provide: AuthService, useValue: { user: () => null } },
       { provide: StudentDashboardService, useValue: { profiles: () => of(profiles) } },
     ] });
     const fixture = TestBed.createComponent(StudentMessages);

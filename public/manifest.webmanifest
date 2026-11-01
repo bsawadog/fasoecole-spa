@@ -1,0 +1,6 @@
+{
+  "id": "/", "name": "FasoÉcole", "short_name": "FasoÉcole", "lang": "fr",
+  "start_url": "/", "scope": "/", "display": "standalone",
+  "background_color": "#061638", "theme_color": "#08375d",
+  "icons": [{ "src": "/assets/images/logofe.png", "sizes": "any", "type": "image/png", "purpose": "any" }]
+}

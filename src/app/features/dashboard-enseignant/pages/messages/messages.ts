@@ -1,4 +1,7 @@
+import { ConversationBrowser } from '../../../../shared/self-space/conversation-browser';
+import { ConversationThreadView } from '../../../../shared/self-space/conversation-thread';
 import { ErrorAlert } from '../../../../shared/error-alert';
+import { messageQueued } from '../../../../shared/offline/message-outbox';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
@@ -8,12 +11,12 @@ import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
-import { DatePipe } from '@angular/common';
+
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { ConversationFiles, MessageAttachments } from '../../../../shared/self-space/message-attachments';
+import { ConversationFiles } from '../../../../shared/self-space/message-attachments';
 import { catchError, exhaustMap, forkJoin, of, timer } from 'rxjs';
 import {
   apiError, TeacherMessageRecipient, ConversationSummary, ConversationThread, SelfSpaceService, TeacherClass,
@@ -22,7 +25,7 @@ import {
 @Component({
   selector: 'app-teacher-messages',
   standalone: true,
-  imports: [ErrorAlert, ModuleHelpButton, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, RouterLink, ConversationFiles, MessageAttachments],
+  imports: [ConversationBrowser, ConversationThreadView, ErrorAlert, ModuleHelpButton, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink, ConversationFiles],
   templateUrl: './messages.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })
@@ -132,6 +135,7 @@ export class TeacherMessages implements OnInit {
 
   startConversation(): void {
     if (this.sending()) return;
+    this.success.set(null);
     const selectedClass = this.classes().find((item) => item.classId === this.classId);
     if (!selectedClass || this.loadingRecipients() || !this.selectedRecipientIds().length
       || !this.subject.trim() || (!this.message.trim() && !this.messageFiles.length)) return;
@@ -152,6 +156,10 @@ export class TeacherMessages implements OnInit {
           this.sending.set(false);
         },
         error: (err) => {
+          if (messageQueued(err)) {
+            this.subject = ''; this.message = ''; this.messageFiles = []; this.selectedRecipientIds.set([]);
+            this.composing.set(false); this.sending.set(false); return;
+          }
           this.error.set(apiError(err, 'Impossible de créer la conversation.'));
           this.sending.set(false);
         },
@@ -159,6 +167,7 @@ export class TeacherMessages implements OnInit {
   }
 
   open(item: ConversationSummary): void {
+    this.success.set(null);
     this.replyFiles = [];
     this.composing.set(false);
     this.api.conversation(item.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -173,6 +182,8 @@ export class TeacherMessages implements OnInit {
   sendReply(): void {
     const current = this.thread();
     if (this.sending() || !current || (!this.reply.trim() && !this.replyFiles.length)) return;
+    this.success.set(null);
+    this.error.set(null);
     this.sending.set(true);
     this.api.replyToConversation(current.conversation.id, this.reply.trim(), this.replyFiles).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (thread) => {
@@ -182,6 +193,7 @@ export class TeacherMessages implements OnInit {
         this.sending.set(false);
       },
       error: (err) => {
+        if (messageQueued(err)) { this.reply = ''; this.replyFiles = []; this.sending.set(false); return; }
         this.error.set(apiError(err, 'Impossible d’envoyer votre réponse.'));
         this.sending.set(false);
       },

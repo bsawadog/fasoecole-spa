@@ -54,6 +54,25 @@
   </aside>
 
   <main class="shell__content">
+    @if (preload.busy()) {
+      <div class="shell__preparation" role="status" aria-live="polite" aria-busy="true">
+        <span class="shell__preparation-spinner" aria-hidden="true"></span>
+        <strong>Préparation de vos données…</strong>
+        <p>Veuillez patienter pendant le chargement des modules pour la consultation hors connexion.</p>
+      </div>
+    }
+    @if (!preload.busy() && preload.failed()) {
+      <p-message severity="warn">La préparation est incomplète. Certains modules peuvent être indisponibles hors connexion.
+        <button pButton type="button" (click)="preload.retry()" [disabled]="!offline.online()">Réessayer</button>
+      </p-message>
+    }
+    @if (moduleCache.refreshIssue()) { <small role="status">{{ moduleCache.refreshIssue() }}</small> }
+    @if (moduleCache.latestRefresh()) { <small role="status">Cache actualisé en arrière-plan à {{ moduleCache.latestRefresh() | date:'HH:mm' }}.</small> }
+    @if (offline.enabled() && !offline.online()) {
+      <p class="ss__state shell__offline-warning" role="status">Hors connexion Internet · Consultation des dernières données chargées sur cet appareil. Les présences et messages peuvent être conservés pour un envoi au retour d’Internet. Les autres modifications nécessitent Internet. {{ offline.unlocked() ? '' : 'Retrouvez Internet pour déverrouiller les données.' }}</p>
+      @if (offline.lastOfflineRead()) { <small class="shell__offline-warning" role="status">Dernière copie consultée : {{ offline.lastOfflineRead() | date:'dd/MM/yyyy HH:mm' }}. Les données peuvent avoir changé sur le serveur.</small> }
+    }
+    @if (offline.enabled() && offline.readCacheIssue()) { <p class="ss__state" role="status">{{ offline.readCacheIssue() }}</p> }
     @if (platformIntervention()) {
       <p-message severity="success" role="status">Intervention SUPER_ADMIN · {{ selectedContextSchool()?.schoolName }}. Les actions sont effectuées avec votre identité d’administrateur.</p-message>
     }
@@ -95,6 +114,10 @@
     </header>
 
     <div class="shell__page">
+      @if (offline.enabled() && offline.unlocked()) { <app-action-outbox /> }
+    @if (messagesPage() || (offline.enabled() && offline.unlocked())) {
+      <app-message-outbox [showStatus]="messagesPage()" />
+    }
     @if (accountStatusError()) {
       <app-error-alert [message]="accountStatusError()" (dismissed)="accountStatusError.set(false)">
         Impossible de vérifier l’état du compte. Certaines informations peuvent ne pas être à jour.

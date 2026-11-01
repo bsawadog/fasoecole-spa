@@ -15,6 +15,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
+import { actionQueued } from '../offline/action-outbox';
 import { AuthService, OWNER_LIFE_MODULES } from '../../core/auth';
 import { ConfirmationService } from '../confirmation/confirmation.service';
 import { apiError, SelfSpaceService } from '../self-space/self-space.service';
@@ -46,6 +47,7 @@ export class SchoolLifePage implements OnInit {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
+  readonly queuedNotice = signal<string | null>(null);
   readonly owner = computed(() => this.scope() === 'schools');
   readonly teacher = computed(() => this.scope() === 'classes');
   readonly canObserve = computed(() => this.owner() || this.teacher());
@@ -110,7 +112,7 @@ export class SchoolLifePage implements OnInit {
   }
   choose(id: number): void {
     if (this.saving() || !this.contexts().some(c => c.id === id)) return;
-    this.contextId.set(id); this.data.set(empty()); this.success.set(null); this.error.set(null);
+    this.contextId.set(id); this.data.set(empty()); this.success.set(null); this.error.set(null); this.queuedNotice.set(null);
     this.event = { classId: null, title: '', description: '', kind: 'EVENT', startsOn: '', endsOn: '' };
     this.observation = { studentId: null, kind: 'INCIDENT', observedOn: this.today, description: '', action: '', sharedWithFamily: false };
     this.document = { kind: 'SCHOOL_CERTIFICATE', reason: '' };
@@ -133,7 +135,7 @@ export class SchoolLifePage implements OnInit {
   }
   private save(action: Observable<void>, message: string, reset: () => void = () => {}): void {
     if (this.saving()) return;
-    this.saving.set(true); this.error.set(null); this.success.set(null);
+    this.saving.set(true); this.error.set(null); this.success.set(null); this.queuedNotice.set(null);
     const id = this.contextId(); const scope = this.scope();
     action.pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: () => {
@@ -141,7 +143,12 @@ export class SchoolLifePage implements OnInit {
         if (id !== this.contextId() || scope !== this.scope()) return;
         reset(); this.success.set(message); this.reload();
       },
-      error: err => { this.saving.set(false); this.error.set(apiError(err, 'Enregistrement impossible. Votre saisie est conservée : vous pouvez réessayer.')); },
+      error: err => {
+        this.saving.set(false);
+        if (id !== this.contextId() || scope !== this.scope()) return;
+        if (actionQueued(err)) { reset(); this.queuedNotice.set(apiError(err, 'Action conservée · en attente d’envoi.')); }
+        else this.error.set(apiError(err, 'Enregistrement impossible. Votre saisie est conservée : vous pouvez réessayer.'));
+      },
     });
   }
   createEvent(): void {

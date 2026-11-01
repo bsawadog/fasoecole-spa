@@ -17,12 +17,14 @@ describe('AcademicContextPicker shared module selection', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
     localStorage.setItem('fasoecole_owner_school', '5');
     localStorage.setItem('fasoecole_year_5', '2');
   });
   afterEach(() => {
     http.verify({ ignoreCancelled: true });
     for (const key of ['fasoecole_owner_school', 'fasoecole_year_5', 'fasoecole_year_6', 'fasoecole_year_explicit_5']) localStorage.removeItem(key);
+    vi.restoreAllMocks();
   });
 
   function setup(changes: Observable<void> = EMPTY, showSchool = true, showYear = true, routeUrl?: string) {
@@ -118,6 +120,45 @@ describe('AcademicContextPicker shared module selection', () => {
     fixture.detectChanges();
     http.expectNone(environment.apiUrl + '/academic-years/context-schools');
     expect(fixture.componentInstance.yearId()).toBe(2);
+  });
+
+  it('keeps loaded years offline, suspends refreshes and resumes automatically online', () => {
+    const changes = new Subject<void>();
+    const { fixture, reload } = setup(changes);
+    vi.mocked(Object.getOwnPropertyDescriptor(navigator, 'onLine')!.get!).mockReturnValue(false);
+    window.dispatchEvent(new Event('offline'));
+    changes.next(); changes.next();
+    fixture.detectChanges();
+    http.expectNone(environment.apiUrl + '/academic-years?schoolId=5');
+    expect(fixture.componentInstance.years()).toEqual(years);
+    expect(fixture.componentInstance.yearId()).toBe(2);
+    expect(fixture.componentInstance.error()).toBe('');
+    expect(fixture.nativeElement.textContent).toContain('Hors connexion Internet');
+    fixture.componentInstance.chooseYear(1);
+    fixture.componentInstance.chooseSchool(6);
+    expect(reload).not.toHaveBeenCalled();
+    vi.mocked(Object.getOwnPropertyDescriptor(navigator, 'onLine')!.get!).mockReturnValue(true);
+    window.dispatchEvent(new Event('online'));
+    http.expectOne(environment.apiUrl + '/academic-years?schoolId=5').flush(years);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Hors connexion Internet');
+    expect(fixture.componentInstance.yearId()).toBe(2);
+  });
+
+  it('cancels a refresh on disconnect and still reports server failures when online', () => {
+    const changes = new Subject<void>();
+    const { fixture } = setup(changes);
+    changes.next();
+    const request = http.expectOne(environment.apiUrl + '/academic-years?schoolId=5');
+    vi.mocked(Object.getOwnPropertyDescriptor(navigator, 'onLine')!.get!).mockReturnValue(false);
+    window.dispatchEvent(new Event('offline'));
+    expect(request.cancelled).toBe(true);
+    expect(fixture.componentInstance.yearId()).toBe(2);
+    vi.mocked(Object.getOwnPropertyDescriptor(navigator, 'onLine')!.get!).mockReturnValue(true);
+    window.dispatchEvent(new Event('online'));
+    http.expectOne(environment.apiUrl + '/academic-years?schoolId=5').flush({}, { status: 500, statusText: 'Server error' });
+    expect(fixture.componentInstance.error()).toBe('Impossible de charger les années.');
+    expect(fixture.componentInstance.years()).toEqual(years);
   });
 });
 

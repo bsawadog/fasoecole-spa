@@ -6,12 +6,15 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpInterceptorFn } from '@angular/common/http';
 import { AuthService } from '../core/auth';
 import { SchoolDataSyncService } from './school-data-sync.service';
-import { Subscription } from 'rxjs';
+import { fromEvent, merge, Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { SelectableAcademicYear, selectAcademicYear } from './academic-year-selection';
 
 export const academicContextInterceptor: HttpInterceptorFn = (request, next) => {
+  // A queued message retains the context in which it was composed.
+  if (request.headers.has('X-Offline-Message-Replay')) return next(request);
   const auth = inject(AuthService);
   const school = Number(localStorage.getItem('fasoecole_owner_school'));
   const year = Number(request.params.get('academicYearId') ?? localStorage.getItem(`fasoecole_year_${school}`));
@@ -35,21 +38,22 @@ export const ACADEMIC_CONTEXT_RELOAD = new InjectionToken<() => void>('Academic 
   selector: 'app-academic-context', standalone: true, imports: [SelectField, SelectOption, ButtonModule, FormsModule],
   template: `@if (schools().length) {
     @if (showSchool()) {
-    <label>Établissement<app-select-field ariaLabel="Établissement consulté" [ngModel]="schoolId()" (ngModelChange)="chooseSchool($event)">
+    <label>Établissement<app-select-field ariaLabel="Établissement consulté" [ngModel]="schoolId()" (ngModelChange)="chooseSchool($event)" [disabled]="!online()">
       @for (s of schools(); track s.id) { <app-select-option [value]="s.id" [label]="((&quot;&quot; + ((s.name)) + &quot;&quot;)).trim()" /> }
     </app-select-field></label>
     }
     @if (showYear()) {
-    <label>Année scolaire<app-select-field ariaLabel="Année scolaire consultée" [ngModel]="yearId()" (ngModelChange)="chooseYear($event)" [disabled]="!years().length">
+    <label>Année scolaire<app-select-field ariaLabel="Année scolaire consultée" [ngModel]="yearId()" (ngModelChange)="chooseYear($event)" [disabled]="!online() || !years().length">
       @if (!yearId()) { <app-select-option [value]="null" [label]="((&quot;&quot; + ((years().length ? 'Choisir une année scolaire' : 'Aucune année scolaire disponible')) + &quot;&quot;)).trim()" /> }
       @for (y of years(); track y.id) { <app-select-option [value]="y.id" [label]="((&quot;&quot; + ((y.label)) + &quot;&quot; + ((y.isCurrent ? ' · en cours' : y.closed ? ' · clôturée' : '')) + &quot;&quot;)).trim()" /> }
     </app-select-field></label>
     @if (manualSelection()) {
-      <button pButton type="button" (click)="useAutomaticYear()">Revenir à l’année en cours</button>
+      <button pButton type="button" [disabled]="!online()" (click)="useAutomaticYear()">Revenir à l’année en cours</button>
     }
     @if (years().length && !yearId()) { <small role="status">Choisissez une année scolaire.</small> }
     }
-    @if (error()) { <small role="alert">{{ error() }}</small> }
+    @if (!online()) { <small role="status">Hors connexion Internet : l’actualisation des données reprendra automatiquement au retour de la connexion.</small> }
+    @else if (error()) { <small role="alert">{{ error() }}</small> }
   }`,
   styles: [`@layer legacy {
     :host{display:flex;gap:12px;flex-wrap:wrap;min-width:0;width:100%}
@@ -81,21 +85,36 @@ export class AcademicContextPicker {
   readonly yearId = signal<number | null>(null);
   readonly manualSelection = signal(false);
   readonly error = signal('');
+  readonly online = signal(typeof navigator === 'undefined' || navigator.onLine);
   constructor() {
     this.destroyRef.onDestroy(() => { this.subscription?.unsubscribe(); this.yearsRequest?.unsubscribe(); });
+    if (typeof window !== 'undefined') {
+      merge(fromEvent(window, 'online'), fromEvent(window, 'offline')).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+        this.online.set(navigator.onLine);
+        this.error.set('');
+        if (!this.online()) { this.yearsRequest?.unsubscribe(); return; }
+        if (!this.ready()) return;
+        const school = this.schoolId();
+        if (school) this.refreshYears(school); else this.loadSchools();
+      });
+    }
     effect(() => {
       const id = this.auth.schoolContextId();
       if (id && id !== this.schoolId() && this.schools().some(s => s.id === id)) { this.schoolId.set(id); this.loadYears(id); }
     });
     effect(() => {
       if (!this.ready()) return;
-      this.http.get<{id:number;name:string;status?:string}[]>(`${environment.apiUrl}/academic-years/context-schools`).subscribe({next: schools => {
+      this.loadSchools();
+    });
+  }
+  private loadSchools(): void {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+    this.http.get<{id:number;name:string;status?:string}[]>(`${environment.apiUrl}/academic-years/context-schools`).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next: schools => {
         this.schools.set(schools);
         const saved = this.auth.schoolContextId() ?? Number(localStorage.getItem('fasoecole_owner_school'));
         const id = schools.find(s => s.id === saved)?.id ?? schools.find(s => s.status === 'ACTIVE')?.id ?? schools[0]?.id;
         if (id) { this.schoolId.set(id); this.auth.selectSchoolContext(id); this.loadYears(id); }
-      }, error: () => this.error.set('Sélection des établissements indisponible.')});
-    });
+      }, error: () => { if (navigator.onLine) this.error.set('Sélection des établissements indisponible.'); }});
   }
   private loadYears(schoolId: number): void {
     if (!this.showYear()) return;
@@ -111,6 +130,8 @@ export class AcademicContextPicker {
     this.refreshYears(schoolId);
   }
   private refreshYears(schoolId: number): void {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+    if (!this.showYear()) return;
     this.yearsRequest?.unsubscribe();
     this.yearsRequest = this.http.get<Year[]>(`${environment.apiUrl}/academic-years`,{params:{schoolId}}).subscribe({next: years => {
       if (this.schoolId() !== schoolId) return;
@@ -124,9 +145,10 @@ export class AcademicContextPicker {
       this.yearId.set(year?.id ?? null);
       if (year && saved !== year.id) { localStorage.setItem(`fasoecole_year_${schoolId}`,String(year.id)); this.reload(); }
       if (!year && saved) { localStorage.removeItem(`fasoecole_year_${schoolId}`); this.reload(); }
-    },error: () => this.error.set('Impossible de charger les années.')});
+    },error: () => { if (this.schoolId() === schoolId && navigator.onLine) this.error.set('Impossible de charger les années.'); }});
   }
   chooseSchool(id: number): void {
+    if (!this.online()) return;
     if (!this.schools().some(s => s.id === id)) return;
     this.auth.selectSchoolContext(id);
     const detail = /^\/(proprietaire|admin)\/(eleves|enseignants)\/\d+(?:[/?]|$)/.exec(this.router?.url ?? '');
@@ -137,6 +159,7 @@ export class AcademicContextPicker {
     this.reload();
   }
   chooseYear(id: number): void {
+    if (!this.online()) return;
     const school = this.schoolId();
     if (!school || !this.years().some(y => y.id === id)) return;
     localStorage.setItem(`fasoecole_year_explicit_${school}`, 'true');
@@ -146,6 +169,7 @@ export class AcademicContextPicker {
     this.reload();
   }
   useAutomaticYear(): void {
+    if (!this.online()) return;
     const school = this.schoolId();
     if (!school) return;
     localStorage.removeItem(`fasoecole_year_explicit_${school}`);

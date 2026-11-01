@@ -24,6 +24,7 @@ import {
 } from '../../core/auth';
 
 import { parseChildMatricules, childMatriculesError } from '../../core/auth/child-matricules';
+import { OfflineAttendanceService } from '../../shared/offline/offline-attendance.service';
 
 const REQUESTABLE_ROLES: ApprovalRole[] = ['TEACHER', 'PARENT', 'STUDENT'];
 
@@ -54,6 +55,13 @@ function apiMessage(error: unknown, fallback: string): string {
   styleUrl: './profile.scss',
 })
 export class ProfilePage implements OnInit {
+  readonly offline = inject(OfflineAttendanceService);
+  readonly offlineError = signal<string | null>(null);
+  async toggleOffline(enabled: boolean): Promise<void> {
+    this.offlineError.set(null);
+    try { await (enabled ? this.offline.enable() : this.offline.disable()); }
+    catch (err) { this.offlineError.set(apiError(err, 'Synchronisez les envois en attente avant de désactiver le mode hors connexion.')); }
+  }
   private readonly auth = inject(AuthService);
   private readonly schoolAccess = inject(SchoolAccessService);
   private readonly destroyRef = inject(DestroyRef);

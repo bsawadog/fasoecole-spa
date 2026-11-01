@@ -31,6 +31,8 @@ export interface TeacherClass {
   schoolName: string;
   academicYearId: number;
   academicYearLabel: string;
+  academicYearStartDate?: string | null;
+  academicYearEndDate?: string | null;
   currentYear: boolean;
   studentCount: number;
   subjects: TeacherSubject[];
@@ -245,6 +247,7 @@ export interface NewConversationPayload {
 }
 
 export interface TeacherAttendanceItem {
+  version?: number | null;
   studentId: number; fullName: string; registrationNumber: string;
   status: AttendanceItem['status'] | null; justification: string | null;
 }

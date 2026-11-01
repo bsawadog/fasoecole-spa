@@ -4,6 +4,8 @@ import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AuthService, SchoolAccessService } from '../../core/auth';
 import { ProfilePage } from './profile';
+import { signal } from '@angular/core';
+import { OfflineAttendanceService } from '../../shared/offline/offline-attendance.service';
 
 describe('ProfilePage', () => {
   const baseUser = {
@@ -13,6 +15,10 @@ describe('ProfilePage', () => {
   };
 
   function setup(user: Record<string, unknown> = baseUser) {
+    const offline = {
+      supported: true, enabled: signal(false), unlocked: signal(true), busy: signal(false), online: signal(true), pending: signal<unknown[]>([]), pendingMessages: signal<unknown[]>([]), issue: signal<string | null>(null),
+      enable: vi.fn(async () => { offline.enabled.set(true); }), disable: vi.fn(async () => { offline.enabled.set(false); }),
+    };
     const auth = {
       user: () => user,
       updateProfile: vi.fn(() => of({ ...baseUser, firstName: 'Aminata' })),
@@ -37,12 +43,38 @@ describe('ProfilePage', () => {
         provideRouter([]),
         { provide: AuthService, useValue: auth },
         { provide: SchoolAccessService, useValue: access },
+        { provide: OfflineAttendanceService, useValue: offline },
       ],
     });
     const fixture = TestBed.createComponent(ProfilePage);
     fixture.detectChanges();
-    return { fixture, auth, access };
+    return { fixture, auth, access, offline };
   }
+
+  it('enables and disables offline storage from the profile', async () => {
+    const { fixture, offline } = setup();
+    const toggle = fixture.nativeElement.querySelector('input[role="switch"]') as HTMLInputElement;
+    toggle.checked = true; toggle.dispatchEvent(new Event('change')); await fixture.whenStable(); fixture.detectChanges();
+    expect(offline.enable).toHaveBeenCalledOnce(); expect(toggle.checked).toBe(true);
+    toggle.checked = false; toggle.dispatchEvent(new Event('change')); await fixture.whenStable(); fixture.detectChanges();
+    expect(offline.disable).toHaveBeenCalledOnce(); expect(toggle.checked).toBe(false);
+  });
+
+  it('protects pending sends before disabling offline storage', () => {
+    const { fixture, offline } = setup();
+    offline.enabled.set(true); offline.pending.set([{ operationId: 'pending' }]); fixture.detectChanges();
+    const toggle = fixture.nativeElement.querySelector('input[role="switch"]') as HTMLInputElement;
+    expect(toggle.disabled).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Attendez leur envoi avant de désactiver ce mode');
+    expect(offline.disable).not.toHaveBeenCalled();
+  });
+  it('protects queued messages before disabling offline storage', () => {
+    const { fixture, offline } = setup();
+    offline.enabled.set(true); offline.pendingMessages.set([{ operationId: 'message' }]); fixture.detectChanges();
+    expect((fixture.nativeElement.querySelector('input[role="switch"]') as HTMLInputElement).disabled).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('message(s) en attente de connexion Internet');
+    expect(offline.disable).not.toHaveBeenCalled();
+  });
 
   async function submit(fixture: ComponentFixture<ProfilePage>, index: number): Promise<void> {
     const values = index === 0 ? fixture.componentInstance.form : fixture.componentInstance.passwordForm;

@@ -6,6 +6,23 @@
   </header>
 
   <app-appearance-picker />
+  @if (user()?.approved && user()?.emailVerified && !user()?.mustChangePassword) {
+    <section class="profile__card" aria-labelledby="profile-offline-title">
+      <h2 id="profile-offline-title">Mode hors connexion Internet</h2>
+      <p>À activer sur votre appareil personnel. Vos saisies sont conservées chiffrées pendant les coupures Internet, puis envoyées automatiquement au retour de la connexion Internet, tant que l’application est ouverte.</p>
+      <p class="profile__hint">Consultez les données déjà chargées dans les modules de votre profil. Les présences des enseignants peuvent aussi être saisies pour un envoi ultérieur. Après fermeture, Internet est nécessaire pour déverrouiller les données.</p>
+      <label><input type="checkbox" role="switch" aria-label="Mode hors connexion Internet sur cet appareil" [checked]="offline.enabled()"
+        [disabled]="!offline.supported || offline.busy() || (!offline.enabled() && !offline.online()) || (offline.enabled() && (!offline.unlocked() || !!offline.pending().length || !!offline.pendingMessages().length))"
+        (change)="toggleOffline($any($event.target).checked)" /> Activer sur cet appareil personnel</label>
+      @if (!offline.supported) { <p>Le stockage sécurisé n’est pas disponible dans ce navigateur.</p> }
+      @if (offline.pending().length) { <p role="status">{{ offline.pending().length }} envoi(s) en attente, visibles dans le module Présences. Ils se synchronisent automatiquement au retour d’Internet. Attendez leur envoi avant de désactiver ce mode.</p> }
+      @if (offline.pendingMessages().length) { <p role="status">{{ offline.pendingMessages().length }} message(s) en attente de connexion Internet. Attendez leur envoi avant de désactiver ce mode.</p> }
+      @if (offline.busy()) { <p role="status">Préparation et synchronisation du mode hors connexion Internet…</p> }
+      @else if (offline.enabled() && !offline.unlocked()) { <p>Reconnectez-vous avec Internet pour déverrouiller les saisies locales.</p> }
+      @if (offline.issue()) { <p role="status">{{ offline.issue() }}</p> }
+      @if (offlineError()) { <app-error-alert [message]="offlineError()" (dismissed)="offlineError.set(null)" /> }
+    </section>
+  }
 
   @if (user()?.mustChangePassword) {
     <section class="profile__verify" role="alert">

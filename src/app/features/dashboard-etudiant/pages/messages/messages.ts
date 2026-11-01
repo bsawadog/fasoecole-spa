@@ -1,4 +1,7 @@
+import { ConversationBrowser } from '../../../../shared/self-space/conversation-browser';
+import { ConversationThreadView } from '../../../../shared/self-space/conversation-thread';
 import { ErrorAlert } from '../../../../shared/error-alert';
+import { messageQueued } from '../../../../shared/offline/message-outbox';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { LoadingState } from '../../../../shared/ui/loading-state';
 import { TextareaModule } from 'primeng/textarea';
@@ -8,18 +11,18 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectField, SelectOption } from '../../../../shared/ui/select-field';
 import { StudentDashboardService, StudyProfile } from '../../../../shared/self-space/student-dashboard.service';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
-import { DatePipe } from '@angular/common';
+
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { catchError, exhaustMap, forkJoin, of, timer } from 'rxjs';
 import { apiError, ConversationSummary, ConversationThread, SelfSpaceService } from '../../../../shared/self-space/self-space.service';
-import { ConversationFiles, MessageAttachments } from '../../../../shared/self-space/message-attachments';
+import { ConversationFiles } from '../../../../shared/self-space/message-attachments';
 
 @Component({
   selector: 'app-student-messages',
   standalone: true,
-  imports: [ErrorAlert, ModuleHelpButton, LoadingState, InputTextModule, SelectField, SelectOption, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, DatePipe, ConversationFiles, MessageAttachments],
+  imports: [ConversationBrowser, ConversationThreadView, ErrorAlert, ModuleHelpButton, LoadingState, InputTextModule, SelectField, SelectOption, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, ConversationFiles],
   templateUrl: './messages.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })
@@ -95,7 +98,11 @@ export class StudentMessages implements OnInit {
         this.reply = ''; this.files = [];
         this.showComposer.set(false); this.sending.set(false);
       },
-      error: (err) => { this.error.set(apiError(err, 'Impossible de démarrer cette conversation.')); this.sending.set(false); },
+      error: (err) => {
+        if (messageQueued(err)) { this.subject = ''; this.message = ''; this.messageFiles = []; this.showComposer.set(false); }
+        else this.error.set(apiError(err, 'Impossible de démarrer cette conversation.'));
+        this.sending.set(false);
+      },
     });
   }
   send(): void {
@@ -105,7 +112,11 @@ export class StudentMessages implements OnInit {
     this.error.set(null);
     this.api.replyToConversation(id, this.reply.trim(), this.files).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (thread) => { this.thread.set(thread); this.reply = ''; this.files = []; this.sending.set(false); },
-      error: (err) => { this.error.set(apiError(err, 'Impossible d’envoyer la réponse.')); this.sending.set(false); },
+      error: (err) => {
+        if (messageQueued(err)) { this.reply = ''; this.files = []; }
+        else this.error.set(apiError(err, 'Impossible d’envoyer la réponse.'));
+        this.sending.set(false);
+      },
     });
   }
 }

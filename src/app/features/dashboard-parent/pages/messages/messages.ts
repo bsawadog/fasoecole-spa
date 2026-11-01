@@ -1,4 +1,7 @@
+import { ConversationBrowser } from '../../../../shared/self-space/conversation-browser';
+import { ConversationThreadView } from '../../../../shared/self-space/conversation-thread';
 import { ErrorAlert } from '../../../../shared/error-alert';
+import { messageQueued } from '../../../../shared/offline/message-outbox';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
@@ -8,12 +11,12 @@ import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
-import { DatePipe } from '@angular/common';
+
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { ConversationFiles, MessageAttachments } from '../../../../shared/self-space/message-attachments';
+import { ConversationFiles } from '../../../../shared/self-space/message-attachments';
 import { catchError, exhaustMap, forkJoin, of, timer } from 'rxjs';
 import {
   apiError,
@@ -28,7 +31,7 @@ import {
 @Component({
   selector: 'app-parent-messages',
   standalone: true,
-  imports: [ErrorAlert, ModuleHelpButton, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, RouterLink, ConversationFiles, MessageAttachments],
+  imports: [ConversationBrowser, ConversationThreadView, ErrorAlert, ModuleHelpButton, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, RouterLink, ConversationFiles],
   templateUrl: './messages.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })
@@ -171,6 +174,9 @@ export class ParentMessages implements OnInit {
         this.sending.set(false);
       },
       error: (err) => {
+        if (messageQueued(err)) {
+          this.subject = ''; this.message = ''; this.messageFiles = []; this.showComposer.set(false); this.sending.set(false); return;
+        }
         this.error.set(apiError(err, 'Impossible d’envoyer votre message. Réessayez.'));
         this.sending.set(false);
       },
@@ -194,6 +200,7 @@ export class ParentMessages implements OnInit {
           this.sending.set(false);
         },
         error: (err) => {
+          if (messageQueued(err)) { this.reply = ''; this.replyFiles = []; this.sending.set(false); return; }
           this.error.set(apiError(err, 'Impossible d’envoyer votre réponse. Réessayez.'));
           this.sending.set(false);
         },

@@ -1,4 +1,9 @@
 import { ErrorAlert } from '../../../shared/error-alert';
+import { MessageOutboxPanel } from '../../../shared/offline/message-outbox-panel';
+import { ActionOutboxPanel } from '../../../shared/offline/action-outbox-panel';
+import { OfflineAttendanceService } from '../../../shared/offline/offline-attendance.service';
+import { ModuleQueryCache } from '../../../shared/offline/module-query-cache';
+import { ModulePreloadService } from '../../../shared/offline/module-preload.service';
 import { MessageActivityService } from '../../../shared/message-activity.service';
 import { LoadingState } from '../../../shared/ui/loading-state';
 import { AccountActions } from './account-actions';
@@ -7,7 +12,7 @@ import { ModuleHelpButton } from '../../../shared/help/module-help-button';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { Component, computed, effect, untracked, DestroyRef, inject, OnInit, signal } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -144,8 +149,8 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [ErrorAlert, AccountActions, NavigationActivity, LoadingState, ButtonModule, MessageModule, ModuleHelpButton,
-    NgTemplateOutlet,
+  imports: [ErrorAlert, MessageOutboxPanel, ActionOutboxPanel, AccountActions, NavigationActivity, LoadingState, ButtonModule, MessageModule, ModuleHelpButton,
+    NgTemplateOutlet, DatePipe,
     RouterOutlet,
     AcademicContextPicker,
     RouterLink,
@@ -167,6 +172,9 @@ const MENU_BY_ROLE: Record<Role, NavigationItem[]> = {
   styleUrl: './app-shell.scss',
 })
 export class AppShell implements OnInit {
+  readonly offline = inject(OfflineAttendanceService);
+  readonly moduleCache = inject(ModuleQueryCache);
+  readonly preload = inject(ModulePreloadService);
   readonly modulesOpen = signal(true);
   private readonly auth = inject(AuthService);
   private readonly supportHttp = inject(HttpClient);
@@ -177,6 +185,7 @@ export class AppShell implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly routeUrl = toSignal(this.router.events.pipe(filter(event => event instanceof NavigationEnd), map(() => this.router.url)), { initialValue: this.router.url });
+  readonly messagesPage = computed(() => /\/(?:messages)(?:[/?#]|$)/.test(this.routeUrl()));
   readonly contextSchools = computed(() => this.auth.ownerAccess() ?? []);
   readonly selectedContextSchool = computed(() => {
     const id = this.auth.schoolContextId();
@@ -320,6 +329,11 @@ export class AppShell implements OnInit {
   }
 
   constructor() {
+    effect(() => {
+      const user = this.auth.user(), token = this.auth.getToken();
+      this.moduleCache.useSession(user ? `${user.id}/${user.role}/${token}` : '');
+    });
+    this.destroyRef.onDestroy(() => this.moduleCache.useSession(''));
     effect(onCleanup => {
       const role = this.auth.role();
       const administrationView = role === 'admin' && this.routeUrl().startsWith('/proprietaire');

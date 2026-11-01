@@ -22,7 +22,7 @@ const finance = { schoolName: school.name, expected: 1560000, discounts: 0, coll
   perFeeType: fees.map(fee => ({ feeTypeId: fee.id, feeTypeName: fee.name, expected: fee.amount * 24, collected: 0, remaining: fee.amount * 24 })), recentPayments: [] };
 
 /** All API calls are intercepted: UI checks never touch a school account or database. */
-export async function mockSchool(page: Page, profile: Profile = 'proprietaire', additionalRoles: string[] = [], delegatedModules?: string[]) {
+export async function mockSchool(page: Page, profile: Profile = 'proprietaire', additionalRoles: string[] = [], delegatedModules?: string[], onContext = false) {
   const user = { id: 7, email: 'demo@example.test', firstName: 'Mariam', lastName: 'Ouédraogo', role: profile,
     approved: true, emailVerified: true, mustChangePassword: false, passwordSet: true, ownerAccount: profile === 'proprietaire' && delegatedModules === undefined,
     rawRoles: delegatedModules === undefined ? [...new Set([roles[profile], ...additionalRoles])] : ['STAFF'], requestedSchoolId: null, requestedSchoolName: null, requestedRole: null };
@@ -31,7 +31,8 @@ export async function mockSchool(page: Page, profile: Profile = 'proprietaire', 
     localStorage.setItem('fasoecole_owner_school', '1');
     localStorage.setItem('fasoecole_year_1', '1');
   }, { user });
-  await page.route('**/api/**', async route => {
+  const routeTarget = onContext ? page.context() : page;
+  await routeTarget.route('**/api/**', async route => {
     const url = new URL(route.request().url());
     const api = url.pathname.slice(url.pathname.indexOf('/api') + 4);
     let data: unknown = [];

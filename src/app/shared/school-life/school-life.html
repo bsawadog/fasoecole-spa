@@ -6,6 +6,7 @@
   </header>
   @if (error()) { <app-error-alert [message]="error()" (dismissed)="error.set(null)">{{ error() }}</app-error-alert> }
   @if (success()) { <p-message severity="success" class="ss__alert ss__alert--success" role="status">{{ success() }}</p-message> }
+  @if (queuedNotice()) { <p-message severity="warn" role="status">{{ queuedNotice() }}</p-message> }
   @if (contexts().length && !owner()) {
     <label class="ss__field">{{ owner() ? 'Établissement' : teacher() ? 'Classe' : 'Élève' }}
       <app-select-field name="context" [ngModel]="contextId()" (ngModelChange)="choose($event)" [disabled]="saving()" [ariaLabel]="((&quot;&quot; + ((owner() ? 'Établissement' : teacher() ? 'Classe' : 'Élève')) + &quot; &quot;)).trim()">

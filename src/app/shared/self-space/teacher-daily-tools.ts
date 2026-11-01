@@ -17,6 +17,7 @@ import { apiError, RosterStudent, SelfSpaceService, TeacherClass } from './self-
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Availability, Lesson, PersonalNote, Support, TeacherDailyToolsService } from './teacher-daily-tools.service';
+import { actionQueued } from '../offline/action-outbox';
 
 @Component({selector:'app-teacher-daily-tools',standalone:true,
  imports:[ErrorAlert, DatePipe,DecimalPipe,FormsModule,RouterLink,ButtonModule,MessageModule,InputTextModule,TextareaModule,DateField,SelectField,SelectOption,FormValidationDirective],
@@ -28,6 +29,7 @@ export class TeacherDailyTools implements OnChanges {
  readonly mode=input.required<'lessons'|'support'|'notes'|'availability'>();
  readonly classId=input<number|null>(null);readonly subjects=input<TeacherClass['subjects']>([]);
  readonly loading=signal(false);readonly saving=signal(false);readonly error=signal<string|null>(null);readonly success=signal<string|null>(null);
+ readonly queuedNotice=signal<string|null>(null);
  readonly lessons=signal<Lesson[]>([]);readonly support=signal<Support[]>([]);readonly notes=signal<PersonalNote[]>([]);readonly requests=signal<Availability[]>([]);
  readonly roster=signal<RosterStudent[]>([]);readonly profiles=signal<{teacherId:number;schoolName:string}[]>([]);
  readonly today=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
@@ -37,7 +39,7 @@ export class TeacherDailyTools implements OnChanges {
  plan={action:'',reviewOn:null as string|null,resolved:false,familyMessage:'',shared:false};
  request={teacherId:null as number|null,startsAt:'',endsAt:'',reason:'',replacementRequested:false};
  private version=0;
- ngOnChanges():void{this.editing=null;this.studentId=null;this.success.set(null);this.reset();this.load();}
+ ngOnChanges():void{this.editing=null;this.studentId=null;this.success.set(null);this.queuedNotice.set(null);this.reset();this.load();}
  reset():void{this.editing=null;this.lesson={subjectId:this.subjects()[0]?.subjectId??null,lessonOn:this.today,title:'',content:'',objectives:'',nextWork:'',shared:false};this.note={title:'',content:'',remindOn:null,done:false};this.studentId=null;this.plan={action:'',reviewOn:null,resolved:false,familyMessage:'',shared:false};}
  load():void{
   const version=++this.version,id=this.classId(),mode=this.mode();this.loading.set(true);this.error.set(null);
@@ -49,8 +51,12 @@ export class TeacherDailyTools implements OnChanges {
   });
  }
  private save(action:Observable<void>,form?:NgForm):void{
-  if(this.saving())return;const version=this.version;this.saving.set(true);this.error.set(null);this.success.set(null);
-  action.pipe(takeUntilDestroyed(this.destroy)).subscribe({next:()=>{this.saving.set(false);if(version!==this.version)return;this.reset();if(this.mode()==='availability')this.request={...this.request,startsAt:'',endsAt:'',reason:'',replacementRequested:false};form?.resetForm(this.mode()==='lessons'?this.lesson:this.mode()==='notes'?this.note:this.mode()==='support'?{...this.plan,studentId:null}:this.request);this.success.set(this.mode()==='availability'?'Demande transmise. Consultez la réponse dans Messages.':'Enregistrement effectué.');this.load();},error:err=>{this.saving.set(false);if(version===this.version)this.error.set(apiError(err,'Enregistrement impossible. Votre saisie est conservée.'));}});
+  if(this.saving())return;const version=this.version;this.saving.set(true);this.error.set(null);this.success.set(null);this.queuedNotice.set(null);
+  action.pipe(takeUntilDestroyed(this.destroy)).subscribe({next:()=>{this.saving.set(false);if(version!==this.version)return;this.reset();if(this.mode()==='availability')this.request={...this.request,startsAt:'',endsAt:'',reason:'',replacementRequested:false};form?.resetForm(this.mode()==='lessons'?this.lesson:this.mode()==='notes'?this.note:this.mode()==='support'?{...this.plan,studentId:null}:this.request);this.success.set(this.mode()==='availability'?'Demande transmise. Consultez la réponse dans Messages.':'Enregistrement effectué.');this.load();},error:err=>{
+   this.saving.set(false);if(version!==this.version)return;
+   if(actionQueued(err)){this.reset();form?.resetForm(this.mode()==='lessons'?this.lesson:this.note);this.queuedNotice.set(apiError(err,'Action conservée · en attente d’envoi.'));}
+   else this.error.set(apiError(err,'Enregistrement impossible. Votre saisie est conservée.'));
+  }});
  }
  saveLesson(form:NgForm):void{if(!form.valid||!this.classId())return;this.save(this.api.save('classes/'+this.classId()+'/lessons',this.lesson,this.editing),form);}
  editLesson(row:Lesson):void{this.editing=row.id;this.lesson={subjectId:row.subjectId,lessonOn:row.lessonOn,title:row.title,content:row.content,objectives:row.objectives,nextWork:row.nextWork,shared:row.shared};}

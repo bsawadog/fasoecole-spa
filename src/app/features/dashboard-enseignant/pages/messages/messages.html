@@ -13,14 +13,7 @@
       @if (loading()) { <app-loading-state message="Chargement…" /> }
       @else if (!conversations().length) { <p class="ss__body ss__muted">Aucune conversation pour le moment.</p> }
       @else {
-        @for (item of conversations(); track item.id) {
-          <button class="ss__conv" type="button" [class.ss__conv--on]="thread()?.conversation?.id === item.id"
-                  [class.ss__conv--unread]="item.unread" (click)="open(item)">
-            <strong>{{ item.subject }}</strong><span>{{ item.recipientCount ?? item.recipientNames?.length ?? 0 }} destinataire(s)</span>
-            <small>{{ item.lastMessageAt | date: 'dd/MM/yyyy HH:mm' }}</small>
-            @if (item.unread) { <span class="ss__chip ss__chip--red">Non lu</span> }
-          </button>
-        }
+        <app-conversation-browser [items]="conversations()" [selectedId]="thread()?.conversation?.id ?? null" [disabled]="sending()" (selected)="open($event)" />
       }
     </aside>
     <section class="ss__card ss__body">
@@ -69,15 +62,7 @@
       } @else if (thread(); as current) {
         <h2>{{ current.conversation.subject }}</h2>
         <p class="ss__muted">{{ current.conversation.recipientCount ?? current.conversation.recipientNames?.length ?? 0 }} destinataire(s)</p>
-        <div class="ss__thread" aria-live="polite">
-          @for (message of current.messages; track message.id) {
-            <article class="ss__msg" [class.ss__msg--mine]="message.mine">
-              <small>{{ message.senderName }} · {{ message.sentAt | date: 'dd/MM/yyyy HH:mm' }}</small>{{ message.content }}
-              <app-message-attachments [attachments]="message.attachments ?? []" />
-              @if (message.mine) { <small>{{ message.readBy?.length ? 'Lu par ' + message.readBy.length + ' personne(s)' : 'Non lu' }}</small> }
-            </article>
-          }
-        </div>
+        <app-conversation-thread [conversationId]="current.conversation.id" [messages]="current.messages" />
         <form class="ss__body" (ngSubmit)="sendReply()">
           <label class="ss__field">Répondre<textarea pTextarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" [required]="!replyFiles.length"></textarea></label>
           <app-conversation-files [(files)]="replyFiles" [disabled]="sending()" />

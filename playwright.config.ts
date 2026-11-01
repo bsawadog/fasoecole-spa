@@ -8,6 +8,8 @@ export default defineConfig({
   workers: 2,
   reporter: 'list',
   use: {
+    // Ordinary UI fixtures intercept page requests. Offline tests explicitly enable the worker.
+    serviceWorkers: 'block',
     baseURL: 'http://127.0.0.1:4202',
     actionTimeout: 15_000,
     screenshot: 'only-on-failure',

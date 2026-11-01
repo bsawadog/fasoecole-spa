@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.csr.html",
+  "assetGroups": [
+    {
+      "name": "application",
+      "installMode": "prefetch",
+      "resources": { "files": ["/index.csr.html", "/*.js$", "/*.css$", "/manifest.webmanifest", "/assets/images/logofe.png"] }
+    }
+  ],
+  "dataGroups": [],
+  "navigationRequestStrategy": "freshness",
+  "navigationUrls": ["/**", "!/**/*.*", "!/**/__*", "!/**/__*/*", "!/api/**"]
+}

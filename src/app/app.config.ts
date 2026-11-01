@@ -1,4 +1,5 @@
-import { ApplicationConfig, LOCALE_ID, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, LOCALE_ID, isDevMode, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { provideServiceWorker } from '@angular/service-worker';
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -7,6 +8,7 @@ import { SeoTitleStrategy } from './core/seo/seo-title-strategy';
 import { routes } from './app.routes';
 import { academicContextInterceptor } from './shared/academic-context';
 import { authInterceptor } from './core/auth';
+import { offlineReadInterceptor } from './shared/offline/offline-read.interceptor';
 import { providePrimeNG } from 'primeng/config';
 import { schoolTheme } from './shared/ui/theme';
 import { environment } from '../environments/environment';
@@ -15,6 +17,7 @@ registerLocaleData(localeFr);
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideServiceWorker('ngsw-worker.js', { enabled: !isDevMode(), registrationStrategy: 'registerImmediately' }),
     { provide: TitleStrategy, useClass: SeoTitleStrategy },
     { provide: LOCALE_ID, useValue: 'fr-FR' },
     providePrimeNG({
@@ -52,6 +55,6 @@ export const appConfig: ApplicationConfig = {
     }),
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled' })),
-    provideHttpClient(withInterceptors([authInterceptor, academicContextInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor, academicContextInterceptor, offlineReadInterceptor])),
   ]
 };

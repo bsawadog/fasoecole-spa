@@ -20,6 +20,7 @@ import { StudentDashboardService, StudyProfile, StudyTask } from '../../../../sh
 import { ParentPortalService, PortalPost } from '../../../../shared/self-space/parent-portal.service';
 import { PortalPosts } from '../../../../shared/self-space/portal-posts';
 import { FamilyLearning } from '../../../../shared/self-space/family-learning';
+import { actionQueued } from '../../../../shared/offline/action-outbox';
 type Mode='presences'|'annonces'|'accompagnement'|'dossier'|'organisation';
 const titles:Record<Mode,string>={presences:'Mes présences et retards',annonces:'Les annonces de mon établissement',accompagnement:'Mon accompagnement',dossier:'Mon dossier élève',organisation:'Mon organisation'};
 @Component({selector:'app-student-study-module',standalone:true,
@@ -30,6 +31,7 @@ export class StudentStudyModule implements OnInit {
  private readonly route=inject(ActivatedRoute);private readonly router=inject(Router);private readonly destroy=inject(DestroyRef);private readonly confirmation=inject(ConfirmationService);
  readonly mode=signal<Mode>('organisation');readonly title=computed(()=>titles[this.mode()]);readonly profiles=signal<StudyProfile[]>([]);readonly studentId=signal<number|null>(null);
  readonly loadingProfiles=signal(true);readonly loading=signal(false);readonly saving=signal(false);readonly error=signal<string|null>(null);readonly success=signal<string|null>(null);
+ readonly queuedNotice=signal<string|null>(null);
  readonly attendance=signal<AttendanceItem[]>([]);readonly posts=signal<PortalPost[]>([]);readonly profile=signal<StudentProfile|null>(null);readonly tasks=signal<StudyTask[]>([]);
  readonly today=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
  readonly attendanceLabels:Record<string,string>={PRESENT:'Présent',ABSENT:'Absent',LATE:'En retard',EXCUSED:'Absence excusée'};
@@ -47,7 +49,7 @@ export class StudentStudyModule implements OnInit {
  }
  reset():void{this.editing=null;this.draft={title:'',details:'',dueOn:null,done:false};}
  edit(task:StudyTask):void{this.editing=task.id;this.draft={title:task.title,details:task.details,dueOn:task.dueOn,done:task.done};}
- private save(action:Observable<void>,reset:()=>void=()=>{}):void{if(this.saving())return;const version=this.version;this.saving.set(true);this.error.set(null);this.success.set(null);action.pipe(takeUntilDestroyed(this.destroy)).subscribe({next:()=>{this.saving.set(false);if(version!==this.version)return;reset();this.success.set('Mon organisation a été mise à jour.');this.load();},error:err=>{this.saving.set(false);if(version===this.version)this.error.set(apiError(err,'Enregistrement impossible. Votre saisie est conservée.'));}});}
+ private save(action:Observable<void>,reset:()=>void=()=>{}):void{if(this.saving())return;const version=this.version;this.saving.set(true);this.error.set(null);this.success.set(null);this.queuedNotice.set(null);action.pipe(takeUntilDestroyed(this.destroy)).subscribe({next:()=>{this.saving.set(false);if(version!==this.version)return;reset();this.success.set('Mon organisation a été mise à jour.');this.load();},error:err=>{this.saving.set(false);if(version!==this.version)return;if(actionQueued(err)){reset();this.queuedNotice.set(apiError(err,'Rappel conservé · en attente d’envoi.'));}else this.error.set(apiError(err,'Enregistrement impossible. Votre saisie est conservée.'));}});}
  saveTask(form:NgForm):void{const id=this.studentId();if(!form.valid||id===null)return;this.save(this.api.saveTask(id,{...this.draft},this.editing),()=>{this.reset();form.resetForm(this.draft);});}
  toggle(task:StudyTask):void{const id=this.studentId();if(id!==null)this.save(this.api.saveTask(id,{title:task.title,details:task.details,dueOn:task.dueOn,done:!task.done},task.id));}
  async remove(task:StudyTask):Promise<void>{const id=this.studentId(),version=this.version;if(id===null||this.saving())return;if(!await this.confirmation.confirm({title:'Supprimer ce rappel ?',message:task.title,confirmLabel:'Supprimer',destructive:true}))return;if(version!==this.version||this.saving())return;this.save(this.api.deleteTask(id,task.id));}

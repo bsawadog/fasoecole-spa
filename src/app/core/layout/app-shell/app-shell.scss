@@ -451,3 +451,32 @@
 }
 
 }
+.shell__preparation {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  background: var(--theme-surface, #fff);
+  color: var(--ui-text, #183d30);
+}
+.shell__preparation-spinner {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1.5rem;
+  border: 4px solid var(--ui-border, #e0e8e4);
+  border-top-color: var(--ui-text, #183d30);
+  border-radius: 50%;
+  animation: preparation-spin 800ms linear infinite;
+}
+@keyframes preparation-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .shell__preparation-spinner { animation: none; }
+}
+.shell__content .shell__offline-warning {
+  color: light-dark(#b45309, #fb923c);
+}

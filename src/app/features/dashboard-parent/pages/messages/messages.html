@@ -22,16 +22,7 @@
       } @else if (!conversations().length) {
         <p class="ss__body ss__muted">Aucune conversation pour le moment.</p>
       } @else {
-        @for (item of conversations(); track item.id) {
-          <button type="button" class="ss__conv"
-                  [class.ss__conv--on]="thread()?.conversation?.id === item.id"
-                  [class.ss__conv--unread]="item.unread"
-                  (click)="openConversation(item)">
-            <strong>{{ item.subject }}</strong>
-            <span>{{ item.schoolName }}@if (item.studentName) { · {{ item.studentName }} }</span>
-            <small>{{ item.lastMessageAt | date: 'dd/MM/yyyy HH:mm' }}</small>
-          </button>
-        }
+        <app-conversation-browser [items]="conversations()" [selectedId]="thread()?.conversation?.id ?? null" [disabled]="sending()" (selected)="openConversation($event)" />
       }
     </aside>
 
@@ -90,16 +81,7 @@
           <h2>{{ current.conversation.subject }}</h2>
           <p class="ss__muted">{{ current.conversation.schoolName }}@if (current.conversation.studentName) { · {{ current.conversation.studentName }} }</p>
         </div>
-        <div class="ss__thread" aria-live="polite">
-          @for (item of current.messages; track item.id) {
-            <article class="ss__msg" [class.ss__msg--mine]="item.mine">
-              <small>{{ item.senderName || (item.fromSchool ? 'Établissement' : 'Vous') }} · {{ item.sentAt | date: 'dd/MM/yyyy HH:mm' }}</small>
-            {{ item.content }}
-            <app-message-attachments [attachments]="item.attachments ?? []" />
-            @if (item.mine) { <small>{{ item.readBy?.length ? 'Lu par ' + item.readBy.length + ' personne(s)' : 'Non lu' }}</small> }
-            </article>
-          }
-        </div>
+        <app-conversation-thread [conversationId]="current.conversation.id" [messages]="current.messages" />
         <form class="ss__body" (ngSubmit)="sendReply()">
           <label class="ss__field">Répondre
             <textarea pTextarea name="reply" [(ngModel)]="reply" rows="3" maxlength="4000" [required]="!replyFiles.length"></textarea>

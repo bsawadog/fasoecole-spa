@@ -94,4 +94,22 @@ describe('Teacher messaging integration', () => {
     expect(fixture.componentInstance.error()).toBeFalsy();
     expect(fixture.componentInstance.sending()).toBe(false);
   });
+
+  it('clears a previous delivery confirmation when a new send loses the connection and preserves its draft', async () => {
+    await compose();
+    submit().flush([summary]);
+    fixture.detectChanges(); await fixture.whenStable();
+    expect(fixture.componentInstance.success()).toContain('envoyé');
+
+    await compose();
+    const failed = submit();
+    expect(fixture.componentInstance.success()).toBeNull();
+    failed.error(new ProgressEvent('error'));
+    fixture.detectChanges(); await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).not.toContain('Votre message a été envoyé');
+    expect(fixture.componentInstance.error()).toContain('Connexion au serveur impossible');
+    expect(fixture.componentInstance.message).toBe('Please review the exercises');
+    expect(fixture.componentInstance.selectedRecipientIds()).toEqual([2203]);
+    expect(fixture.componentInstance.sending()).toBe(false);
+  });
 });

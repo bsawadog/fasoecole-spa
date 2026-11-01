@@ -2,6 +2,7 @@
  <header class="ss__header module-help-header"><app-module-help/><div><h1>{{title()}}</h1><p>Les informations et outils de mon espace élève.</p></div><a routerLink="/etudiant" [queryParams]="{studentId:studentId()}">Retour à mon tableau de bord</a></header>
  @if(error()){<app-error-alert [message]="error()" (dismissed)="error.set(null)">{{error()}}</app-error-alert>@if(!profiles().length){<button pButton type="button" (click)="loadProfiles()">Réessayer le chargement du dossier</button>}}
  @if(success()){<p-message severity="success" role="status">{{success()}}</p-message>}
+ @if(queuedNotice()){<p-message severity="warn" role="status">{{queuedNotice()}}</p-message>}
  @if(loadingProfiles()){<app-loading-state message="Chargement de mon dossier…"/>}
  @else if(!profiles().length&&!error()){<p>Aucun dossier élève accessible dans cet établissement.</p>}
  @if(profiles().length){<label class="ss__field">Mon établissement<app-select-field [ngModel]="studentId()" (ngModelChange)="choose(+$event)" ariaLabel="Mon dossier élève" [disabled]="saving()">@for(p of profiles();track p.studentId){<app-select-option [value]="p.studentId" [label]="p.schoolName+' · '+(p.className||'Classe non renseignée')"/>}</app-select-field></label><button pButton type="button" severity="secondary" variant="outlined" (click)="load()" [disabled]="loading()||saving()">Actualiser</button>}

@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { auditTime, catchError, defer, distinctUntilChanged, EMPTY, expand, map, merge, Observable, retry, share, timer } from 'rxjs';
+import { auditTime, catchError, defer, distinctUntilChanged, EMPTY, expand, filter, map, merge, Observable, retry, share, tap, timer } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { ModuleQueryCache } from './offline/module-query-cache';
 
 interface Revision { revision: number; date: string; }
 
@@ -9,10 +10,13 @@ interface Revision { revision: number; date: string; }
 @Injectable({ providedIn: 'root' })
 export class SchoolDataSyncService {
   private readonly http = inject(HttpClient);
+  private readonly cache = inject(ModuleQueryCache);
   private readonly streams = new Map<number,Observable<void>>();
   readonly connections = signal<Record<number,boolean>>({});
-  watch(schoolId: number): Observable<void> {
-    const existing = this.streams.get(schoolId); if (existing) return existing;
+  watch(schoolId: number, domains?: readonly string[]): Observable<void> {
+    let stream = this.streams.get(schoolId);
+    if (!stream) {
+    let previous: Revision | undefined;
     const request = (since?: number) => this.http.get<Revision>(`${environment.apiUrl}/schools/${schoolId}/changes`, {
       params: since === undefined ? {} : { since },
     });
@@ -21,10 +25,19 @@ export class SchoolDataSyncService {
       map(value => { this.connections.update(state => ({...state,[schoolId]:true})); return value; }),
       retry({ delay: () => { this.connections.update(state => ({...state,[schoolId]:false})); return timer(5000); } }),
       distinctUntilChanged((a,b) => a.revision === b.revision && a.date === b.date),
+      tap(value => {
+        if (previous && (previous.revision !== value.revision || previous.date !== value.date)) this.cache.invalidateSchool(schoolId);
+        previous = value;
+      }),
       map(() => undefined),
       catchError(() => EMPTY),
     );
-    const stream = merge(live,timer(30_000,30_000).pipe(map(() => undefined))).pipe(auditTime(150),share());
-    this.streams.set(schoolId,stream); return stream;
+    stream = merge(live,timer(30_000,30_000).pipe(map(() => undefined))).pipe(share());
+    this.streams.set(schoolId,stream);
+    }
+    return merge(stream, this.cache.refreshed.pipe(
+      filter(scope => (scope.school === null || scope.school === schoolId) && (!domains || domains.includes(scope.domain))),
+      map(() => undefined),
+    )).pipe(auditTime(150));
   }
 }

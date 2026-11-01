@@ -1,4 +1,7 @@
+import { ConversationBrowser } from '../../../../shared/self-space/conversation-browser';
+import { ConversationThreadView } from '../../../../shared/self-space/conversation-thread';
 import { ErrorAlert } from '../../../../shared/error-alert';
+import { messageQueued } from '../../../../shared/offline/message-outbox';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { SelectField } from '../../../../shared/ui/select-field';
 import { SelectOption } from '../../../../shared/ui/select-field';
@@ -8,7 +11,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { FormValidationDirective } from '../../../../shared/form-validation.directive';
-import { DatePipe } from '@angular/common';
+
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -16,12 +19,12 @@ import { catchError, exhaustMap, forkJoin, of, timer } from 'rxjs';
 import { AuthService, RegistrationSchool } from '../../../../core/auth';
 import { apiError, ConversationRecipient, ConversationSummary, ConversationThread } from '../../../../shared/self-space/self-space.service';
 import { OwnerFamilyMessagesService } from '../../family-messages.service';
-import { ConversationFiles, MessageAttachments } from '../../../../shared/self-space/message-attachments';
+import { ConversationFiles } from '../../../../shared/self-space/message-attachments';
 
 @Component({
   selector: 'app-owner-messages',
   standalone: true,
-  imports: [ErrorAlert, ModuleHelpButton, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, DatePipe, FormsModule, ConversationFiles, MessageAttachments],
+  imports: [ConversationBrowser, ConversationThreadView, ErrorAlert, ModuleHelpButton, SelectField, SelectOption, LoadingState, InputTextModule, TextareaModule, ButtonModule, MessageModule, FormValidationDirective, FormsModule, ConversationFiles],
   templateUrl: './messages.html',
   styleUrl: '../../../../shared/self-space/self-space.scss',
 })
@@ -210,6 +213,10 @@ export class OwnerMessages implements OnInit {
         this.sending.set(false);
       },
       error: (err) => {
+        if (messageQueued(err)) {
+          this.subject = ''; this.message = ''; this.messageFiles = []; this.selectedRecipientIds.set([]);
+          this.composing.set(false); this.sending.set(false); return;
+        }
         this.error.set(apiError(err, 'Impossible de créer cette conversation.'));
         this.sending.set(false);
       },
@@ -249,6 +256,7 @@ export class OwnerMessages implements OnInit {
         this.sending.set(false);
       },
       error: (err) => {
+        if (messageQueued(err)) { this.reply = ''; this.replyFiles = []; this.sending.set(false); return; }
         this.error.set(apiError(err, 'Impossible d’envoyer la réponse.'));
         this.sending.set(false);
       },

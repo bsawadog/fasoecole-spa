@@ -41,6 +41,7 @@
           },
           "configurations": {
             "production": {
+              "serviceWorker": "ngsw-config.json",
               "server": "src/main.server.ts",
               "outputMode": "static",
               "budgets": [
@@ -64,6 +65,7 @@
               ]
             },
             "dev": {
+              "serviceWorker": "ngsw-config.json",
               "server": "src/main.server.ts",
               "outputMode": "static",
               "optimization": true,
