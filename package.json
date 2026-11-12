@@ -8,7 +8,7 @@
     "start:prod": "ng serve --configuration production",
     "build": "npm run build:prod",
     "build:local": "ng build --configuration development",
-    "build:offline:local": "ng build --configuration development --optimization --service-worker=ngsw-config.json --server=src/main.server.ts --output-mode=static",
+    "build:offline:local": "ng build --configuration development --optimization --output-hashing=all --service-worker=ngsw-config.json --server=src/main.server.ts --output-mode=static",
     "build:dev": "ng build --configuration dev && node tools/finalize-seo.cjs dev",
     "build:prod": "ng build --configuration production && node tools/finalize-seo.cjs prod",
     "watch": "ng build --watch --configuration development",

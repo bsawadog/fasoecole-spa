@@ -43,10 +43,12 @@ export class ModulePreloadService {
   private generation = 0;
   readonly busy = signal(false);
   readonly failed = signal(0);
+  readonly prepared = signal(false);
   retry(): void { this.context = ''; this.prepare(); }
   constructor() {
     effect(() => {
       this.auth.user(); this.auth.getToken(); this.auth.schoolContextId();
+      this.auth.ownerModules();
       this.offline.enabled(); this.offline.unlocked(); this.offline.online();
       untracked(() => this.prepare());
     });
@@ -56,19 +58,32 @@ export class ModulePreloadService {
   private prepare(): void {
     const user = this.auth.user();
     if (!user?.approved || !user.emailVerified || user.mustChangePassword || !this.offline.enabled() || !this.offline.unlocked() || !this.offline.online()) {
+      if (!user?.approved || !user.emailVerified || user.mustChangePassword || !this.offline.enabled() || !this.offline.unlocked()) this.prepared.set(false);
       this.context = ''; this.generation++; this.subscription?.unsubscribe(); this.busy.set(false); return;
     }
     const school = this.auth.schoolContextId(), year = school ? localStorage.getItem(`fasoecole_year_${school}`) : null;
-    const context = `${user.id}/${user.role}/${this.auth.getToken()}/${school}/${year}`;
+    const modules = this.auth.ownerModules();
+    const context = `${user.id}/${user.role}/${this.auth.getToken()}/${school}/${year}/${[...modules].sort().join(',')}`;
     if (this.context === context) return;
     this.context = context;
     const generation = ++this.generation;
-    this.subscription?.unsubscribe(); this.failed.set(0); this.busy.set(true);
+    this.subscription?.unsubscribe(); this.failed.set(0); this.prepared.set(false); this.busy.set(true);
     const api = environment.apiUrl;
     const common = [`${api}/academic-years/context-schools`];
     if (user.role === 'enseignant') common.push(`${api}/me/teacher/classes`, `${api}/me/teacher/schedule`);
     else if (user.role === 'parent' || user.role === 'etudiant') common.push(`${api}/me/students`);
     else if (school) common.push(...['academic-years', 'classes', 'levels', 'subjects'].map(path => `${api}/${path}?schoolId=${school}`));
+    const administrative = user.role === 'admin' || user.role === 'proprietaire';
+    if (administrative && school && modules.has('ENROLLMENT')) {
+      common.push(`${api}/owner/enrollment/schools/${school}/overview`, `${api}/owner/enrollment/schools/${school}/fees`);
+    }
+    if (administrative && school && user.rawRoles?.some(role => role === 'SCHOOL_ADMIN' || role === 'SUPER_ADMIN')) {
+      common.push(`${api}/owner/staff/schools/${school}/employees`);
+    }
+    if (administrative && school && modules.has('TEACHERS') && modules.has('PAYROLL')) {
+      const month = new Date().toLocaleDateString('en-CA').slice(0, 7);
+      common.push(`${api}/owner/payroll/schools/${school}?month=${month}`);
+    }
     const recent = recentModuleReads(this.offline.recentReadKeys(), user.role, school, year);
     this.subscription = from(common).pipe(
       mergeMap(url => this.http.get<unknown>(url).pipe(map(body => ({ url, body })), catchError(() => { this.failed.update(n => n + 1); return of({ url, body: null }); })), 2),
@@ -76,9 +91,20 @@ export class ModulePreloadService {
       switchMap(results => {
         const followups: PreloadRead[] = [];
         for (const result of results) {
+          if (school && result.url === `${api}/owner/enrollment/schools/${school}/overview`) {
+            const years = (result.body as { years?: { id: number; closed?: boolean }[] } | null)?.years;
+            if (Array.isArray(years)) for (const year of years) {
+              if (Number.isSafeInteger(year.id) && !year.closed) followups.push({ url: `${api}/owner/enrollment/schools/${school}/years/${year.id}/classes` });
+            }
+          }
           if (!Array.isArray(result.body)) continue;
           const date = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
           for (const item of result.body) {
+            if (administrative && school && result.url === `${api}/classes?schoolId=${school}`
+                && Number.isSafeInteger(item?.id) && item.schoolId === school) {
+              if (modules.has('STUDENTS')) followups.push({ url: `${api}/classes/${item.id}/roster` });
+              if (modules.has('TEACHERS')) followups.push({ url: `${api}/teacher-work/classes/${item.id}/teachers` });
+            }
             if (result.url.endsWith('/me/teacher/classes') && Number.isSafeInteger(item?.classId)) {
               const base = `${api}/me/teacher/classes/${item.classId}`;
               followups.push({ url: `${api}/school-life/classes/${item.classId}?module=HOMEWORK` });
@@ -94,6 +120,8 @@ export class ModulePreloadService {
         return from(plan).pipe(mergeMap(item => this.http.get(item.url, { headers: item.headers }).pipe(catchError(() => { this.failed.update(n => n + 1); return of(null); })), 2));
       }),
       finalize(() => { if (generation === this.generation) this.busy.set(false); }),
-    ).subscribe();
+    ).subscribe({ complete: () => {
+      if (generation === this.generation && this.offline.online()) this.prepared.set(this.failed() === 0);
+    } });
   }
 }

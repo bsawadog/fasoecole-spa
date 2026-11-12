@@ -1,3 +1,4 @@
+import { actionQueued } from '../../../../shared/offline/action-outbox';
 import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { ChangeDetectorRef,Component,computed,ElementRef,HostListener,inject,OnDestroy,OnInit,signal } from '@angular/core';
@@ -170,6 +171,14 @@ export class SchoolTaxesPage implements OnInit,OnDestroy {
   }
   private emptyForm(){return {code:'TVA' as TaxCode,label:'TVA',periodStart:'',periodEnd:'',amount:null as number|null,dueDate:'',creditor:'Direction générale des impôts',declarationReference:'',notes:'',reason:''};}
   private run(request:Observable<unknown>,message:string,done:()=>void):void{this.busy.set(true);this.error.set('');this.success.set('');this.requests.add(request.subscribe({next:()=>{this.busy.set(false);this.success.set(message);done();},error:err=>this.fail(err,'Impossible d’enregistrer. Vos valeurs sont conservées.')}));}
-  private fail(err:{error?:{message?:string}},fallback:string):void{this.busy.set(false);this.error.set(err?.error?.message||fallback);}
+  private fail(err:{error?:{message?:string}},fallback:string):void{
+    if (actionQueued(err)) {
+      this.busy.set(false);
+      this.closePanels();
+      this.success.set(err?.error?.message ?? 'Ajout conservé sur cet appareil, en attente d’envoi.');
+      return;
+    }
+    this.busy.set(false); this.error.set(err?.error?.message || fallback);
+  }
   private focus(selector:string):void{setTimeout(()=>this.host.nativeElement.querySelector<HTMLElement>(selector)?.focus(),0);}
 }

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { auditTime, catchError, defer, distinctUntilChanged, EMPTY, expand, filter, map, merge, Observable, retry, share, tap, timer } from 'rxjs';
+import { auditTime, catchError, defer, distinctUntilChanged, EMPTY, expand, filter, fromEvent, map, merge, Observable, of, retry, share, switchMap, tap, timer } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ModuleQueryCache } from './offline/module-query-cache';
 
@@ -32,7 +32,15 @@ export class SchoolDataSyncService {
       map(() => undefined),
       catchError(() => EMPTY),
     );
-    stream = merge(live,timer(30_000,30_000).pipe(map(() => undefined))).pipe(share());
+    const connected = typeof window === 'undefined' ? of(true) : merge(
+      of(navigator.onLine), fromEvent(window, 'online').pipe(map(() => true)),
+      fromEvent(window, 'offline').pipe(map(() => false)),
+    );
+    const available = connected.pipe(distinctUntilChanged(), switchMap(online => {
+      if (!online) { this.connections.update(state => ({...state,[schoolId]:false})); return EMPTY; }
+      return merge(live,timer(30_000,30_000).pipe(map(() => undefined)));
+    }));
+    stream = available.pipe(share());
     this.streams.set(schoolId,stream);
     }
     return merge(stream, this.cache.refreshed.pipe(

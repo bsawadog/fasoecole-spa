@@ -157,6 +157,17 @@ describe('AuthService account flow', () => {
     http.expectOne(`${environment.apiUrl}/owner/staff/my-access`).flush(access);
     expect(auth.ownerAccess()).toEqual(access);
   });
+  it('uses session access for module navigation while a forced refresh fails with 504', () => {
+    auth.loadOwnerAccess().subscribe();
+    http.expectOne(`${environment.apiUrl}/owner/staff/my-access`).flush(access);
+    auth.loadOwnerAccess(true).subscribe({error:()=>undefined});
+    const refresh=http.expectOne(`${environment.apiUrl}/owner/staff/my-access`);
+    const read=vi.fn();
+    auth.loadOwnerAccess().subscribe(read);
+    expect(read).toHaveBeenCalledWith(access);
+    refresh.flush(null,{status:504,statusText:'Gateway Timeout'});
+    expect(auth.ownerAccess()).toEqual(access);
+  });
 
   it('forces a new request after a mutation even when an older refresh is pending', () => {
     auth.loadOwnerAccess().subscribe();

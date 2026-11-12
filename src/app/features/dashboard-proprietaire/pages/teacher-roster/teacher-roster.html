@@ -21,6 +21,7 @@
       <p class="teacher-roster__payroll-hint">Montants du mois choisi, toutes classes confondues.</p>
     </div>
     @if (payrollError()) { <app-error-alert [message]="payrollError()" (dismissed)="payrollError.set('')">{{ payrollError() }}</app-error-alert> }
+    @if (payrollOffline()) { <p-message severity="warn">Les salaires de ce mois ne sont pas disponibles hors connexion. La liste des enseignants reste consultable.</p-message> }
   }
 
 

@@ -1,3 +1,4 @@
+import { actionQueued } from '../../../../shared/offline/action-outbox';
 import { ErrorAlert } from '../../../../shared/error-alert';
 import { RowActions } from '../../../../shared/ui/row-actions';
 import type { ExpenseInvoiceTax } from '../../expenses.service';
@@ -401,6 +402,15 @@ export class ExpensesPage implements OnInit, OnDestroy {
   }
 
   private fail(err: { error?: { message?: string } }, fallback: string): void {
+    if (actionQueued(err)) {
+      this.busy.set(false);
+      this.formOpen.set(false);
+      this.form = this.emptyExpense();
+      this.categoryForm = { name: '', description: '' };
+      this.success.set(err?.error?.message ?? 'Ajout conservé sur cet appareil, en attente d’envoi.');
+      return;
+    }
+
     this.busy.set(false);
     this.error.set(err?.error?.message ?? fallback);
   }

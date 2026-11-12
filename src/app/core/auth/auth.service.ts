@@ -330,12 +330,12 @@ export class AuthService {
   loadOwnerAccess(force = false): Observable<SchoolAccess[]> {
     const sessionToken = this._token();
     // Ordinary page loads share requests. Explicit refreshes always fetch fresh access.
-    const ongoing = this.ownerAccessRequest;
-    if (!force && ongoing?.token === sessionToken) return ongoing.response;
     const cached = this._ownerAccess();
     if (cached && !force) {
       return of(cached);
     }
+    const ongoing = this.ownerAccessRequest;
+    if (!force && ongoing?.token === sessionToken) return ongoing.response;
     const request = { token: sessionToken, response: undefined as unknown as Observable<SchoolAccess[]> };
     request.response = this.http
       .get<SchoolAccess[]>(`${this.apiUrl}/owner/staff/my-access`)

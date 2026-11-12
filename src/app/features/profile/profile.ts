@@ -25,6 +25,9 @@ import {
 
 import { parseChildMatricules, childMatriculesError } from '../../core/auth/child-matricules';
 import { OfflineAttendanceService } from '../../shared/offline/offline-attendance.service';
+import { OfflineDiagnosticsService } from '../../shared/offline/offline-diagnostics.service';
+import { OfflineAppService } from '../../shared/offline/offline-app.service';
+import { ModulePreloadService } from '../../shared/offline/module-preload.service';
 
 const REQUESTABLE_ROLES: ApprovalRole[] = ['TEACHER', 'PARENT', 'STUDENT'];
 
@@ -57,6 +60,42 @@ function apiMessage(error: unknown, fallback: string): string {
 export class ProfilePage implements OnInit {
   readonly offline = inject(OfflineAttendanceService);
   readonly offlineError = signal<string | null>(null);
+  private readonly offlineDiagnostics = inject(OfflineDiagnosticsService);
+  private readonly offlineApplication = inject(OfflineAppService);
+  private readonly offlinePreparation = inject(ModulePreloadService);
+  readonly diagnostic = signal('');
+  readonly diagnosticCopied = signal(false);
+  prepareOfflineDiagnostic(): void {
+    const copies = this.offline.recentReadKeys().map(key => {
+      try {
+        const [role, url, responseType, school, year] = JSON.parse(key);
+        return { role, path: this.offlineDiagnostics.path(url), responseType, school, year };
+      } catch { return { invalid: true }; }
+    });
+    this.diagnosticCopied.set(false);
+    this.diagnostic.set(JSON.stringify({
+      diagnosticVersion: 1, at: new Date().toISOString(), origin: location.origin,
+      role: this.auth.user()?.role, browserOnline: navigator.onLine,
+      approved: this.auth.user()?.approved, emailVerified: this.auth.user()?.emailVerified,
+      mustChangePassword: !!this.auth.user()?.mustChangePassword,
+      workerControlled: !!navigator.serviceWorker?.controller,
+      entryScripts: Array.from(document.querySelectorAll('script[src]')).map(script => this.offlineDiagnostics.path(script.getAttribute('src')!)),
+      applicationReady: this.offlineApplication.ready(),
+      storageSupported: this.offline.supported, modeEnabled: this.offline.enabled(),
+      vaultUnlocked: this.offline.unlocked(), connectivityReported: this.offline.online(),
+      school: this.auth.schoolContextId(),
+      year: localStorage.getItem(`fasoecole_year_${this.auth.schoolContextId()}`),
+      preparationBusy: this.offlinePreparation.busy(),
+      preparationFailed: this.offlinePreparation.failed(),
+      dataPrepared: this.offlinePreparation.prepared(),
+      cacheIssue: this.offline.readCacheIssue(), copyCount: copies.length, copies,
+      events: this.offlineDiagnostics.snapshot(),
+    }, null, 2));
+  }
+  async copyOfflineDiagnostic(): Promise<void> {
+    try { await navigator.clipboard.writeText(this.diagnostic()); this.diagnosticCopied.set(true); }
+    catch { this.diagnosticCopied.set(false); }
+  }
   async toggleOffline(enabled: boolean): Promise<void> {
     this.offlineError.set(null);
     try { await (enabled ? this.offline.enable() : this.offline.disable()); }

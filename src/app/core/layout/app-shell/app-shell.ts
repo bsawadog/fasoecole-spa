@@ -349,6 +349,7 @@ export class AppShell implements OnInit {
         this.incidentsAttention.set(0);
         if (this.auth.isSchoolOwner() && (role === 'proprietaire' || role === 'admin')) {
           subscriptions.add(timer(0, 20_000).pipe(
+            filter(() => navigator.onLine),
             filter(() => this.user()?.approved === true && this.user()?.emailVerified === true),
             exhaustMap(() => this.supportHttp.get<number>(`${environment.apiUrl}/support/incidents/attention-count`).pipe(catchError(() => EMPTY))),
             takeUntilDestroyed(this.destroyRef),
@@ -356,6 +357,7 @@ export class AppShell implements OnInit {
         }
         if (role === 'proprietaire' || role === 'admin') {
           subscriptions.add(timer(0, 20_000).pipe(
+            filter(() => navigator.onLine),
             filter(() => this.user()?.approved === true && this.user()?.emailVerified === true),
             exhaustMap(() => this.auth.loadOwnerAccess(true).pipe(catchError(() => EMPTY))),
             takeUntilDestroyed(this.destroyRef),

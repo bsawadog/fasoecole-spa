@@ -66,6 +66,9 @@
         <button pButton type="button" (click)="preload.retry()" [disabled]="!offline.online()">Réessayer</button>
       </p-message>
     }
+    @if (offline.enabled() && offline.unlocked() && !preload.busy() && preload.prepared() && !offline.readCacheIssue()) {
+      <p class="ss__state" role="status">Données prêtes hors connexion pour cet établissement. Vous pouvez ouvrir les modules préparés sans Internet.</p>
+    }
     @if (moduleCache.refreshIssue()) { <small role="status">{{ moduleCache.refreshIssue() }}</small> }
     @if (moduleCache.latestRefresh()) { <small role="status">Cache actualisé en arrière-plan à {{ moduleCache.latestRefresh() | date:'HH:mm' }}.</small> }
     @if (platformIntervention()) {

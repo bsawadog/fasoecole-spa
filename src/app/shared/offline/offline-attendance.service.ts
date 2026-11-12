@@ -11,6 +11,7 @@ import { PendingMessage, MESSAGE_ID, MESSAGE_REPLAY, messageBody, isMessageWrite
 import { MessageActivityService } from '../message-activity.service';
 import { LocalPublication, PUBLICATION_ID, PUBLICATION_REPLAY, isPublicationPath, publicationBody } from './publication-outbox';
 import { PendingAction, ACTION_ID, ACTION_REPLAY, queuedActionLabel } from './action-outbox';
+import { OfflineAppService } from './offline-app.service';
 import { AttendanceVault as Vault, OfflineEntry, PendingCall, Snapshot, attendanceContext as context, confirmCall, enqueueCall, firstForContext, localSnapshot } from './attendance-queue';
 export type { OfflineEntry, PendingCall } from './attendance-queue';
 const empty = (): Vault => ({ snapshots: {}, pending: [] });
@@ -22,6 +23,7 @@ export class OfflineAttendanceService {
   private readonly vault = inject(ATTENDANCE_VAULT);
   private readonly destroy = inject(DestroyRef);
   private readonly activity = inject(MessageActivityService);
+  private readonly application = inject(OfflineAppService);
   readonly supported = typeof window !== 'undefined' && !!globalThis.crypto?.subtle && !!globalThis.indexedDB && !!navigator.locks;
   readonly online = signal(typeof navigator === 'undefined' || navigator.onLine);
   readonly enabled = signal(false);
@@ -63,11 +65,14 @@ export class OfflineAttendanceService {
   constructor() {
     effect(() => {
       const user = this.auth.user(); const token = this.auth.getToken();
-      untracked(() => { if (!user || token !== this.token || !this.owner.startsWith(`${user.id}/`)) {
+      const eligible = !!user?.approved && user.emailVerified === true && !user.mustChangePassword && this.supported;
+      untracked(() => { if (!user || token !== this.token || !this.owner.startsWith(`${user.id}/`) || (!eligible && this.enabled())) {
         this.generation++; this.key = undefined; this.owner = ''; this.token = token;
         this.state = empty(); this.pending.set([]); this.pendingMessages.set([]); this.lastMessageSync.set(null); this.unlocked.set(false); this.busy.set(false);
         this.clearSessionNavigation();
-        this.enabled.set(!!user && this.supported && localStorage.getItem(`fasoecole_offline_${user.id}`) === 'true');
+        // Absence of a preference means enabled by default. An explicit opt-out
+        // must survive reconnecting and opening the application again.
+        this.enabled.set(eligible && localStorage.getItem(`fasoecole_offline_${user!.id}`) !== 'false');
         if (this.enabled() && this.online()) void this.unlock();
       } });
     });
@@ -96,7 +101,8 @@ export class OfflineAttendanceService {
     this.clearSessionNavigation();
   }
   async enable(): Promise<void> {
-    const user = this.auth.user(); if (!user || !this.supported) return;
+    const user = this.auth.user();
+    if (!user?.approved || user.emailVerified !== true || user.mustChangePassword || !this.supported) return;
     localStorage.setItem(`fasoecole_offline_${user.id}`, 'true'); this.enabled.set(true);
     await this.unlock();
   }
@@ -110,7 +116,7 @@ export class OfflineAttendanceService {
       state.reads = {};
     });
     const user = this.auth.user();
-    if (user) localStorage.removeItem(`fasoecole_offline_${user.id}`);
+    if (user) localStorage.setItem(`fasoecole_offline_${user.id}`, 'false');
     this.generation++; this.key = undefined; this.owner = ''; this.state = empty();
     this.enabled.set(false); this.unlocked.set(false); this.pending.set([]);
     this.pendingMessages.set([]); this.lastMessageSync.set(null);
@@ -124,6 +130,8 @@ export class OfflineAttendanceService {
     if (!userId || !token) return;
     this.busy.set(true); this.issue.set(null);
     try {
+      await this.application.prepare();
+      if (generation !== this.generation || token !== this.auth.getToken() || !this.enabled()) return;
       let device = localStorage.getItem('fasoecole_offline_device');
       if (!device) { device = crypto.randomUUID(); localStorage.setItem('fasoecole_offline_device', device); }
       const response = await firstValueFrom(this.http.post<{ key: string }>(`${environment.apiUrl}/me/offline-devices/${device}/key`, {}).pipe(timeout(20_000)));
@@ -231,7 +239,7 @@ export class OfflineAttendanceService {
   }
   async queueAction(action: PendingAction): Promise<void> {
     if (!this.enabled() || !this.unlocked() || !this.sameSession()) throw new Error('Activez et déverrouillez le mode hors connexion pour conserver cette action.');
-    if (action.userId !== this.auth.user()?.id || action.role !== this.auth.user()?.role || !queuedActionLabel('POST', action.path, action.role)) throw new Error('Cette action ne peut pas être mise en attente.');
+    if (action.userId !== this.auth.user()?.id || action.role !== this.auth.user()?.role || !queuedActionLabel('POST', action.path, action.role, action.payload)) throw new Error('Cette action ne peut pas être mise en attente.');
     await this.change(state => {
       const actions = state.actions ??= [];
       if (actions.some(item => item.operationId === action.operationId)) return;
@@ -414,7 +422,7 @@ export class OfflineAttendanceService {
             item.attempted = true; return structuredClone(item);
           });
           if (!action || generation !== this.generation) continue;
-          if (!queuedActionLabel('POST', action.path, action.role)) throw { status: 400, error: { message: 'Action non reconnue.' } };
+          if (!queuedActionLabel('POST', action.path, action.role, action.payload)) throw { status: 400, error: { message: 'Action non reconnue.' } };
           const headers: Record<string, string> = { [ACTION_ID]: action.operationId, [ACTION_REPLAY]: 'true' };
           if (action.school) headers['X-Academic-School'] = action.school;
           if (action.year) headers['X-Academic-Year'] = action.year;

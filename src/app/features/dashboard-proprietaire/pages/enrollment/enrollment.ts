@@ -1,3 +1,4 @@
+import { actionQueued } from '../../../../shared/offline/action-outbox';
 import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -122,6 +123,7 @@ export class EnrollmentPage implements OnInit {
   readonly newStudentClassesLoading = signal(false);
   readonly lastRegistration = signal<RegistrationResult | null>(null);
   readonly enrollmentFees = signal<EnrollmentFee[]>([]);
+  readonly enrollmentFeesReady = signal(false);
   readonly paymentMethods: { code: PaymentMethodCode; label: string }[] = [
     { code: 'CASH', label: 'Espèces' },
     { code: 'MOBILE_MONEY', label: 'Mobile Money' },
@@ -396,12 +398,17 @@ export class EnrollmentPage implements OnInit {
   private loadEnrollmentFees(): void {
     const schoolId = this.schoolId();
     if (!schoolId) return;
+    this.enrollmentFeesReady.set(false);
     this.api.enrollmentFees(schoolId).subscribe({
       next: (fees) => {
+        this.enrollmentFeesReady.set(true);
         this.enrollmentFees.set(fees);
         this.feeChoices = Object.fromEntries(fees.map((f) => [f.id, { selected: false, amountPaid: null }]));
       },
-      error: () => this.enrollmentFees.set([]),
+      error: (err) => {
+        this.enrollmentFees.set([]);
+        this.error.set(err?.error?.message ?? 'Les frais d’inscription ne sont pas disponibles. Chargez les données de cet établissement en ligne avant de saisir une inscription.');
+      },
     });
   }
 
@@ -447,7 +454,7 @@ export class EnrollmentPage implements OnInit {
   registerStudent(): void {
     const schoolId = this.schoolId();
     const f = this.newStudentForm;
-    if (!schoolId) return;
+    if (!schoolId || this.busy()) return;
     if (!f.classId || !f.firstName.trim() || !f.lastName.trim()) {
       this.error.set('Renseignez la classe, le prénom et le nom.');
       return;
@@ -461,6 +468,10 @@ export class EnrollmentPage implements OnInit {
       return;
     }
     const target = this.newStudentClasses().find((c) => c.id === Number(f.classId));
+    if (!this.enrollmentFeesReady()) {
+      this.error.set('Attendez le chargement des frais d’inscription avant de valider. En cas de coupure, les données doivent avoir été préparées en ligne.');
+      return;
+    }
     const fees = this.selectedFees().map((fee) => ({
       fee, amountPaid: Number(this.feeChoices[fee.id]?.amountPaid) || 0,
     }));
@@ -926,6 +937,15 @@ export class EnrollmentPage implements OnInit {
   }
 
   private fail(err: { error?: { message?: string } } | null, fallback: string): void {
+    if (actionQueued(err)) {
+      this.busy.set(false);
+      this.closeNewStudent();
+      this.newStudentForm = this.emptyNewStudentForm();
+      this.guardians = [this.emptyGuardian()];
+      this.success.set(err?.error?.message ?? 'Ajout conservé sur cet appareil, en attente d’envoi.');
+      return;
+    }
+
     this.busy.set(false);
     this.error.set(err?.error?.message ?? fallback);
   }

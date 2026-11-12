@@ -1,3 +1,14 @@
+@if (offlineApp.supported) {
+  <aside class="offline-preparation" role="status">
+    @if (offlineApp.busy()) {
+      Préparation de l’application hors connexion… Gardez Internet jusqu’à la fin.
+    } @else if (offlineApp.error(); as error) {
+      {{ error }} <button type="button" (click)="offlineApp.retry()">Réessayer</button>
+    } @else if (offlineApp.ready()) {
+      Application prête pour le hors connexion. Chargez les données de vos modules avant de couper Internet.
+    }
+  </aside>
+}
 <router-outlet />
 <app-confirmation-dialog />
 

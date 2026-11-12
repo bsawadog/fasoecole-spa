@@ -9,6 +9,13 @@ import { EmployeesPage } from './employees';
 import { environment } from '../../../../../environments/environment';
 
 describe('Teacher creation and initial compensation', () => {
+  it('clears a durably queued teacher form without announcing an account or invitation',()=>{
+    const {page,http}=setup();page.form.monthlySalary=100000;page.save();
+    http.expectOne(`${environment.apiUrl}/teacher-work/schools/1/teachers`).flush({actionQueued:true},{status:503,statusText:'Offline'});
+    expect(page.busy()).toBe(false);expect(page.error()).toBe('');
+    expect(page.success()).toContain('en attente');expect(page.form.firstName).toBe('');
+    http.verify();
+  });
   function setup() {
     const management = {
       getClasses: vi.fn(() => of([{ id: 11, schoolId: 1, name: 'CM1', academicYearId: 2 }])),

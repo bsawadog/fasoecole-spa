@@ -4,7 +4,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
-import { AuthService } from '../../core/auth';
+import { AuthService, OwnerModule } from '../../core/auth';
 import { environment } from '../../../environments/environment';
 import { ModulePreloadService, recentModuleReads } from './module-preload.service';
 import { OfflineAttendanceService } from './offline-attendance.service';
@@ -13,10 +13,10 @@ describe('Progressive module preparation', () => {
   let http: HttpTestingController;
   beforeEach(() => TestBed.resetTestingModule());
   afterEach(() => { http?.verify({ ignoreCancelled: true }); TestBed.resetTestingModule(); });
-  function setup() {
+  function setup(role = 'enseignant', modules: OwnerModule[] = []) {
     const online = signal(true);
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(),
-      { provide: AuthService, useValue: { user: () => ({ id: 7, role: 'enseignant', approved: true, emailVerified: true }), getToken: () => 'test', schoolContextId: () => 1 } },
+      { provide: AuthService, useValue: { user: () => ({ id: 7, role, approved: true, emailVerified: true }), getToken: () => 'test', schoolContextId: () => 1, ownerModules: () => new Set(modules) } },
       { provide: OfflineAttendanceService, useValue: { enabled: () => true, unlocked: () => true, online, recentReadKeys: () => [] } },
       { provide: Router, useValue: { events: new Subject() } },
     ] });
@@ -44,6 +44,45 @@ describe('Progressive module preparation', () => {
     expect(urls).toContain(environment.apiUrl + '/me/teacher/classes/11/portal/posts?kind=DOCUMENT');
     expect(preload.busy()).toBe(false);
   });
+  it.each(['admin','proprietaire'])('prepares every accessible class roster before a first offline visit for %s',role=>{
+    const {preload,online}=setup(role,['STUDENTS','TEACHERS']);
+    const urls:string[]=[];
+    while(preload.busy()) {
+      const batch=http.match(()=>true);expect(batch.length).toBeGreaterThan(0);expect(batch.length).toBeLessThanOrEqual(2);
+      for(const request of batch) {
+        urls.push(request.request.url);
+        request.flush(request.request.url===environment.apiUrl+'/classes?schoolId=1'
+          ?[{id:11,schoolId:1},{id:12,schoolId:1},{id:99,schoolId:2}]:[]);
+      }
+    }
+    for(const id of [11,12]) {
+      expect(urls).toContain(environment.apiUrl+`/classes/${id}/roster`);
+      expect(urls).toContain(environment.apiUrl+`/teacher-work/classes/${id}/teachers`);
+    }
+    expect(urls.some(url=>url.includes('/99/'))).toBe(false);
+    expect(preload.prepared()).toBe(true);
+    online.set(false);TestBed.tick();expect(preload.prepared()).toBe(true);
+  });
+  it('does not preload teacher data when only the students module is delegated',()=>{
+    const {preload}=setup('proprietaire',['STUDENTS']);const urls:string[]=[];
+    while(preload.busy())for(const request of http.match(()=>true)) {
+      urls.push(request.request.url);
+      request.flush(request.request.url===environment.apiUrl+'/classes?schoolId=1'?[{id:11,schoolId:1}]:[]);
+    }
+    expect(urls).toContain(environment.apiUrl+'/classes/11/roster');
+    expect(urls.some(url=>url.includes('/teacher-work/')||url.includes('/payroll/'))).toBe(false);
+  });
+  it('prepares enrollment fees and host classes for open years before a first offline registration',()=>{
+    const {preload}=setup('admin',['ENROLLMENT']);const urls:string[]=[];
+    while(preload.busy())for(const request of http.match(()=>true)) {
+      urls.push(request.request.url);
+      request.flush(request.request.url.endsWith('/owner/enrollment/schools/1/overview')
+        ?{years:[{id:1,closed:false},{id:2,closed:false},{id:3,closed:true}]}:[]);
+    }
+    expect(urls).toContain(environment.apiUrl+'/owner/enrollment/schools/1/fees');
+    for(const id of [1,2])expect(urls).toContain(environment.apiUrl+`/owner/enrollment/schools/1/years/${id}/classes`);
+    expect(urls.some(url=>url.includes('/years/3/'))).toBe(false);expect(preload.prepared()).toBe(true);
+  });
   it('reports incomplete preparation and allows a retry', () => {
     const { preload } = setup();
     const initial = http.match(() => true);
@@ -51,6 +90,7 @@ describe('Progressive module preparation', () => {
     initial[1].flush([]);
     http.expectOne(environment.apiUrl + '/me/teacher/schedule').flush([]);
     expect(preload.failed()).toBe(1);
+    expect(preload.prepared()).toBe(false);
     expect(preload.busy()).toBe(false);
     preload.retry();
     expect(preload.busy()).toBe(true);

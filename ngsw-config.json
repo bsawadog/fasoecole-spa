@@ -5,10 +5,16 @@
     {
       "name": "application",
       "installMode": "prefetch",
-      "resources": { "files": ["/index.csr.html", "/*.js$", "/*.css$", "/manifest.webmanifest", "/assets/images/logofe.png"] }
+      "resources": { "files": ["/index.csr.html", "/*.js$", "/*.css$", "/manifest.webmanifest", "/assets/images/logofe.png", "/assets/images/0*.jpg"] }
+    },
+    {
+      "name": "images",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": { "files": ["/assets/images/**"] }
     }
   ],
   "dataGroups": [],
-  "navigationRequestStrategy": "freshness",
+  "navigationRequestStrategy": "performance",
   "navigationUrls": ["/**", "!/**/*.*", "!/**/__*", "!/**/__*/*", "!/api/**"]
 }

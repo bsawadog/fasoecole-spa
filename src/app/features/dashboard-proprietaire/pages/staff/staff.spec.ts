@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AuthService, OWNER_MODULES } from '../../../../core/auth';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import { EmployeeMember, StaffService } from '../../staff.service';
@@ -13,6 +13,14 @@ const member: EmployeeMember = {
 };
 
 describe('StaffPage', () => {
+  it('keeps the directory unchanged and closes the form after an employee is durably queued',()=>{
+    const {fixture,api}=setup(true),page=fixture.componentInstance;
+    page.openCreate();Object.assign(page.form,{firstName:'Ali',lastName:'Test',jobTitle:'Gardien',monthlySalary:75000});
+    api.create.mockReturnValueOnce(throwError(()=>({error:{actionQueued:true}})));
+    page.save();expect(page.busy()).toBe(false);expect(page.formOpen()).toBe(false);
+    expect(page.staff()).toEqual([member]);expect(page.success()).toContain('en attente');expect(page.error()).toBeNull();
+    expect(api.directory).toHaveBeenCalledOnce();
+  });
   function setup(allowCreate = false) {
     const api = {
       directory: vi.fn(() => of([member])),

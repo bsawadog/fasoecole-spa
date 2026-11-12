@@ -9,8 +9,8 @@
   @if (user()?.approved && user()?.emailVerified && !user()?.mustChangePassword) {
     <section class="profile__card" aria-labelledby="profile-offline-title">
       <h2 id="profile-offline-title">Mode hors connexion Internet</h2>
-      <p>À activer sur votre appareil personnel. Vos saisies sont conservées chiffrées pendant les coupures Internet, puis envoyées automatiquement au retour de la connexion Internet, tant que l’application est ouverte.</p>
-      <p class="profile__hint">Consultez les données déjà chargées dans les modules de votre profil. Les présences des enseignants peuvent aussi être saisies pour un envoi ultérieur. Après fermeture, Internet est nécessaire pour déverrouiller les données.</p>
+      <p>Activé par défaut sur cet appareil après validation de votre compte. Vous pouvez le désactiver ci-dessous ; votre choix sera conservé. Vos saisies sont conservées chiffrées pendant les coupures Internet, puis envoyées automatiquement au retour de la connexion Internet, tant que l’application est ouverte.</p>
+      <p class="profile__hint">Consultez les données déjà chargées dans les modules de votre profil. Les ajouts compatibles (messages, présences, dépenses, paiements, inscriptions…) peuvent être conservés pour un envoi ultérieur. Ils restent en attente jusqu’à la confirmation du serveur. Après fermeture ou rechargement, Internet est nécessaire pour déverrouiller les données.</p>
       <label><input type="checkbox" role="switch" aria-label="Mode hors connexion Internet sur cet appareil" [checked]="offline.enabled()"
         [disabled]="!offline.supported || offline.busy() || (!offline.enabled() && !offline.online()) || (offline.enabled() && (!offline.unlocked() || !!offline.pending().length || !!offline.pendingMessages().length))"
         (change)="toggleOffline($any($event.target).checked)" /> Activer sur cet appareil personnel</label>
@@ -21,6 +21,16 @@
       @else if (offline.enabled() && !offline.unlocked()) { <p>Reconnectez-vous avec Internet pour déverrouiller les saisies locales.</p> }
       @if (offline.issue()) { <p role="status">{{ offline.issue() }}</p> }
       @if (offlineError()) { <app-error-alert [message]="offlineError()" (dismissed)="offlineError.set(null)" /> }
+      <details>
+        <summary>Diagnostic hors connexion</summary>
+        <p>En cas d'erreur, préparez ce diagnostic après avoir ouvert le module concerné. Il contient les états techniques et les chemins des requêtes, sans mot de passe, jeton ni contenu des dossiers.</p>
+        <button pButton type="button" (click)="prepareOfflineDiagnostic()">Préparer le diagnostic</button>
+        @if (diagnostic()) {
+          <textarea aria-label="Diagnostic hors connexion" readonly [value]="diagnostic()" rows="12" style="display:block;width:100%;box-sizing:border-box;margin:.75rem 0"></textarea>
+          <button pButton type="button" (click)="copyOfflineDiagnostic()">Copier le diagnostic</button>
+          @if (diagnosticCopied()) { <p role="status">Diagnostic copié.</p> }
+        }
+      </details>
     </section>
   }
 

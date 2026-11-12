@@ -52,6 +52,17 @@ describe('Offline module reads', () => {
     ['parent', '/school-life/students/4/requests'], ['admin', '/school-life/schools/1/books'],
     ['enseignant', '/me/teacher/classes/11/lessons'], ['enseignant', '/me/teacher/daily/notes'],
     ['etudiant', '/me/student/profiles/4/tasks'],
+    ...['admin', 'proprietaire'].flatMap(role => [
+      '/owner/resources/schools/1/assets', '/owner/resources/schools/1/stock',
+      '/owner/resources/schools/1/stock/2/movements',
+      '/owner/expenses/schools/1/categories', '/owner/expenses/schools/1/expenses',
+      '/owner/payables/schools/1', '/owner/payables/schools/1/fixed', '/owner/payables/schools/1/2/payments',
+      '/owner/taxes/schools/1', '/owner/taxes/schools/1/2/payments',
+      '/owner/cash-book/schools/1/entries', '/owner/bank-book/schools/1/entries',
+      '/owner/finance/schools/1/fee-types', '/owner/finance/invoices/2/payments',
+      '/owner/grades/classes/11/evaluations', '/owner/enrollment/schools/1/students',
+      '/owner/staff/schools/1', '/teacher-work/schools/1/teachers',
+    ].map(path => [role, path])),
   ])('durably queues supported creations for %s at %s without reporting server success', async (role, path) => {
     user.update(value => ({ ...value, role })); connected = false;
     await expect(firstValueFrom(http.post(environment.apiUrl + path, { title: 'Ajout', content: 'Contenu' }, { headers: headers() })))
@@ -66,6 +77,20 @@ describe('Offline module reads', () => {
     const request = requests.expectOne(path), id = request.request.headers.get('X-Offline-Action-Id');
     expect(id).toBeTruthy(); request.error(new ProgressEvent('error')); await rejection;
     expect(offline.queueAction).toHaveBeenCalledWith(expect.objectContaining({ operationId: id }));
+  });
+  it('keeps recounts, edits, closures and unauthorized admin creations online only', async () => {
+    connected = false;
+    for (const role of ['admin', 'enseignant', 'parent', 'etudiant']) {
+      user.update(value => ({ ...value, role }));
+      const path = role === 'admin' ? '/owner/resources/schools/1/stock/2/movements' : '/owner/finance/invoices/2/payments';
+      await expect(firstValueFrom(http.post(environment.apiUrl + path, { kind: 'COUNT' }, { headers: headers() }))).rejects.toMatchObject({ status: 0 });
+    }
+    user.update(value => ({ ...value, role: 'admin' }));
+    for (const path of ['/owner/cash-book/schools/1/close', '/owner/enrollment/schools/1/promotion']) {
+      await expect(firstValueFrom(http.post(environment.apiUrl + path, {}, { headers: headers() }))).rejects.toMatchObject({ status: 0 });
+    }
+    await expect(firstValueFrom(http.put(environment.apiUrl + '/owner/grades/evaluations/2/grades', {}, { headers: headers() }))).rejects.toMatchObject({ status: 0 });
+    expect(offline.queueAction).not.toHaveBeenCalled();
   });
   it('keeps a storage failure distinct from successful queueing', async () => {
     connected = false; offline.queueAction.mockRejectedValueOnce(new Error('Coffre plein'));
@@ -156,6 +181,25 @@ describe('Offline module reads', () => {
     requests.expectOne(url).error(new ProgressEvent('error'));
     expect(await result).toEqual([{ title: 'Calendrier privé' }]);
     expect(offline.online()).toBe(false);
+  });
+  it.each(['/classes/11/roster', '/teacher-work/classes/11/teachers'])
+  ('uses the encrypted copy for %s after a service-worker 504 while the browser reports online', async path => {
+    const endpoint=environment.apiUrl+path;
+    const first=firstValueFrom(http.get(endpoint,{headers:headers()}));
+    requests.expectOne(endpoint).flush([{id:11,name:'Données de la classe'}]);await first;
+    cache.invalidateSchool(null);
+    const result=firstValueFrom(http.get(endpoint,{headers:headers()}));
+    requests.expectOne(endpoint).flush(null,{status:504,statusText:'Gateway Timeout'});
+    expect(await result).toEqual([{id:11,name:'Données de la classe'}]);
+    expect(connected).toBe(true);expect(offline.online()).toBe(false);
+  });
+  it('explains missing or locked copies after a 504 instead of displaying a gateway error', async () => {
+    for(const unlocked of [true,false]) {
+      offline.unlocked.set(unlocked);
+      const result=firstValueFrom(http.get(url,{headers:headers()}));
+      const rejected=expect(result).rejects.toMatchObject({status:0,error:{offline:true,message:expect.stringContaining(unlocked?'pas disponibles':'déverrouiller')}});
+      requests.expectOne(url).flush(null,{status:504,statusText:'Gateway Timeout'});await rejected;
+    }
   });
   it('does not save a late response under a different account', async () => {
     const result = firstValueFrom(http.get(url, { headers: headers() }));

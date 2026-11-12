@@ -1,3 +1,4 @@
+import { actionQueued } from '../../../../shared/offline/action-outbox';
 import { ErrorAlert } from '../../../../shared/error-alert';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -153,7 +154,15 @@ export class CashBookPage implements OnInit, OnDestroy {
     return value!==null && Number.isFinite(value) && (positive?value>0:value>=0) && value<=(positive?9999999999.99:999999999999.99)
       && Math.abs(value*100-Math.round(value*100))<0.0001;
   }
-  private fail(err: {error?:{message?:string}},fallback: string): void {this.error.set(err?.error?.message ?? fallback);}
+  private fail(err: {error?:{message?:string}},fallback: string): void {
+    if (actionQueued(err)) {
+      this.busy.set(false);
+      this.resetEntry();
+      this.success.set(err?.error?.message ?? 'Ajout conservé sur cet appareil, en attente d’envoi.');
+      return;
+    }
+    this.error.set(err?.error?.message ?? fallback);
+  }
   @HostListener('window:beforeprint') beforePrint(): void {this.printing.set(true);this.changes.detectChanges();}
   @HostListener('window:afterprint') afterPrint(): void {this.printing.set(false);}
   print(): void {this.beforePrint();window.print();this.afterPrint();}

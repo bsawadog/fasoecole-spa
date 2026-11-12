@@ -1,3 +1,4 @@
+import { actionQueued } from '../../../../shared/offline/action-outbox';
 import { ErrorAlert } from '../../../../shared/error-alert';
 import { RowActions } from '../../../../shared/ui/row-actions';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
@@ -503,6 +504,13 @@ export class GradesPage implements OnInit, OnDestroy {
   }
 
   private fail(err: { error?: { message?: string } }, fallback: string): void {
+    if (actionQueued(err)) {
+      this.busy.set(false);
+      this.resetEvaluation();
+      this.success.set(err?.error?.message ?? 'Ajout conservé sur cet appareil, en attente d’envoi.');
+      return;
+    }
+
     this.busy.set(false);
     this.error.set(err?.error?.message ?? fallback);
   }

@@ -8,21 +8,26 @@ import { offlineApiPath, offlineReadKey, readBody, serializeRead } from './offli
 import { ModuleQueryCache, QUERY_FRESH_MS, QUERY_RECHECK_MS, queryScope } from './module-query-cache';
 import { isMessageWrite, MESSAGE_ID, MESSAGE_REPLAY, packMessage } from './message-outbox';
 import { ACTION_ID, ACTION_REPLAY, queuedActionLabel } from './action-outbox';
+import { OfflineDiagnosticsService } from './offline-diagnostics.service';
 
-/** Session cache for online reads; encrypted persistence requires explicit offline opt-in. */
+/** Session cache for online reads; encrypted persistence follows the account's offline preference. */
 export const offlineReadInterceptor: HttpInterceptorFn = (request, next) => {
   const path = offlineApiPath(request.url, environment.apiUrl);
   if (path === null) return next(request);
   const auth = inject(AuthService);
   const offline = inject(OfflineAttendanceService);
   const cache = inject(ModuleQueryCache);
+  const diagnostics = inject(OfflineDiagnosticsService);
+  const record = (outcome: string, status?: number) => diagnostics.record(request.url, outcome, {
+    status, school: request.headers.get('X-Academic-School'), year: request.headers.get('X-Academic-Year'),
+  });
   const user = auth.user(), token = auth.getToken(), role = user?.role ?? '';
   if (!user?.approved || !user.emailVerified || user.mustChangePassword
-      || request.headers.get('Authorization') !== `Bearer ${token}`) return next(request);
+      || request.headers.get('Authorization') !== `Bearer ${token}`) { record('offline-cache-not-eligible'); return next(request); }
   cache.useSession(`${user.id}/${role}/${token}`);
   const sameSession = () => auth.getToken() === token && auth.user()?.id === user.id && auth.user()?.role === role;
   const messageWrite = isMessageWrite(request.method, path);
-  const actionLabel = queuedActionLabel(request.method, path, role);
+  const actionLabel = queuedActionLabel(request.method, path, role, request.body);
   if (actionLabel && !request.headers.has(ACTION_ID)) request = request.clone({ setHeaders: { [ACTION_ID]: crypto.randomUUID() } });
   if (messageWrite && !request.headers.has(MESSAGE_ID)) request = request.clone({ setHeaders: { [MESSAGE_ID]: crypto.randomUUID() } });
   const key = offlineReadKey(request, role);
@@ -54,13 +59,14 @@ export const offlineReadInterceptor: HttpInterceptorFn = (request, next) => {
     throw new HttpErrorResponse({ status: 0, error: { offline: true, actionQueued: true, message: 'Action conservée chiffrée sur cet appareil · en attente d’envoi. La base de données sera mise à jour après confirmation du serveur.' } });
   })());
   const copy = () => {
-    if (!sameSession() || !offline.unlocked()) return unavailable('Retrouvez Internet pour déverrouiller les données locales de ce compte.');
+    if (!sameSession() || !offline.unlocked()) { record('vault-locked-or-session-changed'); return unavailable('Retrouvez Internet pour déverrouiller les données locales de ce compte.'); }
     const entry = offline.readCopy(key);
+    record(entry ? 'offline-cache-hit' : 'offline-cache-miss');
     return entry ? of(new HttpResponse({ status: 200, url: request.urlWithParams, body: readBody(entry), headers: new HttpHeaders(entry.headers) }))
       : unavailable('Ces données ne sont pas disponibles hors connexion Internet. Consultez cette page avec Internet pour préparer sa copie locale.');
   };
   if (!navigator.onLine) {
-    if (!offline.enabled()) return next(request);
+    if (!offline.enabled()) { record('offline-mode-disabled'); return next(request); }
     if (messageWrite && !request.headers.has(MESSAGE_REPLAY)) return queueMessage();
     if (actionLabel && !request.headers.has(ACTION_REPLAY)) return queueAction();
     if (request.method !== 'GET') return unavailable('Mode consultation hors connexion Internet : cette action nécessite Internet. Les présences peuvent être enregistrées dans leur module pour un envoi ultérieur.');
@@ -90,6 +96,7 @@ export const offlineReadInterceptor: HttpInterceptorFn = (request, next) => {
       return from(save());
     }),
     catchError(error => {
+      record('request-failed', typeof error.status === 'number' ? error.status : undefined);
       if (!sameSession()) return throwError(() => error);
       if (actionLabel && !request.headers.has(ACTION_REPLAY) && offline.enabled() && offline.unlocked()
           && (!error.status || error.status >= 500 || [408, 429].includes(error.status))) return queueAction();
@@ -103,7 +110,9 @@ export const offlineReadInterceptor: HttpInterceptorFn = (request, next) => {
           return throwError(() => error);
         }));
       }
-      if (request.method === 'GET' && !error.status && offline.enabled()) {
+      // The Angular service worker synthesizes 504 when fetch fails, even when
+      // navigator.onLine still reports a connection to the local network.
+      if (request.method === 'GET' && (!error.status || error.status === 504) && offline.enabled()) {
         offline.online.set(false);
         return copy();
       }

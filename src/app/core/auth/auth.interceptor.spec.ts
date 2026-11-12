@@ -30,6 +30,7 @@ describe('authInterceptor session lifecycle', () => {
     client.get(endpoint).subscribe({ error: () => undefined });
     const request = http.expectOne(endpoint);
     expect(request.request.headers.get('Authorization')).toBe('Bearer old-jwt');
+    expect(request.request.headers.get('ngsw-bypass')).toBe('true');
     request.flush({}, { status: 401, statusText: 'Unauthorized' });
     expect(logout).toHaveBeenCalledOnce();
   });
@@ -40,7 +41,8 @@ describe('authInterceptor session lifecycle', () => {
   it('does not leak the JWT to another server', () => {
     client.get('https://example.test/data').subscribe();
     const request = http.expectOne('https://example.test/data');
-    expect(request.request.headers.has('Authorization')).toBe(false); request.flush({});
+    expect(request.request.headers.has('Authorization')).toBe(false);
+    expect(request.request.headers.has('ngsw-bypass')).toBe(false); request.flush({});
   });
   it('keeps a new session when an old pending request returns unauthorized', () => {
     client.get(endpoint).subscribe({ error: () => undefined });
@@ -50,5 +52,12 @@ describe('authInterceptor session lifecycle', () => {
   });
   it('does not create a session or force logout for an anonymous request', () => {
     token = null; failure(401); expect(logout).not.toHaveBeenCalled();
+  });
+  it('also bypasses the static worker for public API calls without adding credentials', () => {
+    token=null;
+    client.get(`${environment.apiUrl}/schools/registration-options`).subscribe();
+    const request=http.expectOne(`${environment.apiUrl}/schools/registration-options`);
+    expect(request.request.headers.get('ngsw-bypass')).toBe('true');
+    expect(request.request.headers.has('Authorization')).toBe(false);request.flush([]);
   });
 });

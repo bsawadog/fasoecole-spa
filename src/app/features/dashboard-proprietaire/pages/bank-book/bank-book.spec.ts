@@ -13,6 +13,16 @@ function setup(value=sample){
  const fixture=TestBed.createComponent(BankBookPage);fixture.detectChanges();return {fixture,page:fixture.componentInstance,api,auth};
 }
 describe('Bank book',()=>{
+ it('clears a queued entry without claiming that its amount was posted to the bank',()=>{
+   const {page,api}=setup();
+   api.add.mockReturnValueOnce(throwError(()=>({error:{actionQueued:true,message:'En attente de confirmation'}})));
+   page.entry={date:page.currentDate,direction:'OUT',amount:250,label:'Frais bancaires',reference:'F1'};
+   const balance=page.data()?.closingBalance, reads=api.overview.mock.calls.length;
+   page.saveEntry();
+   expect(page.entry.amount).toBeNull();expect(page.busy()).toBe(false);expect(page.error()).toBe('');
+   expect(page.success()).toBe('En attente de confirmation');expect(page.data()?.closingBalance).toBe(balance);
+   expect(api.overview.mock.calls).toHaveLength(reads);
+ });
  it('shows receipts, payments and the unreconciled balance with separate permission',()=>{const {fixture,auth}=setup();const text=fixture.nativeElement.textContent;expect(text).toContain('Solde avant rapprochement bancaire');expect(text).toContain('Dépôt');expect(text).toContain('Virement');expect(auth.getOwnedSchools).toHaveBeenCalledWith(7,'BANK_BOOK');});
  it('accepts an opening overdraft',()=>{const {page,api}=setup({...sample,book:null});page.opening={date:'2026-07-01',amount:-5000.5};page.open();expect(api.open).toHaveBeenCalledWith(5,'2026-07-01',-5000.5);});
  it('preserves input and idempotency key after failed submission',()=>{const {page,api}=setup();api.add.mockReturnValueOnce(throwError(()=>({error:{message:'Offline'}})));page.entry={date:page.currentDate,direction:'OUT',amount:250,label:'Frais bancaires',reference:'F1'};page.saveEntry();expect(page.entry.label).toBe('Frais bancaires');expect(page.error()).toBe('Offline');page.saveEntry();const calls=api.add.mock.calls as unknown as [number,{requestId:string}][];expect(calls).toHaveLength(2);expect(calls[0][1].requestId).toBe(calls[1][1].requestId);});

@@ -173,9 +173,9 @@ export class ClassRoster implements OnInit, OnDestroy {
         const selected = schools.find((item) => item.id === storedId) ?? schools[0];
         this.selectSchool(selected.id);
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.reportError('Impossible de charger vos établissements.');
+        this.reportError(apiError(err, 'Impossible de charger vos établissements.'));
       },
     });
   }
@@ -565,9 +565,9 @@ export class ClassRoster implements OnInit, OnDestroy {
         this.loading.set(false);
         if (data.classes.length > 0) this.selectClass(data.classes[0].id);
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.reportError('Impossible de charger les classes de cet établissement.');
+        this.reportError(apiError(err, 'Impossible de charger les classes de cet établissement.'));
       },
     });
   }
@@ -589,9 +589,9 @@ export class ClassRoster implements OnInit, OnDestroy {
         this.rows.set(rows);
         this.loadingRoster.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.loadingRoster.set(false);
-        this.reportError(`Impossible de charger les ${this.learner().plural} de cette classe.`);
+        this.reportError(apiError(err, `Impossible de charger les ${this.learner().plural} de cette classe.`));
       },
     });
   }

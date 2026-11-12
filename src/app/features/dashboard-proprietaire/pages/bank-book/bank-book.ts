@@ -1,3 +1,4 @@
+import { actionQueued } from '../../../../shared/offline/action-outbox';
 import { ErrorAlert } from '../../../../shared/error-alert';
 import { Component, computed, DestroyRef, HostListener, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -81,7 +82,7 @@ export class BankBookPage implements OnInit {
   private perform(action:Observable<void>,message:string,done?:()=>void):void {
     this.busy.set(true);this.error.set('');this.success.set('');
     action.pipe(takeUntilDestroyed(this.destroy)).subscribe({next:()=>{this.busy.set(false);done?.();this.success.set(message);this.load();},
-      error:err=>{this.busy.set(false);this.error.set(apiError(err,'Enregistrement impossible. Votre saisie est conservée.'));}});
+      error:err=>{this.busy.set(false);if(actionQueued(err)){done?.();this.success.set(apiError(err,'Mouvement conservé, en attente d’envoi.'));return;}this.error.set(apiError(err,'Enregistrement impossible. Votre saisie est conservée.'));}});
   }
   private validMoney(value:number|null,positive:boolean):boolean {
     return value!==null&&Number.isFinite(value)&&(!positive||value>0)&&Math.abs(value)<=(positive?9999999999.99:999999999999.99)&&Math.abs(value*100-Math.round(value*100))<.0001;

@@ -1,3 +1,4 @@
+import { actionQueued } from '../../../../shared/offline/action-outbox';
 import { ErrorAlert } from '../../../../shared/error-alert';
 import { RowActions } from '../../../../shared/ui/row-actions';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
@@ -198,7 +199,16 @@ export class SchoolResourcesPage implements OnInit, OnDestroy {
     const link = document.createElement('a'); link.href = url; link.download = `${this.mode === 'assets' ? 'patrimoine' : 'stocks'}-${this.schoolId()}-${today()}.csv`; link.click();
     setTimeout(() => URL.revokeObjectURL(url),1000);
   }
-  private fail(err: {error?: {message?: string}}, fallback: string): void { this.busy.set(false); this.error.set(err?.error?.message || fallback); }
+  private fail(err: {error?: {message?: string}}, fallback: string): void {
+    if (actionQueued(err)) {
+      this.busy.set(false);
+      this.panel.set(null);
+      this.selected.set(null);
+      this.success.set(err?.error?.message ?? 'Ajout conservé sur cet appareil, en attente d’envoi.');
+      return;
+    }
+    this.busy.set(false); this.error.set(err?.error?.message || fallback);
+  }
   private focusPanel(): void { setTimeout(() => this.host.nativeElement.querySelector<HTMLElement>('.resources__panel h2')?.focus(),0); }
   private emptyAsset(): AssetInput { return {code:'',name:'',category:'DESK_BENCH',location:'',custodian:'',ownership:'OWNED',condition:'GOOD',status:'IN_USE',quantity:1,unitValue:null,acquiredOn:null,maintenanceOn:null,notes:'',version:null,changeReason:''}; }
   private emptyStock(): StockInput { return {code:'',name:'',category:'TEACHING',unit:'boîte',location:'',minimumQuantity:0,unitCost:null,active:true,notes:'',version:null}; }

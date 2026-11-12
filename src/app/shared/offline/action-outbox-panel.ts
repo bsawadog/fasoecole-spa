@@ -5,6 +5,25 @@ import { PendingAction } from './action-outbox';
 import { ConfirmationService } from '../confirmation/confirmation.service';
 
 const FIELDS: Record<string, { label: string; type?: string; max?: number }> = {
+  name: { label: 'Nom', max: 150 }, label: { label: 'Libellé', max: 150 },
+  firstName: { label: 'Prénom', max: 100 }, lastName: { label: 'Nom de famille', max: 100 },
+  email: { label: 'Courriel', max: 150 }, phone: { label: 'Téléphone', max: 30 },
+  jobTitle: { label: 'Fonction', max: 80 }, employeeNumber: { label: 'Numéro d’employé', max: 50 },
+  specialty: { label: 'Spécialité', max: 150 }, hireDate: { label: 'Date d’embauche', type: 'date' },
+  monthlySalary: { label: 'Salaire mensuel', type: 'number' }, hourlyRate: { label: 'Taux horaire', type: 'number' },
+  rateEffectiveFrom: { label: 'Date d’effet du tarif', type: 'date' },
+  code: { label: 'Code', max: 40 }, location: { label: 'Emplacement', max: 150 },
+  custodian: { label: 'Responsable', max: 150 }, unit: { label: 'Unité', max: 30 },
+  amount: { label: 'Montant', type: 'number' }, quantity: { label: 'Quantité', type: 'number' },
+  minimumQuantity: { label: 'Seuil minimum', type: 'number' },
+  unitValue: { label: 'Valeur unitaire', type: 'number' }, unitCost: { label: 'Coût unitaire', type: 'number' },
+  notes: { label: 'Remarques', max: 500 }, supplier: { label: 'Fournisseur', max: 150 },
+  creditor: { label: 'Organisme', max: 150 }, recipient: { label: 'Destinataire', max: 150 },
+  date: { label: 'Date', type: 'date' }, expenseDate: { label: 'Date de dépense', type: 'date' },
+  dueDate: { label: 'Échéance', type: 'date' }, evalDate: { label: 'Date de l’évaluation', type: 'date' },
+  periodStart: { label: 'Début de période', type: 'date' }, periodEnd: { label: 'Fin de période', type: 'date' },
+  startMonth: { label: 'Premier mois', type: 'month' }, dueDay: { label: 'Jour d’échéance', type: 'number' },
+  maxValue: { label: 'Barème', type: 'number' }, weight: { label: 'Poids', type: 'number' },
   title: { label: 'Titre', max: 160 }, description: { label: 'Description' }, action: { label: 'Mesures prises' },
   reason: { label: 'Motif' }, content: { label: 'Contenu' }, objectives: { label: 'Objectifs', max: 2000 },
   details: { label: 'Détails' }, dueOn: { label: 'Échéance', type: 'date' },
@@ -32,7 +51,7 @@ const FIELDS: Record<string, { label: string; type?: string; max?: number }> = {
                     @if (field.type === 'checkbox') {
                       <input type="checkbox" [checked]="values[field.key]" (change)="values[field.key] = $any($event.target).checked" />
                     } @else if (field.type) {
-                      <input [type]="field.type" [value]="values[field.key] ?? ''" (input)="values[field.key] = $any($event.target).value" />
+                      <input [type]="field.type" [attr.step]="field.type === 'number' ? 'any' : null" [value]="values[field.key] ?? ''" (input)="values[field.key] = $any($event.target).value" />
                     } @else {
                       <textarea [value]="values[field.key] ?? ''" [maxLength]="field.max ?? 4000" (input)="values[field.key] = $any($event.target).value" rows="3"></textarea>
                     }
@@ -91,7 +110,7 @@ export class ActionOutboxPanel {
   async save(item: PendingAction): Promise<void> {
     const payload = { ...this.values };
     for (const field of this.fields(item)) {
-      if (field.type === 'number') payload[field.key] = Number(payload[field.key]);
+      if (field.type === 'number') payload[field.key] = payload[field.key] === '' || payload[field.key] == null ? null : Number(payload[field.key]);
       if (field.type === 'date' && !payload[field.key]) payload[field.key] = null;
     }
     await this.run(() => this.offline.updateAction(item.operationId, payload));

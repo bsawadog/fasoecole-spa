@@ -1,4 +1,5 @@
 import { ErrorAlert } from '../../../../shared/error-alert';
+import { actionQueued } from '../../../../shared/offline/action-outbox';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { DateField } from '../../../../shared/ui/date-field';
 import { NumberField } from '../../../../shared/ui/number-field';
@@ -234,7 +235,13 @@ export class EmployeesPage {
         this.success.set(`Enseignant ajouté${teacher.employeeNumber ? ' : ' + teacher.employeeNumber : ''}. ${notice}`);
         this.form = this.emptyForm(); this.slots = []; this.showAssignments = false;
       },
-      error: err => { this.busy.set(false); this.error.set(err?.error?.message ?? 'Impossible de créer cet enseignant.'); },
+      error: err => {
+        this.busy.set(false);
+        if (actionQueued(err)) {
+          this.form = this.emptyForm(); this.slots = []; this.showAssignments = false;
+          this.success.set('Enseignant conservé sur cet appareil, en attente d’envoi. Le compte et les invitations seront créés après confirmation du serveur.');
+        } else this.error.set(err?.error?.message ?? 'Impossible de créer cet enseignant.');
+      },
     });
   }
 }

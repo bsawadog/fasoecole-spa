@@ -1,3 +1,4 @@
+import { actionQueued } from '../../../../shared/offline/action-outbox';
 import { ErrorAlert } from '../../../../shared/error-alert';
 import { RowActions } from '../../../../shared/ui/row-actions';
 import { TooltipModule } from 'primeng/tooltip';
@@ -148,7 +149,17 @@ export class Payables implements OnDestroy {
     this.busy.set(true); this.error.set(''); this.success.set('');
     this.requests.add(request.subscribe({next: () => { this.busy.set(false); this.success.set(message); after(); },error: err => this.fail(err,'Impossible d’enregistrer cette opération.')}));
   }
-  private fail(err: {error?:{message?:string}},fallback: string) { this.busy.set(false); this.error.set(err?.error?.message ?? fallback); }
+  private fail(err: {error?:{message?:string}},fallback: string) {
+    if (actionQueued(err)) {
+      this.busy.set(false);
+      this.formKind = null;
+      this.form = this.emptyForm();
+      this.closeDetail();
+      this.success.set(err?.error?.message ?? 'Ajout conservé sur cet appareil, en attente d’envoi.');
+      return;
+    }
+    this.busy.set(false); this.error.set(err?.error?.message ?? fallback);
+  }
   private emptyForm() { return {categoryId:0,label:'',supplier:'',amount:null as number|null,dueDate:this.month+'-01',dueDay:5,notes:''}; }
   private emptyPayment() { return {amount:null as number|null,date:date(),method:'CASH' as PaymentMethod,reference:''}; }
 }

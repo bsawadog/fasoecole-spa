@@ -42,7 +42,7 @@ describe('AppShell account readiness', () => {
       { provide: AuthService, useValue: auth }, { provide: SelfSpaceService, useValue: self },
       { provide: OwnerFamilyMessagesService, useValue: messages },
       { provide: OfflineAttendanceService, useValue: { enabled: () => false, ...offlineOverrides } },
-      { provide: ModulePreloadService, useValue: { busy: () => false, failed: () => 0 } },
+      { provide: ModulePreloadService, useValue: { busy: () => false, failed: () => 0, prepared: () => false } },
     ] });
     TestBed.overrideComponent(AppShell, { remove: { imports: [AcademicContextPicker] }, add: { imports: [AcademicContextStub] } });
     const fixture = TestBed.createComponent(AppShell); fixture.detectChanges(); vi.advanceTimersByTime(1);

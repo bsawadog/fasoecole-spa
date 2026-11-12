@@ -32,6 +32,18 @@ describe('SchoolResourcesPage', () => {
     expect(access).toHaveBeenCalledWith(9,'INVENTORY');
     expect(page.activeItemCount()).toBe(1); http.verify();
   });
+  it('closes a durably queued movement without changing the displayed stock or reloading', async () => {
+    const {page,http,base}=setup('stock');
+    page.openMovement(stock);
+    Object.assign(page.movementForm,{kind:'OUT',quantity:2,reason:'Dotation',recipient:'CP1'});
+    await page.saveMovement();
+    http.expectOne(`${base}/stock/7/movements`).flush(
+      {actionQueued:true,message:'En attente de confirmation du serveur'}, {status:503,statusText:'Offline'});
+    expect(page.panel()).toBeNull(); expect(page.busy()).toBe(false);
+    expect(page.items()[0].quantity).toBe(5);
+    expect(page.success()).toContain('En attente de confirmation'); expect(page.error()).toBe('');
+    http.expectNone(`${base}/stock`); http.verify();
+  });
   it('rejects insufficient stock locally and retains a retry key after a network failure', async () => {
     const {page,http,base}=setup('stock');
     page.openMovement(stock);

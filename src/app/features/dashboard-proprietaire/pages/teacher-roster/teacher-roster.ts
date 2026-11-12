@@ -39,14 +39,18 @@ export class TeacherRoster implements OnInit, OnDestroy {
   readonly salaryMonth = signal(new Date().toLocaleDateString('en-CA').slice(0, 7));
   readonly payrollOverview = signal<PayrollOverview | null>(null);
   readonly payrollError = signal('');
+  readonly payrollOffline = signal(false);
   constructor() { effect(() => this.refreshPayroll()); }
   refreshPayroll(): void {
     const school = this.selectedSchoolId(), month = this.salaryMonth();
-    this.payrollRequest?.unsubscribe(); this.payrollOverview.set(null); this.payrollError.set('');
+    this.payrollRequest?.unsubscribe(); this.payrollOverview.set(null); this.payrollError.set(''); this.payrollOffline.set(false);
     if (!school || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return;
     this.payrollRequest = this.payroll.overview(school, month).subscribe({
       next: result => this.payrollOverview.set(result),
-      error: (err) => this.payrollError.set(apiError(err, 'Salaires indisponibles. Vérifiez votre accès au module Salaires ou réessayez.')),
+      error: (err) => {
+        if (err?.error?.offline) this.payrollOffline.set(true);
+        else this.payrollError.set(apiError(err, 'Salaires indisponibles. Vérifiez votre accès au module Salaires ou réessayez.'));
+      },
     });
   }
   salary(teacherId: number): SalaryContract | undefined {
@@ -432,7 +436,10 @@ export class TeacherRoster implements OnInit, OnDestroy {
       const id = this.selectedClassId();
       if (this.loading() || this.loadingTeachers() || !id) return;
       this.classRequest?.unsubscribe();
-      this.classRequest = this.teacherWork.teachersByClass(id).subscribe({next: rows => this.teachers.set(rows)});
+      this.classRequest = this.teacherWork.teachersByClass(id).subscribe({
+        next: rows => this.teachers.set(rows),
+        error: err => this.error.set(apiError(err, 'Impossible d’actualiser les enseignants de cette classe.')),
+      });
       if (this.showAllTeachers()) this.refreshAllTeachers();
     });
     this.schoolRequest?.unsubscribe();
@@ -492,7 +499,8 @@ export class TeacherRoster implements OnInit, OnDestroy {
     });
     this.candidatesRequest = this.teacherWork.candidatesByClass(classId).subscribe({
       next: teachers => this.candidates.set(teachers.filter(teacher => this.candidateSchoolIds.has(teacher.schoolId))),
-      error: (err) => this.error.set(apiError(err, 'Impossible de charger les enseignants disponibles pour cette classe.')),
+      // Assignment candidates are optional when consulting the saved class roster.
+      error: (err) => { if (!err?.error?.offline) this.error.set(apiError(err, 'Impossible de charger les enseignants disponibles pour cette classe.')); },
     });
   }
 }

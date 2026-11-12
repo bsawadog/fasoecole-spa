@@ -9,6 +9,8 @@ import { TeacherClass } from '../self-space/self-space.service';
 import { PendingMessage, MESSAGE_ID } from './message-outbox';
 import { LocalPublication, PUBLICATION_ID } from './publication-outbox';
 import { PendingAction, ACTION_ID } from './action-outbox';
+import { environment } from '../../../environments/environment';
+import { OfflineAppService } from './offline-app.service';
 
 const storage = { value: undefined as unknown };
 const vault = {
@@ -27,7 +29,7 @@ describe('Offline attendance synchronization', () => {
   beforeEach(() => {
     storage.value = undefined;
     vi.stubGlobal('indexedDB', {});
-    localStorage.removeItem('fasoecole_offline_7');
+    localStorage.setItem('fasoecole_offline_7', 'false');
     localStorage.setItem('fasoecole_auth', JSON.stringify({ token: 'test-session', user: { id: 7 } }));
     Object.defineProperty(navigator, 'locks', { configurable: true, value: { request: async (_name: string, callback: () => unknown) => callback() } });
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
@@ -42,17 +44,65 @@ describe('Offline attendance synchronization', () => {
     localStorage.removeItem('fasoecole_offline_7');
     localStorage.removeItem('fasoecole_offline_device');
   });
-  function setup() {
+  function setup(role = 'enseignant', application = { prepare: async () => {} }, account = { approved: true, emailVerified: true, mustChangePassword: false }) {
     const http = { post: vi.fn(() => of({ key: 'test-key' })), put: vi.fn(() => of([{ ...row, status: 'ABSENT', version: 0 }])) };
     TestBed.configureTestingModule({ providers: [
-      { provide: AuthService, useValue: { user: () => ({ id: 7, role: 'enseignant' }), getToken: () => 'test-session' } },
+      { provide: AuthService, useValue: { user: () => ({ id: 7, role, ...account }), getToken: () => 'test-session' } },
       { provide: HttpClient, useValue: http },
       { provide: ATTENDANCE_VAULT, useValue: vault },
+      { provide: OfflineAppService, useValue: application },
     ] });
     const service = TestBed.inject(OfflineAttendanceService);
     TestBed.tick();
     return { service, http };
   }
+  it('waits for application files before enabling private offline storage',async()=>{
+    let complete!:()=>void;
+    const application={prepare:()=>new Promise<void>(resolve=>{complete=resolve;})};
+    const {service,http}=setup('admin',application);
+    const enabling=service.enable();
+    expect(service.enabled()).toBe(true);expect(service.unlocked()).toBe(false);expect(service.busy()).toBe(true);expect(http.post).not.toHaveBeenCalled();
+    complete();await enabling;
+    expect(service.enabled()).toBe(true);expect(service.unlocked()).toBe(true);
+  });
+  it('automatically enables and unlocks offline mode for an eligible account with no saved preference',async()=>{
+    localStorage.removeItem('fasoecole_offline_7');
+    const {service}=setup('admin');
+    expect(service.enabled()).toBe(true);
+    await vi.waitFor(()=>expect(service.unlocked()).toBe(true));
+  });
+  it('waits for connectivity before automatically unlocking a restored offline session',async()=>{
+    localStorage.removeItem('fasoecole_offline_7');
+    vi.spyOn(navigator,'onLine','get').mockReturnValue(false);
+    const {service,http}=setup();
+    expect(service.enabled()).toBe(true);expect(service.unlocked()).toBe(false);expect(http.post).not.toHaveBeenCalled();
+    vi.spyOn(navigator,'onLine','get').mockReturnValue(true);window.dispatchEvent(new Event('online'));
+    await vi.waitFor(()=>expect(service.unlocked()).toBe(true));
+  });
+  it('does not enable storage on an unsupported browser',()=>{
+    localStorage.removeItem('fasoecole_offline_7');vi.stubGlobal('indexedDB',undefined);
+    const {service,http}=setup();
+    expect(service.supported).toBe(false);expect(service.enabled()).toBe(false);expect(http.post).not.toHaveBeenCalled();
+  });
+  it('keeps an explicit opt-out after a new session and allows enabling it again',async()=>{
+    const {service}=setup();
+    expect(service.enabled()).toBe(false);
+    await service.enable();await service.disable();
+    expect(localStorage.getItem('fasoecole_offline_7')).toBe('false');
+    TestBed.resetTestingModule();
+    const next=setup().service;expect(next.enabled()).toBe(false);
+    await next.enable();expect(next.unlocked()).toBe(true);
+    expect(localStorage.getItem('fasoecole_offline_7')).toBe('true');
+  });
+  it.each([
+    {approved:false,emailVerified:true,mustChangePassword:false},
+    {approved:true,emailVerified:false,mustChangePassword:false},
+    {approved:true,emailVerified:true,mustChangePassword:true},
+  ])('does not automatically enable offline storage before account activation: %o',account=>{
+    localStorage.removeItem('fasoecole_offline_7');
+    const {service,http}=setup('admin',undefined,account);
+    expect(service.enabled()).toBe(false);expect(http.post).not.toHaveBeenCalled();
+  });
   const pending = (issue?: string): AttendanceVault => ({ snapshots: {}, pending: [{
     operationId: 'one', schoolId: 1, classId: 11, date: '2026-10-31', issue,
     entries: [{ studentId: 1, status: 'ABSENT', justification: null, expectedStatus: null, expectedJustification: null, expectedVersion: null }],
@@ -65,6 +115,21 @@ describe('Offline attendance synchronization', () => {
     files: [{ name: 'cours.txt', type: 'text/plain', data: btoa('Cours de calcul') }] });
   const action = (): PendingAction => ({ operationId: crypto.randomUUID(), userId: 7, role: 'enseignant', path: '/school-life/classes/11/observations',
     payload: { classId: 11, studentId: 4, description: 'Observation', observedOn: '2026-11-01' }, label: 'Observation de discipline', createdAt: new Date().toISOString(), school: '1', year: '2' });
+  it.each(['/owner/finance/invoices/2/payments', '/owner/enrollment/schools/1/students', '/owner/resources/schools/1/stock/2/movements'])
+  ('preserves an admin creation across a lost response and only removes it after confirmation: %s', async path => {
+    const {service,http}=setup('admin'); await service.enable();
+    const item:PendingAction={...action(),role:'admin',path,payload:{amount:100,kind:'OUT',quantity:2}};
+    await service.queueAction(item);
+    http.post.mockReturnValueOnce(throwError(()=>({status:0})));
+    await service.synchronize();expect(service.pendingActions()).toHaveLength(1);
+    window.dispatchEvent(new Event('pagehide'));
+    http.post.mockReturnValueOnce(of({key:'test-key'}));
+    await service.unlock();
+    expect(service.pendingActions()).toEqual([]);
+    const sends=(http.post.mock.calls as unknown as [string,unknown,{headers:Record<string,string>}][]).filter(call=>call[0]===environment.apiUrl+path);
+    expect(sends).toHaveLength(2);
+    for(const send of sends)expect(send[2].headers[ACTION_ID]).toBe(item.operationId);
+  });
   it('retains actions and their original identity after closure and a lost response', async () => {
     const { service, http } = setup(); await service.enable(); const item = action();
     await service.queueAction(item); await service.queueAction(item); expect(service.pendingActions()).toHaveLength(1);

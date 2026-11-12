@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AuthService } from '../../../../core/auth';
 import { ConfirmationService } from '../../../../shared/confirmation/confirmation.service';
 import { EnrollmentService, PromotionPlan, YearInfo } from '../../enrollment.service';
@@ -35,6 +35,21 @@ const plan: PromotionPlan = {
 };
 
 describe('EnrollmentPage', () => {
+  it('keeps a queued registration pending without a receipt or an invented enrollment count', () => {
+    const {page,api}=setup();
+    page.openNewStudent();
+    Object.assign(page.newStudentForm,{classId:12,firstName:'Sali',lastName:'Test'});
+    Object.assign(page.guardians[0],{firstName:'Ali',lastName:'Test'});
+    const print=vi.spyOn(page,'printEnrollmentReceipt');
+    const enrolled=page.newStudentClasses().find(c=>c.id===12)?.enrolled;
+    api.registerStudent.mockReturnValueOnce(throwError(()=>({error:{actionQueued:true,message:'En attente de confirmation'}})));
+    page.registerStudent();
+    expect(api.registerStudent).toHaveBeenCalledOnce();
+    expect(page.lastRegistration()).toBeNull();expect(print).not.toHaveBeenCalled();
+    expect(page.newStudentClasses().find(c=>c.id===12)?.enrolled).toBe(enrolled);
+    expect(page.newStudentOpen()).toBe(false);expect(page.newStudentForm.firstName).toBe('');
+    expect(page.success()).toBe('En attente de confirmation');expect(page.error()).toBeNull();
+  });
   function setup(closure = false) {
     vi.spyOn(window, 'open').mockReturnValue(null);
     const api = {

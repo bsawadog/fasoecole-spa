@@ -1,4 +1,5 @@
 import { ErrorAlert } from '../../../../shared/error-alert';
+import { actionQueued } from '../../../../shared/offline/action-outbox';
 import { RowActions } from '../../../../shared/ui/row-actions';
 import { ModuleHelpButton } from '../../../../shared/help/module-help-button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -316,6 +317,11 @@ export class StaffPage implements OnInit {
   }
 
   private fail(err: { error?: { message?: string } } | null, fallback: string): void {
+    if (actionQueued(err)) {
+      this.busy.set(false); this.closeForm();
+      this.success.set('Employé conservé sur cet appareil, en attente d’envoi. Le compte, ses accès et les invitations seront créés après confirmation du serveur.');
+      return;
+    }
     this.busy.set(false);
     this.error.set(err?.error?.message ?? fallback);
   }

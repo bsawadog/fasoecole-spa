@@ -6,6 +6,7 @@ import { AuthService, SchoolAccessService } from '../../core/auth';
 import { ProfilePage } from './profile';
 import { signal } from '@angular/core';
 import { OfflineAttendanceService } from '../../shared/offline/offline-attendance.service';
+import { ModulePreloadService } from '../../shared/offline/module-preload.service';
 
 describe('ProfilePage', () => {
   const baseUser = {
@@ -18,9 +19,12 @@ describe('ProfilePage', () => {
     const offline = {
       supported: true, enabled: signal(false), unlocked: signal(true), busy: signal(false), online: signal(true), pending: signal<unknown[]>([]), pendingMessages: signal<unknown[]>([]), issue: signal<string | null>(null),
       enable: vi.fn(async () => { offline.enabled.set(true); }), disable: vi.fn(async () => { offline.enabled.set(false); }),
+      recentReadKeys: () => [JSON.stringify(['enseignant','http://localhost:8080/api/classes/11/roster?token=must-not-be-shared','json','1','2'])],
+      readCacheIssue: () => null,
     };
     const auth = {
       user: () => user,
+      schoolContextId: () => 1,
       updateProfile: vi.fn(() => of({ ...baseUser, firstName: 'Aminata' })),
       changePassword: vi.fn(() => of(undefined)),
       resendEmailVerification: vi.fn(() => of({ emailSent: true })),
@@ -44,12 +48,22 @@ describe('ProfilePage', () => {
         { provide: AuthService, useValue: auth },
         { provide: SchoolAccessService, useValue: access },
         { provide: OfflineAttendanceService, useValue: offline },
+        { provide: ModulePreloadService, useValue: { busy: () => false, failed: () => 0, prepared: () => true } },
       ],
     });
     const fixture = TestBed.createComponent(ProfilePage);
     fixture.detectChanges();
     return { fixture, auth, access, offline };
   }
+  it('reports the local cache state without account details, secrets or request query values', () => {
+    const {fixture,offline}=setup();
+    offline.enabled.set(true);
+    fixture.componentInstance.prepareOfflineDiagnostic();
+    const text=fixture.componentInstance.diagnostic(),report=JSON.parse(text);
+    expect(report.modeEnabled).toBe(true);expect(report.vaultUnlocked).toBe(true);
+    expect(report.copyCount).toBe(1);expect(report.copies[0].path).toBe('/api/classes/11/roster');
+    expect(text).not.toContain('must-not-be-shared');expect(text).not.toContain(baseUser.email);expect(text).not.toContain(baseUser.firstName);
+  });
 
   it('enables and disables offline storage from the profile', async () => {
     const { fixture, offline } = setup();
